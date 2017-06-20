@@ -1,3 +1,4 @@
 Flask==0.12.2
 graphene==1.4
 Flask-GraphQL==1.4.1
+pytest
