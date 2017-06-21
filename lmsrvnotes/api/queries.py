@@ -21,8 +21,9 @@ import graphene
 from graphene import resolve_only_args
 from datetime import datetime
 import json
+import re
 
-from .objects import Notes, NoteSummary, Note
+from .objects import Notes, NoteSummary, Note, LogLevel
 from lmcommon.labbook import LabBook
 
 
@@ -33,34 +34,62 @@ class NotesQueries(graphene.ObjectType):
 
     @resolve_only_args
     def resolve_notes(self, lbname):
+
         lb = LabBook()
 
         # TODO: Lookup lbname based on logged in user
         lb.from_name("default", lbname)
 
-        # RBTODO get the list of notes from the labbook
-        note1 = NoteSummary ( lbname=lbname, id=1, loglevel="User1", tags=["tag1","tag2"], timestamp=datetime.now(), message="commit1" )
-        note2 = NoteSummary ( lbname=lbname, id=2, loglevel="User2", tags=["tag2.1","tag2.2"], timestamp=datetime.now(), message="commit1" )
+        # retrieve a list of notes from the commit log.
+        lblog = lb.log(max_count=100)
 
-        commitlog = { note1, note2  }
-       
-        return Notes(lbname=lbname, entries=commitlog) 
+        # empty list of notes
+        notes = []
+
+        # filter log on Notes
+        regex=r"gtmNOTE_: ([\w\s\S]+)\ngtmjson_metadata_: (.*)"
+        for entry in lblog:
+
+            m = re.match(regex, entry['message'])
+            if m:
+            
+                message = m.group(1)
+                notemd = json.loads(m.group(2))
+
+                # add a NoteSummary object to output
+                notes.append (NoteSummary (lbname=lbname, level=LogLevel(notemd['level']), commit=entry['commit'], timestamp=entry['committed_on'], linkedcommit=notemd['linkedcommit'], tags=notemd['tags'], message=message )) 
+              
+        
+        # retrieve a list of notes from the commit log.
+
+        # RBTODO get the list of notes from the labbook
+        return Notes(lbname=lbname, entries=notes) 
 
 
 class NoteQueries(graphene.ObjectType):
     """Queries that interact with a single note"""
 
-    note = graphene.Field(Note, lbname=graphene.String(), id=graphene.ID())
+    note = graphene.Field(Note, lbname=graphene.String(), commit=graphene.ID())
 
     @resolve_only_args
-    def resolve_note(self, lbname, id):
+    def resolve_note(self, lbname, commit):
 
-#        lb = LabBook()
-#    
-#        lbcommit = lb.commit_by_id(id)
-#
-#        return Note(NoteSummary,Not)
+        lb = LabBook()
 
-        return Note ( lbname=lbname, id=id, loglevel="User3", tags=["tag3.1","tag3.2"], timestamp=datetime.now(), message="commit3" , freetext="freetext7", kvobjects=json.dumps([["7","seven"],["8","Eight"]])) 
+        # TODO: Lookup lbname based on logged in user
+        lb.from_name("default", lbname)
+
+        # get the record for the individual commit
+        entry = lb.log_entry(commit=commit)
+
+        # filter log on Notes
+        regex=r"gtmNOTE_: ([\w\s\S]+)\ngtmjson_metadata_: (.*)"
+
+        m = re.match(regex, entry['message'])
+        if m:
+            message = m.group(1)
+            notemd = json.loads(m.group(2))
+
+        return Note (lbname=lbname, level=LogLevel(notemd['level']), commit=entry['commit'], timestamp=entry['committed_on'], linkedcommit=notemd['linkedcommit'], tags=notemd['tags'], message=message, freetext="freetext7", kvobjects=json.dumps([["7","seven"],["8","Eight"]])) 
   
 

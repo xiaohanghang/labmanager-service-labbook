@@ -22,25 +22,38 @@ from graphene.types import datetime
 from graphene.types import json
 
 
+#RBTODO move to better place
+# @DK do we want an enum,  or just use text.
+class LogLevel(graphene.Enum):
+    USER_MAJOR = 11
+    USER_MINOR = 12
+    AUTO_MAJOR = 21
+    AUTO_MINOR = 22
+    AUTO_DETAIL = 23
+    
+
 class NoteSummary (graphene.ObjectType):
     """The brief version of a note derived from the git log"""
     lbname = graphene.String()
-    id = graphene.ID()
+    commit = graphene.ID()
+    linkedcommit = graphene.ID()
     message = graphene.String()
-    loglevel = graphene.String()
+    level = graphene.String()
     tags = graphene.List(graphene.String)
     timestamp = datetime.DateTime()
 
 
 # RBTODO duplicated fields -- hieararchy? interface?
+# @DK review
 
 class Note(graphene.ObjectType):
     """The long version of a note stored in the notes files"""
 
     lbname = graphene.String()
-    id = graphene.ID()
+    commit = graphene.ID()
+    linkedcommit = graphene.ID()
     message = graphene.String()
-    loglevel = graphene.String()
+    level = graphene.String()
     tags = graphene.List(graphene.String)
     timestamp = datetime.DateTime()
 

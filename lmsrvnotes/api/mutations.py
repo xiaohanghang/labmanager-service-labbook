@@ -24,10 +24,10 @@ import graphene
 import json
 from datetime import datetime
 
-
-from .objects import Note
+from .objects import Note, LogLevel
 
 from lmcommon.labbook import LabBook
+from lmcommon.gitlib import GitAuthor
 
 #class NoteKVFields(graphene.ObjectType):
 #    """Container for arbitrary key/value.  
@@ -41,11 +41,12 @@ from lmcommon.labbook import LabBook
 class CreateNote(graphene.Mutation):
     """Class for Mutator.  Don't use camel case in suffix, i.e. Labbook not LabBook """
 
-    # RBTODO wire up optional input and required input.
     class Input:
-      lbname = graphene.String()
-      message = graphene.String()
-      loglevel = graphene.String()
+        lbname = graphene.String(required=True)
+        level = LogLevel(required=True)
+        message = graphene.String()
+        linkedcommit = graphene.String()
+        tags = graphene.List(graphene.String)
 
     # Return the Note
     note = graphene.Field(lambda: Note)
@@ -53,21 +54,22 @@ class CreateNote(graphene.Mutation):
     @staticmethod
     def mutate(root, args, context, info):
 
-        print(args.get("lbname"))
-
- # Create a new empty LabBook
         # lookup the labbook by name
-        # validate that the id points to a good commit record
-        # add the commit mesage to the git log
-#        lbnote = lb.new_note (loglevel=args.get('loglevel'), commit_id = args.get('commit_id'),  
-#                        timestamp=datetime.now(), message=args.get('message'))
-        # add the details to the notes log.
+        lb = LabBook()
+        lb.from_name("default", args.get('lbname'))
 
-        # RBTODO separate commit id and ID
-        note = Note( lbname=args.get('lbname'), id=7, loglevel=args.get('loglevel'), tags=["tag11.1","tags11.2"], timestamp=datetime.now(), message=args.get('message'), freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
-#        note = Note( name=args.get('lbname'), id=7, loglevel=args.get('loglevel'), 
-#                        tags=["tag11.1","tags11.2"], timestamp=datetime.now(), message=args.get('message'),
-#                        freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
+        notesmd = { 'level': args.get('level'),
+                    'linkedcommit': args.get('linkedcommit'),
+                    'tags': args.get('tags') }
+
+        # format note metadata into message
+        message = "gtmNOTE_: {}\ngtmjson_metadata_: {}".format(args.get('message'),json.dumps(notesmd))
+
+        notecommit = lb.commit(message)
+
+        # RBTODO deal with freetext and kvobjects 
+        # RBTODO get the timestamp from the commit record
+        note = Note( lbname=args.get('lbname'), commit=notecommit, linkedcommit=args.get("linkedcommit"), level=args.get('level'), tags=args.get('tags'), timestamp=datetime.now(), message=args.get('message'), freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
 
         return CreateNote(note=note)
 

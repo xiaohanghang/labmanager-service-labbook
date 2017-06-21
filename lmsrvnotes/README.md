@@ -1,15 +1,57 @@
 
 Example query for notes/note service:
 
-Queries:
+Create a Labbook:
+
+mutation myMutation {
+    createLabbook(name: "NotesLB", description: "Labbook to store notes")
+    {labbook{name,id,username,description}}
+}
 
 
-Notes
+Add notes:
+
+mutation myMutation {
+  createNote (lbname:"NotesLB", message:"First user defined note.", level: USER_MAJOR, linkedcommit: "123abcf", tags: ["user","major"]) {
+    note {
+      commit
+      linkedcommit
+      timestamp
+      tags
+      message
+      lbname
+      level
+      freetext
+      kvobjects
+    }
+  }
+}
+
+mutation myMutation {
+  createNote (lbname:"NotesLB", message:"Second user defined note.", level: USER_MAJOR, linkedcommit: "123abcf", tags: ["user","major"]) {
+    note {
+      commit
+      linkedcommit
+      timestamp
+      tags
+      message
+      lbname
+      level
+      freetext
+      kvobjects
+    }
+  }
+}
+
+
+Query notes:
+
 {
-  notes(name: "NewLabBook") {
+  notes(lbname: "NotesLB") {
     entries {
-      id
-      loglevel
+      commit
+      linkedcommit
+      level
       message
       tags
       timestamp
@@ -19,19 +61,17 @@ Notes
 }
 
 
-Note
+Query Individual Note
 
 {
-  note(lbname: "NewLabBook", id: "7") {
-    id
+  note(lbname: "NotesLB", id: "0f0c3df68eaad873402518e2f7186d9a2ed8ccad") {
+    commit
+    linkedcommit
     lbname
-    kvobjects
     message
-    loglevel
+    level
     timestamp
     freetext
-    
+    kvobjects
   }
 }
-
-
