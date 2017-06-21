@@ -30,6 +30,7 @@ from mock import patch
 
 from lmcommon.labbook import LabBook
 from lmcommon.configuration import Configuration
+
 from ..api import LabbookMutations, LabbookQueries
 
 

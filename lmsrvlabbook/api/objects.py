@@ -35,6 +35,15 @@ class Labbook(graphene.ObjectType):
     # The username of the owner - To be replaced with a proper User interface
     username = graphene.String()
 
+    # The name of the current branch
+    branch = graphene.String()
+
+    # The git commit hash currently checked out
+    commit = graphene.String()
+
+    # The git commit hash currently checked out limited to 8 characters
+    commit_short = graphene.String()
+
 
 class User(graphene.ObjectType):
     """The User type represents a user logged into the LabManager"""

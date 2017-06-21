@@ -47,6 +47,27 @@ class CreateLabbook(graphene.Mutation):
         return CreateLabbook(labbook=labbook)
 
 
+class CreateLabbookBranch(graphene.Mutation):
+    """Create a new Branch in an existing LabBook"""
+
+    class Input:
+        name = graphene.String()
+
+    # Return the LabBook instance
+    labbook = graphene.Field(lambda: Labbook)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        # Create a new empty LabBook
+        lb = LabBook()
+        lb.new(username="default",
+               name=args.get('name'),
+               description=args.get('description'))
+
+        labbook = Labbook(name=lb.name, id=lb.id, description=lb.description, username=lb.username)
+        return CreateLabbook(labbook=labbook)
+
+
 class LabbookMutations(graphene.ObjectType):
     """Entry point for all graphql mutations"""
     create_labbook = CreateLabbook.Field()
