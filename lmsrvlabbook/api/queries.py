@@ -20,7 +20,7 @@
 import graphene
 from graphene import resolve_only_args
 
-from .objects import Labbook
+from .objects import Labbook, User
 
 from lmcommon.labbook import LabBook
 
@@ -28,27 +28,38 @@ from lmcommon.labbook import LabBook
 class LabbookQueries(graphene.ObjectType):
     """Entry point for all LabBook queries"""
     labbook = graphene.Field(Labbook, name=graphene.String())
-    labbooks = graphene.Field(graphene.List(graphene.String), username=graphene.String())
-    users = graphene.Field(graphene.List(graphene.String))
+    labbooks = graphene.Field(graphene.List(Labbook))
+    users = graphene.Field(graphene.List(User))
 
     # TODO: @randal - what is resolve only args?
     @resolve_only_args
     def resolve_labbook(self, name):
         lb = LabBook()
 
-        # TODO: Lookup name based on logged in user
-        lb.from_name("default", name)
+        # TODO: Lookup name based on logged in user when available
+        username = "default"
+        lb.from_name(username, name)
 
         return Labbook(name=lb.name, id=lb.id, description=lb.description, username=lb.username)
 
     @resolve_only_args
-    def resolve_labbooks(self, username):
+    def resolve_labbooks(self):
         lb = LabBook()
 
-        # TODO: Lookup name based on logged in user
+        # TODO: Lookup name based on logged in user when available
+        username = "default"
         labbooks = lb.list_local_labbooks(username=username)
 
-        return labbooks[username]
+        result = []
+        if username in labbooks:
+            for lb_name in labbooks[username]:
+                lb = LabBook()
+                lb.from_name(username, lb_name)
+                result.append(Labbook(name=lb.name, id=lb.id, description=lb.description, username=lb.username))
+        else:
+            raise ValueError("User {} not found.".format(username))
+
+        return result
 
     @resolve_only_args
     def resolve_users(self):
@@ -57,6 +68,10 @@ class LabbookQueries(graphene.ObjectType):
         # TODO: Lookup name based on logged in user
         labbooks = lb.list_local_labbooks()
 
-        return labbooks.keys()
+        result = []
+        for user in labbooks.keys():
+            result.append(User(username=user))
+
+        return result
 
 

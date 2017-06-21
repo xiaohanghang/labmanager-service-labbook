@@ -36,11 +36,6 @@ class Labbook(graphene.ObjectType):
     username = graphene.String()
 
 
-class Labbooks(graphene.ObjectType):
-    """The LabBook type that represents a LabBook instance on disk"""
-    labbook_names = graphene.List(graphene.String)
-
-
-class Users(graphene.ObjectType):
-    """The LabBook type that represents a LabBook instance on disk"""
-    usernames = graphene.List(graphene.String)
+class User(graphene.ObjectType):
+    """The User type represents a user logged into the LabManager"""
+    username = graphene.String()
