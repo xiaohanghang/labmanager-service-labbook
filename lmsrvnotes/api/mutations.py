@@ -17,21 +17,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
-from lmsrvlabbook.blueprints import labbook_service
-from lmsrvnotes.blueprints import notes_service
-from lmcommon.configuration import Configuration
+import uuid
 
-# Load config data for the LabManager instance
-config = Configuration()
+import graphene
+from .objects import Notes
 
-# Create Flask app and configure
-app = Flask("lmsrvlabbook")
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
+from lmcommon.labbook import LabBook
 
-# Register service
-app.register_blueprint(labbook_service)
-app.register_blueprint(notes_service)
+class CreateNote(graphene.Mutation):
+    """Class for Mutator.  Don't use camel case in suffix, i.e. Labbook not LabBook """
 
-if __name__ == '__main__':
-    app.run()
+    @staticmethod
+    def mutate(root, args, context, info):
+      return 
+
+
+class NotesMutations(graphene.ObjectType):
+    """Entry point for all graphql mutations"""
+

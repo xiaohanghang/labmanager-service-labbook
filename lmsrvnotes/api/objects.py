@@ -17,21 +17,27 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
-from lmsrvlabbook.blueprints import labbook_service
-from lmsrvnotes.blueprints import notes_service
-from lmcommon.configuration import Configuration
+import graphene
+from graphene.types import datetime
 
-# Load config data for the LabManager instance
-config = Configuration()
+class NoteSummary (graphene.ObjectType):
+    """The brief version of a note derived from the git log"""
+    id = graphene.ID()
+    message = graphene.String()
+    loglevel = graphene.String()
+    tags = graphene.List(graphene.String)
+    timestamp = datetime.DateTime()
 
-# Create Flask app and configure
-app = Flask("lmsrvlabbook")
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
 
-# Register service
-app.register_blueprint(labbook_service)
-app.register_blueprint(notes_service)
+class Notes (graphene.ObjectType):
+    """The summary of notes for a labbook"""
 
-if __name__ == '__main__':
-    app.run()
+    # the unique name of a LabBook
+    name = graphene.String()
+
+    # summary entries
+    entries = graphene.List(NoteSummary)
+
+    # The username of the owner - To be replaced with a proper User interface
+    username = graphene.String()
+
