@@ -19,6 +19,8 @@
 # SOFTWARE.
 import graphene
 from graphene.types import datetime
+from graphene.types import json
+
 
 class NoteSummary (graphene.ObjectType):
     """The brief version of a note derived from the git log"""
@@ -28,6 +30,18 @@ class NoteSummary (graphene.ObjectType):
     tags = graphene.List(graphene.String)
     timestamp = datetime.DateTime()
 
+class NoteDetail (graphene.ObjectType):
+    """The long version of a note stored in the notes files"""
+    id = graphene.ID()
+    name = graphene.String()
+
+    # NonNull is a way to get a single file of custom type with query capability.
+    summary = graphene.NonNull(NoteSummary)
+
+    freetext = graphene.String()
+
+    # kvobject are a json dumps of whatever
+    kvobjects = json.JSONString()
 
 class Notes (graphene.ObjectType):
     """The summary of notes for a labbook"""

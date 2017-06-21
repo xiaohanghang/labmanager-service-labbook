@@ -20,8 +20,9 @@
 import graphene
 from graphene import resolve_only_args
 from datetime import datetime
+import json
 
-from .objects import Notes, NoteSummary
+from .objects import Notes, NoteSummary, NoteDetail
 from lmcommon.labbook import LabBook
 
 
@@ -29,6 +30,7 @@ class NotesQueries(graphene.ObjectType):
     """Queries that get lists of notes from git repositories"""
 
     notes = graphene.Field(Notes, name=graphene.String())
+    note = graphene.Field(NoteDetail, name=graphene.String(), id=graphene.ID())
 
     # TODO: @randal - what is resolve only args?
     @resolve_only_args
@@ -45,6 +47,21 @@ class NotesQueries(graphene.ObjectType):
         commitlog = { note1, note2  }
        
         return Notes(name=name, entries=commitlog) 
+
+    @resolve_only_args
+    def resolve_note(self, name, id):
+
+#        lb = LabBook()
+#    
+#        lbcommit = lb.commit_by_id(id)
+#
+#        return Note(NoteSummary,NotDetail)
+
+
+        note3 = NoteSummary ( id=3, loglevel="User3", tags=["tag3.1","tag3.2"], timestamp=datetime.now(), message="commit3" )
+
+        return NoteDetail ( name=name, id=id, summary=note3, freetext="freetext7", kvobjects=json.dumps([["7","seven"],["8","Eight"]])) 
+  
 
 #class NoteQueries(graphene.ObjectType):
 #    """Queries that detail details for an individual note from note log."""

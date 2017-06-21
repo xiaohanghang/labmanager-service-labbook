@@ -36,9 +36,9 @@ notes_service.add_url_rule('/notes/',
                              view_func=GraphQLView.as_view('graphql',
                                                            schema=graphene.Schema(query=NotesQueries),
                                                            graphiql=config.config["flask"]["DEBUG"]))
+                                                                                  #mutation=NotesMutations),
 
 #notes_service.add_url_rule('/note/',
 #                             view_func=GraphQLView.as_view('graphql',
 #                                                           schema=graphene.Schema(query=NoteQueries),
 #                                                           graphiql=config.config["flask"]["DEBUG"]))
-                                #                                                  mutation=NotesMutations),

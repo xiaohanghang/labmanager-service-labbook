@@ -24,11 +24,43 @@ from .objects import Notes
 
 from lmcommon.labbook import LabBook
 
+class NoteKVFields(graphene.ObjectType):
+    """Container for arbitrary key/value.  
+        * keys are strings.
+        * values are uninterpreted blobs encoded as strings?
+    """
+    key = graphene.String()
+    value = graphene.String()
+
+
 class CreateNote(graphene.Mutation):
     """Class for Mutator.  Don't use camel case in suffix, i.e. Labbook not LabBook """
 
+    class input:
+      name = graphene.String()
+      commit_id = graphene.ID()
+      loglevel = graphene.String()
+      message = graphene.ID()
+#
+#  RBTODO these fields will go into notes log.
+#      freetext = graphene.String()
+#      kvobjects = graphene.list(NoteKVFields)
+
     @staticmethod
     def mutate(root, args, context, info):
+        lb = LabBook()
+
+        # TODO: Lookup name based on logged in user
+        lb.from_name("default", name)
+
+        # add the commit mesage to the git log
+        lbnote = lb.new_note (loglevel=args.get('loglevel'), commit_id = args.get('commit_id'),  
+                        timestamp=datetime.now(), message=args.get('message'))
+
+        #RBTODO finish
+        #RBTODO finish
+        note = CreateNote ( lb
+
       return 
 
 
