@@ -1,2 +1,2 @@
-#from .mutations import NotesMutations
-from .queries import NotesQueries
+from .mutations import NoteMutations
+from .queries import NotesQueries, NoteQueries

@@ -24,30 +24,38 @@ from graphene.types import json
 
 class NoteSummary (graphene.ObjectType):
     """The brief version of a note derived from the git log"""
+    lbname = graphene.String()
     id = graphene.ID()
     message = graphene.String()
     loglevel = graphene.String()
     tags = graphene.List(graphene.String)
     timestamp = datetime.DateTime()
 
-class NoteDetail (graphene.ObjectType):
+
+# RBTODO duplicated fields -- hieararchy? interface?
+
+class Note(graphene.ObjectType):
     """The long version of a note stored in the notes files"""
+
+    lbname = graphene.String()
     id = graphene.ID()
-    name = graphene.String()
+    message = graphene.String()
+    loglevel = graphene.String()
+    tags = graphene.List(graphene.String)
+    timestamp = datetime.DateTime()
 
-    # NonNull is a way to get a single file of custom type with query capability.
-    summary = graphene.NonNull(NoteSummary)
-
+    # longer fields
     freetext = graphene.String()
 
     # kvobject are a json dumps of whatever
     kvobjects = json.JSONString()
 
+
 class Notes (graphene.ObjectType):
     """The summary of notes for a labbook"""
 
     # the unique name of a LabBook
-    name = graphene.String()
+    lbname = graphene.String()
 
     # summary entries
     entries = graphene.List(NoteSummary)

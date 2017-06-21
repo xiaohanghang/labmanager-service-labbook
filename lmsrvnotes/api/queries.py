@@ -22,64 +22,45 @@ from graphene import resolve_only_args
 from datetime import datetime
 import json
 
-from .objects import Notes, NoteSummary, NoteDetail
+from .objects import Notes, NoteSummary, Note
 from lmcommon.labbook import LabBook
 
 
 class NotesQueries(graphene.ObjectType):
     """Queries that get lists of notes from git repositories"""
 
-    notes = graphene.Field(Notes, name=graphene.String())
-    note = graphene.Field(NoteDetail, name=graphene.String(), id=graphene.ID())
+    notes = graphene.Field(Notes, lbname=graphene.String())
 
-    # TODO: @randal - what is resolve only args?
     @resolve_only_args
-    def resolve_notes(self, name):
+    def resolve_notes(self, lbname):
         lb = LabBook()
 
-        # TODO: Lookup name based on logged in user
-        lb.from_name("default", name)
+        # TODO: Lookup lbname based on logged in user
+        lb.from_name("default", lbname)
 
         # RBTODO get the list of notes from the labbook
-        note1 = NoteSummary ( id=1, loglevel="User1", tags=["tag1","tag2"], timestamp=datetime.now(), message="commit1" )
-        note2 = NoteSummary ( id=2, loglevel="User2", tags=["tag2.1","tag2.2"], timestamp=datetime.now(), message="commit1" )
+        note1 = NoteSummary ( lbname=lbname, id=1, loglevel="User1", tags=["tag1","tag2"], timestamp=datetime.now(), message="commit1" )
+        note2 = NoteSummary ( lbname=lbname, id=2, loglevel="User2", tags=["tag2.1","tag2.2"], timestamp=datetime.now(), message="commit1" )
 
         commitlog = { note1, note2  }
        
-        return Notes(name=name, entries=commitlog) 
+        return Notes(lbname=lbname, entries=commitlog) 
+
+
+class NoteQueries(graphene.ObjectType):
+    """Queries that interact with a single note"""
+
+    note = graphene.Field(Note, lbname=graphene.String(), id=graphene.ID())
 
     @resolve_only_args
-    def resolve_note(self, name, id):
+    def resolve_note(self, lbname, id):
 
 #        lb = LabBook()
 #    
 #        lbcommit = lb.commit_by_id(id)
 #
-#        return Note(NoteSummary,NotDetail)
+#        return Note(NoteSummary,Not)
 
-
-        note3 = NoteSummary ( id=3, loglevel="User3", tags=["tag3.1","tag3.2"], timestamp=datetime.now(), message="commit3" )
-
-        return NoteDetail ( name=name, id=id, summary=note3, freetext="freetext7", kvobjects=json.dumps([["7","seven"],["8","Eight"]])) 
+        return Note ( lbname=lbname, id=id, loglevel="User3", tags=["tag3.1","tag3.2"], timestamp=datetime.now(), message="commit3" , freetext="freetext7", kvobjects=json.dumps([["7","seven"],["8","Eight"]])) 
   
 
-#class NoteQueries(graphene.ObjectType):
-#    """Queries that detail details for an individual note from note log."""
-#    notes = graphene.Field(Notes, name=graphene.String())
-#
-#    # TODO: @randal - what is resolve only args?
-#    @resolve_only_args
-#    def resolve_notes(self, name):
-#        lb = LabBook()
-#
-#        # TODO: Lookup name based on logged in user
-#        lb.from_name("default", name)
-#
-#        # RBTODO get the list of notes from the labbook
-#        note1 = NoteSummary ( id=1, message="commit1" )
-#        note2 = NoteSummary ( id=2, message="commit2" )
-#
-#        commitlog = { note1, note2  }
-#       
-#        return Notes(name=name, entries=commitlog) 
-#

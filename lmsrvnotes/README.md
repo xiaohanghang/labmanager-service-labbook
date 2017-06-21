@@ -3,28 +3,35 @@ Example query for notes/note service:
 
 Queries:
 
+
+Notes
 {
   notes(name: "NewLabBook") {
-    name
-    username
     entries {
-      id,
-      message,
-      tags,
+      id
+      loglevel
+      message
+      tags
       timestamp
     }
+    username
   }
 }
 
 
+Note
 
 {
-  note(name: "NewLabBook", id: "7") {
-    freetext
+  note(lbname: "NewLabBook", id: "7") {
+    id
+    lbname
     kvobjects
-    summary {
-      message,
-      loglevel
-    }
+    message
+    loglevel
+    timestamp
+    freetext
+    
   }
 }
+
+

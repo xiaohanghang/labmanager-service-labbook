@@ -20,50 +20,57 @@
 import uuid
 
 import graphene
-from .objects import Notes
+
+import json
+from datetime import datetime
+
+
+from .objects import Note
 
 from lmcommon.labbook import LabBook
 
-class NoteKVFields(graphene.ObjectType):
-    """Container for arbitrary key/value.  
-        * keys are strings.
-        * values are uninterpreted blobs encoded as strings?
-    """
-    key = graphene.String()
-    value = graphene.String()
+#class NoteKVFields(graphene.ObjectType):
+#    """Container for arbitrary key/value.  
+#        * keys are strings.
+#        * values are uninterpreted blobs encoded as strings?
+#    """
+#    key = graphene.String()
+#    value = graphene.String()
 
 
 class CreateNote(graphene.Mutation):
     """Class for Mutator.  Don't use camel case in suffix, i.e. Labbook not LabBook """
 
-    class input:
-      name = graphene.String()
-      commit_id = graphene.ID()
-      loglevel = graphene.String()
-      message = graphene.ID()
-#
-#  RBTODO these fields will go into notes log.
-#      freetext = graphene.String()
-#      kvobjects = graphene.list(NoteKVFields)
+    # RBTODO wire up optional input.
+#    class input:
+#      lbname = graphene.String()
+#      message = graphene.String()
+#      loglevel = graphene.String()
+
+    # Return the Note
+    note = graphene.Field(lambda: Note)
 
     @staticmethod
     def mutate(root, args, context, info):
-        lb = LabBook()
 
-        # TODO: Lookup name based on logged in user
-        lb.from_name("default", name)
-
+ # Create a new empty LabBook
+        # lookup the labbook by name
+        # validate that the id points to a good commit record
         # add the commit mesage to the git log
-        lbnote = lb.new_note (loglevel=args.get('loglevel'), commit_id = args.get('commit_id'),  
-                        timestamp=datetime.now(), message=args.get('message'))
+#        lbnote = lb.new_note (loglevel=args.get('loglevel'), commit_id = args.get('commit_id'),  
+#                        timestamp=datetime.now(), message=args.get('message'))
+        # add the details to the notes log.
 
-        #RBTODO finish
-        #RBTODO finish
-        note = CreateNote ( lb
+        # RBTODO separate commit id and ID
+        note = Note( lbname="Some Name", id=7, loglevel="warn", tags=["tag11.1","tags11.2"], timestamp=datetime.now(), message="message11", freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
+#        note = Note( name=args.get('lbname'), id=7, loglevel=args.get('loglevel'), 
+#                        tags=["tag11.1","tags11.2"], timestamp=datetime.now(), message=args.get('message'),
+#                        freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
 
-      return 
+        return CreateNote(note=note)
 
 
-class NotesMutations(graphene.ObjectType):
+class NoteMutations(graphene.ObjectType):
     """Entry point for all graphql mutations"""
+    create_note = CreateNote.Field()
 
