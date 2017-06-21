@@ -41,17 +41,19 @@ from lmcommon.labbook import LabBook
 class CreateNote(graphene.Mutation):
     """Class for Mutator.  Don't use camel case in suffix, i.e. Labbook not LabBook """
 
-    # RBTODO wire up optional input.
-#    class input:
-#      lbname = graphene.String()
-#      message = graphene.String()
-#      loglevel = graphene.String()
+    # RBTODO wire up optional input and required input.
+    class Input:
+      lbname = graphene.String()
+      message = graphene.String()
+      loglevel = graphene.String()
 
     # Return the Note
     note = graphene.Field(lambda: Note)
 
     @staticmethod
     def mutate(root, args, context, info):
+
+        print(args.get("lbname"))
 
  # Create a new empty LabBook
         # lookup the labbook by name
@@ -62,7 +64,7 @@ class CreateNote(graphene.Mutation):
         # add the details to the notes log.
 
         # RBTODO separate commit id and ID
-        note = Note( lbname="Some Name", id=7, loglevel="warn", tags=["tag11.1","tags11.2"], timestamp=datetime.now(), message="message11", freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
+        note = Note( lbname=args.get('lbname'), id=7, loglevel=args.get('loglevel'), tags=["tag11.1","tags11.2"], timestamp=datetime.now(), message=args.get('message'), freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
 #        note = Note( name=args.get('lbname'), id=7, loglevel=args.get('loglevel'), 
 #                        tags=["tag11.1","tags11.2"], timestamp=datetime.now(), message=args.get('message'),
 #                        freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
