@@ -23,8 +23,9 @@ from datetime import datetime
 import json
 import re
 
-from .objects import Notes, NoteSummary, Note, LogLevel
+from .objects import Notes, NoteSummary, Note, NoteObject, LogLevel
 from lmcommon.labbook import LabBook
+from lmcommon.notes import NoteStore
 
 
 class NotesQueries(graphene.ObjectType):
@@ -57,12 +58,10 @@ class NotesQueries(graphene.ObjectType):
                 notemd = json.loads(m.group(2))
 
                 # add a NoteSummary object to output
-                notes.append (NoteSummary (lbname=lbname, level=LogLevel(notemd['level']), commit=entry['commit'], timestamp=entry['committed_on'], linkedcommit=notemd['linkedcommit'], tags=notemd['tags'], message=message )) 
+                notes.append (NoteSummary (lbname=lbname, level=LogLevel.get(notemd['level']), commit=entry['commit'], author=entry['author'], timestamp=entry['committed_on'], linkedcommit=notemd['linkedcommit'], tags=notemd['tags'], message=message )) 
               
         
         # retrieve a list of notes from the commit log.
-
-        # RBTODO get the list of notes from the labbook
         return Notes(lbname=lbname, entries=notes) 
 
 
@@ -75,9 +74,10 @@ class NoteQueries(graphene.ObjectType):
     def resolve_note(self, lbname, commit):
 
         lb = LabBook()
-
         # TODO: Lookup lbname based on logged in user
         lb.from_name("default", lbname)
+
+        ns = NoteStore(lb)
 
         # get the record for the individual commit
         entry = lb.log_entry(commit=commit)
@@ -87,9 +87,20 @@ class NoteQueries(graphene.ObjectType):
 
         m = re.match(regex, entry['message'])
         if m:
+            # summary data from git log
             message = m.group(1)
             notemd = json.loads(m.group(2))
 
-        return Note (lbname=lbname, level=LogLevel(notemd['level']), commit=entry['commit'], timestamp=entry['committed_on'], linkedcommit=notemd['linkedcommit'], tags=notemd['tags'], message=message, freetext="freetext7", kvobjects=json.dumps([["7","seven"],["8","Eight"]])) 
+            # get the detail from notes storage.
+            note_detail = ns.getEntry(commit)
+
+            # deep copy of the input noteobjects -- list comprehension doesn't work
+            note_objects= []
+            for i in json.loads(note_detail['objects']):
+                nobj = NoteObject(key=i['key'], objecttype=i['objecttype'], value=i['value'])
+                note_objects.append(nobj)
+
+        return Note(lbname=lbname, level=LogLevel.get(notemd['level']), commit=entry['commit'], timestamp=entry['committed_on'], linkedcommit=notemd['linkedcommit'], author=entry['author'], tags=notemd['tags'], message=message, freetext=note_detail['freetext'], objects=note_objects)
+
   
 

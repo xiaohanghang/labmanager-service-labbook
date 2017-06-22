@@ -24,18 +24,11 @@ import graphene
 import json
 from datetime import datetime
 
-from .objects import Note, LogLevel
+from .objects import Note, LogLevel, NoteObject, NoteObjectIn
 
 from lmcommon.labbook import LabBook
 from lmcommon.gitlib import GitAuthor
-
-#class NoteKVFields(graphene.ObjectType):
-#    """Container for arbitrary key/value.  
-#        * keys are strings.
-#        * values are uninterpreted blobs encoded as strings?
-#    """
-#    key = graphene.String()
-#    value = graphene.String()
+from lmcommon.notes import NoteStore
 
 
 class CreateNote(graphene.Mutation):
@@ -47,6 +40,8 @@ class CreateNote(graphene.Mutation):
         message = graphene.String()
         linkedcommit = graphene.String()
         tags = graphene.List(graphene.String)
+        freetext = graphene.String()
+        objects = graphene.List(NoteObjectIn)
 
     # Return the Note
     note = graphene.Field(lambda: Note)
@@ -64,12 +59,23 @@ class CreateNote(graphene.Mutation):
 
         # format note metadata into message
         message = "gtmNOTE_: {}\ngtmjson_metadata_: {}".format(args.get('message'),json.dumps(notesmd))
-
         notecommit = lb.commit(message)
 
-        # RBTODO deal with freetext and kvobjects 
-        # RBTODO get the timestamp from the commit record
-        note = Note( lbname=args.get('lbname'), commit=notecommit, linkedcommit=args.get("linkedcommit"), level=args.get('level'), tags=args.get('tags'), timestamp=datetime.now(), message=args.get('message'), freetext="freetext11", kvobjects=json.dumps([["11","ounces"],["8","hours"]]))
+        try:
+            # instantiate the notes detailed store
+            ns = NoteStore(lb)
+            nsdict = { 'freetext': args.get('freetext'), 'objects': json.dumps(args.get('objects')) }
+            ns.putEntry(str(notecommit), nsdict)
+        except:
+            raise #TODO what compensating action?
+
+        # deep copy of the input noteobjects -- list comprehension doesn't work
+        nobjects= []
+        for i in args.get('objects'):
+            nobj = NoteObject(key=i['key'], objecttype=i['objecttype'], value=i['value'])
+            nobjects.append(nobj)
+
+        note = Note( lbname=args.get('lbname'), commit=notecommit, linkedcommit=args.get("linkedcommit"), level=args.get('level'), tags=args.get('tags'), timestamp=datetime.now(), message=args.get('message'), freetext=args.get('freetext'), objects=nobjects)
 
         return CreateNote(note=note)
 

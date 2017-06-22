@@ -37,31 +37,11 @@ class NoteSummary (graphene.ObjectType):
     lbname = graphene.String()
     commit = graphene.ID()
     linkedcommit = graphene.ID()
+    author = graphene.String()
     message = graphene.String()
     level = graphene.String()
     tags = graphene.List(graphene.String)
     timestamp = datetime.DateTime()
-
-
-# RBTODO duplicated fields -- hieararchy? interface?
-# @DK review
-
-class Note(graphene.ObjectType):
-    """The long version of a note stored in the notes files"""
-
-    lbname = graphene.String()
-    commit = graphene.ID()
-    linkedcommit = graphene.ID()
-    message = graphene.String()
-    level = graphene.String()
-    tags = graphene.List(graphene.String)
-    timestamp = datetime.DateTime()
-
-    # longer fields
-    freetext = graphene.String()
-
-    # kvobject are a json dumps of whatever
-    kvobjects = json.JSONString()
 
 
 class Notes (graphene.ObjectType):
@@ -73,6 +53,39 @@ class Notes (graphene.ObjectType):
     # summary entries
     entries = graphene.List(NoteSummary)
 
-    # The username of the owner - To be replaced with a proper User interface
-    username = graphene.String()
+
+class NoteObjectAbs(graphene.AbstractType):
+    """Container for arbitrary objects
+        * keys are strings.
+        * object type the content
+        * values are uninterpreted blobs encoded as strings
+    """
+    key = graphene.String()
+    objecttype = graphene.String()      # TODO make an ENUM?
+    value = graphene.String()
+
+# Input and output types needed for requests and mutations
+class NoteObjectIn(graphene.InputObjectType, NoteObjectAbs):
+    pass
+class NoteObject(graphene.ObjectType, NoteObjectAbs):
+    pass
+
+class Note(graphene.ObjectType):
+    """The long version of a note that included details"""
+
+    # TODO inheritance from NoteSummary didn't work here.
+    # Summary fields in git commit log
+    lbname = graphene.String()
+    commit = graphene.ID()
+    linkedcommit = graphene.ID()
+    author = graphene.String()
+    message = graphene.String()
+    level = graphene.String()
+    tags = graphene.List(graphene.String)
+    timestamp = datetime.DateTime()
+
+    # detail fields in NoteStore
+    freetext = graphene.String()
+    objects = graphene.List(NoteObject)
+
 
