@@ -63,13 +63,14 @@ class TestLabBookServiceMutations(object):
     def test_create_labbook(self, mock_config_file, snapshot):
         """Test listing labbooks"""
         # Mock the configuration class it it returns the same mocked config file
+        #TODO: DEBUG MUTATIONS
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
             # Make and validate request
             client = Client(mock_config_file[2])
 
             # Create LabBook
             query = """
-            mutation CreateLabBook($name: String!, $desc: String!){
+            mutation CreateLabBook($name: String!, $desc: String!, $desc: String!){
               createLabbook(name: $name, description: $desc){
                 labbook{
                   id

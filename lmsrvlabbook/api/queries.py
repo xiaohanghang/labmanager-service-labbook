@@ -21,14 +21,16 @@ import os
 import graphene
 from graphene import resolve_only_args
 
-from .objects import Labbook, User
+from .objects import Labbook, LabbookRef, LabbookCommit
 
 from lmcommon.labbook import LabBook
 from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
+from lmcommon.api.objects import User
+from lmcommon.api.util import get_logged_in_user
 
 
-def get_graphene_labbook(username, labbook_name):
+def _get_graphene_labbook(username, labbook_name):
     """ Private method to get a Graphene Labbook object from disk based on the username and LabBook name
 
     Args:
@@ -45,9 +47,55 @@ def get_graphene_labbook(username, labbook_name):
     git = get_git_interface(Configuration().config["git"])
     git.set_working_directory(os.path.join(git.working_directory, username, labbook_name))
 
-    return Labbook(name=lb.name, id=lb.id, description=lb.description, username=lb.username,
-                   commit=git.commit_hash, commit_short=git.commit_hash_short,
-                   branch=git.get_current_branch_name())
+    # Get branches
+    branch_listing = git.list_branches()
+
+    return Labbook(name=lb.name, id=lb.id, description=lb.description, owner=User(username=lb.owner["username"]),
+                   commit=_get_graphene_labbook_commit(lb),
+                   local_branches=branch_listing["local"], remote_branches=branch_listing["remote"],
+                   active_branch=_get_graphene_labbook_ref(lb, git_obj=git))
+
+
+def _get_graphene_labbook_commit(labbook_obj):
+    """ Private method to get a Graphene LabbookCommit object from a LabBook instance
+
+    Args:
+        labbook_obj(LabBook): A lmcommon.labbook.LabBook instance
+
+    Returns:
+        LabbookCommit
+    """
+    # TODO: Lookup name based on logged in user when available
+    username = get_logged_in_user()
+
+    # Get the commit information
+    git = get_git_interface(Configuration().config["git"])
+    git.set_working_directory(os.path.join(git.working_directory, username, labbook_obj.name))
+
+    return LabbookCommit(hash=git.commit_hash, short_hash=git.commit_hash_short,
+                         committed_on=git.committed_on.isoformat())
+
+
+def _get_graphene_labbook_ref(labbook_obj, git_obj=None):
+    """ Private method to get a Graphene LabbookRef object from a LabBook instance
+
+    Args:
+        labbook_obj(LabBook): A lmcommon.labbook.LabBook instance
+        git_obj(lmcommon.gitlib.GitRepoInterface): Optional initialized git repo instance
+
+    Returns:
+        LabbookCommit
+    """
+    if not git_obj:
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+
+        # Get the git information
+        git_obj = get_git_interface(Configuration().config["git"])
+        git_obj.set_working_directory(os.path.join(git_obj.working_directory, username, labbook_obj.name))
+
+    return LabbookRef(commit=_get_graphene_labbook_commit(labbook_obj),
+                      name=git_obj.get_current_branch_name(), prefix=git_obj.git_path.rsplit("/", 1)[0])
 
 
 class LabbookQueries(graphene.ObjectType):
@@ -70,8 +118,8 @@ class LabbookQueries(graphene.ObjectType):
             Labbook
         """
         # TODO: Lookup name based on logged in user when available
-        username = "default"
-        return get_graphene_labbook(username, name)
+        username = get_logged_in_user()
+        return _get_graphene_labbook(username, name)
 
     @resolve_only_args
     def resolve_labbooks(self):
@@ -85,13 +133,13 @@ class LabbookQueries(graphene.ObjectType):
         lb = LabBook()
 
         # TODO: Lookup name based on logged in user when available
-        username = "default"
+        username = get_logged_in_user()
         labbooks = lb.list_local_labbooks(username=username)
 
         result = []
         if username in labbooks:
             for lb_name in labbooks[username]:
-                result.append(get_graphene_labbook(username, lb_name))
+                result.append(_get_graphene_labbook(username, lb_name))
         else:
             raise ValueError("User {} not found.".format(username))
 

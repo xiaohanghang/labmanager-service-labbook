@@ -21,8 +21,11 @@ import uuid
 
 import graphene
 from .objects import Labbook
+from .queries import _get_graphene_labbook
 
 from lmcommon.labbook import LabBook
+from lmcommon.api.util import get_logged_in_user
+from lmcommon.api.objects import InputUser
 
 
 class CreateLabbook(graphene.Mutation):
@@ -31,41 +34,26 @@ class CreateLabbook(graphene.Mutation):
     class Input:
         name = graphene.String()
         description = graphene.String()
+        owner = graphene.Argument(InputUser)
 
     # Return the LabBook instance
     labbook = graphene.Field(lambda: Labbook)
 
     @staticmethod
     def mutate(root, args, context, info):
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+
         # Create a new empty LabBook
         lb = LabBook()
-        lb.new(username="default",
+        lb.new(username=username,
                name=args.get('name'),
-               description=args.get('description'))
+               description=args.get('description'),
+               owner=args.get('owner'))
 
-        labbook = Labbook(name=lb.name, id=lb.id, description=lb.description, username=lb.username)
-        return CreateLabbook(labbook=labbook)
-
-
-class CreateLabbookBranch(graphene.Mutation):
-    """Create a new Branch in an existing LabBook"""
-
-    class Input:
-        name = graphene.String()
-
-    # Return the LabBook instance
-    labbook = graphene.Field(lambda: Labbook)
-
-    @staticmethod
-    def mutate(root, args, context, info):
-        # Create a new empty LabBook
-        lb = LabBook()
-        lb.new(username="default",
-               name=args.get('name'),
-               description=args.get('description'))
-
-        labbook = Labbook(name=lb.name, id=lb.id, description=lb.description, username=lb.username)
-        return CreateLabbook(labbook=labbook)
+        # Get a graphene instance of the newly created LabBook
+        new_labbook = _get_graphene_labbook(username, lb.name)
+        return CreateLabbook(labbook=new_labbook)
 
 
 class LabbookMutations(graphene.ObjectType):
