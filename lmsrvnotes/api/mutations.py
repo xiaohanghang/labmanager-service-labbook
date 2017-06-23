@@ -53,21 +53,22 @@ class CreateNote(graphene.Mutation):
         lb = LabBook()
         lb.from_name("default", args.get('lbname'))
 
-        notesmd = { 'level': args.get('level'),
-                    'linkedcommit': args.get('linkedcommit'),
-                    'tags': args.get('tags') }
+        notesmd = {'level': args.get('level'),
+                   'linkedcommit': args.get('linkedcommit'),
+                   'tags': args.get('tags')}
 
         # format note metadata into message
-        message = "gtmNOTE_: {}\ngtmjson_metadata_: {}".format(args.get('message'),json.dumps(notesmd))
+        message = "gtmNOTE_: {}\ngtmjson_metadata_: {}".\
+                    format(args.get('message'),json.dumps(notesmd))
         notecommit = lb.commit(message)
 
         try:
             # instantiate the notes detailed store
             ns = NoteStore(lb)
-            nsdict = { 'freetext': args.get('freetext'), 'objects': json.dumps(args.get('objects')) }
+            nsdict = {'freetext': args.get('freetext'), 'objects': json.dumps(args.get('objects'))}
             ns.putEntry(str(notecommit), nsdict)
         except:
-            raise #TODO what compensating action?
+            raise # TODO what compensating action?
 
         # deep copy of the input noteobjects -- list comprehension doesn't work
         nobjects= []
@@ -75,7 +76,15 @@ class CreateNote(graphene.Mutation):
             nobj = NoteObject(key=i['key'], objecttype=i['objecttype'], value=i['value'])
             nobjects.append(nobj)
 
-        note = Note( lbname=args.get('lbname'), commit=notecommit, linkedcommit=args.get("linkedcommit"), level=args.get('level'), tags=args.get('tags'), timestamp=datetime.now(), message=args.get('message'), freetext=args.get('freetext'), objects=nobjects)
+        note = Note( lbname=args.get('lbname'),
+                     commit=notecommit,
+                     linkedcommit=args.get("linkedcommit"),
+                     level=args.get('level'),
+                     tags=args.get('tags'),
+                     timestamp=datetime.now(),
+                     message=args.get('message'),
+                     freetext=args.get('freetext'),
+                     objects=nobjects)
 
         return CreateNote(note=note)
 

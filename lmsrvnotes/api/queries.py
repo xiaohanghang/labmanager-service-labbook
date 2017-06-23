@@ -58,9 +58,15 @@ class NotesQueries(graphene.ObjectType):
                 notemd = json.loads(m.group(2))
 
                 # add a NoteSummary object to output
-                notes.append (NoteSummary (lbname=lbname, level=LogLevel.get(notemd['level']), commit=entry['commit'], author=entry['author'], timestamp=entry['committed_on'], linkedcommit=notemd['linkedcommit'], tags=notemd['tags'], message=message )) 
+                notes.append(NoteSummary (lbname=lbname,
+                                          level=LogLevel.get(notemd['level']),
+                                          commit=entry['commit'],
+                                          author=entry['author'],
+                                          timestamp=entry['committed_on'],
+                                          linkedcommit=notemd['linkedcommit'],
+                                          tags=notemd['tags'],
+                                          message=message))
               
-        
         # retrieve a list of notes from the commit log.
         return Notes(lbname=lbname, entries=notes) 
 
@@ -100,7 +106,16 @@ class NoteQueries(graphene.ObjectType):
                 nobj = NoteObject(key=i['key'], objecttype=i['objecttype'], value=i['value'])
                 note_objects.append(nobj)
 
-        return Note(lbname=lbname, level=LogLevel.get(notemd['level']), commit=entry['commit'], timestamp=entry['committed_on'], linkedcommit=notemd['linkedcommit'], author=entry['author'], tags=notemd['tags'], message=message, freetext=note_detail['freetext'], objects=note_objects)
+        return Note(lbname=lbname,
+                    level=LogLevel.get(notemd['level']),
+                    commit=entry['commit'],
+                    timestamp=entry['committed_on'],
+                    linkedcommit=notemd['linkedcommit'],
+                    author=entry['author'],
+                    tags=notemd['tags'],
+                    message=message,
+                    freetext=note_detail['freetext'],
+                    objects=note_objects)
 
   
 

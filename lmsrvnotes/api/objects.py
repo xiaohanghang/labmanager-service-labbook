@@ -22,7 +22,6 @@ from graphene.types import datetime
 from graphene.types import json
 
 
-#RBTODO move to better place
 # @DK do we want an enum,  or just use text.
 class LogLevel(graphene.Enum):
     USER_MAJOR = 11
@@ -32,7 +31,7 @@ class LogLevel(graphene.Enum):
     AUTO_DETAIL = 23
     
 
-class NoteSummary (graphene.ObjectType):
+class NoteSummary(graphene.ObjectType):
     """The brief version of a note derived from the git log"""
     lbname = graphene.String()
     commit = graphene.ID()
@@ -44,7 +43,7 @@ class NoteSummary (graphene.ObjectType):
     timestamp = datetime.DateTime()
 
 
-class Notes (graphene.ObjectType):
+class Notes(graphene.ObjectType):
     """The summary of notes for a labbook"""
 
     # the unique name of a LabBook
@@ -64,11 +63,15 @@ class NoteObjectAbs(graphene.AbstractType):
     objecttype = graphene.String()      # TODO make an ENUM?
     value = graphene.String()
 
+
 # Input and output types needed for requests and mutations
 class NoteObjectIn(graphene.InputObjectType, NoteObjectAbs):
     pass
+
+
 class NoteObject(graphene.ObjectType, NoteObjectAbs):
     pass
+
 
 class Note(graphene.ObjectType):
     """The long version of a note that included details"""

@@ -33,12 +33,12 @@ notes_service = Blueprint('notes_service', __name__)
 
 # Add routes -- each must have their own view
 notes_service.add_url_rule('/note/',
-                             view_func=GraphQLView.as_view('graphql-note',
-                                                           schema=graphene.Schema(query=NoteQueries,
-                                                           mutation=NoteMutations),
-                                                           graphiql=config.config["flask"]["DEBUG"]))
+                           view_func=GraphQLView.as_view('graphql-note',
+                                                         schema=graphene.Schema(query=NoteQueries,
+                                                                                mutation=NoteMutations),
+                                                         graphiql=config.config["flask"]["DEBUG"]))
 
 notes_service.add_url_rule('/notes/',
-                             view_func=GraphQLView.as_view('graphql-notes',
-                                                           schema=graphene.Schema(query=NotesQueries),
-                                                           graphiql=config.config["flask"]["DEBUG"]))
+                           view_func=GraphQLView.as_view('graphql-notes',
+                                                         schema=graphene.Schema(query=NotesQueries),
+                                                         graphiql=config.config["flask"]["DEBUG"]))
