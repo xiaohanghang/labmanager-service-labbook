@@ -38,15 +38,6 @@ snapshots['test_list_labbooks 1'] = {
     }
 }
 
-snapshots['test_get_labbook 1'] = {
-    'data': {
-        'labbook': {
-            'name': 'labbook1',
-            'description': 'my first labbook1'
-        }
-    }
-}
-
 snapshots['test_get_labbook 2'] = {
     'data': {
         'labbook': {
@@ -79,5 +70,19 @@ snapshots['test_get_multiple 1'] = {
                 'description': 'fghghfjghgf3454dfs dsfasf f sfsadf asdf asdf sda'
             }
         ]
+    }
+}
+
+snapshots['test_get_labbook 1'] = {
+    'data': {
+        'labbook': {
+            'name': 'labbook1',
+            'description': 'my first labbook1',
+            'localBranches': [
+                'master'
+            ],
+            'remoteBranches': [
+            ]
+        }
     }
 }

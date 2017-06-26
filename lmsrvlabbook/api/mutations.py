@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import uuid
+import os
 
 import graphene
 from .objects import Labbook
@@ -26,6 +27,8 @@ from .queries import _get_graphene_labbook
 from lmcommon.labbook import LabBook
 from lmcommon.api.util import get_logged_in_user
 from lmcommon.api.objects import InputUser
+from lmcommon.configuration import Configuration
+from lmcommon.gitlib import get_git_interface
 
 
 class CreateLabbook(graphene.Mutation):
@@ -56,6 +59,63 @@ class CreateLabbook(graphene.Mutation):
         return CreateLabbook(labbook=new_labbook)
 
 
+class CreateBranch(graphene.Mutation):
+    """Mutation create a NEW branch for a LabBook LOCALLY"""
+
+    class Input:
+        labbook_name = graphene.String()
+        branch_name = graphene.String()
+
+    # Return the LabBook instance
+    labbook = graphene.Field(lambda: Labbook)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+
+        # Load an existing LabBook
+        labbook_obj = LabBook()
+        labbook_obj.from_name(username, args.get('labbook_name'))
+
+        # Create Branch
+        git_obj = get_git_interface(Configuration().config["git"])
+        git_obj.set_working_directory(os.path.join(git_obj.working_directory, username, labbook_obj.name))
+        git_obj.create_branch(args.get('branch_name'))
+
+        return CreateBranch(labbook=labbook_obj)
+
+
+class CheckoutBranch(graphene.Mutation):
+    """Mutation checkout an existing branch branch"""
+
+    class Input:
+        labbook_name = graphene.String()
+        branch_name = graphene.String()
+
+    # Return the LabBook instance
+    labbook = graphene.Field(lambda: Labbook)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+
+        # Load an existing LabBook
+        labbook_obj = LabBook()
+        labbook_obj.from_name(username, args.get('labbook_name'))
+
+        # Checkout Branch
+        git_obj = get_git_interface(Configuration().config["git"])
+        git_obj.set_working_directory(os.path.join(git_obj.working_directory, username, labbook_obj.name))
+        git_obj.fetch()
+        git_obj.checkout(args.get('branch_name'))
+
+        return CheckoutBranch(labbook=labbook_obj)
+
+
 class LabbookMutations(graphene.ObjectType):
     """Entry point for all graphql mutations"""
     create_labbook = CreateLabbook.Field()
+    create_branch = CreateBranch.Field()
+    checkout_branch = CheckoutBranch.Field()

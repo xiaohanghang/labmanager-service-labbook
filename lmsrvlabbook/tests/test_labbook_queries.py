@@ -125,6 +125,8 @@ class TestLabBookServiceQueries(object):
               labbook(name: "labbook1") {
                 name
                 description
+                localBranches
+                remoteBranches
               }
             }
             """

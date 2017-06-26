@@ -23,6 +23,7 @@ import os
 import uuid
 import shutil
 from snapshottest import snapshot
+from lmcommon.api.objects import InputUser
 
 from graphene.test import Client
 import graphene
@@ -63,15 +64,14 @@ class TestLabBookServiceMutations(object):
     def test_create_labbook(self, mock_config_file, snapshot):
         """Test listing labbooks"""
         # Mock the configuration class it it returns the same mocked config file
-        #TODO: DEBUG MUTATIONS
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
             # Make and validate request
             client = Client(mock_config_file[2])
 
             # Create LabBook
             query = """
-            mutation CreateLabBook($name: String!, $desc: String!, $desc: String!){
-              createLabbook(name: $name, description: $desc){
+            mutation CreateLabBook($name: String!, $desc: String!, $owner_obj: InputUser!){
+              createLabbook(name: $name, description: $desc, owner: $owner_obj){
                 labbook{
                   id
                   name
@@ -80,16 +80,20 @@ class TestLabBookServiceMutations(object):
               }
             }
             """
-            variables = {"name": "test-lab-book", "desc": "my test description"}
+            variables = {"name": "test-lab-book1", "desc": "my test description",
+                         "owner_obj": {"username": "test_user"}}
 
             client.execute(query, variable_values=variables)
 
             # Get LabBook you just created
             query = """
             {
-              labbook(name: "test-lab-book") {
+              labbook(name: "test-lab-book1") {
                 name
                 description
+                owner {
+                  username
+                }
               }
             }
             """
@@ -119,3 +123,140 @@ class TestLabBookServiceMutations(object):
 
             # Second should fail with an error message
             snapshot.assert_match(client.execute(query, variable_values=variables))
+
+    def test_create_branch(self, mock_config_file, snapshot):
+        """Test creating a new branch in a labbook"""
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Create LabBook
+            query = """
+            mutation CreateLabBook($name: String!, $desc: String!, $owner_obj: InputUser!){
+              createLabbook(name: $name, description: $desc, owner: $owner_obj){
+                labbook{
+                  id
+                  name
+                  description
+                }
+              }
+            }
+            """
+            variables = {"name": "test-lab-book2", "desc": "my test description blah blah 12345",
+                         "owner_obj": {"username": "test_user1"}}
+
+            client.execute(query, variable_values=variables)
+
+            # Create a Branch
+            query = """
+            mutation BranchLabBook($labbook_name: String!, $branch_name: String!){
+              createBranch(labbookName: $labbook_name, branchName: $branch_name) {
+                labbook{                  
+                  name
+                  localBranches
+                }
+              }
+            }
+            """
+            variables = {"labbook_name": "test-lab-book2", "branch_name": "dev-branch-1"}
+
+            client.execute(query, variable_values=variables)
+
+            # Create Branch
+            query = """
+            {
+              labbook(name: "test-lab-book2") {
+                name
+                description
+                localBranches
+              }
+            }
+            """
+            snapshot.assert_match(client.execute(query))
+
+    def test_checkout_branch(self, mock_config_file, snapshot):
+        """Test checking out a new branch in a labbook"""
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Create LabBook
+            query = """
+            mutation CreateLabBook($name: String!, $desc: String!, $owner_obj: InputUser!){
+              createLabbook(name: $name, description: $desc, owner: $owner_obj){
+                labbook{
+                  id
+                  name
+                  description
+                }
+              }
+            }
+            """
+            variables = {"name": "test-lab-book3", "desc": "a different description",
+                         "owner_obj": {"username": "test_user4"}}
+
+            client.execute(query, variable_values=variables)
+
+            # Create a Branch
+            query = """
+            mutation BranchLabBook($labbook_name: String!, $branch_name: String!){
+              createBranch(labbookName: $labbook_name, branchName: $branch_name) {
+                labbook{                  
+                  name
+                  localBranches
+                }
+              }
+            }
+            """
+            variables = {"labbook_name": "test-lab-book3", "branch_name": "dev-branch-5"}
+
+            client.execute(query, variable_values=variables)
+
+            # Check branch status
+            query = """
+            {
+              labbook(name: "test-lab-book3") {
+                name
+                description
+                localBranches
+                activeBranch {
+                  name
+                  prefix
+                }
+              }
+            }
+            """
+            snapshot.assert_match(client.execute(query))
+
+            #  Checkout a Branch
+            query = """
+            mutation CheckoutLabBook($labbook_name: String!, $branch_name: String!){
+              checkoutBranch(labbookName: $labbook_name, branchName: $branch_name) {
+                labbook{                  
+                  name
+                  localBranches
+                }
+              }
+            }
+            """
+            variables = {"labbook_name": "test-lab-book3", "branch_name": "dev-branch-5"}
+
+            client.execute(query, variable_values=variables)
+
+            # Check branch status
+            query = """
+            {
+              labbook(name: "test-lab-book3") {
+                name
+                description
+                localBranches
+                activeBranch {
+                  name
+                  prefix
+                }
+              }
+            }
+            """
+            snapshot.assert_match(client.execute(query))
