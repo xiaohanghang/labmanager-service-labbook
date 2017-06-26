@@ -23,15 +23,22 @@ import os
 import uuid
 import shutil
 from snapshottest import snapshot
-from lmcommon.api.objects import InputUser
 
 from graphene.test import Client
 import graphene
 from mock import patch
 
-from lmcommon.labbook import LabBook
 from lmcommon.configuration import Configuration
 from ..api import LabbookMutations, LabbookQueries
+
+
+# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
+class Query(LabbookQueries, graphene.ObjectType):
+    pass
+
+
+class Mutation(LabbookMutations, graphene.ObjectType):
+    pass
 
 
 @pytest.fixture()
@@ -51,8 +58,8 @@ git:
         fp.seek(0)
 
         # Create test client
-        schema = graphene.Schema(query=LabbookQueries,
-                                 mutation=LabbookMutations)
+        schema = graphene.Schema(query=Query,
+                                 mutation=Mutation)
 
         yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
 

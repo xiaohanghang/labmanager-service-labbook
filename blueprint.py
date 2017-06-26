@@ -17,19 +17,35 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
-import blueprint
+from flask import Blueprint
+from flask_graphql import GraphQLView
+import graphene
+
+from lmsrvlabbook.api import LabbookQueries, LabbookMutations
+
 from lmcommon.configuration import Configuration
+
+# ** This blueprint is the combined full LabBook service with all components served together from a single schema ** #
+
+
+# Create Classes to combine all sub-service components (to support breaking apart if desired)
+class Query(LabbookQueries, graphene.ObjectType):
+    pass
+
+
+class Mutation(LabbookMutations, graphene.ObjectType):
+    pass
+
 
 # Load config data for the LabManager instance
 config = Configuration()
 
-# Create Flask app and configure
-app = Flask("lmsrvlabbook")
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
+# Create Blueprint
+complete_labbook_service = Blueprint('labbook_service', __name__)
 
-# Register service
-app.register_blueprint(blueprint.labbook_service)
-
-if __name__ == '__main__':
-    app.run()
+# Add route
+complete_labbook_service.add_url_rule('/labbook/',
+                                      view_func=GraphQLView.as_view('graphql',
+                                                                    schema=graphene.Schema(query=Query,
+                                                                                           mutation=Mutation),
+                                                                    graphiql=config.config["flask"]["DEBUG"]))

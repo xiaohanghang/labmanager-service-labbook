@@ -114,7 +114,7 @@ class CheckoutBranch(graphene.Mutation):
         return CheckoutBranch(labbook=labbook_obj)
 
 
-class LabbookMutations(graphene.ObjectType):
+class LabbookMutations(graphene.AbstractType):
     """Entry point for all graphql mutations"""
     create_labbook = CreateLabbook.Field()
     create_branch = CreateBranch.Field()

@@ -98,7 +98,7 @@ def _get_graphene_labbook_ref(labbook_obj, git_obj=None):
                       name=git_obj.get_current_branch_name(), prefix=git_obj.git_path.rsplit("/", 1)[0])
 
 
-class LabbookQueries(graphene.ObjectType):
+class LabbookQueries(graphene.AbstractType):
     """Entry point for all LabBook queries"""
     labbook = graphene.Field(Labbook, name=graphene.String())
     labbooks = graphene.Field(graphene.List(Labbook))
