@@ -17,19 +17,36 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
-import blueprint
-from lmcommon.configuration import Configuration
+import graphene
 
-# Load config data for the LabManager instance
-config = Configuration()
 
-# Create Flask app and configure
-app = Flask("lmsrvlabbook")
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
+class ImageStatus(graphene.Enum):
+    """An enumeration for Docker image status"""
+    # The image has not be built locally yet
+    DOES_NOT_EXIST = 0
+    # The image is being built
+    BUILD_IN_PROGRESS = 1
+    # The image has been built and the Dockerfile has yet to change
+    EXISTS = 2
+    # The image has been built and the Dockerfile has been edited
+    STALE = 3
 
-# Register service
-app.register_blueprint(blueprint.complete_labbook_service)
 
-if __name__ == '__main__':
-    app.run()
+class ContainerStatus(graphene.Enum):
+    """An enumeration for container image status"""
+    # The container is not running
+    NOT_RUNNING = 0
+    # The container is starting
+    STARTING = 1
+    # The container is running
+    RUNNING = 2
+
+
+class Environment(graphene.ObjectType):
+    """A type that represents the Environment for a LabBook"""
+    # The name of the current branch
+    image_status = graphene.Field(ImageStatus)
+
+    # The name of the current branch
+    container_status = graphene.Field(ContainerStatus)
+

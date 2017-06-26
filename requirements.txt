@@ -3,6 +3,7 @@ graphene==1.4
 Flask-GraphQL==1.4.1
 
 # Environment Service requirements
+docker==2.3.0
 
 # Testing requirements
 pytest

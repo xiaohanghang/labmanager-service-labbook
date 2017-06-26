@@ -22,6 +22,7 @@ from flask_graphql import GraphQLView
 import graphene
 
 from lmsrvlabbook.api import LabbookQueries, LabbookMutations
+from lmsrvenv.api import EnvironmentQueries, EnvironmentMutations
 
 from lmcommon.configuration import Configuration
 
@@ -29,11 +30,11 @@ from lmcommon.configuration import Configuration
 
 
 # Create Classes to combine all sub-service components (to support breaking apart if desired)
-class Query(LabbookQueries, graphene.ObjectType):
+class Query(LabbookQueries, EnvironmentQueries, graphene.ObjectType):
     pass
 
 
-class Mutation(LabbookMutations, graphene.ObjectType):
+class Mutation(LabbookMutations, EnvironmentMutations, graphene.ObjectType):
     pass
 
 
@@ -41,7 +42,7 @@ class Mutation(LabbookMutations, graphene.ObjectType):
 config = Configuration()
 
 # Create Blueprint
-complete_labbook_service = Blueprint('labbook_service', __name__)
+complete_labbook_service = Blueprint('complete_labbook_service', __name__)
 
 # Add route
 complete_labbook_service.add_url_rule('/labbook/',
