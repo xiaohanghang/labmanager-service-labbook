@@ -2,6 +2,8 @@ Flask==0.12.2
 graphene==1.4
 Flask-GraphQL==1.4.1
 
+iso8601
+
 # Environment Service requirements
 docker==2.3.0
 

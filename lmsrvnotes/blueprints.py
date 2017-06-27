@@ -17,20 +17,28 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
-import blueprint
+from flask import Blueprint
+from flask_graphql import GraphQLView
+import graphene
+
+from .api import NotesQueries, NoteQueries, NoteMutations
 
 from lmcommon.configuration import Configuration
 
 # Load config data for the LabManager instance
 config = Configuration()
 
-# Create Flask app and configure
-app = Flask("lmsrvlabbook")
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
+# Create Blueprint
+notes_service = Blueprint('notes_service', __name__)
 
-# Register service
-app.register_blueprint(blueprint.complete_labbook_service)
+# Add routes -- each must have their own view
+notes_service.add_url_rule('/note/',
+                           view_func=GraphQLView.as_view('graphql-note',
+                                                         schema=graphene.Schema(query=NoteQueries,
+                                                                                mutation=NoteMutations),
+                                                         graphiql=config.config["flask"]["DEBUG"]))
 
-if __name__ == '__main__':
-    app.run()
+notes_service.add_url_rule('/notes/',
+                           view_func=GraphQLView.as_view('graphql-notes',
+                                                         schema=graphene.Schema(query=NotesQueries),
+                                                         graphiql=config.config["flask"]["DEBUG"]))
