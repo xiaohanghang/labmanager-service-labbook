@@ -17,23 +17,36 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Blueprint
-from flask_graphql import GraphQLView
 import graphene
 
-from .api import LabbookQueries, LabbookMutations
 
-from lmcommon.configuration import Configuration
+class ImageStatus(graphene.Enum):
+    """An enumeration for Docker image status"""
+    # The image has not be built locally yet
+    DOES_NOT_EXIST = 0
+    # The image is being built
+    BUILD_IN_PROGRESS = 1
+    # The image has been built and the Dockerfile has yet to change
+    EXISTS = 2
+    # The image has been built and the Dockerfile has been edited
+    STALE = 3
 
-# Load config data for the LabManager instance
-config = Configuration()
 
-# Create Blueprint
-labbook_service = Blueprint('labbook_service', __name__)
+class ContainerStatus(graphene.Enum):
+    """An enumeration for container image status"""
+    # The container is not running
+    NOT_RUNNING = 0
+    # The container is starting
+    STARTING = 1
+    # The container is running
+    RUNNING = 2
 
-# Add route
-labbook_service.add_url_rule('/labbook/',
-                             view_func=GraphQLView.as_view('graphql',
-                                                           schema=graphene.Schema(query=LabbookQueries,
-                                                                                  mutation=LabbookMutations),
-                                                           graphiql=config.config["flask"]["DEBUG"]))
+
+class Environment(graphene.ObjectType):
+    """A type that represents the Environment for a LabBook"""
+    # The name of the current branch
+    image_status = graphene.Field(ImageStatus)
+
+    # The name of the current branch
+    container_status = graphene.Field(ContainerStatus)
+

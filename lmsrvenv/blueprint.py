@@ -17,20 +17,33 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
-import blueprint
+from flask import Blueprint
+from flask_graphql import GraphQLView
+import graphene
+
+from .api import EnvironmentQueries, EnvironmentMutations
 
 from lmcommon.configuration import Configuration
+
+
+# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
+class Query(EnvironmentQueries, graphene.ObjectType):
+    pass
+
+
+class Mutation(EnvironmentMutations, graphene.ObjectType):
+    pass
+
 
 # Load config data for the LabManager instance
 config = Configuration()
 
-# Create Flask app and configure
-app = Flask("lmsrvlabbook")
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
+# Create Blueprint
+environment_service = Blueprint('environment_service', __name__)
 
-# Register service
-app.register_blueprint(blueprint.complete_labbook_service)
-
-if __name__ == '__main__':
-    app.run()
+# Add route
+environment_service.add_url_rule('/labbook/',
+                                 view_func=GraphQLView.as_view('graphql',
+                                                               schema=graphene.Schema(query=Query,
+                                                                                      mutation=Mutation),
+                                                               graphiql=config.config["flask"]["DEBUG"]))

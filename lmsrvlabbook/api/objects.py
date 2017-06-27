@@ -19,28 +19,38 @@
 # SOFTWARE.
 import graphene
 
+from lmcommon.api.interfaces import GitObject, RefObject, RepositoryObjectDetails, Node
+
+
+class LabbookCommit(graphene.ObjectType):
+    """An object representing a commit to a LabBook"""
+    class Meta:
+        interfaces = (GitObject, )
+
+
+class LabbookRef(graphene.ObjectType):
+    """An object representing a git reference in a LabBook repository"""
+    class Meta:
+        interfaces = (RefObject, )
+
+    # The target commit the reference points to
+    commit = graphene.Field(LabbookCommit)
+
 
 class Labbook(graphene.ObjectType):
     """The LabBook type that represents a LabBook instance on disk"""
-    # A unique identifier for the LabBook
-    id = graphene.ID()
+    class Meta:
+        interfaces = (Node, RepositoryObjectDetails)
 
-    # The name of the LabBook. Must be unique to what exists locally and unique in a user's library when pushing
-    # Only A-Za-z0-9- allowed
-    name = graphene.String()
+    # The name of the current branch
+    active_branch = graphene.Field(LabbookRef)
 
-    # A short description of the LabBook limited to 140 UTF-8 characters
-    description = graphene.String()
+    # List of available local branches
+    local_branches = graphene.List(graphene.String)
 
-    # The username of the owner - To be replaced with a proper User interface
-    username = graphene.String()
+    # List of available remote branches
+    remote_branches = graphene.List(graphene.String)
 
+    # The git commit of the currently checked out branch
+    commit = graphene.Field(LabbookCommit)
 
-class Labbooks(graphene.ObjectType):
-    """The LabBook type that represents a LabBook instance on disk"""
-    labbook_names = graphene.List(graphene.String)
-
-
-class Users(graphene.ObjectType):
-    """The LabBook type that represents a LabBook instance on disk"""
-    usernames = graphene.List(graphene.String)
