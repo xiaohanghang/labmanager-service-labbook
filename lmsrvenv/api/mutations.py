@@ -86,7 +86,7 @@ class StartContainer(graphene.Mutation):
         return StartContainer(environment=_get_graphene_environment(username, args.get('name')))
 
 
-class EnvironmentMutations(graphene.AbstractType):t
+class EnvironmentMutations(graphene.AbstractType):
     """Entry point for all Environment graphql mutations"""
     build_image = BuildImage.Field()
     start_container = StartContainer.Field()
