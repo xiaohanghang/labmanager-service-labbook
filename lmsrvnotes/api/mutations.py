@@ -17,79 +17,87 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import uuid
-
 import graphene
 
 import json
+import os
 from datetime import datetime
 
-from .objects import Note, LogLevel, NoteObject, NoteObjectIn
+from .objects import Note, LogLevel, NoteObject, NoteObjectInput
 
 from lmcommon.labbook import LabBook
-from lmcommon.gitlib import GitAuthor
+from lmcommon.api.util import get_logged_in_user
+
 from lmcommon.notes import NoteStore
 
 
 class CreateNote(graphene.Mutation):
-    """Class for Mutator.  Don't use camel case in suffix, i.e. Labbook not LabBook """
+    """Mutation to create a new note entry"""
 
     class Input:
-        lbname = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
         level = LogLevel(required=True)
         message = graphene.String()
-        linkedcommit = graphene.String()
+        linked_commit = graphene.String()
         tags = graphene.List(graphene.String)
-        freetext = graphene.String()
-        objects = graphene.List(NoteObjectIn)
+        free_text = graphene.String()
+        objects = graphene.List(NoteObjectInput)
 
     # Return the Note
     note = graphene.Field(lambda: Note)
 
     @staticmethod
     def mutate(root, args, context, info):
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
 
-        # lookup the labbook by name
+        # Load LabBook instance
         lb = LabBook()
-        lb.from_name("default", args.get('lbname'))
+        lb.from_name(username, args.get('labbook_name'))
 
-        notesmd = {'level': args.get('level'),
-                   'linkedcommit': args.get('linkedcommit'),
-                   'tags': args.get('tags')}
+        note_metadata = {'level': args.get('level'),
+                         'linked_commit': args.get('linked_commit'),
+                         'tags': args.get('tags')}
 
         # format note metadata into message
-        message = "gtmNOTE_: {}\ngtmjson_metadata_: {}".\
-                    format(args.get('message'),json.dumps(notesmd))
-        notecommit = lb.commit(message)
+        message = "gtmNOTE_: {}\ngtmjson_metadata_: {}".format(args.get('message'), json.dumps(note_metadata))
 
         try:
-            # instantiate the notes detailed store
+            # Instantiate the notes detailed store and save detail to local db
             ns = NoteStore(lb)
-            nsdict = {'freetext': args.get('freetext'), 'objects': json.dumps(args.get('objects'))}
-            ns.putEntry(str(notecommit), nsdict)
-        except:
-            raise # TODO what compensating action?
+            nsdict = {'free_text': args.get('free_text'), 'objects': json.dumps(args.get('objects'))}
+
+            # Create record using the linked_commit hash as the reference
+            ns.put_entry(str(args.get('linked_commit')), nsdict)
+        except Exception as err:
+            raise IOError("Failed to store note detail: {}".format(err))
+
+        # Add everything in the LabBook notes/log directory in case it is new or a new log file has been created
+        lb.git.add_all(os.path.expanduser(os.path.join(".gigantum", "notes", "log")))
+
+        # Commit the changes as you've updated the notes DB
+        notecommit = lb.commit(message)
 
         # deep copy of the input noteobjects -- list comprehension doesn't work
-        nobjects= []
+        nobjects = []
         for i in args.get('objects'):
-            nobj = NoteObject(key=i['key'], objecttype=i['objecttype'], value=i['value'])
+            nobj = NoteObject(key=i['key'], object_type=i['object_type'], value=i['value'])
             nobjects.append(nobj)
 
-        note = Note( lbname=args.get('lbname'),
-                     commit=notecommit,
-                     linkedcommit=args.get("linkedcommit"),
-                     level=args.get('level'),
-                     tags=args.get('tags'),
-                     timestamp=datetime.now(),
-                     message=args.get('message'),
-                     freetext=args.get('freetext'),
-                     objects=nobjects)
+        note = Note(labbook_name=args.get('labbook_name'),
+                    commit=notecommit,
+                    linked_commit=args.get("linked_commit"),
+                    level=args.get('level'),
+                    tags=args.get('tags'),
+                    timestamp=datetime.utcnow(),
+                    message=args.get('message'),
+                    free_text=args.get('free_text'),
+                    objects=nobjects)
 
         return CreateNote(note=note)
 
 
-class NoteMutations(graphene.ObjectType):
-    """Entry point for all graphql mutations"""
+class NoteMutations(graphene.AbstractType):
+    """Entry point for all Note service mutations"""
     create_note = CreateNote.Field()
 
