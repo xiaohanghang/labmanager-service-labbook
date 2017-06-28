@@ -81,6 +81,7 @@ class StartContainer(graphene.Mutation):
         client.containers.run('{}-{}'.format(username, args.get('name')),
                               detach=True,
                               name='{}-{}'.format(username, args.get('name')),
+                              ports={"8888/tcp": "8888"},
                               volumes={labbook_dir: {'bind': '/mnt/labbook', 'mode': 'rw'}})
 
         return StartContainer(environment=_get_graphene_environment(username, args.get('name')))
