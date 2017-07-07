@@ -8,5 +8,6 @@ iso8601
 docker==2.3.0
 
 # Testing requirements
+mock==2.0.0
 pytest
 snapshottest
