@@ -106,7 +106,7 @@ class TestNoteService(object):
                   labbookName                  
                   author
                   commit
-                  linkedCommitt
+                  linkedCommit
                   message
                   level
                   tags                  

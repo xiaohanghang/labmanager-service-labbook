@@ -18,5 +18,6 @@ dependencies:
 
 test:
   override:
-    - pytest --cov=lmcommon .
+    - pytest --cov=lmsrvlabbook lmsrvlabbook/
+    - pytest --cov=lmsrvnotes --cov-append lmsrvnotes/
     - coveralls
