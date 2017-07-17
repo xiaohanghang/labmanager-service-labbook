@@ -17,16 +17,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import graphene
-from graphene import resolve_only_args
 import json
 import re
 
-from lmcommon.api.util import get_logged_in_user
+import graphene
+from graphene import resolve_only_args
 
-from .objects import Notes, NoteSummary, Note, NoteObject, LogLevel
 from lmcommon.labbook import LabBook
 from lmcommon.notes import NoteStore
+from lmsrvcore.api import get_logged_in_user
+from .objects import Notes, NoteSummary, Note, NoteObject
 
 
 class NoteQueries(graphene.AbstractType):

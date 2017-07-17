@@ -21,7 +21,7 @@ from flask import Blueprint
 from flask_graphql import GraphQLView
 import graphene
 
-from lmsrvlabbook.api import LabbookQueries, LabbookMutations
+from lmsrvlabbook.api import LabbookQuery, LabbookMutations
 from lmsrvnotes.api import NoteQueries, NoteMutations
 from lmsrvenv.api import EnvironmentQueries, EnvironmentMutations
 
@@ -31,7 +31,7 @@ from lmcommon.configuration import Configuration
 
 
 # Create Classes to combine all sub-service components (to support breaking apart if desired)
-class Query(LabbookQueries, EnvironmentQueries, NoteQueries, graphene.ObjectType):
+class Query(LabbookQuery, EnvironmentQueries, NoteQueries, graphene.ObjectType):
     pass
 
 

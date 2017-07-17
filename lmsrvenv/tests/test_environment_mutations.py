@@ -17,25 +17,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import pytest
-import tempfile
 import os
-import uuid
 import shutil
-from snapshottest import snapshot
+import tempfile
+import uuid
 
 import docker
-from docker.errors import ImageNotFound
-
-from graphene.test import Client
 import graphene
+import pytest
+from docker.errors import ImageNotFound
+from graphene.test import Client
 from mock import patch
 
 from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
-from lmcommon.api.util import get_logged_in_user
-
-
+from lmsrvcore.api import get_logged_in_user
 from ..api import EnvironmentMutations, EnvironmentQueries
 
 

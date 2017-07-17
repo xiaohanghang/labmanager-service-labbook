@@ -21,11 +21,11 @@ import os
 
 import docker
 import graphene
+
+from lmcommon.configuration import Configuration
+from lmsrvcore.api import get_logged_in_user
 from .objects import Environment
 from .queries import _get_graphene_environment
-
-from lmcommon.api.util import get_logged_in_user
-from lmcommon.configuration import Configuration
 
 
 class BuildImage(graphene.Mutation):

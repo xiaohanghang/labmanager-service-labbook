@@ -18,21 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import graphene
 
-from lmcommon.configuration import Configuration
-from lmcommon.gitlib import get_git_interface
-from lmcommon.labbook import LabBook
-#from lmsrvcore.api import InputUser
-#from lmsrvcore.api import get_logged_in_user
-#from .objects import Labbook
-#from .query import _get_graphene_labbook
+def get_logged_in_user():
+    """A Method to get the current logged in user's username
 
-from lmsrvlabbook.api.objects.labbook import CreateLabbook
+    Currently this is faked out until we actually have a user model
 
-
-class LabbookMutations(graphene.AbstractType):
-    """Entry point for all graphql mutations"""
-    create_labbook = CreateLabbook.Field()
-    #create_branch = CreateBranch.Field()
-    #checkout_branch = CheckoutBranch.Field()
+    Returns:
+        str
+    """
+    return "default"

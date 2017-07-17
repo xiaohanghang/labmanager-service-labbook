@@ -19,38 +19,8 @@
 # SOFTWARE.
 import graphene
 
-from lmcommon.api.interfaces import GitObject, RefObject, RepositoryObjectDetails, Node
 
-
-class LabbookCommit(graphene.ObjectType):
-    """An object representing a commit to a LabBook"""
-    class Meta:
-        interfaces = (GitObject, )
-
-
-class LabbookRef(graphene.ObjectType):
-    """An object representing a git reference in a LabBook repository"""
-    class Meta:
-        interfaces = (RefObject, )
-
-    # The target commit the reference points to
-    commit = graphene.Field(LabbookCommit)
-
-
-class Labbook(graphene.ObjectType):
-    """The LabBook type that represents a LabBook instance on disk"""
-    class Meta:
-        interfaces = (Node, RepositoryObjectDetails)
-
-    # The name of the current branch
-    active_branch = graphene.Field(LabbookRef)
-
-    # List of available local branches
-    local_branches = graphene.List(graphene.String)
-
-    # List of available remote branches
-    remote_branches = graphene.List(graphene.String)
-
-    # The git commit of the currently checked out branch
-    commit = graphene.Field(LabbookCommit)
+class User(graphene.Interface):
+    """Interface representing a user in the system"""
+    username = graphene.String()
 

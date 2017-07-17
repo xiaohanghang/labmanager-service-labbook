@@ -29,11 +29,11 @@ import graphene
 from mock import patch
 
 from lmcommon.configuration import Configuration
-from ..api import LabbookMutations, LabbookQueries
+from ..api import LabbookMutations, LabbookQuery
 
 
 # Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQueries, graphene.ObjectType):
+class Query(LabbookQuery, graphene.ObjectType):
     pass
 
 

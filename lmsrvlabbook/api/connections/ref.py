@@ -17,22 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import graphene
-
-from lmcommon.configuration import Configuration
-from lmcommon.gitlib import get_git_interface
-from lmcommon.labbook import LabBook
-#from lmsrvcore.api import InputUser
-#from lmsrvcore.api import get_logged_in_user
-#from .objects import Labbook
-#from .query import _get_graphene_labbook
-
-from lmsrvlabbook.api.objects.labbook import CreateLabbook
+from lmsrvlabbook.api.objects import LabbookRef
 
 
-class LabbookMutations(graphene.AbstractType):
-    """Entry point for all graphql mutations"""
-    create_labbook = CreateLabbook.Field()
-    #create_branch = CreateBranch.Field()
-    #checkout_branch = CheckoutBranch.Field()
+class LocalBranchConnection(graphene.relay.Connection):
+
+    def __init__(self):
+        # Call super constructor
+        graphene.relay.Connection.__init__(self)
+
+    class Meta:
+        node = LabbookRef
