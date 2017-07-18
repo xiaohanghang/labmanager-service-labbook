@@ -39,6 +39,11 @@ class LabbookRef(graphene.ObjectType):
     commit = graphene.Field(LabbookCommit)
 
     @staticmethod
+    def get_node(node_id, context, info):
+        input_data = {"type_id": node_id}
+        return LabbookRef.create(input_data)
+
+    @staticmethod
     def to_type_id(id_data):
         """Method to generate a single string that uniquely identifies this object
 
@@ -61,7 +66,13 @@ class LabbookRef(graphene.ObjectType):
             dict
         """
         split = type_id.split("&")
-        return {"owner": split[0], "name": split[1], "prefix": split[2], "branch": split[3]}
+        id_data = {"owner": split[0], "name": split[1], "branch": split[3]}
+        if split[2] == "None":
+            id_data["prefix"] = None
+        else:
+            id_data["prefix"] = split[2]
+
+        return id_data
 
     @staticmethod
     def create(id_data):
@@ -74,8 +85,9 @@ class LabbookRef(graphene.ObjectType):
                 "username": <optional username for logged in user>,
                 "owner": <owner username (or org)>,
                 "name": <name of the labbook>
-                "prefix": <branch prefix (e.g. '/origin', will be omitted null for local branches>
+                "prefix": <branch prefix (e.g. 'origin', will be omitted null for local branches>
                 "branch": <branch name>
+                "git": <optional gitlib instance already instantiated>
             }
 
         Args:
@@ -90,26 +102,39 @@ class LabbookRef(graphene.ObjectType):
 
         if "type_id" in id_data:
             # Parse ID components
-            id_data.update(LabbookCommit.parse_type_id(id_data["type_id"]))
+            id_data.update(LabbookRef.parse_type_id(id_data["type_id"]))
+            del id_data["type_id"]
 
-        # Get the commit information
-        git = get_git_interface(Configuration().config["git"])
-        git.set_working_directory(os.path.join(git.working_directory,
-                                               id_data["username"],
-                                               id_data["owner"],
-                                               id_data["name"]))
+        if "git" not in id_data:
+            git = get_git_interface(Configuration().config["git"])
+            git.set_working_directory(os.path.join(git.working_directory,
+                                                   id_data["username"],
+                                                   id_data["owner"],
+                                                   id_data["name"]))
+        else:
+            git = id_data["git"]
 
         # Look up commit hash for a given ref
         git_path = id_data["branch"]
         if "prefix" in id_data:
             if id_data["prefix"]:
                 git_path = "{}/{}".format(id_data["prefix"], id_data["branch"])
+        else:
+            id_data["prefix"] = None
 
         git_ref = git.repo.refs[git_path]
         id_data["hash"] = git_ref.commit.hexsha
 
-        return LabbookRef(commit=LabbookCommit.create(id_data),
+        return LabbookRef(id=LabbookRef.to_type_id(id_data),
+                          commit=LabbookCommit.create(id_data),
                           name=id_data["branch"], prefix=id_data["prefix"])
+
+
+# Connection for paging through refs
+class LabbookRefConnection(graphene.relay.Connection):
+
+    class Meta:
+        node = LabbookRef
 
 
 # class CreateBranch(graphene.relay.ClientIDMutation):

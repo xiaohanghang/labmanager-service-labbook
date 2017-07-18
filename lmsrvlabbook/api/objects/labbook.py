@@ -19,6 +19,7 @@
 # SOFTWARE.
 import graphene
 import os
+import base64
 
 from lmcommon.labbook import LabBook
 from lmcommon.gitlib import get_git_interface
@@ -30,7 +31,7 @@ from lmsrvcore.api import ObjectType
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
 
-from lmsrvlabbook.api.objects import LabbookCommit, LabbookRef
+from lmsrvlabbook.api.objects import LabbookCommit, LabbookRef, LabbookRefConnection
 
 
 class Labbook(ObjectType):
@@ -42,18 +43,11 @@ class Labbook(ObjectType):
     class Meta:
         interfaces = (graphene.relay.Node, GitRepository)
 
-    ## The name of the current branch
-    #active_branch = graphene.Field(LabbookRef)
-#
-    ##TODO UPDATE TO CONNECTIONS
-    ## Connection to access local branches
-    #local_branches = graphene.List(graphene.String)
-#
-    ## Connection to access remote branches
-    #remote_branches = graphene.List(graphene.String)
-#
-    ## The git commit of the currently checked out branch
-    #commit = graphene.Field(LabbookCommit)
+    # The name of the current branch
+    active_branch = graphene.Field(LabbookRef)
+
+    # List of branches
+    branches = graphene.relay.ConnectionField(LabbookRefConnection)
 
     @staticmethod
     def get_node(node_id, context, info):
@@ -105,6 +99,7 @@ class Labbook(ObjectType):
         """
         if "type_id" in id_data:
             id_data.update(Labbook.parse_type_id(id_data["type_id"]))
+            del id_data["type_id"]
 
         if "username" not in id_data:
             id_data["username"] = get_logged_in_user()
@@ -117,16 +112,116 @@ class Labbook(ObjectType):
         git.set_working_directory(os.path.join(git.working_directory, id_data["username"],
                                                id_data["owner"], id_data["name"]))
 
-        # Get branches
-        branch_listing = git.list_branches()
+        # Get the current checked out branch name
+        id_data["branch"] = git.get_current_branch_name()
 
-        return Labbook(name=lb.name, description=lb.description,
-                       owner=Owner.create({"username": lb.owner["username"]}),
-                       id=Labbook.to_type_id(id_data))
-                       #commit=_get_graphene_labbook_commit(lb))
-                       #id=lb.id,
-                       #local_branches=branch_listing["local"], remote_branches=branch_listing["remote"],
-                       #active_branch=_get_graphene_labbook_ref(lb, git_obj=git))
+        # Share git instance to speed up IO
+        id_data["git"] = git
+
+        # Get branches
+        #branch_listing = git.list_branches()
+
+        return Labbook(id=Labbook.to_type_id(id_data),
+                       name=lb.name, description=lb.description,
+                       owner=Owner.create(id_data),
+                       active_branch=LabbookRef.create(id_data))
+
+    def resolve_branches(self, args, context, info):
+        """Method to page through branch Refs
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        if "first" in args:
+            if int(args["first"]) < 0:
+                raise ValueError("`first` must be greater than 0")
+        if "last" in args:
+            if int(args["last"]) < 0:
+                raise ValueError("`last` must be greater than 0")
+
+        # Get the git information
+        git = get_git_interface(Configuration().config["git"])
+        # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
+        git.set_working_directory(os.path.join(git.working_directory, get_logged_in_user(),
+                                               self.owner.username, self.name))
+
+        # TODO: Design a better cursor implementation
+        # Get all edges and cursors. Here, cursors are just an index into the refs
+        edges = [x for x in git.repo.refs]
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,x in enumerate(edges)]
+
+        after_index = None
+        before_index = None
+        if "after" in args:
+            if args["after"] in cursors:
+                # Remove edges after cursor
+                after_index = int(base64.b64decode(args["after"]))
+
+        if "before" in args:
+            if args["before"] in cursors:
+                # Remove edges after cursor
+                before_index = int(base64.b64decode(args["before"]))
+
+        if after_index is not None and before_index is not None:
+            edges = edges[after_index+1:before_index]
+            cursors = cursors[after_index+1:before_index]
+        elif after_index is not None:
+            edges = edges[after_index + 1:]
+            cursors = cursors[after_index + 1:]
+        elif before_index is not None:
+            edges = edges[:before_index]
+            cursors = cursors[:before_index]
+
+        num_edges_before_slice = len(edges)
+
+        if "first" in args:
+            if len(edges) > int(args["first"]):
+                edges = edges[:int(args["first"])]
+                cursors = cursors[:int(args["first"])]
+
+        if "last" in args:
+            if len(edges) > int(args["last"]):
+                edges = edges[-int(args["last"]):]
+                cursors = cursors[-int(args["last"]):]
+
+        # Get LabbookRef instances
+        edge_objs = []
+        for edge, cursor in zip(edges, cursors):
+            parts = edge.name.split("/")
+            if len(parts) > 1:
+                prefix = parts[0]
+                branch = parts[1]
+            else:
+                prefix = None
+                branch = parts[0]
+
+            id_data = {"name": self.name,
+                       "owner": self.owner.username,
+                       "prefix": prefix,
+                       "branch": branch}
+            edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
+
+        # Compute page info status
+        has_previous_page = False
+        if "last" not in args:
+            has_previous_page = False
+        elif num_edges_before_slice > int(args["last"]):
+            has_previous_page = True
+
+        has_next_page = False
+        if "first" not in args:
+            has_next_page = False
+        elif num_edges_before_slice > int(args["first"]):
+            has_next_page = True
+
+        return LabbookRefConnection(edges=edge_objs,
+                                    page_info=graphene.relay.PageInfo(has_next_page=has_next_page,
+                                                                      has_previous_page=has_previous_page))
 
 
 class CreateLabbook(graphene.Mutation):
@@ -157,16 +252,3 @@ class CreateLabbook(graphene.Mutation):
                    "username": username}
         new_labbook = Labbook.create(id_data)
         return CreateLabbook(labbook=new_labbook)
-
-
-#SNIPPET FOR GETTING REFS
-# # Get the commit information
-#        git = get_git_interface(Configuration().config["git"])
-#        git.set_working_directory(os.path.join(git.working_directory,
-#                                               id_data["username"],
-#                                               id_data["owner"],
-#                                               id_data["name"]))
-#
-#        return LabbookRef(commit=_get_graphene_labbook_commit(labbook_obj),
-#                          name=git_obj.get_current_branch_name(), prefix=git_obj.git_path.rsplit("/", 1)[0])
-#

@@ -35,9 +35,10 @@ class LabbookCommit(ObjectType):
     class Meta:
         interfaces = (GitCommit, graphene.relay.Node)
 
-    def get_node(self, node_id, context, info):
+    @staticmethod
+    def get_node(node_id, context, info):
         input_data = {"type_id": node_id}
-        return self.create(input_data)
+        return LabbookCommit.create(input_data)
 
     @staticmethod
     def to_type_id(id_data):
@@ -74,8 +75,9 @@ class LabbookCommit(ObjectType):
                 "type_id": <unique id for this object Type),
                 "username": <optional username for logged in user>,
                 "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-                "hash": <full hexsha hash of the commit>
+                "name": <name of the labbook>,
+                "hash": <full hexsha hash of the commit>,
+                "git": <optional gitlib instance already instantiated>
             }
 
         Args:
@@ -91,15 +93,20 @@ class LabbookCommit(ObjectType):
         if "type_id" in id_data:
             # Parse ID components
             id_data.update(LabbookCommit.parse_type_id(id_data["type_id"]))
+            del id_data["type_id"]
 
         # Get the commit information
-        git = get_git_interface(Configuration().config["git"])
-        git.set_working_directory(os.path.join(git.working_directory,
-                                               id_data["username"],
-                                               id_data["owner"],
-                                               id_data["name"]))
+        if "git" not in id_data:
+            git = get_git_interface(Configuration().config["git"])
+            git.set_working_directory(os.path.join(git.working_directory,
+                                                   id_data["username"],
+                                                   id_data["owner"],
+                                                   id_data["name"]))
+        else:
+            git = id_data["git"]
 
         committed_on = git.repo.commit(id_data["hash"]).committed_datetime.isoformat()
 
-        return LabbookCommit(hash=id_data["hash"], short_hash=id_data["hash"][:8],
+        return LabbookCommit(id=LabbookCommit.to_type_id(id_data),
+                             hash=id_data["hash"], short_hash=id_data["hash"][:8],
                              committed_on=committed_on)

@@ -27,9 +27,10 @@ class Owner(ObjectType):
     class Meta:
         interfaces = (graphene.relay.Node, User)
 
-    def get_node(self, node_id, context, info):
-        input_data = {"username": node_id}
-        return self.create(input_data)
+    @staticmethod
+    def get_node(node_id, context, info):
+        input_data = {"type_id": node_id}
+        return Owner.create(input_data)
 
     @staticmethod
     def to_type_id(id_data):
