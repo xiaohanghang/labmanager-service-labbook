@@ -26,7 +26,8 @@ class ObjectType(graphene.ObjectType):
 
     """
 
-    def get_node(self, node_id, context, info):
+    @classmethod
+    def get_node(cls, node_id, context, info):
         """Method to get a node from the type ID
 
         Args:
@@ -38,7 +39,7 @@ class ObjectType(graphene.ObjectType):
             ObjectType
         """
         input_data = {"type_id": node_id}
-        return self.create(input_data)
+        return cls.create(input_data)
 
     @staticmethod
     @abc.abstractmethod

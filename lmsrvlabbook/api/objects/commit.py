@@ -36,11 +36,6 @@ class LabbookCommit(ObjectType):
         interfaces = (GitCommit, graphene.relay.Node)
 
     @staticmethod
-    def get_node(node_id, context, info):
-        input_data = {"type_id": node_id}
-        return LabbookCommit.create(input_data)
-
-    @staticmethod
     def to_type_id(id_data):
         """Method to generate a single string that uniquely identifies this object
 

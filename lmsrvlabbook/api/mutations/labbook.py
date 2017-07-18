@@ -17,22 +17,40 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import graphene
 
-from lmcommon.configuration import Configuration
-from lmcommon.gitlib import get_git_interface
 from lmcommon.labbook import LabBook
-#from lmsrvcore.api import InputUser
-#from lmsrvcore.api import get_logged_in_user
-#from .objects import Labbook
-#from .query import _get_graphene_labbook
 
-from lmsrvlabbook.api.objects.labbook import CreateLabbook
+from lmsrvcore.auth.user import get_logged_in_user
+
+from lmsrvlabbook.api.objects import Labbook
 
 
-class LabbookMutations(graphene.AbstractType):
-    """Entry point for all graphql mutations"""
-    create_labbook = CreateLabbook.Field()
-    #create_branch = CreateBranch.Field()
-    #checkout_branch = CheckoutBranch.Field()
+class CreateLabbook(graphene.Mutation):
+    """Mutator for creation of a new Labbook on disk"""
+
+    class Input:
+        name = graphene.String()
+        description = graphene.String()
+
+    # Return the LabBook instance
+    labbook = graphene.Field(lambda: Labbook)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+
+        # Create a new empty LabBook
+        lb = LabBook()
+        lb.new(username=username,
+               name=args.get('name'),
+               description=args.get('description'),
+               owner={"username": username})
+
+        # Get a graphene instance of the newly created LabBook
+        id_data = {"owner": username,
+                   "name": lb.name,
+                   "username": username}
+        new_labbook = Labbook.create(id_data)
+        return CreateLabbook(labbook=new_labbook)

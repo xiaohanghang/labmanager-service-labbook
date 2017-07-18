@@ -20,8 +20,10 @@
 # SOFTWARE.
 import graphene
 import os
+
 from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
+from lmcommon.labbook import LabBook
 
 from lmsrvcore.auth.user import get_logged_in_user
 
@@ -128,102 +130,3 @@ class LabbookRef(graphene.ObjectType):
         return LabbookRef(id=LabbookRef.to_type_id(id_data),
                           commit=LabbookCommit.create(id_data),
                           name=id_data["branch"], prefix=id_data["prefix"])
-
-
-# Connection for paging through refs
-class LabbookRefConnection(graphene.relay.Connection):
-
-    class Meta:
-        node = LabbookRef
-
-
-# class CreateBranch(graphene.relay.ClientIDMutation):
-#     """Mutation create a NEW branch for a LabBook LOCALLY"""
-#
-#     class Input:
-#         owner = graphene.String()
-#         labbook_name = graphene.String(required=True)
-#         branch_name = graphene.String(required=True)
-#
-#     # Return the LabBook instance
-#     branch = graphene.Field(lambda: LabbookRef)
-#
-#     @classmethod
-#     def mutate_and_get_payload(cls, input, context, info):
-#         """Method to perform mutation
-#
-#         Args:
-#             input:
-#             context:
-#             info:
-#
-#         Returns:
-#
-#         """
-#
-#         username = get_logged_in_user()
-#
-#         # Load an existing LabBook
-#         labbook_obj = LabBook()
-#         labbook_obj.from_name(username, args.get('labbook_name'))
-#
-#         # Create Branch
-#         git_obj = get_git_interface(Configuration().config["git"])
-#         git_obj.set_working_directory(os.path.join(git_obj.working_directory, username, labbook_obj.name))
-#         git_obj.create_branch(args.get('branch_name'))
-#
-#
-#         input.get('ship_name')
-#
-#
-#         # TODO: Lookup name based on logged in user when available
-#         id_data = {"username": get_logged_in_user()}
-#
-#         # Get the commit information
-#         git = get_git_interface(Configuration().config["git"])
-#         git.set_working_directory(os.path.join(git.working_directory,
-#                                                id_data["username"],
-#                                                id_data["owner"],
-#                                                id_data["name"]))
-#
-#         # Look up commit hash for a given ref
-#         git_path = id_data["branch"]
-#         if "prefix" in id_data:
-#             if id_data["prefix"]:
-#                 git_path = "{}/{}".format(id_data["prefix"], id_data["branch"])
-#
-#         git_ref = git.repo.refs[git_path]
-#         id_data["hash"] = git_ref.commit.hexsha
-#
-#         branch_ref = LabbookRef(commit=LabbookCommit.create(id_data),
-#                                 name=args.get('branch_name'), prefix=None)
-#
-#         return CreateBranch(labbook=labbook_obj)
-#
-#
-# class CheckoutBranch(graphene.Mutation):
-#     """Mutation checkout an existing branch branch"""
-#
-#     class Input:
-#         labbook_name = graphene.String()
-#         branch_name = graphene.String()
-#
-#     # Return the LabBook instance
-#     labbook = graphene.Field(lambda: Labbook)
-#
-#     @staticmethod
-#     def mutate(root, args, context, info):
-#         # TODO: Lookup name based on logged in user when available
-#         username = get_logged_in_user()
-#
-#         # Load an existing LabBook
-#         labbook_obj = LabBook()
-#         labbook_obj.from_name(username, args.get('labbook_name'))
-#
-#         # Checkout Branch
-#         git_obj = get_git_interface(Configuration().config["git"])
-#         git_obj.set_working_directory(os.path.join(git_obj.working_directory, username, labbook_obj.name))
-#         git_obj.fetch()
-#         git_obj.checkout(args.get('branch_name'))
-#
-#         return CheckoutBranch(labbook=labbook_obj)

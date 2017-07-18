@@ -18,10 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.objects import LabbookRef
+from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook
 
 
-class LabbookRefConnection(graphene.relay.Connection):
-    """A Connection for paging through labbook git refs (branches)"""
-    class Meta:
-        node = LabbookRef
+class LabbookMutations(graphene.AbstractType):
+    """Entry point for all graphql mutations"""
+    create_labbook = CreateLabbook.Field()
+    create_branch = CreateBranch.Field()
+    checkout_branch = CheckoutBranch.Field()

@@ -28,11 +28,6 @@ class Owner(ObjectType):
         interfaces = (graphene.relay.Node, User)
 
     @staticmethod
-    def get_node(node_id, context, info):
-        input_data = {"type_id": node_id}
-        return Owner.create(input_data)
-
-    @staticmethod
     def to_type_id(id_data):
         """Method to generate a single string that uniquely identifies this object
 
