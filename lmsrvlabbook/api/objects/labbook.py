@@ -32,7 +32,7 @@ from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
 from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects import LabbookRef
+from lmsrvlabbook.api.objects import LabbookRef, Environment
 from lmsrvlabbook.api.connections import LabbookRefConnection
 
 
@@ -50,6 +50,9 @@ class Labbook(ObjectType):
 
     # List of branches
     branches = graphene.relay.ConnectionField(LabbookRefConnection)
+
+    # Environment Information
+    environment = graphene.Field(Environment)
 
     @staticmethod
     def to_type_id(id_data):
@@ -123,7 +126,8 @@ class Labbook(ObjectType):
         return Labbook(id=Labbook.to_type_id(id_data),
                        name=lb.name, description=lb.description,
                        owner=Owner.create(id_data),
-                       active_branch=LabbookRef.create(id_data))
+                       active_branch=LabbookRef.create(id_data),
+                       environment=Environment.create(id_data))
 
     def resolve_branches(self, args, context, info):
         """Method to page through branch Refs

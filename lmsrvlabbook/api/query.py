@@ -61,42 +61,42 @@ class LabbookQuery(graphene.AbstractType):
     #@resolve_only_args
     #def resolve_labbooks(self):
     #    """Method to return a all graphene Labbook instances for the logged in user
-#
+
     #    Uses the "currently logged in" user
-#
+
     #    Returns:
     #        list(Labbook)
     #    """
     #    lb = LabBook()
-#
+
     #    # TODO: Lookup name based on logged in user when available
     #    username = get_logged_in_user()
     #    labbooks = lb.list_local_labbooks(username=username)
-#
+
     #    result = []
     #    if username in labbooks:
     #        for lb_name in labbooks[username]:
     #            result.append(_get_graphene_labbook(username, lb_name))
     #    else:
     #        raise ValueError("User {} not found.".format(username))
-#
+
     #    return result
-#
+
     #@resolve_only_args
     #def resolve_users(self):
     #    """Method to return a list of users who have logged into the LabManager instance
-#
+
     #    Returns:
     #        list(str)
     #    """
     #    lb = LabBook()
-#
+
     #    labbooks = lb.list_local_labbooks()
-#
+
     #    result = []
     #    for user in labbooks.keys():
     #        result.append(User(username=user))
-#
+
     #    return result
 
 

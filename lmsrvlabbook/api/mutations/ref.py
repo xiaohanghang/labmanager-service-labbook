@@ -77,8 +77,8 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
     """Mutation checkout an existing branch branch"""
     class Input:
         owner = graphene.String()
-        labbook_name = graphene.String()
-        branch_name = graphene.String()
+        labbook_name = graphene.String(required=True)
+        branch_name = graphene.String(required=True)
 
     # Return the LabBook instance
     labbook = graphene.Field(lambda: Labbook)

@@ -26,7 +26,7 @@ from lmsrvcore.auth.user import get_logged_in_user
 from lmsrvlabbook.api.objects import Labbook
 
 
-class CreateLabbook(graphene.Mutation):
+class CreateLabbook(graphene.relay.ClientIDMutation):
     """Mutator for creation of a new Labbook on disk"""
 
     class Input:
@@ -36,16 +36,16 @@ class CreateLabbook(graphene.Mutation):
     # Return the LabBook instance
     labbook = graphene.Field(lambda: Labbook)
 
-    @staticmethod
-    def mutate(root, args, context, info):
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
         username = get_logged_in_user()
 
         # Create a new empty LabBook
         lb = LabBook()
         lb.new(username=username,
-               name=args.get('name'),
-               description=args.get('description'),
+               name=input.get('name'),
+               description=input.get('description'),
                owner={"username": username})
 
         # Get a graphene instance of the newly created LabBook

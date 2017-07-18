@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook
+from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -26,3 +26,5 @@ class LabbookMutations(graphene.AbstractType):
     create_labbook = CreateLabbook.Field()
     create_branch = CreateBranch.Field()
     checkout_branch = CheckoutBranch.Field()
+    build_image = BuildImage.Field()
+    start_container = StartContainer.Field()

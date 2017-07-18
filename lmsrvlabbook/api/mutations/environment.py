@@ -23,71 +23,89 @@ import docker
 import graphene
 
 from lmcommon.configuration import Configuration
-from lmsrvcore.api import get_logged_in_user
-from .objects import Environment
-from .queries import _get_graphene_environment
+
+from lmsrvcore.auth.user import get_logged_in_user
+
+from lmsrvlabbook.api.objects import Environment
 
 
-class BuildImage(graphene.Mutation):
+class BuildImage(graphene.relay.ClientIDMutation):
     """Mutator to build a LabBook's Docker Image"""
 
     class Input:
-        name = graphene.String()
+        owner = graphene.String()
+        labbook_name = graphene.String(required=True)
 
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
 
-    @staticmethod
-    def mutate(root, args, context, info):
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
         username = get_logged_in_user()
+
+        if "owner" not in input:
+            owner = username
+        else:
+            owner = input["username"]
 
         # TODO: Move environment code into a library
         client = docker.from_env()
 
         # Get Dockerfile directory
-        env_dir = os.path.join(Configuration().config['git']['working_directory'], username,  args.get('name'),
-                               '.gigantum', 'env')
+        env_dir = os.path.join(Configuration().config['git']['working_directory'], username, owner,
+                               input.get('labbook_name'), '.gigantum', 'env')
         env_dir = os.path.expanduser(env_dir)
 
         # Build image
-        client.images.build(path=env_dir, tag='{}-{}'.format(username, args.get('name')), pull=True)
+        client.images.build(path=env_dir, tag='{}-{}-{}'.format(username, owner, input.get('labbook_name')), pull=True)
 
-        return BuildImage(environment=_get_graphene_environment(username, args.get('name')))
+        id_data = {"username": username,
+                   "owner": owner,
+                   "name": input.get("labbook_name")}
+        
+        return BuildImage(environment=Environment.create(id_data))
 
 
-class StartContainer(graphene.Mutation):
+class StartContainer(graphene.relay.ClientIDMutation):
     """Mutator to start a LabBook's Docker Image in a container"""
 
     class Input:
-        name = graphene.String()
+        owner = graphene.String()
+        labbook_name = graphene.String(required=True)
 
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
 
-    @staticmethod
-    def mutate(root, args, context, info):
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
         username = get_logged_in_user()
+
+        if "owner" not in input:
+            owner = username
+        else:
+            owner = input["username"]
 
         # TODO: Move environment code into a library
         client = docker.from_env()
 
-        # Get LabBook directory
-        labbook_dir = os.path.join(Configuration().config['git']['working_directory'], username,  args.get('name'))
+        # Get Dockerfile directory
+        labbook_dir = os.path.join(Configuration().config['git']['working_directory'],
+                                   username, owner,
+                                   input.get('labbook_name'))
         labbook_dir = os.path.expanduser(labbook_dir)
 
-        # Build image
-        client.containers.run('{}-{}'.format(username, args.get('name')),
+        # Start container
+        client.containers.run('{}-{}-{}'.format(username, owner, input.get('labbook_name')),
                               detach=True,
-                              name='{}-{}'.format(username, args.get('name')),
+                              name='{}-{}-{}'.format(username, owner, input.get('labbook_name')),
                               ports={"8888/tcp": "8888"},
                               volumes={labbook_dir: {'bind': '/mnt/labbook', 'mode': 'rw'}})
 
-        return StartContainer(environment=_get_graphene_environment(username, args.get('name')))
+        id_data = {"username": username,
+                   "owner": owner,
+                   "name": input.get("labbook_name")}
 
+        return BuildImage(environment=Environment.create(id_data))
 
-class EnvironmentMutations(graphene.AbstractType):
-    """Entry point for all Environment graphql mutations"""
-    build_image = BuildImage.Field()
-    start_container = StartContainer.Field()
