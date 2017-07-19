@@ -33,7 +33,6 @@ from lmcommon.labbook import LabBook
 
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
-#from ..api import NoteMutations, NoteQueries
 
 
 # Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)

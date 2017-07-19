@@ -36,6 +36,7 @@ from lmsrvcore.auth.user import get_logged_in_user
 from lmsrvlabbook.api.mutation import LabbookMutations
 from lmsrvlabbook.api.query import LabbookQuery
 
+
 # Create ObjectType clases, since the EnvironmentQueries and EnvironmentMutations
 # are abstract (allowing multiple inheritance)
 class Query(LabbookMutations, graphene.ObjectType):
