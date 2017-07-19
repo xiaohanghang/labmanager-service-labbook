@@ -26,7 +26,7 @@ from lmcommon.configuration import Configuration
 from lmcommon.gitlib import get_git_interface
 from lmcommon.labbook import LabBook
 
-from lmsrvcore.api.objects import Owner
+#from lmsrvcore.api.objects import Owner
 from lmsrvcore.auth.user import get_logged_in_user
 
 from lmsrvlabbook.api.objects import Labbook, LabbookRef, LabbookCommit

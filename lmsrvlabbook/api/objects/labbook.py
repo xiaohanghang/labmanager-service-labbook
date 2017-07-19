@@ -32,8 +32,8 @@ from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
 from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects import LabbookRef, Environment
-from lmsrvlabbook.api.connections import LabbookRefConnection
+from lmsrvlabbook.api.objects import LabbookRef, Environment, Note
+from lmsrvlabbook.api.connections import LabbookRefConnection, NoteConnection
 
 
 class Labbook(ObjectType):
@@ -53,6 +53,9 @@ class Labbook(ObjectType):
 
     # Environment Information
     environment = graphene.Field(Environment)
+
+    # Connection to Note Entries
+    notes = graphene.relay.ConnectionField(NoteConnection)
 
     @staticmethod
     def to_type_id(id_data):
@@ -174,3 +177,41 @@ class Labbook(ObjectType):
 
         return LabbookRefConnection(edges=edge_objs,
                                     page_info=lbc.page_info)
+
+    def resolve_notes(self, args, context, info):
+        """Method to page through branch Refs
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
+        # Load LabBook instance
+        lb = LabBook()
+        lb.from_name(get_logged_in_user(), self.owner.username, self.name)
+
+        # TODO: Design a better cursor implementation that actually pages through repo history
+        # retrieve a list of notes from the commit log.
+        labbook_log_data = lb.log(max_count=100)
+
+        # Get all edges and cursors. Here, cursors are just an index into the refs
+        edges = [x for x in labbook_log_data]
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        # Get LabbookRef instances
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            id_data = {"name": self.name,
+                       "owner": self.owner.username,
+                       "commit": "test"}
+            edge_objs.append(NoteConnection.Edge(node=Note.create(id_data), cursor=cursor))
+
+        return NoteConnection(edges=edge_objs, page_info=lbc.page_info)
