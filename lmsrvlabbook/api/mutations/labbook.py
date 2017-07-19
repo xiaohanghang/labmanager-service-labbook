@@ -23,15 +23,15 @@ from lmcommon.labbook import LabBook
 
 from lmsrvcore.auth.user import get_logged_in_user
 
-from lmsrvlabbook.api.objects import Labbook
+from lmsrvlabbook.api.objects.labbook import Labbook
 
 
 class CreateLabbook(graphene.relay.ClientIDMutation):
     """Mutator for creation of a new Labbook on disk"""
 
     class Input:
-        name = graphene.String()
-        description = graphene.String()
+        name = graphene.String(required=True)
+        description = graphene.String(required=True)
 
     # Return the LabBook instance
     labbook = graphene.Field(lambda: Labbook)

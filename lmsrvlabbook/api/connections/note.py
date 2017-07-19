@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.objects.note import NoteObject, Note
+from lmsrvlabbook.api.objects.note import Note
 
 
 class NoteConnection(graphene.relay.Connection):
@@ -27,7 +27,3 @@ class NoteConnection(graphene.relay.Connection):
         node = Note
 
 
-class NoteObjectConnection(graphene.relay.Connection):
-    """A Connection for paging through labbook git refs (branches)"""
-    class Meta:
-        node = NoteObject

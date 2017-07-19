@@ -17,19 +17,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
-
+import base64
 import graphene
 from graphene import resolve_only_args
 
-from lmcommon.configuration import Configuration
-from lmcommon.gitlib import get_git_interface
 from lmcommon.labbook import LabBook
 
-#from lmsrvcore.api.objects import Owner
 from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects import Labbook, LabbookRef, LabbookCommit
+from lmsrvlabbook.api.objects.labbook import Labbook, LabbookSummary
+from lmsrvlabbook.api.connections.labbook import LabbookConnection
 
 
 class LabbookQuery(graphene.AbstractType):
@@ -38,10 +36,10 @@ class LabbookQuery(graphene.AbstractType):
     node = graphene.relay.Node.Field()
 
     labbook = graphene.Field(Labbook, owner=graphene.String(), name=graphene.String())
-    #labbooks = graphene.Field(graphene.List(Labbook))
-    #users = graphene.Field(graphene.List(User))
 
-    # TODO: Double check if the decorator is needed
+    # Connection to locally available labbooks
+    local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
+
     @resolve_only_args
     def resolve_labbook(self, owner, name):
         """Method to return a graphene Labbok instance based on the name
@@ -58,45 +56,36 @@ class LabbookQuery(graphene.AbstractType):
         id_data = {"username": get_logged_in_user(), "name": name, "owner": owner}
         return Labbook.create(id_data)
 
-    #@resolve_only_args
-    #def resolve_labbooks(self):
-    #    """Method to return a all graphene Labbook instances for the logged in user
+    def resolve_local_labbooks(self, args, context, info):
+        """Method to return a all graphene LabbookSummary instances for the logged in user
 
-    #    Uses the "currently logged in" user
+        Uses the "currently logged in" user
 
-    #    Returns:
-    #        list(Labbook)
-    #    """
-    #    lb = LabBook()
+        Returns:
+            list(Labbook)
+        """
+        lb = LabBook()
 
-    #    # TODO: Lookup name based on logged in user when available
-    #    username = get_logged_in_user()
-    #    labbooks = lb.list_local_labbooks(username=username)
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+        labbooks = lb.list_local_labbooks(username=username)
 
-    #    result = []
-    #    if username in labbooks:
-    #        for lb_name in labbooks[username]:
-    #            result.append(_get_graphene_labbook(username, lb_name))
-    #    else:
-    #        raise ValueError("User {} not found.".format(username))
+        # Collect all labbooks for all owners
+        edges = []
+        for key in labbooks.keys():
+            edges.extend(labbooks[key])
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
-    #    return result
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
 
-    #@resolve_only_args
-    #def resolve_users(self):
-    #    """Method to return a list of users who have logged into the LabManager instance
+        # Get LabbookSummary instances
+        id_data = {"username": username}
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            id_data["name"] = edge["name"]
+            id_data["owner"] = edge["owner"]
+            edge_objs.append(LabbookConnection.Edge(node=LabbookSummary.create(id_data), cursor=cursor))
 
-    #    Returns:
-    #        list(str)
-    #    """
-    #    lb = LabBook()
-
-    #    labbooks = lb.list_local_labbooks()
-
-    #    result = []
-    #    for user in labbooks.keys():
-    #        result.append(User(username=user))
-
-    #    return result
-
-
+        return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)

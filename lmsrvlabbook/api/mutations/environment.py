@@ -26,7 +26,7 @@ from lmcommon.configuration import Configuration
 
 from lmsrvcore.auth.user import get_logged_in_user
 
-from lmsrvlabbook.api.objects import Environment
+from lmsrvlabbook.api.objects.environment import Environment
 
 
 class BuildImage(graphene.relay.ClientIDMutation):

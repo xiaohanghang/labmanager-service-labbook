@@ -27,7 +27,8 @@ from lmcommon.labbook import LabBook
 
 from lmsrvcore.auth.user import get_logged_in_user
 
-from lmsrvlabbook.api.objects import LabbookRef, Labbook
+from lmsrvlabbook.api.objects.ref import LabbookRef
+from lmsrvlabbook.api.objects.labbook import Labbook
 
 
 class CreateBranch(graphene.relay.ClientIDMutation):

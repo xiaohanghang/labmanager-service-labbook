@@ -32,30 +32,21 @@ from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
 from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects import LabbookRef, Environment, Note
-from lmsrvlabbook.api.connections import LabbookRefConnection, NoteConnection
+from lmsrvlabbook.api.objects.ref import LabbookRef
+from lmsrvlabbook.api.objects.environment import Environment
+from lmsrvlabbook.api.objects.note import Note
+from lmsrvlabbook.api.connections.ref import LabbookRefConnection
+from lmsrvlabbook.api.connections.note import NoteConnection
 
 
-class Labbook(ObjectType):
-    """A type representing a LabBook and all of its contents
+class LabbookSummary(ObjectType):
+    """A type representing a summary of a LabBook used for listing LabBooks
 
     LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
 
     """
     class Meta:
         interfaces = (graphene.relay.Node, GitRepository)
-
-    # The name of the current branch
-    active_branch = graphene.Field(LabbookRef)
-
-    # List of branches
-    branches = graphene.relay.ConnectionField(LabbookRefConnection)
-
-    # Environment Information
-    environment = graphene.Field(Environment)
-
-    # Connection to Note Entries
-    notes = graphene.relay.ConnectionField(NoteConnection)
 
     @staticmethod
     def to_type_id(id_data):
@@ -81,6 +72,60 @@ class Labbook(ObjectType):
         """
         split = type_id.split("&")
         return {"owner": split[0], "name": split[1]}
+
+    @staticmethod
+    def create(id_data):
+        """Method to create a graphene LabBook object based on the node ID or owner+name
+
+        id_data should at a minimum contain either `type_id` or `owner` & `name`
+
+            {
+                "type_id": <unique id for this object Type),
+                "owner": <owner username (or org)>,
+                "name": <name of the labbook>
+            }
+
+        Args:
+            id_data(dict): A dictionary of variables that uniquely ID the instance. Can be a node ID or other vars
+
+        Returns:
+            Labbook
+        """
+        if "type_id" in id_data:
+            id_data.update(Labbook.parse_type_id(id_data["type_id"]))
+            del id_data["type_id"]
+
+        if "username" not in id_data:
+            id_data["username"] = get_logged_in_user()
+
+        lb = LabBook()
+        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+
+        return LabbookSummary(id=Labbook.to_type_id(id_data),
+                              name=lb.name, description=lb.description,
+                              owner=Owner.create(id_data))
+
+
+class Labbook(LabbookSummary):
+    """A type representing a LabBook and all of its contents
+
+    LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
+
+    """
+    class Meta:
+        interfaces = (graphene.relay.Node, GitRepository)
+
+    # The name of the current branch
+    active_branch = graphene.Field(LabbookRef)
+
+    # List of branches
+    branches = graphene.relay.ConnectionField(LabbookRefConnection)
+
+    # Environment Information
+    environment = graphene.Field(Environment)
+
+    # Connection to Note Entries
+    notes = graphene.relay.ConnectionField(NoteConnection)
 
     @staticmethod
     def create(id_data):
@@ -209,9 +254,14 @@ class Labbook(ObjectType):
         # Get LabbookRef instances
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
+            #TODO: need to index into commit history better, this hack skips commits not in db. Probably should use DB
+            # directly vs. the git log
+            if edge["committer"]["name"] != 'Gigantum AutoCommit':
+                continue
+
             id_data = {"name": self.name,
                        "owner": self.owner.username,
-                       "commit": "test"}
+                       "commit": edge["commit"]}
             edge_objs.append(NoteConnection.Edge(node=Note.create(id_data), cursor=cursor))
 
         return NoteConnection(edges=edge_objs, page_info=lbc.page_info)

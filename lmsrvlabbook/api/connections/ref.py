@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.objects import LabbookRef
+from lmsrvlabbook.api.objects.ref import LabbookRef
 
 
 class LabbookRefConnection(graphene.relay.Connection):

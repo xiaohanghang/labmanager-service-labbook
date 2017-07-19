@@ -23,13 +23,13 @@ import os
 
 from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
-from lmcommon.labbook import LabBook
+#from lmcommon.labbook import LabBook
 
 from lmsrvcore.auth.user import get_logged_in_user
 
 from lmsrvcore.api.interfaces import GitRef
 
-from lmsrvlabbook.api.objects import LabbookCommit
+from lmsrvlabbook.api.objects.commit import LabbookCommit
 
 
 class LabbookRef(graphene.ObjectType):

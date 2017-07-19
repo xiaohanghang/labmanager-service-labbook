@@ -31,7 +31,7 @@ from lmsrvcore.auth.user import get_logged_in_user
 from lmsrvcore.api import ObjectType
 from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.connections import NoteObjectConnection
+from lmsrvlabbook.api.connections.noteobject import NoteObjectConnection
 
 
 class LogLevel(graphene.Enum):
@@ -44,92 +44,6 @@ class LogLevel(graphene.Enum):
     AUTO_MAJOR = 21
     AUTO_MINOR = 22
     AUTO_DETAIL = 23
-
-
-class NoteObject(ObjectType):
-    """Container for arbitrary objects stored within a note"""
-
-    class Meta:
-        interfaces = (graphene.relay.Node,)
-
-    # Name of the object
-    key = graphene.String()
-
-    # Content type of the object
-    # TODO make an ENUM
-    object_type = graphene.String()
-
-    # Uninterpreted blobs encoded as string
-    value = graphene.String()
-
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
-
-        Args:
-            id_data(dict):
-
-        Returns:
-            str
-        """
-        return "{}&{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["linked_commit"],
-                                    id_data["note_object_key"])
-
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
-
-        Args:
-            type_id (str): type unique identifier
-
-        Returns:
-            dict
-        """
-        split = type_id.split("&")
-        return {"owner": split[0], "name": split[1], "linked_commit": split[2], "note_object_key": split[3]}
-
-    @staticmethod
-    def create(id_data):
-        """Method to create a graphene NoteObject object based on the node ID or owner+name+note_object_key
-
-            {
-                "type_id": <unique id for this object Type),
-                "username": <optional logged in user>,
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-                "note_object_key": <key for the object to retrieve>
-            }
-
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance. Can be a node ID or other vars
-
-        Returns:
-            NoteObject
-        """
-        if "type_id" in id_data:
-            id_data.update(NoteObject.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
-
-        if "username" not in id_data:
-            id_data["username"] = get_logged_in_user()
-
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-
-        # Create NoteStore instance
-        note_db = NoteStore(lb)
-
-        # get the detail from notes storage.
-        note_detail = note_db.get_entry(id_data["linked_commit"])
-        for detail in json.loads(note_detail['objects']):
-            if detail["key"] == id_data["note_object_key"]:
-                return NoteObject(id=NoteObject.to_type_id(id_data),
-                                  key=detail['key'],
-                                  object_type=detail['object_type'],
-                                  value=detail['value'])
-
-        # If you are here, key not found
-        return []
 
 
 class Note(ObjectType):
@@ -209,7 +123,7 @@ class Note(ObjectType):
             Note
         """
         if "type_id" in id_data:
-            id_data.update(NoteObject.parse_type_id(id_data["type_id"]))
+            id_data.update(Note.parse_type_id(id_data["type_id"]))
             del id_data["type_id"]
 
         if "username" not in id_data:
@@ -246,10 +160,10 @@ class Note(ObjectType):
                     author=entry['author'],
                     tags=note_metadata['tags'],
                     message=message,
-                    free_text=note_detail['free_text'],
-                    _note_detail=note_detail,
-                    _owner=id_data["owner"],
-                    _labbook_name=id_data["name"])
+                    free_text=note_detail['free_text'])#,
+                    #_note_detail=note_detail,
+                    #_owner=id_data["owner"],
+                    #_labbook_name=id_data["name"])
 
     def resolve_objects(self, args, context, info):
         """Method to page through branch Refs
@@ -278,14 +192,8 @@ class Note(ObjectType):
                        "name": self._labbook_name,
                        "linked_commit": self.linked_commit,
                        "note_object_key": edge.key}
-            edge_objs.append(NoteObjectConnection.Edge(node=NoteObject.create(id_data), cursor=cursor))
+            edge_objs.append(NoteObjectConnection.Edge(node=Note.create(id_data), cursor=cursor))
 
         return NoteObjectConnection(edges=edge_objs,
                                     page_info=lbc.page_info)
-
-
-# Input and output types needed for requests and mutations
-#class NoteObjectInput(graphene.InputObjectType, NoteObject):
-#    pass
-
 
