@@ -157,7 +157,7 @@ class TestNoteService(object):
 
             for cnt in range(0, 5):
                 # Create a note
-                query = """
+                aquery = """
                         mutation CreateNote {
                           createNote(labbookName: "notes-test-2",
                             message: "Added a new file in this test """ + str(cnt) + """\",
@@ -183,10 +183,33 @@ class TestNoteService(object):
                         }
                         """
 
+                query = """
+                        mutation CreateNote {
+                          createNote(input: {
+                            labbookName: "notes-test-2",
+                            message: "Added a new file in this test """ + str(cnt) + """\",
+                            level: USER_MINOR,
+                            linkedCommit: \"""" + str(commit) + """\",
+                            tags: ["user", "minor"],
+                            freeText: "Lots of stuff can go here <>><<>::SDF:",
+                            objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]}) {
+                                note {
+                                  labbookName                  
+                                  author 
+                                  message
+                                  level
+                                  tags                  
+                                  freeText
+                                }
+                            }
+                          }
+                        
+                        """
+
                 snapshot.assert_match(client.execute(query))
 
             # Get Note you just created
-            query = """
+            aquery = """
             {
               noteSummaries(labbookName: "notes-test-2") {
                 entries {
@@ -195,6 +218,22 @@ class TestNoteService(object):
                   level
                   message
                   tags
+                }
+              }
+            }
+            """
+            query = """
+            {
+              labbook(name: "notes-test-2", owner: "default") {
+                notes {
+                    edges {
+                        node {
+                            message
+                            author
+                            level
+                            tags
+                        }
+                    }
                 }
               }
             }

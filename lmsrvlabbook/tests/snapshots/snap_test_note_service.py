@@ -28,110 +28,11 @@ snapshots['TestNoteService.test_get_note_summaries 1'] = {
         {
             'locations': [
                 {
-                    'column': 38,
-                    'line': 3
-                }
-            ],
-            'message': 'Unknown argument "labbookName" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 4
-                }
-            ],
-            'message': 'Unknown argument "message" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 5
-                }
-            ],
-            'message': 'Unknown argument "level" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 6
-                }
-            ],
-            'message': 'Unknown argument "linkedCommit" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 7
-                }
-            ],
-            'message': 'Unknown argument "tags" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 8
-                }
-            ],
-            'message': 'Unknown argument "freeText" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 9
-                }
-            ],
-            'message': 'Unknown argument "objects" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 31,
-                    'line': 11
+                    'column': 35,
+                    'line': 12
                 }
             ],
             'message': 'Cannot query field "labbookName" on type "Note".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 18
-                }
-            ],
-            'message': 'Cannot query field "key" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 19
-                }
-            ],
-            'message': 'Cannot query field "objectType" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 20
-                }
-            ],
-            'message': 'Cannot query field "value" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 27,
-                    'line': 3
-                }
-            ],
-            'message': 'Field "createNote" argument "input" of type "CreateNoteInput!" is required but not provided.'
         }
     ]
 }
@@ -141,110 +42,11 @@ snapshots['TestNoteService.test_get_note_summaries 2'] = {
         {
             'locations': [
                 {
-                    'column': 38,
-                    'line': 3
-                }
-            ],
-            'message': 'Unknown argument "labbookName" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 4
-                }
-            ],
-            'message': 'Unknown argument "message" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 5
-                }
-            ],
-            'message': 'Unknown argument "level" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 6
-                }
-            ],
-            'message': 'Unknown argument "linkedCommit" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 7
-                }
-            ],
-            'message': 'Unknown argument "tags" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 8
-                }
-            ],
-            'message': 'Unknown argument "freeText" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 9
-                }
-            ],
-            'message': 'Unknown argument "objects" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 31,
-                    'line': 11
+                    'column': 35,
+                    'line': 12
                 }
             ],
             'message': 'Cannot query field "labbookName" on type "Note".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 18
-                }
-            ],
-            'message': 'Cannot query field "key" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 19
-                }
-            ],
-            'message': 'Cannot query field "objectType" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 20
-                }
-            ],
-            'message': 'Cannot query field "value" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 27,
-                    'line': 3
-                }
-            ],
-            'message': 'Field "createNote" argument "input" of type "CreateNoteInput!" is required but not provided.'
         }
     ]
 }
@@ -254,110 +56,11 @@ snapshots['TestNoteService.test_get_note_summaries 3'] = {
         {
             'locations': [
                 {
-                    'column': 38,
-                    'line': 3
-                }
-            ],
-            'message': 'Unknown argument "labbookName" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 4
-                }
-            ],
-            'message': 'Unknown argument "message" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 5
-                }
-            ],
-            'message': 'Unknown argument "level" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 6
-                }
-            ],
-            'message': 'Unknown argument "linkedCommit" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 7
-                }
-            ],
-            'message': 'Unknown argument "tags" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 8
-                }
-            ],
-            'message': 'Unknown argument "freeText" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 9
-                }
-            ],
-            'message': 'Unknown argument "objects" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 31,
-                    'line': 11
+                    'column': 35,
+                    'line': 12
                 }
             ],
             'message': 'Cannot query field "labbookName" on type "Note".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 18
-                }
-            ],
-            'message': 'Cannot query field "key" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 19
-                }
-            ],
-            'message': 'Cannot query field "objectType" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 20
-                }
-            ],
-            'message': 'Cannot query field "value" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 27,
-                    'line': 3
-                }
-            ],
-            'message': 'Field "createNote" argument "input" of type "CreateNoteInput!" is required but not provided.'
         }
     ]
 }
@@ -367,110 +70,11 @@ snapshots['TestNoteService.test_get_note_summaries 4'] = {
         {
             'locations': [
                 {
-                    'column': 38,
-                    'line': 3
-                }
-            ],
-            'message': 'Unknown argument "labbookName" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 4
-                }
-            ],
-            'message': 'Unknown argument "message" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 5
-                }
-            ],
-            'message': 'Unknown argument "level" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 6
-                }
-            ],
-            'message': 'Unknown argument "linkedCommit" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 7
-                }
-            ],
-            'message': 'Unknown argument "tags" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 8
-                }
-            ],
-            'message': 'Unknown argument "freeText" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 9
-                }
-            ],
-            'message': 'Unknown argument "objects" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 31,
-                    'line': 11
+                    'column': 35,
+                    'line': 12
                 }
             ],
             'message': 'Cannot query field "labbookName" on type "Note".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 18
-                }
-            ],
-            'message': 'Cannot query field "key" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 19
-                }
-            ],
-            'message': 'Cannot query field "objectType" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 20
-                }
-            ],
-            'message': 'Cannot query field "value" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 27,
-                    'line': 3
-                }
-            ],
-            'message': 'Field "createNote" argument "input" of type "CreateNoteInput!" is required but not provided.'
         }
     ]
 }
@@ -480,124 +84,30 @@ snapshots['TestNoteService.test_get_note_summaries 5'] = {
         {
             'locations': [
                 {
-                    'column': 38,
-                    'line': 3
-                }
-            ],
-            'message': 'Unknown argument "labbookName" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 4
-                }
-            ],
-            'message': 'Unknown argument "message" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 5
-                }
-            ],
-            'message': 'Unknown argument "level" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 6
-                }
-            ],
-            'message': 'Unknown argument "linkedCommit" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 7
-                }
-            ],
-            'message': 'Unknown argument "tags" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 8
-                }
-            ],
-            'message': 'Unknown argument "freeText" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 9
-                }
-            ],
-            'message': 'Unknown argument "objects" on field "createNote" of type "Mutation".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 31,
-                    'line': 11
+                    'column': 35,
+                    'line': 12
                 }
             ],
             'message': 'Cannot query field "labbookName" on type "Note".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 18
-                }
-            ],
-            'message': 'Cannot query field "key" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 19
-                }
-            ],
-            'message': 'Cannot query field "objectType" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 20
-                }
-            ],
-            'message': 'Cannot query field "value" on type "NoteObjectConnection".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 27,
-                    'line': 3
-                }
-            ],
-            'message': 'Field "createNote" argument "input" of type "CreateNoteInput!" is required but not provided.'
         }
     ]
 }
 
 snapshots['TestNoteService.test_get_note_summaries 6'] = {
+    'data': {
+        'labbook': {
+            'notes': None
+        }
+    },
     'errors': [
         {
             'locations': [
                 {
-                    'column': 15,
-                    'line': 3
+                    'column': 17,
+                    'line': 4
                 }
             ],
-            'message': 'Cannot query field "noteSummaries" on type "Query".'
+            'message': 'Commit e8be95706000d48df2857c3b2d58c8de037ee838 not found'
         }
     ]
 }
