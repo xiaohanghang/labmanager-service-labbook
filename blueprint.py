@@ -22,8 +22,8 @@ from flask_graphql import GraphQLView
 import graphene
 
 from lmsrvlabbook.api import LabbookQuery, LabbookMutations
-from lmsrvnotes.api import NoteQueries, NoteMutations
-from lmsrvenv.api import EnvironmentQueries, EnvironmentMutations
+#from lmsrvnotes.api import NoteQueries, NoteMutations
+#from lmsrvenv.api import EnvironmentQueries, EnvironmentMutations
 
 from lmcommon.configuration import Configuration
 

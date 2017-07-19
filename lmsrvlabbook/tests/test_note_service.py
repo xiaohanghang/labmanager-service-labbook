@@ -119,22 +119,19 @@ class TestNoteService(object):
 
             # Get Note you just created
             note_commit = result["data"]["createNote"]["note"]["commit"]
+
             query = """
             {
-                  note(labbookName: "notes-test-1", commit: \"""" + note_commit + """\") {
-                    labbookName                   
-                    author
-                    message
-                    level
-                    tags                
-                    freeText
-                    objects {
-                      key
-                      objectType
-                      value
+                labbook(name: "notes-test-1", owner: "default") {
+                    notes(first:1) {
+                        edges {
+                            node {
+                                message
+                            }
+                        }
                     }
-                  }
                 }
+            }
             """
             snapshot.assert_match(client.execute(query))
 

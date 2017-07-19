@@ -7,209 +7,18 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_create_note 1'] = {
+snapshots['TestNoteService.test_create_note 1'] = {
     'data': {
-        'note': {
-            'author': "{'name': 'Gigantum AutoCommit', 'email': 'noreply@gigantum.io'}",
-            'freeText': 'Lots of stuff can go here <>><<>::SDF:',
-            'labbookName': 'notes-test-1',
-            'level': 'USER_MINOR',
-            'message': 'Added a new file in this test',
-            'objects': [
-                {
-                    'key': 'objectkey1',
-                    'objectType': 'PNG',
-                    'value': '2new0x7FABC374FX'
-                }
-            ],
-            'tags': [
-                'user',
-                'minor'
-            ]
-        }
-    }
-}
-
-snapshots['test_get_note_summaries 1'] = {
-    'data': {
-        'createNote': {
-            'note': {
-                'author': None,
-                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
-                'labbookName': 'notes-test-2',
-                'level': 'USER_MINOR',
-                'message': 'Added a new file in this test 0',
-                'objects': [
+        'labbook': {
+            'notes': {
+                'edges': [
                     {
-                        'key': 'objectkey1',
-                        'objectType': 'PNG',
-                        'value': '2new0x7FABC374FX'
+                        'node': {
+                            'message': 'Added a new file in this test'
+                        }
                     }
-                ],
-                'tags': [
-                    'user',
-                    'minor'
                 ]
             }
-        }
-    }
-}
-
-snapshots['test_get_note_summaries 2'] = {
-    'data': {
-        'createNote': {
-            'note': {
-                'author': None,
-                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
-                'labbookName': 'notes-test-2',
-                'level': 'USER_MINOR',
-                'message': 'Added a new file in this test 1',
-                'objects': [
-                    {
-                        'key': 'objectkey1',
-                        'objectType': 'PNG',
-                        'value': '2new0x7FABC374FX'
-                    }
-                ],
-                'tags': [
-                    'user',
-                    'minor'
-                ]
-            }
-        }
-    }
-}
-
-snapshots['test_get_note_summaries 3'] = {
-    'data': {
-        'createNote': {
-            'note': {
-                'author': None,
-                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
-                'labbookName': 'notes-test-2',
-                'level': 'USER_MINOR',
-                'message': 'Added a new file in this test 2',
-                'objects': [
-                    {
-                        'key': 'objectkey1',
-                        'objectType': 'PNG',
-                        'value': '2new0x7FABC374FX'
-                    }
-                ],
-                'tags': [
-                    'user',
-                    'minor'
-                ]
-            }
-        }
-    }
-}
-
-snapshots['test_get_note_summaries 4'] = {
-    'data': {
-        'createNote': {
-            'note': {
-                'author': None,
-                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
-                'labbookName': 'notes-test-2',
-                'level': 'USER_MINOR',
-                'message': 'Added a new file in this test 3',
-                'objects': [
-                    {
-                        'key': 'objectkey1',
-                        'objectType': 'PNG',
-                        'value': '2new0x7FABC374FX'
-                    }
-                ],
-                'tags': [
-                    'user',
-                    'minor'
-                ]
-            }
-        }
-    }
-}
-
-snapshots['test_get_note_summaries 5'] = {
-    'data': {
-        'createNote': {
-            'note': {
-                'author': None,
-                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
-                'labbookName': 'notes-test-2',
-                'level': 'USER_MINOR',
-                'message': 'Added a new file in this test 4',
-                'objects': [
-                    {
-                        'key': 'objectkey1',
-                        'objectType': 'PNG',
-                        'value': '2new0x7FABC374FX'
-                    }
-                ],
-                'tags': [
-                    'user',
-                    'minor'
-                ]
-            }
-        }
-    }
-}
-
-snapshots['test_get_note_summaries 6'] = {
-    'data': {
-        'noteSummaries': {
-            'entries': [
-                {
-                    'author': "{'name': 'Gigantum AutoCommit', 'email': 'noreply@gigantum.io'}",
-                    'labbookName': 'notes-test-2',
-                    'level': 'USER_MINOR',
-                    'message': 'Added a new file in this test 4',
-                    'tags': [
-                        'user',
-                        'minor'
-                    ]
-                },
-                {
-                    'author': "{'name': 'Gigantum AutoCommit', 'email': 'noreply@gigantum.io'}",
-                    'labbookName': 'notes-test-2',
-                    'level': 'USER_MINOR',
-                    'message': 'Added a new file in this test 3',
-                    'tags': [
-                        'user',
-                        'minor'
-                    ]
-                },
-                {
-                    'author': "{'name': 'Gigantum AutoCommit', 'email': 'noreply@gigantum.io'}",
-                    'labbookName': 'notes-test-2',
-                    'level': 'USER_MINOR',
-                    'message': 'Added a new file in this test 2',
-                    'tags': [
-                        'user',
-                        'minor'
-                    ]
-                },
-                {
-                    'author': "{'name': 'Gigantum AutoCommit', 'email': 'noreply@gigantum.io'}",
-                    'labbookName': 'notes-test-2',
-                    'level': 'USER_MINOR',
-                    'message': 'Added a new file in this test 1',
-                    'tags': [
-                        'user',
-                        'minor'
-                    ]
-                },
-                {
-                    'author': "{'name': 'Gigantum AutoCommit', 'email': 'noreply@gigantum.io'}",
-                    'labbookName': 'notes-test-2',
-                    'level': 'USER_MINOR',
-                    'message': 'Added a new file in this test 0',
-                    'tags': [
-                        'user',
-                        'minor'
-                    ]
-                }
-            ]
         }
     }
 }
@@ -789,20 +598,6 @@ snapshots['TestNoteService.test_get_note_summaries 6'] = {
                 }
             ],
             'message': 'Cannot query field "noteSummaries" on type "Query".'
-        }
-    ]
-}
-
-snapshots['TestNoteService.test_create_note 1'] = {
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 19,
-                    'line': 3
-                }
-            ],
-            'message': 'Cannot query field "note" on type "Query". Did you mean "node"?'
         }
     ]
 }
