@@ -87,7 +87,7 @@ class TestNoteService(object):
 
             # Create a file in the LabBook and commit it
             working_dir = lb.git.config["working_directory"]
-            labbook_dir = os.path.join(working_dir, "default", "notes-test-1")
+            labbook_dir = os.path.join(working_dir, "default", "default", "notes-test-1")
             with open(os.path.join(labbook_dir, "code", "test1.txt"), 'wt') as dt:
                 dt.write("Some content")
             lb.git.add(os.path.join(labbook_dir, "code", "test1.txt"))
@@ -95,32 +95,26 @@ class TestNoteService(object):
 
             # Create a note
             query = """
-            mutation CreateNote {
-              createNote(labbookName: "notes-test-1",
-                message: "Added a new file in this test",
+            mutation makenote {
+              createNote(input: {
+                labbookName: "notes-test-1",
+                owner: "default",
                 level: USER_MINOR,
+                message: "Added a new file in this test",
                 linkedCommit: \"""" + str(commit) + """\",
                 tags: ["user", "minor"],
                 freeText: "Lots of stuff can go here <>><<>::SDF:",
-                objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]) {
+                objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]
+              })
+              {
                 note {
-                  labbookName                  
-                  author
-                  commit
-                  linkedCommit
                   message
-                  level
-                  tags                  
-                  freeText
-                  objects {
-                    key
-                    objectType
-                    value
-                  }
+                  commit
                 }
               }
             }
             """
+
             result = client.execute(query)
 
             # Get Note you just created
@@ -158,7 +152,7 @@ class TestNoteService(object):
 
             # Create a file in the LabBook and commit it
             working_dir = lb.git.config["working_directory"]
-            labbook_dir = os.path.join(working_dir, "default", "notes-test-2")
+            labbook_dir = os.path.join(working_dir, "default", "default", "notes-test-2")
             with open(os.path.join(labbook_dir, "code", "test1.txt"), 'wt') as dt:
                 dt.write("Some content")
             lb.git.add(os.path.join(labbook_dir, "code", "test1.txt"))
