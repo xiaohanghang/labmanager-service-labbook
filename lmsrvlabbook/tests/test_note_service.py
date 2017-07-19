@@ -31,15 +31,17 @@ from mock import patch
 from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 
-from ..api import NoteMutations, NoteQueries
+from lmsrvlabbook.api.query import LabbookQuery
+from lmsrvlabbook.api.mutation import LabbookMutations
+#from ..api import NoteMutations, NoteQueries
 
 
 # Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(NoteQueries, graphene.ObjectType):
+class Query(LabbookQuery, graphene.ObjectType):
     pass
 
 
-class Mutation(NoteMutations, graphene.ObjectType):
+class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
 

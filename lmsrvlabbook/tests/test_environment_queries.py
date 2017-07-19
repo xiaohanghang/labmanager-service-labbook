@@ -31,16 +31,17 @@ from mock import patch
 from lmcommon.labbook import LabBook
 from lmcommon.configuration import Configuration
 
-from ..api import EnvironmentMutations, EnvironmentQueries
+from lmsrvlabbook.api.query import LabbookQuery
+from lmsrvlabbook.api.mutation import LabbookMutations
 
 
 # Create ObjectType clases, since the EnvironmentQueries and EnvironmentMutations
 # are abstract (allowing multiple inheritance)
-class Query(EnvironmentQueries, graphene.ObjectType):
+class Query(LabbookQuery, graphene.ObjectType):
     pass
 
 
-class Mutation(EnvironmentMutations, graphene.ObjectType):
+class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
 
