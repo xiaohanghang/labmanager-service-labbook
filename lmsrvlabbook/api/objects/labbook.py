@@ -241,7 +241,12 @@ class Labbook(LabbookSummary):
 
         # TODO: Design a better cursor implementation that actually pages through repo history
         # retrieve a list of notes from the commit log.
-        labbook_log_data = lb.log(max_count=100)
+        labbook_log_data = []
+        # TODO: need to index into commit history better, this hack skips commits not in db. Probably should use DB
+        # directly vs. the git log
+        for commit in lb.log(max_count=100):
+            if commit["committer"]["name"] == 'Gigantum AutoCommit':
+                labbook_log_data.append(commit)
 
         # Get all edges and cursors. Here, cursors are just an index into the refs
         edges = [x for x in labbook_log_data]
@@ -254,11 +259,6 @@ class Labbook(LabbookSummary):
         # Get LabbookRef instances
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            #TODO: need to index into commit history better, this hack skips commits not in db. Probably should use DB
-            # directly vs. the git log
-            if edge["committer"]["name"] != 'Gigantum AutoCommit':
-                continue
-
             id_data = {"name": self.name,
                        "owner": self.owner.username,
                        "commit": edge["commit"]}
