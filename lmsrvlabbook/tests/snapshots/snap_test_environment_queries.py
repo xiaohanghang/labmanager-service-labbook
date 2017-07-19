@@ -15,3 +15,17 @@ snapshots['test_get_environment_status 1'] = {
         }
     }
 }
+
+snapshots['TestEnvironmentServiceQueries.test_get_environment_status 1'] = {
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 15,
+                    'line': 3
+                }
+            ],
+            'message': 'Cannot query field "environment" on type "Query".'
+        }
+    ]
+}

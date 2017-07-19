@@ -90,7 +90,7 @@ class TestLabBookServiceMutations(object):
         """Test building a labbook's image"""
         # Create labbook
         lb = LabBook(mock_config_file[0])
-        lb.new(username="default", name="labbook-build", description="building an env")
+        lb.new(owner={"username": "default"}, name="labbook-build", description="building an env")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):

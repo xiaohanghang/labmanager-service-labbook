@@ -47,13 +47,15 @@ class LabbookQuery(graphene.AbstractType):
         Uses the "currently logged in" user
 
         Args:
+            owner(dict): Contains user details
             name(str): Name of the LabBook
 
         Returns:
             Labbook
         """
         # TODO: Lookup name based on logged in user when available
-        id_data = {"username": get_logged_in_user(), "name": name, "owner": owner}
+        #id_data = {"username": get_logged_in_user(), "name": name, "owner": owner}
+        id_data = {"name": name, "owner": owner}
         return Labbook.create(id_data)
 
     def resolve_local_labbooks(self, args, context, info):

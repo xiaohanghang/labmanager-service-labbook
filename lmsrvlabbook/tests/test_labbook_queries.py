@@ -74,9 +74,9 @@ class TestLabBookServiceQueries(object):
         """Test listing users"""
         # Create labbooks
         lb = LabBook(mock_config_file[0])
-        lb.new(username="test1", owner={"username": "test1"}, name="labbook1", description="my first labbook")
-        lb.new(username="test2", owner={"username": "test2"}, name="labbook1", description="my first labbook")
-        lb.new(username="test3", owner={"username": "test3"}, name="labbook1", description="my first labbook")
+        lb.new(owner={"username": "test1"}, name="labbook1", description="my first labbook")
+        lb.new(owner={"username": "test2"}, name="labbook1", description="my first labbook")
+        lb.new(owner={"username": "test3"}, name="labbook1", description="my first labbook")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
@@ -97,9 +97,9 @@ class TestLabBookServiceQueries(object):
         """Test listing labbooks"""
         # Create labbooks
         lb = LabBook(mock_config_file[0])
-        lb.new(username="default", owner={"username": "default"}, name="labbook1", description="my first labbook1")
-        lb.new(username="default", owner={"username": "default"}, name="labbook2", description="my first labbook2")
-        lb.new(username="test3", owner={"username": "test3"}, name="labbook2", description="my first labbook3")
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+        lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
+        lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
@@ -121,7 +121,7 @@ class TestLabBookServiceQueries(object):
         """Test listing labbooks"""
         # Create labbooks
         lb = LabBook(mock_config_file[0])
-        lb.new(username="default", name="labbook1", description="my first labbook1")
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
@@ -155,9 +155,9 @@ class TestLabBookServiceQueries(object):
         """Test hitting multiple queries at once"""
         # Create labbooks
         lb = LabBook(mock_config_file[0])
-        lb.new(username="default", name="a-test-labbook", description="a different description!<>;")
-        lb.new(username="default", name="asdf", description="fghghfjghgf3454dfs dsfasf f sfsadf asdf asdf sda")
-        lb.new(username="tester", name="sjdf932sDJFj-df-sdfasj", description="fgdhdfasdf")
+        lb.new(owner={"username": "default"}, name="a-test-labbook", description="a different description!<>;")
+        lb.new(owner={"username": "default"}, name="asdf", description="fghghfjghgf3454dfs dsfasf f sfsadf asdf asdf sda")
+        lb.new(owner={"username": "tester"}, name="sjdf932sDJFj-df-sdfasj", description="fgdhdfasdf")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):

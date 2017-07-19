@@ -79,7 +79,7 @@ class TestNoteService(object):
 
         # Create labbook
         lb = LabBook(mock_config_file[0])
-        lb.new(username="default", name="notes-test-1", description="my first labbook10000")
+        lb.new(owner={"username": "default"}, name="notes-test-1", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
@@ -150,7 +150,7 @@ class TestNoteService(object):
 
         # Create labbook
         lb = LabBook(mock_config_file[0])
-        lb.new(username="default", name="notes-test-2", description="my first labbook10000")
+        lb.new(owner={"username": "default"}, name="notes-test-2", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):

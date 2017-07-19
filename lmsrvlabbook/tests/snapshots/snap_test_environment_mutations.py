@@ -20,8 +20,8 @@ snapshots['test_build_image 2'] = {
     'data': {
         'buildImage': {
             'environment': {
-                'imageStatus': 'EXISTS',
-                'containerStatus': 'NOT_RUNNING'
+                'containerStatus': 'NOT_RUNNING',
+                'imageStatus': 'EXISTS'
             }
         }
     }
@@ -34,4 +34,46 @@ snapshots['test_build_image 3'] = {
             'imageStatus': 'EXISTS'
         }
     }
+}
+
+snapshots['TestLabBookServiceMutations.test_build_image 1'] = {
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 15,
+                    'line': 3
+                }
+            ],
+            'message': 'Cannot query field "environment" on type "Query".'
+        }
+    ]
+}
+
+snapshots['TestLabBookServiceMutations.test_build_image 2'] = {
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 15,
+                    'line': 3
+                }
+            ],
+            'message': 'Cannot query field "buildImage" on type "Mutation".'
+        }
+    ]
+}
+
+snapshots['TestLabBookServiceMutations.test_build_image 3'] = {
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 15,
+                    'line': 3
+                }
+            ],
+            'message': 'Cannot query field "environment" on type "Query".'
+        }
+    ]
 }

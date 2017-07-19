@@ -43,10 +43,9 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
 
         # Create a new empty LabBook
         lb = LabBook()
-        lb.new(username=username,
+        lb.new(owner={"username": username},
                name=input.get('name'),
-               description=input.get('description'),
-               owner={"username": username})
+               description=input.get('description'))
 
         # Get a graphene instance of the newly created LabBook
         id_data = {"owner": username,
