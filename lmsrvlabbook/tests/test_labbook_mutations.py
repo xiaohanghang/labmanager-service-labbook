@@ -87,10 +87,8 @@ class TestLabBookServiceMutations(object):
               }
             }
             """
-            # variables = {"name": "test-lab-book1", "desc": "my test description",
-            #              "owner_obj": {"username": "test_user"}}
-            variables = {"name": "test-lab-book1", "desc": "my test description"}
 
+            variables = {"name": "test-lab-book1", "desc": "my test description"}
             client.execute(query, variable_values=variables)
 
             # Get LabBook you just created
@@ -113,8 +111,8 @@ class TestLabBookServiceMutations(object):
 
             # Create LabBook
             query = """
-            mutation CreateLabBook($name: String!, $desc: String!){
-              createLabbook(name: $name, description: $desc){
+            mutation myCreateLabbook($name: String!, $desc: String!){
+              createLabbook(input: {name: $name, description: $desc}){
                 labbook{                  
                   name
                   description
@@ -138,8 +136,8 @@ class TestLabBookServiceMutations(object):
 
             # Create LabBook
             query = """
-            mutation CreateLabBook($name: String!, $desc: String!, $owner_obj: InputUser!){
-              createLabbook(name: $name, description: $desc, owner: $owner_obj){
+            mutation CreateLabBook($name: String!, $desc: String!){
+              createLabbook(input: {name: $name, description: $desc}){
                 labbook{
                   id
                   name
@@ -148,15 +146,14 @@ class TestLabBookServiceMutations(object):
               }
             }
             """
-            variables = {"name": "test-lab-book2", "desc": "my test description blah blah 12345",
-                         "owner_obj": {"username": "test_user1"}}
+            variables = {"name": "test-lab-book2", "desc": "Yada yada blah blah blah 99"}
 
             client.execute(query, variable_values=variables)
 
             # Create a Branch
             query = """
             mutation BranchLabBook($labbook_name: String!, $branch_name: String!){
-              createBranch(labbookName: $labbook_name, branchName: $branch_name) {
+              createBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
                 labbook{                  
                   name
                   localBranches
@@ -171,10 +168,19 @@ class TestLabBookServiceMutations(object):
             # Create Branch
             query = """
             {
-              labbook(name: "test-lab-book2") {
+              labbook(name: "test-lab-book2", owner: "default") {
                 name
                 description
-                localBranches
+                activeBranch {
+                    name
+                }
+                branches {
+                    edges {
+                        node {
+                            name
+                        }
+                    }
+                }
               }
             }
             """
@@ -189,9 +195,9 @@ class TestLabBookServiceMutations(object):
 
             # Create LabBook
             query = """
-            mutation CreateLabBook($name: String!, $desc: String!, $owner_obj: InputUser!){
-              createLabbook(name: $name, description: $desc, owner: $owner_obj){
-                labbook{
+            mutation CreateLabBook($name: String!, $desc: String!) {
+              createLabbook(input: {name: $name, description: $desc}) {
+                labbook {
                   id
                   name
                   description
@@ -199,18 +205,24 @@ class TestLabBookServiceMutations(object):
               }
             }
             """
-            variables = {"name": "test-lab-book3", "desc": "a different description",
-                         "owner_obj": {"username": "test_user4"}}
+            variables = {"name": "test-lab-book3", "desc": "a different description"}
 
             client.execute(query, variable_values=variables)
 
             # Create a Branch
             query = """
             mutation BranchLabBook($labbook_name: String!, $branch_name: String!){
-              createBranch(labbookName: $labbook_name, branchName: $branch_name) {
+              createBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
                 labbook{                  
                   name
-                  localBranches
+                  branches {
+                    edges {
+                        node {
+                            prefix
+                            name
+                        }
+                    }
+                  }
                 }
               }
             }
@@ -222,13 +234,19 @@ class TestLabBookServiceMutations(object):
             # Check branch status
             query = """
             {
-              labbook(name: "test-lab-book3") {
+              labbook(name: "test-lab-book3", owner: "default") {
                 name
                 description
-                localBranches
+                branches {
+                    edges {
+                        node {
+                            prefix
+                            name
+                        }
+                    }
+                }
                 activeBranch {
-                  name
-                  prefix
+                    name
                 }
               }
             }
@@ -238,10 +256,12 @@ class TestLabBookServiceMutations(object):
             #  Checkout a Branch
             query = """
             mutation CheckoutLabBook($labbook_name: String!, $branch_name: String!){
-              checkoutBranch(labbookName: $labbook_name, branchName: $branch_name) {
-                labbook{                  
+              checkoutBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
+                labbook {
                   name
-                  localBranches
+                  activeBranch {
+                    name
+                  }
                 }
               }
             }
@@ -253,10 +273,9 @@ class TestLabBookServiceMutations(object):
             # Check branch status
             query = """
             {
-              labbook(name: "test-lab-book3") {
+              labbook(name: "test-lab-book3", owner: "default") {
                 name
                 description
-                localBranches
                 activeBranch {
                   name
                   prefix
