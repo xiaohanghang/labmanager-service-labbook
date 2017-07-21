@@ -85,9 +85,11 @@ class TestEnvironmentServiceQueries(object):
 
             query = """
             {
-              environment(name: "labbook10") {
-                containerStatus
-                imageStatus
+              labbook(owner: "default", name: "labbook10") {
+                  environment {
+                    containerStatus
+                    imageStatus
+                  }
               }
             }
             """
