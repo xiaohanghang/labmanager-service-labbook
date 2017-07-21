@@ -54,6 +54,11 @@ snapshots['TestLabBookServiceMutations.test_create_branch 1'] = {
                 'edges': [
                     {
                         'node': {
+                            'name': 'dev-branch-1'
+                        }
+                    },
+                    {
+                        'node': {
                             'name': 'master'
                         }
                     }
@@ -67,12 +72,28 @@ snapshots['TestLabBookServiceMutations.test_create_branch 1'] = {
 
 snapshots['TestLabBookServiceMutations.test_checkout_branch 1'] = {
     'data': {
+        'createBranch': {
+            'branch': {
+                'name': 'dev-branch-5'
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_checkout_branch 2'] = {
+    'data': {
         'labbook': {
             'activeBranch': {
                 'name': 'master'
             },
             'branches': {
                 'edges': [
+                    {
+                        'node': {
+                            'name': 'dev-branch-5',
+                            'prefix': None
+                        }
+                    },
                     {
                         'node': {
                             'name': 'master',
@@ -87,11 +108,11 @@ snapshots['TestLabBookServiceMutations.test_checkout_branch 1'] = {
     }
 }
 
-snapshots['TestLabBookServiceMutations.test_checkout_branch 2'] = {
+snapshots['TestLabBookServiceMutations.test_checkout_branch 3'] = {
     'data': {
         'labbook': {
             'activeBranch': {
-                'name': 'master',
+                'name': 'dev-branch-5',
                 'prefix': None
             },
             'description': 'a different description',

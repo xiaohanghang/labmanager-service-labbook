@@ -154,9 +154,8 @@ class TestLabBookServiceMutations(object):
             query = """
             mutation BranchLabBook($labbook_name: String!, $branch_name: String!){
               createBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
-                labbook{                  
-                  name
-                  localBranches
+                branch {
+                    name
                 }
               }
             }
@@ -211,25 +210,17 @@ class TestLabBookServiceMutations(object):
 
             # Create a Branch
             query = """
-            mutation BranchLabBook($labbook_name: String!, $branch_name: String!){
+            mutation BranchLabBook($labbook_name: String!, $branch_name: String!) {
               createBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
-                labbook{                  
-                  name
-                  branches {
-                    edges {
-                        node {
-                            prefix
-                            name
-                        }
-                    }
-                  }
+                branch {                  
+                  name                 
                 }
               }
             }
             """
             variables = {"labbook_name": "test-lab-book3", "branch_name": "dev-branch-5"}
 
-            client.execute(query, variable_values=variables)
+            snapshot.assert_match(client.execute(query, variable_values=variables))
 
             # Check branch status
             query = """
