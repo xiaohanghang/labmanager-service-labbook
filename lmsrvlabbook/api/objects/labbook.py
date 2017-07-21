@@ -161,6 +161,7 @@ class Labbook(LabbookSummary):
             git.set_working_directory(os.path.join(git.working_directory,
                                                    id_data["username"],
                                                    id_data["owner"],
+                                                   "labbooks",
                                                    id_data["name"]))
         else:
             git = id_data["git"]

@@ -122,7 +122,7 @@ snapshots['TestNoteService.test_get_note_summaries 6'] = {
                     'line': 4
                 }
             ],
-            'message': 'Commit 21a4fc2241af09210d98d5d7119ae53b4c25c8a2 not found'
+            'message': 'Commit 75ca1f862eaa5e18db00012304aea487f2028c41 not found'
         }
     ]
 }
