@@ -39,11 +39,11 @@ from lmsrvlabbook.api.query import LabbookQuery
 
 # Create ObjectType clases, since the EnvironmentQueries and EnvironmentMutations
 # are abstract (allowing multiple inheritance)
-class Query(LabbookMutations, graphene.ObjectType):
+class Query(LabbookQuery, graphene.ObjectType):
     pass
 
 
-class Mutation(LabbookQuery, graphene.ObjectType):
+class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
 
@@ -108,6 +108,7 @@ class TestLabBookServiceMutations(object):
                 }
             }
             """
+
             snapshot.assert_match(client.execute(query))
 
             # Build the image
