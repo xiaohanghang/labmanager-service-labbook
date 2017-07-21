@@ -157,32 +157,6 @@ class TestNoteService(object):
 
             for cnt in range(0, 5):
                 # Create a note
-                aquery = """
-                        mutation CreateNote {
-                          createNote(labbookName: "notes-test-2",
-                            message: "Added a new file in this test """ + str(cnt) + """\",
-                            level: USER_MINOR,
-                            linkedCommit: \"""" + str(commit) + """\",
-                            tags: ["user", "minor"],
-                            freeText: "Lots of stuff can go here <>><<>::SDF:",
-                            objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]) {
-                            note {
-                              labbookName                  
-                              author 
-                              message
-                              level
-                              tags                  
-                              freeText
-                              objects {
-                                key
-                                objectType
-                                value
-                              }
-                            }
-                          }
-                        }
-                        """
-
                 query = """
                         mutation CreateNote {
                           createNote(input: {
@@ -193,8 +167,7 @@ class TestNoteService(object):
                             tags: ["user", "minor"],
                             freeText: "Lots of stuff can go here <>><<>::SDF:",
                             objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]}) {
-                                note {
-                                  labbookName                  
+                                note {                  
                                   author 
                                   message
                                   level
@@ -209,19 +182,6 @@ class TestNoteService(object):
                 snapshot.assert_match(client.execute(query))
 
             # Get Note you just created
-            aquery = """
-            {
-              noteSummaries(labbookName: "notes-test-2") {
-                entries {
-                  labbookName
-                  author
-                  level
-                  message
-                  tags
-                }
-              }
-            }
-            """
             query = """
             {
               labbook(name: "notes-test-2", owner: "default") {

@@ -24,73 +24,88 @@ snapshots['TestNoteService.test_create_note 1'] = {
 }
 
 snapshots['TestNoteService.test_get_note_summaries 1'] = {
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 35,
-                    'line': 12
-                }
-            ],
-            'message': 'Cannot query field "labbookName" on type "Note".'
+    'data': {
+        'createNote': {
+            'note': {
+                'author': None,
+                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
+                'level': 'USER_MINOR',
+                'message': 'Added a new file in this test 0',
+                'tags': [
+                    'user',
+                    'minor'
+                ]
+            }
         }
-    ]
+    }
 }
 
 snapshots['TestNoteService.test_get_note_summaries 2'] = {
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 35,
-                    'line': 12
-                }
-            ],
-            'message': 'Cannot query field "labbookName" on type "Note".'
+    'data': {
+        'createNote': {
+            'note': {
+                'author': None,
+                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
+                'level': 'USER_MINOR',
+                'message': 'Added a new file in this test 1',
+                'tags': [
+                    'user',
+                    'minor'
+                ]
+            }
         }
-    ]
+    }
 }
 
 snapshots['TestNoteService.test_get_note_summaries 3'] = {
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 35,
-                    'line': 12
-                }
-            ],
-            'message': 'Cannot query field "labbookName" on type "Note".'
+    'data': {
+        'createNote': {
+            'note': {
+                'author': None,
+                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
+                'level': 'USER_MINOR',
+                'message': 'Added a new file in this test 2',
+                'tags': [
+                    'user',
+                    'minor'
+                ]
+            }
         }
-    ]
+    }
 }
 
 snapshots['TestNoteService.test_get_note_summaries 4'] = {
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 35,
-                    'line': 12
-                }
-            ],
-            'message': 'Cannot query field "labbookName" on type "Note".'
+    'data': {
+        'createNote': {
+            'note': {
+                'author': None,
+                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
+                'level': 'USER_MINOR',
+                'message': 'Added a new file in this test 3',
+                'tags': [
+                    'user',
+                    'minor'
+                ]
+            }
         }
-    ]
+    }
 }
 
 snapshots['TestNoteService.test_get_note_summaries 5'] = {
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 35,
-                    'line': 12
-                }
-            ],
-            'message': 'Cannot query field "labbookName" on type "Note".'
+    'data': {
+        'createNote': {
+            'note': {
+                'author': None,
+                'freeText': 'Lots of stuff can go here <>><<>::SDF:',
+                'level': 'USER_MINOR',
+                'message': 'Added a new file in this test 4',
+                'tags': [
+                    'user',
+                    'minor'
+                ]
+            }
         }
-    ]
+    }
 }
 
 snapshots['TestNoteService.test_get_note_summaries 6'] = {
@@ -107,7 +122,7 @@ snapshots['TestNoteService.test_get_note_summaries 6'] = {
                     'line': 4
                 }
             ],
-            'message': 'Commit e8be95706000d48df2857c3b2d58c8de037ee838 not found'
+            'message': 'Commit 21a4fc2241af09210d98d5d7119ae53b4c25c8a2 not found'
         }
     ]
 }
