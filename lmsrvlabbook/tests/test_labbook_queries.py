@@ -158,34 +158,3 @@ class TestLabBookServiceQueries(object):
             }
             """
             snapshot.assert_match(client.execute(query))
-
-    def test_get_multiple(self, mock_config_file, snapshot):
-        """Test hitting multiple queries at once"""
-        # Create labbooks
-        lb = LabBook(mock_config_file[0])
-        lb.new(owner={"username": "default"}, name="a-test-labbook", description="a different description!<>;")
-        lb.new(owner={"username": "default"}, name="asdf", description="fghghfjghgf3454dfs dsfasf f sfsadf asdf asdf sda")
-        lb.new(owner={"username": "tester"}, name="sjdf932sDJFj-df-sdfasj", description="fgdhdfasdf")
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
-            # Make and validate request
-            client = Client(mock_config_file[2])
-
-            # Get LabBooks for a single user - Don't get the ID field since it is a UUID
-            query = """
-            {
-              labbook(name: "a-test-labbook") {    
-                name
-                description
-              }
-              users{
-                username
-              }
-              labbooks {
-                name                
-                description
-              }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
