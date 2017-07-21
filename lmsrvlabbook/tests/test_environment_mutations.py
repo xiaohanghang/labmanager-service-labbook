@@ -100,10 +100,12 @@ class TestLabBookServiceMutations(object):
 
             query = """
             {
-              environment(name: "labbook-build") {
-                containerStatus
-                imageStatus
-              }
+                labbook(name: "labbook-build", owner: "default") {
+                    environment {
+                        imageStatus
+                        containerStatus
+                    }
+                }
             }
             """
             snapshot.assert_match(client.execute(query))
@@ -111,7 +113,7 @@ class TestLabBookServiceMutations(object):
             # Build the image
             query = """
             mutation BuildImage($name: String!){
-              buildImage(name: $name){
+              buildImage(labbookName: $name){
                 environment{
                   imageStatus
                   containerStatus
@@ -126,9 +128,11 @@ class TestLabBookServiceMutations(object):
             # Get LabBook env status again
             query = """
             {
-              environment(name: "labbook-build") {
-                containerStatus
-                imageStatus
+              labbook(name: "labbook-build", owner: "default") {
+                environment {
+                    imageStatus
+                    containerStatus
+                }
               }
             }
             """
