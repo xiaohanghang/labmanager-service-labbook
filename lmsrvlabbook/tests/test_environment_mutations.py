@@ -113,9 +113,9 @@ class TestLabBookServiceMutations(object):
 
             # Build the image
             query = """
-            mutation BuildImage($name: String!){
-              buildImage(labbookName: $name){
-                environment{
+            mutation myBuildImage($name: String!){
+              buildImage(input: {labbookName: $name}) {
+                environment {
                   imageStatus
                   containerStatus
                 }
