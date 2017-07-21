@@ -109,7 +109,7 @@ class TestLabBookServiceQueries(object):
             # Get LabBooks for the "logged in user" - Currently just "default"
             query = """
             {
-	            localLabbooks {
+                localLabbooks {
                     edges {
                         node {
                             name
@@ -144,7 +144,7 @@ class TestLabBookServiceQueries(object):
             # Get LabBooks for the "logged in user" - Currently just "default"
             query = """
                     {
-        	            localLabbooks(first: 2, after: "MQ==") {
+                        localLabbooks(first: 2, after: "MQ==") {
                             edges {
                                 node {
                                     name
