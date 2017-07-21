@@ -49,26 +49,3 @@ snapshots['TestLabBookServiceQueries.test_get_labbook 2'] = {
         }
     }
 }
-
-snapshots['TestLabBookServiceQueries.test_get_multiple 1'] = {
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 15,
-                    'line': 7
-                }
-            ],
-            'message': 'Cannot query field "users" on type "Query".'
-        },
-        {
-            'locations': [
-                {
-                    'column': 15,
-                    'line': 10
-                }
-            ],
-            'message': 'Cannot query field "labbooks" on type "Query". Did you mean "labbook" or "localLabbooks"?'
-        }
-    ]
-}
