@@ -42,10 +42,25 @@ snapshots['TestLabBookServiceQueries.test_get_labbook 1'] = {
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_get_labbook 2'] = {
+snapshots['TestLabBookServiceQueries.test_pagination 1'] = {
     'data': {
-        'labbook': {
-            'name': 'labbook1'
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'Mg==',
+                    'node': {
+                        'description': 'Mice labbook 3',
+                        'name': 'labbook3'
+                    }
+                },
+                {
+                    'cursor': 'Mw==',
+                    'node': {
+                        'description': 'Horses labbook 4',
+                        'name': 'labbook4'
+                    }
+                }
+            ]
         }
     }
 }

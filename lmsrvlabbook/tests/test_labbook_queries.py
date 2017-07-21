@@ -95,7 +95,7 @@ class TestLabBookServiceQueries(object):
 
     def test_list_labbooks(self, mock_config_file, snapshot):
         """Test listing labbooks"""
-        # Create labbooks
+
         lb = LabBook(mock_config_file[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
         lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
@@ -124,6 +124,39 @@ class TestLabBookServiceQueries(object):
 
     # BVB TODO - Make more tests to include pagination!!
 
+    def test_pagination(self, mock_config_file, snapshot):
+        """Test pagination and cursors"""
+
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
+        lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
+        lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
+        lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
+        lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
+        lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
+        lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Get LabBooks for the "logged in user" - Currently just "default"
+            query = """
+                    {
+        	            localLabbooks(first: 2, after: "MQ==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
     def test_get_labbook(self, mock_config_file, snapshot):
         """Test listing labbooks"""
         # Create labbooks
@@ -144,16 +177,6 @@ class TestLabBookServiceQueries(object):
                 activeBranch {
                     name
                 }
-              }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
-
-            # Test selecting a single parameter
-            query = """
-            {
-              labbook(name: "labbook1", owner: "default") {
-                name
               }
             }
             """
