@@ -77,9 +77,9 @@ class TestLabBookServiceMutations(object):
 
             # Create LabBook
             query = """
-            mutation CreateLabBook($name: String!, $desc: String!, $owner_obj: InputUser!){
-              createLabbook(name: $name, description: $desc, owner: $owner_obj){
-                labbook{
+            mutation myCreateLabbook($name: String!, $desc: String!) {
+              createLabbook(input: {name: $name, description: $desc}) {
+                labbook {
                   id
                   name
                   description
@@ -87,20 +87,18 @@ class TestLabBookServiceMutations(object):
               }
             }
             """
-            variables = {"name": "test-lab-book1", "desc": "my test description",
-                         "owner_obj": {"username": "test_user"}}
+            # variables = {"name": "test-lab-book1", "desc": "my test description",
+            #              "owner_obj": {"username": "test_user"}}
+            variables = {"name": "test-lab-book1", "desc": "my test description"}
 
             client.execute(query, variable_values=variables)
 
             # Get LabBook you just created
             query = """
             {
-              labbook(name: "test-lab-book1") {
+              labbook(name: "test-lab-book1", owner: "default") {
                 name
                 description
-                owner {
-                  username
-                }
               }
             }
             """
