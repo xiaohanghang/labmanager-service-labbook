@@ -24,6 +24,7 @@ import base64
 from lmcommon.labbook import LabBook
 from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
+from lmcommon.notes import NoteStore
 
 from lmsrvcore.auth.user import get_logged_in_user
 
@@ -195,7 +196,6 @@ class Labbook(LabbookSummary):
         git.set_working_directory(os.path.join(git.working_directory, get_logged_in_user(),
                                                self.owner.username, "labbooks", self.name))
 
-        # TODO: Design a better cursor implementation
         # Get all edges and cursors. Here, cursors are just an index into the refs
         edges = [x for x in git.repo.refs]
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
@@ -236,21 +236,16 @@ class Labbook(LabbookSummary):
 
         """
         # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
-        # Load LabBook instance
         lb = LabBook()
         lb.from_name(get_logged_in_user(), self.owner.username, self.name)
 
+        note_db = NoteStore(lb)
+
         # TODO: Design a better cursor implementation that actually pages through repo history
-        # retrieve a list of notes from the commit log.
-        labbook_log_data = []
-        # TODO: need to index into commit history better, this hack skips commits not in db. Probably should use DB
-        # directly vs. the git log
-        for commit in lb.log(max_count=100):
-            if commit["committer"]["name"] == 'Gigantum AutoCommit':
-                labbook_log_data.append(commit)
+        all_note_summaries = note_db.get_all_note_summaries()
 
         # Get all edges and cursors. Here, cursors are just an index into the refs
-        edges = [x for x in labbook_log_data]
+        edges = [x for x in all_note_summaries]
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
@@ -260,9 +255,10 @@ class Labbook(LabbookSummary):
         # Get LabbookRef instances
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {"name": self.name,
+            id_data = {"summary": edge,
                        "owner": self.owner.username,
-                       "commit": edge["commit"]}
+                       "name": self.name,
+                       "commit": edge["note_commit"]}
             edge_objs.append(NoteConnection.Edge(node=Note.create(id_data), cursor=cursor))
 
         return NoteConnection(edges=edge_objs, page_info=lbc.page_info)

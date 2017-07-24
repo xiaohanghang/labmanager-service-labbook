@@ -27,8 +27,8 @@ from lmcommon.labbook import LabBook
 from lmcommon.notes import NoteStore
 from lmsrvcore.auth.user import get_logged_in_user
 
-from lmsrvlabbook.api.objects.note import Note, LogLevel
-from lmsrvlabbook.api.objects.noteobject import NoteObject, NoteObjectInput
+from lmsrvlabbook.api.objects.note import Note, NoteLogLevelEnum
+from lmsrvlabbook.api.objects.noteobject import NoteObjectInput
 
 
 class CreateNote(graphene.relay.ClientIDMutation):
@@ -37,7 +37,7 @@ class CreateNote(graphene.relay.ClientIDMutation):
     class Input:
         labbook_name = graphene.String(required=True)
         owner = graphene.String()
-        level = LogLevel(required=True)
+        level = graphene.Field(NoteLogLevelEnum, required=True)
         message = graphene.String(required=True)
         linked_commit = graphene.String(required=True)
         tags = graphene.List(graphene.String)
@@ -61,41 +61,33 @@ class CreateNote(graphene.relay.ClientIDMutation):
         lb = LabBook()
         lb.from_name(username, owner, input.get('labbook_name'))
 
-        note_metadata = {'level': input.get('level'),
-                         'linked_commit': input.get('linked_commit'),
-                         'tags': input.get('tags')}
+        # Create NoteStore instance
+        note_db = NoteStore(lb)
 
-        # format note metadata into message
-        message = "gtmNOTE_: {}\ngtmjson_metadata_: {}".format(input.get('message'), json.dumps(note_metadata))
+        note_data = {'linked_commit': input.get('linked_commit'),
+                     'message': input.get('message'),
+                     'level': input.get('level'),
+                     'tags': input.get('tags'),
+                     'free_text': input.get('free_text'),
+                     'objects': input.get('objects')}
 
-        try:
-            # Instantiate the notes detailed store and save detail to local db
-            ns = NoteStore(lb)
-            nsdict = {'free_text': input.get('free_text'), 'objects': json.dumps(input.get('objects'))}
+        # Create a note record
+        note_commit = note_db.create_note(note_data)
 
-            # Create record using the linked_commit hash as the reference
-            ns.put_entry(str(input.get('linked_commit')), nsdict)
-        except Exception as err:
-            raise IOError("Failed to store note detail: {}".format(err))
+        # Read data back to ensure it was written
+        note = note_db.get_note(note_commit.hexsha)
 
-        # Add everything in the LabBook notes/log directory in case it is new or a new log file has been created
-        lb.git.add_all(os.path.expanduser(os.path.join(".gigantum", "notes", "log")))
+        note_obj = Note(id=Note.to_type_id({'name': input.get('labbook_name'),
+                                            'owner': owner,
+                                            'commit': note_commit}),
+                        commit=note['note_commit'],
+                        linked_commit=note["linked_commit"],
+                        level=note['level'].value,
+                        tags=note['tags'],
+                        timestamp=note['timestamp'],
+                        message=note['message'],
+                        author=note['author']['email'],
+                        free_text=note['free_text'],
+                        objects=note['objects'])
 
-        # Commit the changes as you've updated the notes DB
-        notecommit = lb.commit(message)
-
-        # deep copy of the input noteobjects -- list comprehension doesn't work
-        #nobjects = []
-        #for i in input.get('objects'):
-        #    nobj = NoteObject(key=i['key'], object_type=i['object_type'], value=i['value'])
-        #    nobjects.append(nobj)
-
-        note = Note(commit=notecommit,
-                    linked_commit=input.get("linked_commit"),
-                    level=input.get('level'),
-                    tags=input.get('tags'),
-                    timestamp=datetime.utcnow(),
-                    message=input.get('message'),
-                    free_text=input.get('free_text'))
-
-        return CreateNote(note=note)
+        return CreateNote(note=note_obj)

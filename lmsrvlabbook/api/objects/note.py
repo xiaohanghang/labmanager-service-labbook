@@ -24,7 +24,7 @@ import re
 from graphene.types import datetime
 
 from lmcommon.labbook import LabBook
-from lmcommon.notes import NoteStore
+from lmcommon.notes import NoteStore, NoteLogLevel
 
 from lmsrvcore.auth.user import get_logged_in_user
 
@@ -32,18 +32,11 @@ from lmsrvcore.api import ObjectType
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.connections.noteobject import NoteObjectConnection
+from lmsrvlabbook.api.objects.noteobject import NoteObject
 
 
-class LogLevel(graphene.Enum):
-    """Enumeration representing the note 'level' in the hierarchy"""
-    # User generated Notes
-    USER_MAJOR = 11
-    USER_MINOR = 12
-
-    # Automatic "system" generated notes
-    AUTO_MAJOR = 21
-    AUTO_MINOR = 22
-    AUTO_DETAIL = 23
+# Expose NoteLogLevel enumeration as a graphene Enum
+NoteLogLevelEnum = graphene.Enum.from_enum(NoteLogLevel)
 
 
 class Note(ObjectType):
@@ -64,7 +57,7 @@ class Note(ObjectType):
     author = graphene.String()
 
     # The level of the note
-    level = graphene.Field(LogLevel)
+    level = graphene.Field(NoteLogLevelEnum)
 
     # Tags for the note
     tags = graphene.List(graphene.String)
@@ -90,7 +83,6 @@ class Note(ObjectType):
         """
         return "{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["commit"])
 
-
     @staticmethod
     def parse_type_id(type_id):
         """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
@@ -114,6 +106,7 @@ class Note(ObjectType):
                 "type_id": <unique id for this object Type),
                 "owner": <owner username (or org)>,
                 "name": <name of the labbook>
+                "summary": <dict> If the summary has already been retrieved but not converted to a graphene object
             }
 
         Args:
@@ -129,43 +122,76 @@ class Note(ObjectType):
         if "username" not in id_data:
             id_data["username"] = get_logged_in_user()
 
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        if "summary" not in id_data:
+            # Shortcut to generate a graphene Note type if the not summary has already been pulled from the
+            # gitlog using the NoteStore
+            lb = LabBook()
+            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
 
-        # Create NoteStore instance
-        note_db = NoteStore(lb)
+            # Create NoteStore instance
+            note_db = NoteStore(lb)
 
-        # get the record for the individual commit
-        entry = lb.log_entry(commit=id_data["commit"])
-
-        # filter log on Notes
-        regex = r"gtmNOTE_: ([\w\s\S]+)\ngtmjson_metadata_: (.*)"
-
-        m = re.match(regex, entry['message'])
-        if m:
-            # summary data from git log
-            message = m.group(1)
-            note_metadata = json.loads(m.group(2))
-
-            # get the detail from notes storage.
-            note_detail = note_db.get_entry(note_metadata["linked_commit"])
+            # get the record for the individual commit
+            note = note_db.get_note_summary(id_data["commit"])
         else:
-            raise ValueError("Commit {} not found".format(id_data["commit"]))
+            note = id_data["summary"]
 
         return Note(id=Note.to_type_id(id_data),
-                    commit=entry['commit'],
-                    linked_commit=note_metadata['linked_commit'],
-                    level=note_metadata['level'],
-                    timestamp=entry['committed_on'],
-                    author=entry['author'],
-                    tags=note_metadata['tags'],
-                    message=message,
-                    free_text=note_detail['free_text'])#,
-                    #_note_detail=note_detail,
-                    #_owner=id_data["owner"],
-                    #_labbook_name=id_data["name"])
+                    commit=note['note_commit'],
+                    linked_commit=note['linked_commit'],
+                    level=note['level'].value,
+                    timestamp=note['timestamp'],
+                    author=note['author']['email'],
+                    tags=note['tags'],
+                    message=note['message'])
 
     def resolve_objects(self, args, context, info):
+        """Method to populate the objects field
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        if "objects" not in self.__dict__:
+            # TODO: Use dataloader to access the detail object data as this implementation can have redundent IO
+            id_data = self.parse_type_id(self.id)
+            id_data["username"] = get_logged_in_user()
+            lb = LabBook()
+            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+
+            # Create NoteStore instance
+            note_db = NoteStore(lb)
+
+            # Get detailed record
+            detail = note_db.get_detail_record(self.linked_commit)
+            edges = detail["objects"]
+
+        else:
+            edges = self.objects
+
+        # Get all edges and cursors. Here, cursors are just an index into the refs
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        # Get LabbookRef instances
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            id_data = self.parse_type_id(self.id)
+            id_data.update({"linked_commit": self.linked_commit,
+                            "note_object_key": edge.key})
+            edge_objs.append(NoteObjectConnection.Edge(node=NoteObject.create(id_data), cursor=cursor))
+
+        return NoteObjectConnection(edges=edge_objs,
+                                    page_info=lbc.page_info)
+
+    def resolve_free_text(self, args, context, info):
         """Method to page through branch Refs
 
         Args:
@@ -176,24 +202,20 @@ class Note(ObjectType):
         Returns:
 
         """
-        # TODO: Design a better cursor implementation that doesn't need to load everything to page on each request
-        # Get all edges and cursors. Here, cursors are just an index into the refs
-        edges = [x for x in self.note_detail]
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+        # If free_text has already been explicitly set move on
+        if "free_text" not in self.__dict__:
+            # TODO: Use dataloader to access the detail object data as this implementation can have redundent IO
+            id_data = self.parse_type_id(self.id)
+            id_data["username"] = get_logged_in_user()
+            lb = LabBook()
+            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
 
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
+            # Create NoteStore instance
+            note_db = NoteStore(lb)
 
-        # Get LabbookRef instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {"owner": self._owner,
-                       "name": self._labbook_name,
-                       "linked_commit": self.linked_commit,
-                       "note_object_key": edge.key}
-            edge_objs.append(NoteObjectConnection.Edge(node=Note.create(id_data), cursor=cursor))
+            # Get detailed record
+            detail = note_db.get_detail_record(self.linked_commit)
+            return detail["free_text"]
 
-        return NoteObjectConnection(edges=edge_objs,
-                                    page_info=lbc.page_info)
-
+        else:
+            return self.free_text

@@ -39,7 +39,7 @@ class NoteObjectType(graphene.AbstractType):
 
     # Content type of the object
     # TODO make an ENUM
-    object_type = graphene.String()
+    type = graphene.String()
 
     # Uninterpreted blobs encoded as string
     value = graphene.String()
@@ -88,6 +88,7 @@ class NoteObject(ObjectType, NoteObjectType):
                 "owner": <owner username (or org)>,
                 "name": <name of the labbook>
                 "note_object_key": <key for the object to retrieve>
+                "note_detail_record": <optional dict of note detail data from the `get_detail_record()` method
             }
 
         Args:
@@ -109,14 +110,18 @@ class NoteObject(ObjectType, NoteObjectType):
         # Create NoteStore instance
         note_db = NoteStore(lb)
 
-        # get the detail from notes storage.
-        note_detail = note_db.get_entry(id_data["linked_commit"])
-        for detail in json.loads(note_detail['objects']):
-            if detail["key"] == id_data["note_object_key"]:
+        if "note_detail_record" not in id_data:
+            # get the detail record from notes storage.
+            note_detail = note_db.get_detail_record(id_data["linked_commit"])
+        else:
+            note_detail = id_data["note_detail_record"]
+
+        for obj in note_detail['objects']:
+            if obj.key == id_data["note_object_key"]:
                 return NoteObject(id=NoteObject.to_type_id(id_data),
-                                  key=detail['key'],
-                                  object_type=detail['object_type'],
-                                  value=detail['value'])
+                                  key=obj.key,
+                                  type=obj.type,
+                                  value=obj.value)
 
         # If you are here, key not found
         return []
