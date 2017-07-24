@@ -17,17 +17,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from flask import Flask
 from flask import Blueprint
 from flask_graphql import GraphQLView
 import graphene
 
-from .api import LabbookQueries, LabbookMutations
+from lmsrvlabbook.api import LabbookQuery, LabbookMutations
 
 from lmcommon.configuration import Configuration
 
 
 # Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQueries, graphene.ObjectType):
+class Query(LabbookQuery, graphene.ObjectType):
     pass
 
 
@@ -47,3 +48,18 @@ labbook_service.add_url_rule('/labbook/',
                                                            schema=graphene.Schema(query=Query,
                                                                                   mutation=Mutation),
                                                            graphiql=config.config["flask"]["DEBUG"]))
+
+# If running blueprint script directly, spin a dev server
+if __name__ == '__main__':
+
+    # Load config data for the LabManager instance
+    config = Configuration()
+
+    # Create Flask app and configure
+    app = Flask("lmsrvlabbook")
+    app.config['DEBUG'] = config.config["flask"]["DEBUG"]
+
+    # Register service
+    app.register_blueprint(labbook_service)
+
+    app.run()

@@ -7,81 +7,59 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_list_users 1'] = {
+snapshots['TestLabBookServiceQueries.test_list_labbooks 1'] = {
     'data': {
-        'users': [
-            {
-                'username': 'test1'
-            },
-            {
-                'username': 'test2'
-            },
-            {
-                'username': 'test3'
-            }
-        ]
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'MA==',
+                    'node': {
+                        'description': 'my first labbook1',
+                        'name': 'labbook1'
+                    }
+                },
+                {
+                    'cursor': 'MQ==',
+                    'node': {
+                        'description': 'my first labbook2',
+                        'name': 'labbook2'
+                    }
+                }
+            ]
+        }
     }
 }
 
-snapshots['test_list_labbooks 1'] = {
-    'data': {
-        'labbooks': [
-            {
-                'name': 'labbook1',
-                'description': 'my first labbook1'
-            },
-            {
-                'name': 'labbook2',
-                'description': 'my first labbook2'
-            }
-        ]
-    }
-}
-
-snapshots['test_get_labbook 2'] = {
+snapshots['TestLabBookServiceQueries.test_get_labbook 1'] = {
     'data': {
         'labbook': {
+            'activeBranch': {
+                'name': 'master'
+            },
+            'description': 'my first labbook1',
             'name': 'labbook1'
         }
     }
 }
 
-snapshots['test_get_multiple 1'] = {
+snapshots['TestLabBookServiceQueries.test_pagination 1'] = {
     'data': {
-        'labbook': {
-            'name': 'a-test-labbook',
-            'description': 'a different description!'
-        },
-        'users': [
-            {
-                'username': 'default'
-            },
-            {
-                'username': 'tester'
-            }
-        ],
-        'labbooks': [
-            {
-                'name': 'a-test-labbook',
-                'description': 'a different description!'
-            },
-            {
-                'name': 'asdf',
-                'description': 'fghghfjghgf3454dfs dsfasf f sfsadf asdf asdf sda'
-            }
-        ]
-    }
-}
-
-snapshots['test_get_labbook 1'] = {
-    'data': {
-        'labbook': {
-            'name': 'labbook1',
-            'description': 'my first labbook1',
-            'localBranches': [
-                'master'
-            ],
-            'remoteBranches': [
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'Mg==',
+                    'node': {
+                        'description': 'Mice labbook 3',
+                        'name': 'labbook3'
+                    }
+                },
+                {
+                    'cursor': 'Mw==',
+                    'node': {
+                        'description': 'Horses labbook 4',
+                        'name': 'labbook4'
+                    }
+                }
             ]
         }
     }

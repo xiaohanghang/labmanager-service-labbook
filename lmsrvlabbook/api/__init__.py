@@ -1,2 +1,2 @@
-from .mutations import LabbookMutations
-from .queries import LabbookQueries
+from lmsrvlabbook.api.query import LabbookQuery
+from lmsrvlabbook.api.mutation import LabbookMutations

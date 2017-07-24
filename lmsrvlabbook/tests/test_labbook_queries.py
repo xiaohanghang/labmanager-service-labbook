@@ -31,11 +31,11 @@ from mock import patch
 from lmcommon.labbook import LabBook
 from lmcommon.configuration import Configuration
 
-from ..api import LabbookMutations, LabbookQueries
+from ..api import LabbookMutations, LabbookQuery
 
 
 # Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQueries, graphene.ObjectType):
+class Query(LabbookQuery, graphene.ObjectType):
     pass
 
 
@@ -70,36 +70,36 @@ git:
 
 
 class TestLabBookServiceQueries(object):
-    def test_list_users(self, mock_config_file, snapshot):
-        """Test listing users"""
-        # Create labbooks
-        lb = LabBook(mock_config_file[0])
-        lb.new(username="test1", owner={"username": "test1"}, name="labbook1", description="my first labbook")
-        lb.new(username="test2", owner={"username": "test2"}, name="labbook1", description="my first labbook")
-        lb.new(username="test3", owner={"username": "test3"}, name="labbook1", description="my first labbook")
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
-            # Make and validate request
-            client = Client(mock_config_file[2])
-
-            query = """
-            {
-              users {
-                username
-              }
-            }
-            """
-
-            snapshot.assert_match(client.execute(query))
+    # def test_list_users(self, mock_config_file, snapshot):
+    #     """Test listing users"""
+    #     # Create labbooks
+    #     lb = LabBook(mock_config_file[0])
+    #     lb.new(owner={"username": "test1"}, name="labbook1", description="my first labbook")
+    #     lb.new(owner={"username": "test2"}, name="labbook1", description="my first labbook")
+    #     lb.new(owner={"username": "test3"}, name="labbook1", description="my first labbook")
+    #
+    #     # Mock the configuration class it it returns the same mocked config file
+    #     with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+    #         # Make and validate request
+    #         client = Client(mock_config_file[2])
+    #
+    #         query = """
+    #         {
+    #           users {
+    #             username
+    #           }
+    #         }
+    #         """
+    #
+    #         snapshot.assert_match(client.execute(query))
 
     def test_list_labbooks(self, mock_config_file, snapshot):
         """Test listing labbooks"""
-        # Create labbooks
+
         lb = LabBook(mock_config_file[0])
-        lb.new(username="default", owner={"username": "default"}, name="labbook1", description="my first labbook1")
-        lb.new(username="default", owner={"username": "default"}, name="labbook2", description="my first labbook2")
-        lb.new(username="test3", owner={"username": "test3"}, name="labbook2", description="my first labbook3")
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+        lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
+        lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
@@ -109,19 +109,57 @@ class TestLabBookServiceQueries(object):
             # Get LabBooks for the "logged in user" - Currently just "default"
             query = """
             {
-              labbooks{
-                name                
-                description
-              }
+                localLabbooks {
+                    edges {
+                        node {
+                            name
+                            description
+                        }
+                        cursor
+                    }
+                }
             }
             """
+            snapshot.assert_match(client.execute(query))
+
+    def test_pagination(self, mock_config_file, snapshot):
+        """Test pagination and cursors"""
+
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
+        lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
+        lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
+        lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
+        lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
+        lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
+        lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Get LabBooks for the "logged in user" - Currently just "default"
+            query = """
+                    {
+                        localLabbooks(first: 2, after: "MQ==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
             snapshot.assert_match(client.execute(query))
 
     def test_get_labbook(self, mock_config_file, snapshot):
         """Test listing labbooks"""
         # Create labbooks
         lb = LabBook(mock_config_file[0])
-        lb.new(username="default", name="labbook1", description="my first labbook1")
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
@@ -131,52 +169,12 @@ class TestLabBookServiceQueries(object):
             # Get LabBooks for a single user - Don't get the ID field since it is a UUID
             query = """
             {
-              labbook(name: "labbook1") {
+              labbook(name: "labbook1", owner: "default") {
                 name
                 description
-                localBranches
-                remoteBranches
-              }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
-
-            # Test selecting a single parameter
-            query = """
-            {
-              labbook(name: "labbook1") {
-                name
-              }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
-
-    def test_get_multiple(self, mock_config_file, snapshot):
-        """Test hitting multiple queries at once"""
-        # Create labbooks
-        lb = LabBook(mock_config_file[0])
-        lb.new(username="default", name="a-test-labbook", description="a different description!<>;")
-        lb.new(username="default", name="asdf", description="fghghfjghgf3454dfs dsfasf f sfsadf asdf asdf sda")
-        lb.new(username="tester", name="sjdf932sDJFj-df-sdfasj", description="fgdhdfasdf")
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
-            # Make and validate request
-            client = Client(mock_config_file[2])
-
-            # Get LabBooks for a single user - Don't get the ID field since it is a UUID
-            query = """
-            {
-              labbook(name: "a-test-labbook") {    
-                name
-                description
-              }
-              users{
-                username
-              }
-              labbooks {
-                name                
-                description
+                activeBranch {
+                    name
+                }
               }
             }
             """

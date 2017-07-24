@@ -7,89 +7,116 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['test_create_labbook 1'] = {
+snapshots['TestLabBookServiceMutations.test_create_labbook 1'] = {
     'data': {
         'labbook': {
-            'name': 'test-lab-book1',
             'description': 'my test description',
-            'owner': {
-                'username': 'test_user'
-            }
+            'name': 'test-lab-book1'
         }
     }
 }
 
-snapshots['test_create_labbook_already_exists 1'] = {
+snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 1'] = {
     'data': {
         'createLabbook': {
             'labbook': {
-                'name': 'test-lab-book',
-                'description': 'my test description'
+                'description': 'my test description',
+                'name': 'test-lab-book'
             }
         }
     }
 }
 
-snapshots['test_create_labbook_already_exists 2'] = {
-    'errors': [
-        {
-            'message': 'LabBook `test-lab-book` already exists locally. Choose a new LabBook name',
-            'locations': [
-                {
-                    'line': 3,
-                    'column': 15
-                }
-            ]
-        }
-    ],
+snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 2'] = {
     'data': {
         'createLabbook': None
-    }
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 15,
+                    'line': 3
+                }
+            ],
+            'message': 'LabBook `test-lab-book` already exists locally. Choose a new LabBook name'
+        }
+    ]
 }
 
-snapshots['test_create_branch 1'] = {
+snapshots['TestLabBookServiceMutations.test_create_branch 1'] = {
     'data': {
         'labbook': {
-            'name': 'test-lab-book2',
-            'description': 'my test description blah blah 12345',
-            'localBranches': [
-                'dev-branch-1',
-                'master'
-            ]
+            'activeBranch': {
+                'name': 'master'
+            },
+            'branches': {
+                'edges': [
+                    {
+                        'node': {
+                            'name': 'dev-branch-1'
+                        }
+                    },
+                    {
+                        'node': {
+                            'name': 'master'
+                        }
+                    }
+                ]
+            },
+            'description': 'Yada yada blah blah blah 99',
+            'name': 'test-lab-book2'
         }
     }
 }
 
-snapshots['test_checkout_branch 1'] = {
+snapshots['TestLabBookServiceMutations.test_checkout_branch 1'] = {
     'data': {
-        'labbook': {
-            'name': 'test-lab-book3',
-            'description': 'a different description',
-            'localBranches': [
-                'dev-branch-5',
-                'master'
-            ],
-            'activeBranch': {
-                'name': 'master',
-                'prefix': 'refs/heads'
+        'createBranch': {
+            'branch': {
+                'name': 'dev-branch-5'
             }
         }
     }
 }
 
-snapshots['test_checkout_branch 2'] = {
+snapshots['TestLabBookServiceMutations.test_checkout_branch 2'] = {
     'data': {
         'labbook': {
-            'name': 'test-lab-book3',
+            'activeBranch': {
+                'name': 'master'
+            },
+            'branches': {
+                'edges': [
+                    {
+                        'node': {
+                            'name': 'dev-branch-5',
+                            'prefix': None
+                        }
+                    },
+                    {
+                        'node': {
+                            'name': 'master',
+                            'prefix': None
+                        }
+                    }
+                ]
+            },
             'description': 'a different description',
-            'localBranches': [
-                'dev-branch-5',
-                'master'
-            ],
+            'name': 'test-lab-book3'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_checkout_branch 3'] = {
+    'data': {
+        'labbook': {
             'activeBranch': {
                 'name': 'dev-branch-5',
-                'prefix': 'refs/heads'
-            }
+                'prefix': None
+            },
+            'description': 'a different description',
+            'name': 'test-lab-book3'
         }
     }
 }
