@@ -64,3 +64,26 @@ snapshots['TestLabBookServiceQueries.test_pagination 1'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_pagination 2'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'NA==',
+                    'node': {
+                        'description': 'Cheese labbook 5',
+                        'name': 'labbook5'
+                    }
+                },
+                {
+                    'cursor': 'NQ==',
+                    'node': {
+                        'description': 'Goat labbook 6',
+                        'name': 'labbook6'
+                    }
+                }
+            ]
+        }
+    }
+}

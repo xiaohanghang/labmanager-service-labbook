@@ -155,6 +155,21 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
+            before_query = """
+                    {
+                        localLabbooks(last: 2, before: "Ng==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(before_query))
+
     def test_get_labbook(self, mock_config_file, snapshot):
         """Test listing labbooks"""
         # Create labbooks
