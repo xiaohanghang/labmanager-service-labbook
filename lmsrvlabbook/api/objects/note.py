@@ -156,9 +156,24 @@ class Note(ObjectType):
         Returns:
 
         """
-        # TODO: Design a better cursor implementation that doesn't need to load everything to page on each request
+        if "objects" not in self.__dict__:
+            # TODO: Use dataloader to access the detail object data as this implementation can have redundent IO
+            id_data = self.parse_type_id(self.id)
+            id_data["username"] = get_logged_in_user()
+            lb = LabBook()
+            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+
+            # Create NoteStore instance
+            note_db = NoteStore(lb)
+
+            # Get detailed record
+            detail = note_db.get_detail_record(self.linked_commit)
+            edges = detail["objects"]
+
+        else:
+            edges = self.objects
+
         # Get all edges and cursors. Here, cursors are just an index into the refs
-        edges = [x for x in self.note_detail]
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
@@ -168,10 +183,9 @@ class Note(ObjectType):
         # Get LabbookRef instances
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {"owner": self._owner,
-                       "name": self._labbook_name,
-                       "linked_commit": self.linked_commit,
-                       "note_object_key": edge.key}
+            id_data = self.parse_type_id(self.id)
+            id_data.update({"linked_commit": self.linked_commit,
+                            "note_object_key": edge.key})
             edge_objs.append(NoteObjectConnection.Edge(node=NoteObject.create(id_data), cursor=cursor))
 
         return NoteObjectConnection(edges=edge_objs,
@@ -189,9 +203,10 @@ class Note(ObjectType):
 
         """
         # If free_text has already been explicitly set move on
-        if not self.free_text:
+        if "free_text" not in self.__dict__:
             # TODO: Use dataloader to access the detail object data as this implementation can have redundent IO
             id_data = self.parse_type_id(self.id)
+            id_data["username"] = get_logged_in_user()
             lb = LabBook()
             lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
 
