@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from flask import Flask
+from flask_cors import CORS, cross_origin
+
 import blueprint
 
 from lmcommon.configuration import Configuration
@@ -27,6 +29,12 @@ config = Configuration()
 
 # Create Flask app and configure
 app = Flask("lmsrvlabbook")
+
+if config.config["flask"]["allow_cors"]:
+    # Allow CORS
+    CORS(app)
+
+# Set Debug mode
 app.config['DEBUG'] = config.config["flask"]["DEBUG"]
 
 # Register service
