@@ -104,7 +104,7 @@ class TestNoteService(object):
                 linkedCommit: \"""" + str(commit) + """\",
                 tags: ["user", "minor"],
                 freeText: "Lots of stuff can go here <>><<>::SDF:",
-                objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]
+                objects: [{key: "objectkey1", type: "PNG", value: "2new0x7FABC374FX"}]
               })
               {
                 note {
@@ -150,12 +150,13 @@ class TestNoteService(object):
             # Create a file in the LabBook and commit it
             working_dir = lb.git.config["working_directory"]
             labbook_dir = os.path.join(working_dir, "default", "default", "labbooks", "notes-test-2")
-            with open(os.path.join(labbook_dir, "code", "test1.txt"), 'wt') as dt:
-                dt.write("Some content")
-            lb.git.add(os.path.join(labbook_dir, "code", "test1.txt"))
-            commit = lb.git.commit("a test commit")
 
             for cnt in range(0, 5):
+                with open(os.path.join(labbook_dir, "code", "test{}.txt".format(cnt)), 'wt') as dt:
+                    dt.write("Some content")
+                lb.git.add(os.path.join(labbook_dir, "code", "test{}.txt".format(cnt)))
+                commit = lb.git.commit("a test commit {}".format(cnt))
+
                 # Create a note
                 query = """
                         mutation CreateNote {
@@ -166,7 +167,7 @@ class TestNoteService(object):
                             linkedCommit: \"""" + str(commit) + """\",
                             tags: ["user", "minor"],
                             freeText: "Lots of stuff can go here <>><<>::SDF:",
-                            objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]}) {
+                            objects: [{key: "objectkey1", type: "PNG", value: "2new0x7FABC374FX"}]}) {
                                 note {                  
                                   author 
                                   message

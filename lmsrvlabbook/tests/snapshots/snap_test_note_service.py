@@ -27,13 +27,13 @@ snapshots['TestNoteService.test_get_note_summaries 1'] = {
     'data': {
         'createNote': {
             'note': {
-                'author': None,
+                'author': 'noreply@gigantum.io',
                 'freeText': 'Lots of stuff can go here <>><<>::SDF:',
                 'level': 'USER_MINOR',
                 'message': 'Added a new file in this test 0',
                 'tags': [
-                    'user',
-                    'minor'
+                    'minor',
+                    'user'
                 ]
             }
         }
@@ -44,13 +44,13 @@ snapshots['TestNoteService.test_get_note_summaries 2'] = {
     'data': {
         'createNote': {
             'note': {
-                'author': None,
+                'author': 'noreply@gigantum.io',
                 'freeText': 'Lots of stuff can go here <>><<>::SDF:',
                 'level': 'USER_MINOR',
                 'message': 'Added a new file in this test 1',
                 'tags': [
-                    'user',
-                    'minor'
+                    'minor',
+                    'user'
                 ]
             }
         }
@@ -61,13 +61,13 @@ snapshots['TestNoteService.test_get_note_summaries 3'] = {
     'data': {
         'createNote': {
             'note': {
-                'author': None,
+                'author': 'noreply@gigantum.io',
                 'freeText': 'Lots of stuff can go here <>><<>::SDF:',
                 'level': 'USER_MINOR',
                 'message': 'Added a new file in this test 2',
                 'tags': [
-                    'user',
-                    'minor'
+                    'minor',
+                    'user'
                 ]
             }
         }
@@ -78,13 +78,13 @@ snapshots['TestNoteService.test_get_note_summaries 4'] = {
     'data': {
         'createNote': {
             'note': {
-                'author': None,
+                'author': 'noreply@gigantum.io',
                 'freeText': 'Lots of stuff can go here <>><<>::SDF:',
                 'level': 'USER_MINOR',
                 'message': 'Added a new file in this test 3',
                 'tags': [
-                    'user',
-                    'minor'
+                    'minor',
+                    'user'
                 ]
             }
         }
@@ -95,13 +95,13 @@ snapshots['TestNoteService.test_get_note_summaries 5'] = {
     'data': {
         'createNote': {
             'note': {
-                'author': None,
+                'author': 'noreply@gigantum.io',
                 'freeText': 'Lots of stuff can go here <>><<>::SDF:',
                 'level': 'USER_MINOR',
                 'message': 'Added a new file in this test 4',
                 'tags': [
-                    'user',
-                    'minor'
+                    'minor',
+                    'user'
                 ]
             }
         }
@@ -111,18 +111,65 @@ snapshots['TestNoteService.test_get_note_summaries 5'] = {
 snapshots['TestNoteService.test_get_note_summaries 6'] = {
     'data': {
         'labbook': {
-            'notes': None
+            'notes': {
+                'edges': [
+                    {
+                        'node': {
+                            'author': 'noreply@gigantum.io',
+                            'level': 'USER_MINOR',
+                            'message': 'Added a new file in this test 4',
+                            'tags': [
+                                'minor',
+                                'user'
+                            ]
+                        }
+                    },
+                    {
+                        'node': {
+                            'author': 'noreply@gigantum.io',
+                            'level': 'USER_MINOR',
+                            'message': 'Added a new file in this test 3',
+                            'tags': [
+                                'minor',
+                                'user'
+                            ]
+                        }
+                    },
+                    {
+                        'node': {
+                            'author': 'noreply@gigantum.io',
+                            'level': 'USER_MINOR',
+                            'message': 'Added a new file in this test 2',
+                            'tags': [
+                                'minor',
+                                'user'
+                            ]
+                        }
+                    },
+                    {
+                        'node': {
+                            'author': 'noreply@gigantum.io',
+                            'level': 'USER_MINOR',
+                            'message': 'Added a new file in this test 1',
+                            'tags': [
+                                'minor',
+                                'user'
+                            ]
+                        }
+                    },
+                    {
+                        'node': {
+                            'author': 'noreply@gigantum.io',
+                            'level': 'USER_MINOR',
+                            'message': 'Added a new file in this test 0',
+                            'tags': [
+                                'minor',
+                                'user'
+                            ]
+                        }
+                    }
+                ]
+            }
         }
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 17,
-                    'line': 4
-                }
-            ],
-            'message': 'Commit 75ca1f862eaa5e18db00012304aea487f2028c41 not found'
-        }
-    ]
+    }
 }
