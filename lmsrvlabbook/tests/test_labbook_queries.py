@@ -122,8 +122,6 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    # BVB TODO - Make more tests to include pagination!!
-
     def test_pagination(self, mock_config_file, snapshot):
         """Test pagination and cursors"""
 
