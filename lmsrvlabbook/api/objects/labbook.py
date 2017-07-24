@@ -193,7 +193,7 @@ class Labbook(LabbookSummary):
         git = get_git_interface(Configuration().config["git"])
         # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
         git.set_working_directory(os.path.join(git.working_directory, get_logged_in_user(),
-                                               self.owner.username, self.name))
+                                               self.owner.username, "labbooks", self.name))
 
         # TODO: Design a better cursor implementation
         # Get all edges and cursors. Here, cursors are just an index into the refs
