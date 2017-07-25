@@ -4,12 +4,6 @@ machine:
 
 dependencies:
   pre:
-    - sudo apt-get update
-    - sudo apt-get install linux-image-extra-$(uname -r) linux-image-extra-virtual; sudo apt-get update
-    - sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
-    - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    - sudo add-apt-repository    "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    - sudo apt-get update; sudo apt-get install docker-ce
     - sudo apt-get update; sudo apt-get install build-essential libsnappy-dev
     - mkdir ~/leveldb; cd ~/leveldb; git clone https://github.com/google/leveldb.git; cd leveldb/; make;
     - sudo scp ~/leveldb/leveldb/out-static/lib* ~/leveldb/leveldb/out-shared/lib* /usr/local/lib/

@@ -6,7 +6,8 @@ Flask-Cors==3.0.3
 iso8601
 
 # Environment Service requirements
-docker==2.3.0
+#docker==2.3.0
+docker==1.10.4
 
 # Testing requirements
 mock==2.0.0
