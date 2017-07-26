@@ -42,7 +42,6 @@ class Query(LabbookQuery, graphene.ObjectType):
 class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
-
 @pytest.fixture()
 def mock_config_file():
     """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
@@ -93,7 +92,7 @@ class TestLabBookServiceQueries(object):
     #
     #         snapshot.assert_match(client.execute(query))
 
-    def test_list_labbooks(self, mock_config_file, snapshot):
+    def test_list_labbooks(self, mock_config_file, snapshot, create_labbooks):
         """Test listing labbooks"""
 
         lb = LabBook(mock_config_file[0])
@@ -121,6 +120,9 @@ class TestLabBookServiceQueries(object):
             }
             """
             snapshot.assert_match(client.execute(query))
+
+    def create_labbooks(self, lb: LabBook):
+        pass
 
     def test_pagination(self, mock_config_file, snapshot):
         """Test pagination and cursors"""
