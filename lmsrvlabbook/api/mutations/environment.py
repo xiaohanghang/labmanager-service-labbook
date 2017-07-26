@@ -50,7 +50,13 @@ class BuildImage(graphene.relay.ClientIDMutation):
             owner = input["username"]
 
         # TODO: Move environment code into a library
-        client = docker.from_env(version="1.21")
+        docker_client_version = os.environ.get("DOCKER_CLIENT_VERSION")
+
+        if docker_client_version:
+            # This is needed for CircleCI, may be needed for other deployment envs as well.
+            client = docker.from_env(version=docker_client_version)
+        else:
+            client = docker.from_env()
 
         # Get Dockerfile directory
         env_dir = os.path.join(Configuration().config['git']['working_directory'], username, owner,
