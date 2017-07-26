@@ -115,7 +115,7 @@ class Environment(ObjectType):
             del id_data["type_id"]
 
         # TODO: Move environment interaction to a library
-        client = docker.from_env()
+        client = docker.from_env(version="1.21")
 
         # Check if the image exists
         try:

@@ -50,7 +50,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
             owner = input["username"]
 
         # TODO: Move environment code into a library
-        client = docker.from_env()
+        client = docker.from_env(version="1.21")
 
         # Get Dockerfile directory
         env_dir = os.path.join(Configuration().config['git']['working_directory'], username, owner,
