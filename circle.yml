@@ -18,10 +18,7 @@ dependencies:
     - pip install coveralls pytest-cov
 
 test:
-  pre:
-    - export DOCKER_CLIENT_VERSION="1.21"
-
   override:
-    - pytest --cov=lmsrvlabbook lmsrvlabbook/
-    - pytest --cov=lmsrvnotes --cov-append lmsrvnotes/
-    - coveralls
+    - export DOCKER_CLIENT_VERSION="1.21" && pytest --cov=lmsrvlabbook lmsrvlabbook/
+    - export DOCKER_CLIENT_VERSION="1.21" && pytest --cov=lmsrvnotes --cov-append lmsrvnotes/
+    - export DOCKER_CLIENT_VERSION="1.21" && coveralls
