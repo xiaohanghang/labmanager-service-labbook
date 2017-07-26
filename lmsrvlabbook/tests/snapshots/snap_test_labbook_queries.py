@@ -159,3 +159,33 @@ snapshots['TestLabBookServiceQueries.test_list_labbooks 1'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_pagination_first_only 1'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'MA==',
+                    'node': {
+                        'description': 'Cats labbook 1',
+                        'name': 'labbook1'
+                    }
+                },
+                {
+                    'cursor': 'MQ==',
+                    'node': {
+                        'description': 'Dogs labbook 2',
+                        'name': 'labbook2'
+                    }
+                },
+                {
+                    'cursor': 'Mg==',
+                    'node': {
+                        'description': 'Mice labbook 3',
+                        'name': 'labbook3'
+                    }
+                }
+            ]
+        }
+    }
+}

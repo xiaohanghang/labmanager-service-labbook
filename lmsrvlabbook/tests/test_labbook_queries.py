@@ -155,6 +155,28 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
+    def test_pagination_first_only(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Mock the configuration class it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks(first: 3) {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
     def test_pagination(self, mock_config_file, snapshot):
         """Test pagination and cursors"""
 
