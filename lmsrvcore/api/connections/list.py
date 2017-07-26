@@ -60,11 +60,15 @@ class ListBasedConnection(object):
             if self.args["after"] in self.cursors:
                 # Remove edges after cursor
                 after_index = int(base64.b64decode(self.args["after"]))
+            else:
+                raise ValueError("After cursor not in list")
 
         if "before" in self.args:
             if self.args["before"] in self.cursors:
                 # Remove edges after cursor
                 before_index = int(base64.b64decode(self.args["before"]))
+            else:
+                raise ValueError("Before cursor not in list")
 
         if after_index is not None and before_index is not None:
             self.edges = self.edges[after_index + 1:before_index]
