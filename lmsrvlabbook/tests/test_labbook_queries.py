@@ -177,6 +177,120 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
+    def test_pagination_first_and_after(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Nominal case
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks(first: 4, after: "Mg==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+            # Overrunning end of list of labbooks
+            query = """
+                    {
+                        localLabbooks(first: 6, after: "Ng==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+    def test_pagination_last_only(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Mock the configuration class it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks(last: 3) {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+    def test_pagination_last_and_before(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Mock the configuration class it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks(last: 3, before: "Nw==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+            # Overrun start of list
+            query = """
+                    {
+                        localLabbooks(last: 3, before: "MQ==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+            # Overrun with no intersection (should return empty list)
+            query = """
+                    {
+                        localLabbooks(last: 3, before: "MA==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
     def test_pagination(self, mock_config_file, snapshot):
         """Test pagination and cursors"""
 

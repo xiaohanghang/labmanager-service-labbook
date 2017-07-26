@@ -189,3 +189,148 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_only 1'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 1'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'Mw==',
+                    'node': {
+                        'description': 'Horses labbook 4',
+                        'name': 'labbook4'
+                    }
+                },
+                {
+                    'cursor': 'NA==',
+                    'node': {
+                        'description': 'Cheese labbook 5',
+                        'name': 'labbook5'
+                    }
+                },
+                {
+                    'cursor': 'NQ==',
+                    'node': {
+                        'description': 'Goat labbook 6',
+                        'name': 'labbook6'
+                    }
+                },
+                {
+                    'cursor': 'Ng==',
+                    'node': {
+                        'description': 'Turtle labbook 7',
+                        'name': 'labbook7'
+                    }
+                }
+            ]
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 2'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'Nw==',
+                    'node': {
+                        'description': 'Lamb labbook 8',
+                        'name': 'labbook8'
+                    }
+                },
+                {
+                    'cursor': 'OA==',
+                    'node': {
+                        'description': 'Taco labbook 9',
+                        'name': 'labbook9'
+                    }
+                }
+            ]
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_pagination_last_only 1'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'Ng==',
+                    'node': {
+                        'description': 'Turtle labbook 7',
+                        'name': 'labbook7'
+                    }
+                },
+                {
+                    'cursor': 'Nw==',
+                    'node': {
+                        'description': 'Lamb labbook 8',
+                        'name': 'labbook8'
+                    }
+                },
+                {
+                    'cursor': 'OA==',
+                    'node': {
+                        'description': 'Taco labbook 9',
+                        'name': 'labbook9'
+                    }
+                }
+            ]
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 1'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'NA==',
+                    'node': {
+                        'description': 'Cheese labbook 5',
+                        'name': 'labbook5'
+                    }
+                },
+                {
+                    'cursor': 'NQ==',
+                    'node': {
+                        'description': 'Goat labbook 6',
+                        'name': 'labbook6'
+                    }
+                },
+                {
+                    'cursor': 'Ng==',
+                    'node': {
+                        'description': 'Turtle labbook 7',
+                        'name': 'labbook7'
+                    }
+                }
+            ]
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 2'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'MA==',
+                    'node': {
+                        'description': 'Cats labbook 1',
+                        'name': 'labbook1'
+                    }
+                }
+            ]
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 3'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+            ]
+        }
+    }
+}
