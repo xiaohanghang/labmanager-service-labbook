@@ -150,6 +150,10 @@ class TestLabBookServiceQueries(object):
                                 }
                                 cursor
                             }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
                         }
                     }
                     """
@@ -171,6 +175,10 @@ class TestLabBookServiceQueries(object):
                                     description
                                 }
                                 cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
                             }
                         }
                     }
@@ -194,6 +202,10 @@ class TestLabBookServiceQueries(object):
                                 }
                                 cursor
                             }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
                         }
                     }
                     """
@@ -210,6 +222,10 @@ class TestLabBookServiceQueries(object):
                                 }
                                 cursor
                             }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
                         }
                     }
                     """
@@ -225,6 +241,10 @@ class TestLabBookServiceQueries(object):
                                     description
                                 }
                                 cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
                             }
                         }
                     }
@@ -248,6 +268,10 @@ class TestLabBookServiceQueries(object):
                                 }
                                 cursor
                             }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
                         }
                     }
                     """
@@ -270,6 +294,10 @@ class TestLabBookServiceQueries(object):
                                 }
                                 cursor
                             }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
                         }
                     }
                     """
@@ -286,6 +314,10 @@ class TestLabBookServiceQueries(object):
                                 }
                                 cursor
                             }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
                         }
                     }
                     """
@@ -301,6 +333,10 @@ class TestLabBookServiceQueries(object):
                                     description
                                 }
                                 cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
                             }
                         }
                     }
@@ -329,6 +365,10 @@ class TestLabBookServiceQueries(object):
                                 }
                                 cursor
                             }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
                         }
                     }
                     """
@@ -343,6 +383,10 @@ class TestLabBookServiceQueries(object):
                                     description
                                 }
                                 cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
                             }
                         }
                     }

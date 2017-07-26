@@ -97,7 +97,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_noargs 1'] = {
                         'name': 'labbook9'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': False,
+                'hasPreviousPage': False
+            }
         }
     }
 }
@@ -127,7 +131,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_only 1'] = {
                         'name': 'labbook3'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': True,
+                'hasPreviousPage': False
+            }
         }
     }
 }
@@ -164,7 +172,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 1'] = {
                         'name': 'labbook7'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': True,
+                'hasPreviousPage': False
+            }
         }
     }
 }
@@ -187,7 +199,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 2'] = {
                         'name': 'labbook9'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': True,
+                'hasPreviousPage': False
+            }
         }
     }
 }
@@ -196,7 +212,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
     'data': {
         'localLabbooks': {
             'edges': [
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': True,
+                'hasPreviousPage': False
+            }
         }
     }
 }
@@ -226,7 +246,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_only 1'] = {
                         'name': 'labbook9'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': False,
+                'hasPreviousPage': True
+            }
         }
     }
 }
@@ -256,7 +280,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 1'] = {
                         'name': 'labbook7'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': False,
+                'hasPreviousPage': True
+            }
         }
     }
 }
@@ -272,7 +300,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 2'] = {
                         'name': 'labbook1'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': False,
+                'hasPreviousPage': True
+            }
         }
     }
 }
@@ -281,7 +313,11 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 3'] = {
     'data': {
         'localLabbooks': {
             'edges': [
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': False,
+                'hasPreviousPage': True
+            }
         }
     }
 }
@@ -304,7 +340,11 @@ snapshots['TestLabBookServiceQueries.test_pagination 1'] = {
                         'name': 'labbook4'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': True,
+                'hasPreviousPage': False
+            }
         }
     }
 }
@@ -327,7 +367,11 @@ snapshots['TestLabBookServiceQueries.test_pagination 2'] = {
                         'name': 'labbook6'
                     }
                 }
-            ]
+            ],
+            'pageInfo': {
+                'hasNextPage': False,
+                'hasPreviousPage': True
+            }
         }
     }
 }
