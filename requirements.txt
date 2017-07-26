@@ -7,7 +7,7 @@ iso8601
 
 # Environment Service requirements
 #docker==2.3.0
-docker==1.10.4
+docker==1.10.6
 
 # Testing requirements
 mock==2.0.0
