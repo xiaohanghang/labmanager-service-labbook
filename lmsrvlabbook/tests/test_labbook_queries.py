@@ -67,6 +67,18 @@ git:
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
 
+def create_labbooks(lb: LabBook):
+    lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
+    lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
+    lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
+    lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
+    lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
+    lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
+    lb.new(owner={"username": "default"}, name="labbook7", description="Turtle labbook 7")
+    lb.new(owner={"username": "default"}, name="labbook8", description="Lamb labbook 8")
+    lb.new(owner={"username": "default"}, name="labbook9", description="Taco labbook 9")
+    lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
+
 
 class TestLabBookServiceQueries(object):
     # def test_list_users(self, mock_config_file, snapshot):
@@ -92,7 +104,7 @@ class TestLabBookServiceQueries(object):
     #
     #         snapshot.assert_match(client.execute(query))
 
-    def test_list_labbooks(self, mock_config_file, snapshot, create_labbooks):
+    def test_list_labbooks(self, mock_config_file, snapshot):
         """Test listing labbooks"""
 
         lb = LabBook(mock_config_file[0])
@@ -121,20 +133,33 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def create_labbooks(self, lb: LabBook):
-        pass
+    def test_pagination_noargs(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Mock the configuration class it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
 
     def test_pagination(self, mock_config_file, snapshot):
         """Test pagination and cursors"""
 
         lb = LabBook(mock_config_file[0])
-        lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
-        lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
-        lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
-        lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
-        lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
-        lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
-        lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
+        create_labbooks(lb)
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
