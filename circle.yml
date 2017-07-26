@@ -20,5 +20,4 @@ dependencies:
 test:
   override:
     - export DOCKER_CLIENT_VERSION="1.21" && pytest --cov=lmsrvlabbook lmsrvlabbook/
-    - export DOCKER_CLIENT_VERSION="1.21" && pytest --cov=lmsrvnotes --cov-append lmsrvnotes/
     - export DOCKER_CLIENT_VERSION="1.21" && coveralls
