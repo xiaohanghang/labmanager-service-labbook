@@ -8,7 +8,6 @@ dependencies:
     - mkdir ~/leveldb; cd ~/leveldb; git clone https://github.com/google/leveldb.git; cd leveldb/; make;
     - sudo scp ~/leveldb/leveldb/out-static/lib* ~/leveldb/leveldb/out-shared/lib* /usr/local/lib/
     - cd ~/leveldb/leveldb/include/; sudo scp -r leveldb /usr/local/include/; sudo ldconfig
-    - export DOCKER_CLIENT_VERSION="1.21"
     - sudo service docker start
     - git config --global user.email "noreply@gigantum.io"
     - git config --global user.name "CircleCI"
@@ -19,6 +18,9 @@ dependencies:
     - pip install coveralls pytest-cov
 
 test:
+  pre:
+    - export DOCKER_CLIENT_VERSION="1.21"
+
   override:
     - pytest --cov=lmsrvlabbook lmsrvlabbook/
     - pytest --cov=lmsrvnotes --cov-append lmsrvnotes/
