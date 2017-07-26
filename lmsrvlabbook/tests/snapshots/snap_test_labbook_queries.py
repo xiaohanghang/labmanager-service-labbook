@@ -334,3 +334,54 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 3'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'MA==',
+                    'node': {
+                        'description': 'Cats labbook 1',
+                        'name': 'labbook1'
+                    }
+                },
+                {
+                    'cursor': 'MQ==',
+                    'node': {
+                        'description': 'Dogs labbook 2',
+                        'name': 'labbook2'
+                    }
+                },
+                {
+                    'cursor': 'Mg==',
+                    'node': {
+                        'description': 'Mice labbook 3',
+                        'name': 'labbook3'
+                    }
+                },
+                {
+                    'cursor': 'Mw==',
+                    'node': {
+                        'description': 'Horses labbook 4',
+                        'name': 'labbook4'
+                    }
+                },
+                {
+                    'cursor': 'NA==',
+                    'node': {
+                        'description': 'Cheese labbook 5',
+                        'name': 'labbook5'
+                    }
+                },
+                {
+                    'cursor': 'NQ==',
+                    'node': {
+                        'description': 'Goat labbook 6',
+                        'name': 'labbook6'
+                    }
+                }
+            ]
+        }
+    }
+}

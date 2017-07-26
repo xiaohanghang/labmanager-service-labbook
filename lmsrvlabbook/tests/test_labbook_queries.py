@@ -215,6 +215,22 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
+            # Overrunning end of list of labbooks, returns empty set.
+            query = """
+                    {
+                        localLabbooks(first: 6, after: "Oa==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
     def test_pagination_last_only(self, mock_config_file, snapshot):
         lb = LabBook(mock_config_file[0])
         create_labbooks(lb)
