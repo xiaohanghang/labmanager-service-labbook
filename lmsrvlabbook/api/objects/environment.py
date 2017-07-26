@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
+import os
 
 import docker
 from docker.errors import ImageNotFound, NotFound
@@ -115,7 +116,13 @@ class Environment(ObjectType):
             del id_data["type_id"]
 
         # TODO: Move environment interaction to a library
-        client = docker.from_env()
+        docker_client_version = os.environ.get("DOCKER_CLIENT_VERSION")
+
+        if docker_client_version:
+            # This is needed for CircleCI, may be needed for other deployment envs as well.
+            client = docker.from_env(version=docker_client_version)
+        else:
+            client = docker.from_env()
 
         # Check if the image exists
         try:
