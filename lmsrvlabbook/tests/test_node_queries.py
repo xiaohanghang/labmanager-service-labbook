@@ -71,4 +71,26 @@ git:
 
 class TestLabBookServiceQueries(object):
     def test_cats(self, mock_config_file, snapshot):
-        pass
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+        lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
+        lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Get LabBooks for the "logged in user" - Currently just "default"
+            query = """
+                    {
+                        node(id: "TGFiYm9va1N1bW1hcnk6ZGVmYXVsdCZsYWJib29rMg==") {
+                            id
+                            ... on Labbook {
+                                name
+                                description
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
