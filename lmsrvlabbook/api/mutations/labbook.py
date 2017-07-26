@@ -20,6 +20,7 @@
 import graphene
 
 from lmcommon.labbook import LabBook
+from lmcommon.notes import NoteStore, NoteLogLevel
 
 from lmsrvcore.auth.user import get_logged_in_user
 
@@ -46,6 +47,18 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         lb.new(owner={"username": username},
                name=input.get('name'),
                description=input.get('description'))
+
+        # Create a new Note entry
+        ns = NoteStore(lb)
+        note_data = {"linked_commit": lb.git.commit_hash,
+                     "message": "Created new LabBook: {}/{}".format(username, input.get('name')),
+                     "level": NoteLogLevel.USER_MAJOR,
+                     "tags": [],
+                     "free_text": "",
+                     "objects": []
+                     }
+
+        ns.create_note(note_data)
 
         # Get a graphene instance of the newly created LabBook
         id_data = {"owner": username,

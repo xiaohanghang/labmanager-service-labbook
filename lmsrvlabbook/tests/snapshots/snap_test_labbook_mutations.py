@@ -11,7 +11,17 @@ snapshots['TestLabBookServiceMutations.test_create_labbook 1'] = {
     'data': {
         'labbook': {
             'description': 'my test description',
-            'name': 'test-lab-book1'
+            'name': 'test-lab-book1',
+            'notes': {
+                'edges': [
+                    {
+                        'node': {
+                            'freeText': '',
+                            'message': 'Created new LabBook: default/test-lab-book1'
+                        }
+                    }
+                ]
+            }
         }
     }
 }

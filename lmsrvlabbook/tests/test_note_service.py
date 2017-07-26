@@ -104,7 +104,7 @@ class TestNoteService(object):
                 linkedCommit: \"""" + str(commit) + """\",
                 tags: ["user", "minor"],
                 freeText: "Lots of stuff can go here <>><<>::SDF:",
-                objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]
+                objects: [{key: "objectkey1", type: "PNG", value: "2new0x7FABC374FX"}]
               })
               {
                 note {
@@ -150,12 +150,13 @@ class TestNoteService(object):
             # Create a file in the LabBook and commit it
             working_dir = lb.git.config["working_directory"]
             labbook_dir = os.path.join(working_dir, "default", "default", "labbooks", "notes-test-2")
-            with open(os.path.join(labbook_dir, "code", "test1.txt"), 'wt') as dt:
-                dt.write("Some content")
-            lb.git.add(os.path.join(labbook_dir, "code", "test1.txt"))
-            commit = lb.git.commit("a test commit")
 
             for cnt in range(0, 5):
+                with open(os.path.join(labbook_dir, "code", "test{}.txt".format(cnt)), 'wt') as dt:
+                    dt.write("Some content")
+                lb.git.add(os.path.join(labbook_dir, "code", "test{}.txt".format(cnt)))
+                commit = lb.git.commit("a test commit {}".format(cnt))
+
                 # Create a note
                 query = """
                         mutation CreateNote {
@@ -166,7 +167,7 @@ class TestNoteService(object):
                             linkedCommit: \"""" + str(commit) + """\",
                             tags: ["user", "minor"],
                             freeText: "Lots of stuff can go here <>><<>::SDF:",
-                            objects: [{key: "objectkey1", objectType: "PNG", value: "2new0x7FABC374FX"}]}) {
+                            objects: [{key: "objectkey1", type: "PNG", value: "2new0x7FABC374FX"}]}) {
                                 note {                  
                                   author 
                                   message
@@ -199,3 +200,103 @@ class TestNoteService(object):
             }
             """
             snapshot.assert_match(client.execute(query))
+
+    def test_get_full_note(self, mock_config_file, snapshot):
+        """Test creating and getting a note"""
+
+        # Create labbook
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name="notes-test-1", description="my first labbook10000")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Create a file in the LabBook and commit it
+            working_dir = lb.git.config["working_directory"]
+            labbook_dir = os.path.join(working_dir, "default", "default", "labbooks", "notes-test-1")
+            with open(os.path.join(labbook_dir, "code", "test1.txt"), 'wt') as dt:
+                dt.write("Some content")
+            lb.git.add(os.path.join(labbook_dir, "code", "test1.txt"))
+            commit = lb.git.commit("a test commit")
+
+            # Create a note
+            query = """
+            mutation makenote {
+              createNote(input: {
+                labbookName: "notes-test-1",
+                owner: "default",
+                level: USER_MINOR,
+                message: "Added a new file in this test",
+                linkedCommit: \"""" + str(commit) + """\",
+                tags: ["user", "minor"],
+                freeText: "Lots of stuff can go here <>><<>::SDF:",
+                objects: [{key: "objectkey1", type: "PNG", value: "2new0x7FABC374FX"}, {key: "objectkey2", type: "BLOB", value: "YXNkZmFzZGZmZ2RoYXNkMTI0Mw=="}]
+              })
+              {
+                note {
+                  message              
+                }
+              }
+            }
+            """
+
+            result = client.execute(query)
+
+            query = """
+            {
+                labbook(name: "notes-test-1", owner: "default") {
+                    notes(first:1) {
+                        edges {
+                            node {                                                                                       
+                                message
+                                author
+                                level
+                                tags
+                                freeText
+                                objects {
+                                    edges {
+                                        node {
+                                            key
+                                            type
+                                            value
+                                        }
+                                        cursor
+                                    }
+                                }
+                            }
+                            cursor
+                        }                        
+                    }
+                }
+            }
+            """
+            response = client.execute(query)
+            snapshot.assert_match(response)
+
+            query = """
+                       {
+                           labbook(name: "notes-test-1", owner: "default") {
+                               notes(first:1) {
+                                   edges {
+                                       node {
+                                           id                                                       
+                                           commit
+                                           linkedCommit        
+                                           timestamp                                   
+                                       }
+                                       cursor
+                                   }                        
+                               }
+                           }
+                       }
+                       """
+            response = client.execute(query)
+
+            # make sure fields that do change are at least reasonable
+            assert type(response['data']['labbook']['notes']['edges'][0]['node']['commit']) == str
+            assert type(response['data']['labbook']['notes']['edges'][0]['node']['linkedCommit']) == str
+            assert type(response['data']['labbook']['notes']['edges'][0]['node']['timestamp']) == str
+            assert len(response['data']['labbook']['notes']['edges'][0]['node']['commit']) == 40
+            assert len(response['data']['labbook']['notes']['edges'][0]['node']['linkedCommit']) == 40

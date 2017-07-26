@@ -97,6 +97,14 @@ class TestLabBookServiceMutations(object):
               labbook(name: "test-lab-book1", owner: "default") {
                 name
                 description
+                notes{
+                  edges{
+                    node{
+                      message
+                      freeText
+                    }
+                  }
+                }
               }
             }
             """
