@@ -7,57 +7,22 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['TestLabBookServiceQueries.test_get_labbook 1'] = {
-    'data': {
-        'labbook': {
-            'activeBranch': {
-                'name': 'master'
-            },
-            'description': 'my first labbook1',
-            'name': 'labbook1'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_pagination 1'] = {
+snapshots['TestLabBookServiceQueries.test_list_labbooks 1'] = {
     'data': {
         'localLabbooks': {
             'edges': [
                 {
-                    'cursor': 'Mg==',
+                    'cursor': 'MA==',
                     'node': {
-                        'description': 'Mice labbook 3',
-                        'name': 'labbook3'
+                        'description': 'my first labbook1',
+                        'name': 'labbook1'
                     }
                 },
                 {
-                    'cursor': 'Mw==',
+                    'cursor': 'MQ==',
                     'node': {
-                        'description': 'Horses labbook 4',
-                        'name': 'labbook4'
-                    }
-                }
-            ]
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_pagination 2'] = {
-    'data': {
-        'localLabbooks': {
-            'edges': [
-                {
-                    'cursor': 'NA==',
-                    'node': {
-                        'description': 'Cheese labbook 5',
-                        'name': 'labbook5'
-                    }
-                },
-                {
-                    'cursor': 'NQ==',
-                    'node': {
-                        'description': 'Goat labbook 6',
-                        'name': 'labbook6'
+                        'description': 'my first labbook2',
+                        'name': 'labbook2'
                     }
                 }
             ]
@@ -130,29 +95,6 @@ snapshots['TestLabBookServiceQueries.test_pagination_noargs 1'] = {
                     'node': {
                         'description': 'Taco labbook 9',
                         'name': 'labbook9'
-                    }
-                }
-            ]
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_list_labbooks 1'] = {
-    'data': {
-        'localLabbooks': {
-            'edges': [
-                {
-                    'cursor': 'MA==',
-                    'node': {
-                        'description': 'my first labbook1',
-                        'name': 'labbook1'
-                    }
-                },
-                {
-                    'cursor': 'MQ==',
-                    'node': {
-                        'description': 'my first labbook2',
-                        'name': 'labbook2'
                     }
                 }
             ]
@@ -250,6 +192,15 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 2'] = {
     }
 }
 
+snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+            ]
+        }
+    }
+}
+
 snapshots['TestLabBookServiceQueries.test_pagination_last_only 1'] = {
     'data': {
         'localLabbooks': {
@@ -335,24 +286,10 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 3'] = {
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
+snapshots['TestLabBookServiceQueries.test_pagination 1'] = {
     'data': {
         'localLabbooks': {
             'edges': [
-                {
-                    'cursor': 'MA==',
-                    'node': {
-                        'description': 'Cats labbook 1',
-                        'name': 'labbook1'
-                    }
-                },
-                {
-                    'cursor': 'MQ==',
-                    'node': {
-                        'description': 'Dogs labbook 2',
-                        'name': 'labbook2'
-                    }
-                },
                 {
                     'cursor': 'Mg==',
                     'node': {
@@ -366,7 +303,16 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
                         'description': 'Horses labbook 4',
                         'name': 'labbook4'
                     }
-                },
+                }
+            ]
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_pagination 2'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
                 {
                     'cursor': 'NA==',
                     'node': {
@@ -382,6 +328,18 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
                     }
                 }
             ]
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_labbook 1'] = {
+    'data': {
+        'labbook': {
+            'activeBranch': {
+                'name': 'master'
+            },
+            'description': 'my first labbook1',
+            'name': 'labbook1'
         }
     }
 }

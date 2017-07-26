@@ -218,7 +218,7 @@ class TestLabBookServiceQueries(object):
             # Overrunning end of list of labbooks, returns empty set.
             query = """
                     {
-                        localLabbooks(first: 6, after: "Oa==") {
+                        localLabbooks(first: 6, after: "OA==") {
                             edges {
                                 node {
                                     name
