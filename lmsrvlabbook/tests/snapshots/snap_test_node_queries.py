@@ -60,6 +60,16 @@ snapshots['TestLabBookServiceQueries.test_node_environment 2'] = {
 
 snapshots['TestLabBookServiceQueries.test_node_notes 1'] = {
     'data': {
-        'node': None
+        'node': {
+            'author': 'noreply@gigantum.io',
+            'id': 'Tm90ZTpkZWZhdWx0JnRlc3Qtbm9kZS1ub3RlLTEmNDYxNDk4NGJhZDA1YjNiNDhlMTZhNTMxNGY1ZDI2YjQwZjQ4ZGRjNg==',
+            'level': 'USER_MINOR',
+            'linkedCommit': 'dbc5e4b12101d61343dad3d986d69e6aa91b0735',
+            'message': 'Added a new file in this test',
+            'tags': [
+                'minor',
+                'user'
+            ]
+        }
     }
 }
