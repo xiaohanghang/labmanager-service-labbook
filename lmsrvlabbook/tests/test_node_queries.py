@@ -69,6 +69,26 @@ git:
     shutil.rmtree(temp_dir)
 
 
+def create_stock_labbook(client, name: str):
+    """Creates a boilerplate labbook for further queries or mutations"""
+
+    query = """
+    mutation myCreateLabbook($name: String!, $desc: String!) {
+      createLabbook(input: {name: $name, description: $desc}) {
+        labbook {
+          id
+          name
+          description
+        }
+      }
+    }
+    """
+
+    variables = {"name": name, "desc": "Example labbook by mutation."}
+    results = client.execute(query, variable_values=variables)
+    return results
+
+
 class TestLabBookServiceQueries(object):
 
     def test_node_labbook_from_object(self, mock_config_file, snapshot):
@@ -185,3 +205,9 @@ class TestLabBookServiceQueries(object):
             }
             """ % env_id
             snapshot.assert_match(client.execute(env_node_query))
+
+    def test_node_notes(self, mock_config_file, snapshot):
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            create_stock_labbook(client=client, name="Test-Node-Node-1")
+
