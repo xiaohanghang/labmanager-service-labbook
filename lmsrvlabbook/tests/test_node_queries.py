@@ -207,7 +207,50 @@ class TestLabBookServiceQueries(object):
             snapshot.assert_match(client.execute(env_node_query))
 
     def test_node_notes(self, mock_config_file, snapshot):
+        labbook_name="Test-Node-Note-1"
+
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name=labbook_name, description="Labby McLabbook 99")
+
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
             client = Client(mock_config_file[2])
-            create_stock_labbook(client=client, name="Test-Node-Node-1")
 
+            working_dir = lb.git.config["working_directory"]
+            labbook_dir = os.path.join(working_dir, "default", "default", "labbooks", labbook_name)
+            with open(os.path.join(labbook_dir, "code", "test1.txt"), 'wt') as dt:
+                dt.write("Some content")
+            lb.git.add(os.path.join(labbook_dir, "code", "test1.txt"))
+            commit = lb.git.commit("a test commit")
+
+            #results = create_stock_labbook(client=client, name=labbook_name)
+
+            make_note_query = """
+             mutation makenote {
+               createNote(input: {
+                 labbookName: "%s",
+                 owner: "default",
+                 level: USER_MINOR,
+                 message: "Added a new file in this test",
+                 linkedCommit: \"""" + str(commit) + """\",
+                 tags: ["user", "minor"],
+                 freeText: "Lots of stuff can go here <>><<>::SDF:",
+                 objects: [{key: "objectkey1",
+                            type: "PNG", 
+                            value: "2new0x7FABC374FX"
+                            }, 
+                            {key: "objectkey2", 
+                            type: "BLOB", 
+                            value: "YXNkZmFzZGZmZ2RoYXNkMTI0Mw=="}]
+               })
+               {
+                 note {
+                   id
+                   message              
+                 }
+               }
+             }
+             """
+
+            node_id = client.execute(make_note_query)['data']#['createNote']#['note']['id']
+            import pprint; pprint.pprint(node_id)
+            assert False
