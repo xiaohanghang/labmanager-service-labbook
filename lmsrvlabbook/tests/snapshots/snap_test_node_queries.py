@@ -57,3 +57,9 @@ snapshots['TestLabBookServiceQueries.test_node_environment 2'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_node_notes 1'] = {
+    'data': {
+        'node': None
+    }
+}

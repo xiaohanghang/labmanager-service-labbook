@@ -270,4 +270,20 @@ class TestLabBookServiceQueries(object):
             """ % labbook_name
             first_note_id = client.execute(query)['data']['labbook']['notes']['edges'][0]['node']['id']
 
-            
+            #import pprint; pprint.pprint(first_note_id); assert False
+            node_note_query = """
+            {
+                node(id: "%s") {
+                    id
+                    ... on Note {
+                        author
+                        level
+                        message
+                        linkedCommit
+                        tags
+                    }
+                }
+            }
+            """ % first_note_id
+
+            snapshot.assert_match(client.execute(node_note_query))
