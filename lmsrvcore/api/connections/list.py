@@ -108,8 +108,8 @@ class ListBasedConnection(object):
         elif self.total_edges > int(self.args["first"]):
             has_next_page = True
 
-        assert not (has_next_page and len(self.edges) == 0)
-        assert not (has_previous_page and len(self.edges) == 0)
+        assert not (has_next_page and len(self.edges) == 0), "hasNextPage is true but length of edges is zero"
+        assert not (has_previous_page and len(self.edges) == 0), "hasPrevPage is true but length of edges is zero"
 
         if len(self.edges) == 0:
             start_cursor, end_cursor = None, None
