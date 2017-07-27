@@ -70,36 +70,66 @@ git:
 
 
 class TestLabBookServiceQueries(object):
-    def test_cats(self, mock_config_file, snapshot):
-        lb = LabBook(mock_config_file[0])
-        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
-        lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
-        lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
-
-        # Mock the configuration class it it returns the same mocked config file
+    def test_node_labbook_from_object(self, mock_config_file, snapshot):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
             # Make and validate request
             client = Client(mock_config_file[2])
 
-            # Get LabBooks for the "logged in user" - Currently just "default"
-            #
             query = """
                     {
-                        node(id: "TGFiYm9va1N1bW1hcnk6ZGVmYXVsdCZsYWJib29rMg==") {
+                        node(id: "%s") {
                             ... on Labbook {
                                 name
+                                description
+                                activeBranch {
+                                    name
+                                }
                             }
                             id
                         }
                     }
                     """
-                    #fragment cat on Labbook {
-                    #    name
-                    #}
-                    #"""
-            import pprint
-            print('----------->>>>')
-            pprint.pprint(client.execute(query)['data'])
+
+            # This test still needs to be ironed out.
+            assert False
+            #snapshot.assert_match(client.execute(query))
+
+    def test_node_labbook_from_mutation(self, mock_config_file, snapshot):
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            create_query = """
+            mutation myCreateLabbook($name: String!, $desc: String!) {
+              createLabbook(input: {name: $name, description: $desc}) {
+                labbook {
+                  id
+                  name
+                  description
+                }
+              }
+            }
+            """
+
+            variables = {"name": "test-lab-book1", "desc": "my test description"}
+            labbook_id = \
+                client.execute(create_query, variable_values=variables)['data']['createLabbook']['labbook']['id']
+
+            query = """
+                    {
+                        node(id: "%s") {
+                            ... on Labbook {
+                                name
+                                description
+                                activeBranch {
+                                    name
+                                }
+                            }
+                            id
+                        }
+                    }
+                    """ % labbook_id
+
             snapshot.assert_match(client.execute(query))
 
-            result = client.execute(query)['data']['node']['labbook']['name']
+    def test_node_
