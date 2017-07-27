@@ -34,7 +34,6 @@ class ListBasedConnection(object):
             ListBasedConnection
         """
         self.edges = edges
-        self.total_edges = len(edges)
         self.cursors = cursors
         self.args = args
         self.page_info = None
@@ -45,6 +44,10 @@ class ListBasedConnection(object):
         Returns:
             None
         """
+
+        if "first" in self.args and "last" in self.args:
+            raise ValueError("`first` and `last` arguments cannot be used together")
+
         # Verify valid slicing args
         if "first" in self.args:
             if int(self.args["first"]) < 0:
@@ -60,11 +63,15 @@ class ListBasedConnection(object):
             if self.args["after"] in self.cursors:
                 # Remove edges after cursor
                 after_index = int(base64.b64decode(self.args["after"]))
+            else:
+                raise ValueError("`after` cursor is invalid")
 
         if "before" in self.args:
             if self.args["before"] in self.cursors:
                 # Remove edges after cursor
                 before_index = int(base64.b64decode(self.args["before"]))
+            else:
+                raise ValueError("`before` cursor is invalid")
 
         if after_index is not None and before_index is not None:
             self.edges = self.edges[after_index + 1:before_index]
@@ -75,6 +82,8 @@ class ListBasedConnection(object):
         elif before_index is not None:
             self.edges = self.edges[:before_index]
             self.cursors = self.cursors[:before_index]
+
+        pre_slice_len = len(self.edges)
 
         # Apply slicing filters
         if "first" in self.args:
@@ -89,15 +98,22 @@ class ListBasedConnection(object):
 
         # Compute page info status
         has_previous_page = False
-        if "last" not in self.args:
+        if "last" not in self.args or len(self.edges) == 0:
             has_previous_page = False
-        elif self.total_edges > int(self.args["last"]):
+        elif pre_slice_len > int(self.args["last"]):
             has_previous_page = True
 
         has_next_page = False
-        if "first" not in self.args:
+        if "first" not in self.args or len(self.edges) == 0:
             has_next_page = False
-        elif self.total_edges > int(self.args["first"]):
+        elif pre_slice_len > int(self.args["first"]):
             has_next_page = True
 
-        self.page_info = graphene.relay.PageInfo(has_next_page=has_next_page, has_previous_page=has_previous_page)
+        if len(self.edges) == 0:
+            start_cursor, end_cursor = None, None
+        else:
+            start_cursor, end_cursor = self.cursors[0], self.cursors[-1]
+
+        # startCursor and endCursor
+        self.page_info = graphene.relay.PageInfo(has_next_page=has_next_page, has_previous_page=has_previous_page,
+                                                 start_cursor=start_cursor, end_cursor=end_cursor)
