@@ -151,8 +151,22 @@ class TestLabBookServiceQueries(object):
             }
             """
             variables = {"name": "node-env-test-lb", "desc": "Node env test labbook."}
+            client.execute(query, variable_values=variables)
 
             env_query = """
-            TODO
+            {
+                node(id: "TGFiYm9vazpkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=") {
+                    id
+                    ... on Labbook {
+                        name
+                        description
+                        environment {
+                            imageStatus
+                            containerStatus
+                        }
+                    }
+                }
+            }
             """
+            snapshot.assert_match(client.execute(env_query))
 

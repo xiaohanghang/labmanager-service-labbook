@@ -7,22 +7,16 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['TestLabBookServiceQueries.test_node_labbook 1'] = {
+snapshots['TestLabBookServiceQueries.test_node_labbook_from_object 1'] = {
     'data': {
         'node': {
             'activeBranch': {
                 'name': 'master'
             },
-            'description': 'my test description',
-            'id': 'TGFiYm9vazpkZWZhdWx0JnRlc3QtbGFiLWJvb2sx',
-            'name': 'test-lab-book1'
+            'description': 'Test cat labbook from obj',
+            'id': 'TGFiYm9vazpkZWZhdWx0JmNhdC1sYWItYm9vazE=',
+            'name': 'cat-lab-book1'
         }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_node_labbook_from_object 1'] = {
-    'data': {
-        'node': None
     }
 }
 
@@ -35,6 +29,20 @@ snapshots['TestLabBookServiceQueries.test_node_labbook_from_mutation 1'] = {
             'description': 'my test description',
             'id': 'TGFiYm9vazpkZWZhdWx0JnRlc3QtbGFiLWJvb2sx',
             'name': 'test-lab-book1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_node_environment 1'] = {
+    'data': {
+        'node': {
+            'description': 'Node env test labbook.',
+            'environment': {
+                'containerStatus': 'NOT_RUNNING',
+                'imageStatus': 'DOES_NOT_EXIST'
+            },
+            'id': 'TGFiYm9vazpkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=',
+            'name': 'node-env-test-lb'
         }
     }
 }
