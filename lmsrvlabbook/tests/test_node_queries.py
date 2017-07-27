@@ -274,12 +274,10 @@ class TestLabBookServiceQueries(object):
             node_note_query = """
             {
                 node(id: "%s") {
-                    id
                     ... on Note {
                         author
                         level
                         message
-                        linkedCommit
                         tags
                     }
                 }
