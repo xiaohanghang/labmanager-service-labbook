@@ -174,8 +174,10 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 1'] = {
                 }
             ],
             'pageInfo': {
+                'endCursor': 'Ng==',
                 'hasNextPage': True,
-                'hasPreviousPage': False
+                'hasPreviousPage': False,
+                'startCursor': 'Mw=='
             }
         }
     }
@@ -302,8 +304,10 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 2'] = {
                 }
             ],
             'pageInfo': {
+                'endCursor': 'MA==',
                 'hasNextPage': False,
-                'hasPreviousPage': True
+                'hasPreviousPage': True,
+                'startCursor': 'MA=='
             }
         }
     }
@@ -315,8 +319,10 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 3'] = {
             'edges': [
             ],
             'pageInfo': {
+                'endCursor': None,
                 'hasNextPage': False,
-                'hasPreviousPage': False
+                'hasPreviousPage': False,
+                'startCursor': None
             }
         }
     }
