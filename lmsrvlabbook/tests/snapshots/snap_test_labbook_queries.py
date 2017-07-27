@@ -203,7 +203,7 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 2'] = {
                 }
             ],
             'pageInfo': {
-                'hasNextPage': True,
+                'hasNextPage': False,
                 'hasPreviousPage': False
             }
         }
@@ -306,7 +306,7 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 2'] = {
             'pageInfo': {
                 'endCursor': 'MA==',
                 'hasNextPage': False,
-                'hasPreviousPage': True,
+                'hasPreviousPage': False,
                 'startCursor': 'MA=='
             }
         }
