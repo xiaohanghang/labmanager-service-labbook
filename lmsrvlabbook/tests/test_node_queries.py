@@ -82,15 +82,24 @@ class TestLabBookServiceQueries(object):
             client = Client(mock_config_file[2])
 
             # Get LabBooks for the "logged in user" - Currently just "default"
+            #
             query = """
                     {
                         node(id: "TGFiYm9va1N1bW1hcnk6ZGVmYXVsdCZsYWJib29rMg==") {
-                            id
                             ... on Labbook {
                                 name
-                                description
                             }
+                            id
                         }
                     }
                     """
+                    #fragment cat on Labbook {
+                    #    name
+                    #}
+                    #"""
+            import pprint
+            print('----------->>>>')
+            pprint.pprint(client.execute(query)['data'])
             snapshot.assert_match(client.execute(query))
+
+            result = client.execute(query)['data']['node']['labbook']['name']
