@@ -135,7 +135,6 @@ class TestLabBookServiceQueries(object):
             snapshot.assert_match(client.execute(query))
 
     def test_node_environment(self, mock_config_file, snapshot):
-        id_data = {}
 
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
             client = Client(mock_config_file[2])
@@ -176,7 +175,7 @@ class TestLabBookServiceQueries(object):
 
             env_node_query = """
             {
-                node(id: "RW52aXJvbm1lbnQ6ZGVmYXVsdCZkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=") {
+                node(id: "%s") {
                     id
                     ... on Environment {
                         imageStatus
@@ -184,5 +183,5 @@ class TestLabBookServiceQueries(object):
                     }
                 }
             }
-            """
+            """ % env_id
             snapshot.assert_match(client.execute(env_node_query))
