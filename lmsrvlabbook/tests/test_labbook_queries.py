@@ -205,6 +205,8 @@ class TestLabBookServiceQueries(object):
                             pageInfo {
                                 hasNextPage
                                 hasPreviousPage
+                                startCursor
+                                endCursor
                             }
                         }
                     }
@@ -317,6 +319,8 @@ class TestLabBookServiceQueries(object):
                             pageInfo {
                                 hasNextPage
                                 hasPreviousPage
+                                startCursor
+                                endCursor
                             }
                         }
                     }
@@ -337,6 +341,8 @@ class TestLabBookServiceQueries(object):
                             pageInfo {
                                 hasNextPage
                                 hasPreviousPage
+                                startCursor
+                                endCursor
                             }
                         }
                     }

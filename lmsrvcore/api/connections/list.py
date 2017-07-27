@@ -111,6 +111,11 @@ class ListBasedConnection(object):
         assert not (has_next_page and len(self.edges) == 0)
         assert not (has_previous_page and len(self.edges) == 0)
 
+        if len(self.edges) == 0:
+            start_cursor, end_cursor = None, None
+        else:
+            start_cursor, end_cursor = self.cursors[0], self.cursors[-1]
+
         # startCursor and endCursor
         self.page_info = graphene.relay.PageInfo(has_next_page=has_next_page, has_previous_page=has_previous_page,
-                                                 start_cursor=self.edges[0], end_cursor=self.edges[-1])
+                                                 start_cursor=start_cursor, end_cursor=end_cursor)
