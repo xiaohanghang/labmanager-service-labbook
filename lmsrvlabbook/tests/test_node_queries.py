@@ -174,3 +174,15 @@ class TestLabBookServiceQueries(object):
 
             env_id = results['data']['node']['environment']['id']
 
+            env_node_query = """
+            {
+                node(id: "RW52aXJvbm1lbnQ6ZGVmYXVsdCZkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=") {
+                    id
+                    ... on Environment {
+                        imageStatus
+                        containerStatus
+                    }
+                }
+            }
+            """
+            snapshot.assert_match(client.execute(env_node_query))

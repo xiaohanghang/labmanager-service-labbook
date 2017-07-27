@@ -47,3 +47,13 @@ snapshots['TestLabBookServiceQueries.test_node_environment 1'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_node_environment 2'] = {
+    'data': {
+        'node': {
+            'containerStatus': 'NOT_RUNNING',
+            'id': 'RW52aXJvbm1lbnQ6ZGVmYXVsdCZkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=',
+            'imageStatus': 'DOES_NOT_EXIST'
+        }
+    }
+}
