@@ -70,14 +70,18 @@ git:
 
 
 class TestLabBookServiceQueries(object):
+
     def test_node_labbook_from_object(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name="cat-lab-book1", description="Test cat labbook from obj")
+
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
             # Make and validate request
             client = Client(mock_config_file[2])
 
             query = """
                     {
-                        node(id: "%s") {
+                        node(id: "TGFiYm9vazpkZWZhdWx0JmNhdC1sYWItYm9vazE=") {
                             ... on Labbook {
                                 name
                                 description
@@ -90,9 +94,7 @@ class TestLabBookServiceQueries(object):
                     }
                     """
 
-            # This test still needs to be ironed out.
-            assert False
-            #snapshot.assert_match(client.execute(query))
+            snapshot.assert_match(client.execute(query))
 
     def test_node_labbook_from_mutation(self, mock_config_file, snapshot):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
@@ -132,4 +134,5 @@ class TestLabBookServiceQueries(object):
 
             snapshot.assert_match(client.execute(query))
 
-    def test_node_
+    def test_node_environment_from_object(self, mock_config_file, snapshot):
+        pass
