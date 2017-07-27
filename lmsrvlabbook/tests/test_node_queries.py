@@ -134,5 +134,25 @@ class TestLabBookServiceQueries(object):
 
             snapshot.assert_match(client.execute(query))
 
-    def test_node_environment_from_object(self, mock_config_file, snapshot):
-        pass
+    def test_node_environment(self, mock_config_file, snapshot):
+        id_data = {}
+
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+            mutation CreateLabBook($name: String!, $desc: String!) {
+              createLabbook(input: {name: $name, description: $desc}) {
+                labbook {
+                  id
+                  name
+                  description
+                }
+              }
+            }
+            """
+            variables = {"name": "node-env-test-lb", "desc": "Node env test labbook."}
+
+            env_query = """
+            TODO
+            """
+
