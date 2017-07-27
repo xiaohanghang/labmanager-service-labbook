@@ -214,7 +214,7 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
             'edges': [
             ],
             'pageInfo': {
-                'hasNextPage': True,
+                'hasNextPage': False,
                 'hasPreviousPage': False
             }
         }
@@ -316,7 +316,7 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 3'] = {
             ],
             'pageInfo': {
                 'hasNextPage': False,
-                'hasPreviousPage': True
+                'hasPreviousPage': False
             }
         }
     }

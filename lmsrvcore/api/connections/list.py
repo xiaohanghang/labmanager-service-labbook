@@ -48,7 +48,7 @@ class ListBasedConnection(object):
 
         if "first" in self.args and "last" in self.args:
             raise ValueError("`first` and `last` arguments cannot be used together")
-        
+
         # Verify valid slicing args
         if "first" in self.args:
             if int(self.args["first"]) < 0:
@@ -95,24 +95,20 @@ class ListBasedConnection(object):
                 self.edges = self.edges[-int(self.args["last"]):]
                 self.cursors = self.cursors[-int(self.args["last"]):]
 
-        assert isinstance(self.total_edges, int)
-        assert self.total_edges >= 0
-
         # Compute page info status
         has_previous_page = False
-        if "last" not in self.args:
+        if "last" not in self.args or len(self.edges) == 0:
             has_previous_page = False
         elif self.total_edges > int(self.args["last"]):
             has_previous_page = True
-        else:
-            raise ValueError("self.total_edges(%d) <= int(self.args[last])(%d)" % (self.total_edges, int(self.args["last"])))
 
         has_next_page = False
-        if "first" not in self.args:
+        if "first" not in self.args or len(self.edges) == 0:
             has_next_page = False
         elif self.total_edges > int(self.args["first"]):
             has_next_page = True
-        else:
-            raise ValueError("self.total_edges(%d) <= int(self.args[first])(%d)" % (self.total_edges, int(self.args["first"])))
+
+        assert not (has_next_page and len(self.edges) == 0)
+        assert not (has_previous_page and len(self.edges) == 0)
 
         self.page_info = graphene.relay.PageInfo(has_next_page=has_next_page, has_previous_page=has_previous_page)
