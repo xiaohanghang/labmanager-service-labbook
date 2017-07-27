@@ -42,7 +42,6 @@ class Query(LabbookQuery, graphene.ObjectType):
 class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
-
 @pytest.fixture()
 def mock_config_file():
     """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
@@ -67,6 +66,18 @@ git:
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
+
+def create_labbooks(lb: LabBook):
+    lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
+    lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
+    lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
+    lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
+    lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
+    lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
+    lb.new(owner={"username": "default"}, name="labbook7", description="Turtle labbook 7")
+    lb.new(owner={"username": "default"}, name="labbook8", description="Lamb labbook 8")
+    lb.new(owner={"username": "default"}, name="labbook9", description="Taco labbook 9")
+    lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
 
 
 class TestLabBookServiceQueries(object):
@@ -122,17 +133,227 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
+    def test_pagination_noargs(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Mock the configuration class it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+    def test_pagination_first_only(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Mock the configuration class it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks(first: 3) {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+    def test_pagination_first_and_after(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Nominal case
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks(first: 4, after: "Mg==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                                startCursor
+                                endCursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+            # Overrunning end of list of labbooks
+            query = """
+                    {
+                        localLabbooks(first: 6, after: "Ng==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+            # Overrunning end of list of labbooks, returns empty set.
+            query = """
+                    {
+                        localLabbooks(first: 6, after: "OA==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+    def test_pagination_last_only(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Mock the configuration class it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks(last: 3) {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+    def test_pagination_last_and_before(self, mock_config_file, snapshot):
+        lb = LabBook(mock_config_file[0])
+        create_labbooks(lb)
+
+        # Mock the configuration class it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            client = Client(mock_config_file[2])
+            query = """
+                    {
+                        localLabbooks(last: 3, before: "Nw==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+            # Overrun start of list
+            query = """
+                    {
+                        localLabbooks(last: 3, before: "MQ==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                                startCursor
+                                endCursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
+            # Overrun with no intersection (should return empty list)
+            query = """
+                    {
+                        localLabbooks(last: 3, before: "MA==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                                startCursor
+                                endCursor
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(query))
+
     def test_pagination(self, mock_config_file, snapshot):
         """Test pagination and cursors"""
 
         lb = LabBook(mock_config_file[0])
-        lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
-        lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
-        lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
-        lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
-        lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
-        lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
-        lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
+        create_labbooks(lb)
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
@@ -150,10 +371,33 @@ class TestLabBookServiceQueries(object):
                                 }
                                 cursor
                             }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
                         }
                     }
                     """
             snapshot.assert_match(client.execute(query))
+
+            before_query = """
+                    {
+                        localLabbooks(last: 2, before: "Ng==") {
+                            edges {
+                                node {
+                                    name
+                                    description
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                hasNextPage
+                                hasPreviousPage
+                            }
+                        }
+                    }
+                    """
+            snapshot.assert_match(client.execute(before_query))
 
     def test_get_labbook(self, mock_config_file, snapshot):
         """Test listing labbooks"""
