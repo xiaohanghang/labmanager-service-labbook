@@ -207,7 +207,7 @@ class TestLabBookServiceQueries(object):
             snapshot.assert_match(client.execute(env_node_query))
 
     def test_node_notes(self, mock_config_file, snapshot):
-        labbook_name="Test-Node-Note-1"
+        labbook_name="test-node-note-1"
 
         lb = LabBook(mock_config_file[0])
         lb.new(owner={"username": "default"}, name=labbook_name, description="Labby McLabbook 99")
@@ -227,7 +227,7 @@ class TestLabBookServiceQueries(object):
             make_note_query = """
              mutation makenote {
                createNote(input: {
-                 labbookName: "%s",
+                 labbookName: \"""" + labbook_name + """\",
                  owner: "default",
                  level: USER_MINOR,
                  message: "Added a new file in this test",
@@ -250,7 +250,24 @@ class TestLabBookServiceQueries(object):
                }
              }
              """
+            response = client.execute(make_note_query)
 
-            node_id = client.execute(make_note_query)['data']#['createNote']#['note']['id']
-            import pprint; pprint.pprint(node_id)
-            assert False
+            query = """
+            {
+                labbook(name: "%s", owner: "default") {
+                    notes(first: 1) {
+                        edges {
+                            node {                                                                                       
+                                id
+                                author
+                                level
+                            }
+                            cursor
+                        }                        
+                    }
+                }
+            }
+            """ % labbook_name
+            first_note_id = client.execute(query)['data']['labbook']['notes']['edges'][0]['node']['id']
+
+            
