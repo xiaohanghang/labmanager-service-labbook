@@ -34,7 +34,6 @@ class ListBasedConnection(object):
             ListBasedConnection
         """
         self.edges = edges
-        self.total_edges = len(edges)
         self.cursors = cursors
         self.args = args
         self.page_info = None
@@ -84,6 +83,8 @@ class ListBasedConnection(object):
             self.edges = self.edges[:before_index]
             self.cursors = self.cursors[:before_index]
 
+        pre_slice_len = len(self.edges)
+
         # Apply slicing filters
         if "first" in self.args:
             if len(self.edges) > int(self.args["first"]):
@@ -99,17 +100,14 @@ class ListBasedConnection(object):
         has_previous_page = False
         if "last" not in self.args or len(self.edges) == 0:
             has_previous_page = False
-        elif self.total_edges > int(self.args["last"]):
+        elif pre_slice_len > int(self.args["last"]):
             has_previous_page = True
 
         has_next_page = False
         if "first" not in self.args or len(self.edges) == 0:
             has_next_page = False
-        elif self.total_edges > int(self.args["first"]):
+        elif pre_slice_len > int(self.args["first"]):
             has_next_page = True
-
-        assert not (has_next_page and len(self.edges) == 0), "hasNextPage is true but length of edges is zero"
-        assert not (has_previous_page and len(self.edges) == 0), "hasPrevPage is true but length of edges is zero"
 
         if len(self.edges) == 0:
             start_cursor, end_cursor = None, None
