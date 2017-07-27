@@ -161,6 +161,7 @@ class TestLabBookServiceQueries(object):
                         name
                         description
                         environment {
+                            id
                             imageStatus
                             containerStatus
                         }
@@ -168,5 +169,8 @@ class TestLabBookServiceQueries(object):
                 }
             }
             """
-            snapshot.assert_match(client.execute(env_query))
+            results = client.execute(env_query)
+            snapshot.assert_match(results)
+
+            env_id = results['data']['node']['environment']['id']
 

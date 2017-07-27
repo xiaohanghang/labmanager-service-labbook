@@ -39,6 +39,7 @@ snapshots['TestLabBookServiceQueries.test_node_environment 1'] = {
             'description': 'Node env test labbook.',
             'environment': {
                 'containerStatus': 'NOT_RUNNING',
+                'id': 'RW52aXJvbm1lbnQ6ZGVmYXVsdCZkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=',
                 'imageStatus': 'DOES_NOT_EXIST'
             },
             'id': 'TGFiYm9vazpkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=',
