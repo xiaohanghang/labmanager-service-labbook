@@ -36,7 +36,7 @@ snapshots['TestLabBookServiceQueries.test_node_labbook_from_mutation 1'] = {
 snapshots['TestLabBookServiceQueries.test_node_environment 1'] = {
     'data': {
         'node': {
-            'description': 'Node env test labbook.',
+            'description': 'Example labbook by mutation.',
             'environment': {
                 'containerStatus': 'NOT_RUNNING',
                 'id': 'RW52aXJvbm1lbnQ6ZGVmYXVsdCZkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=',
