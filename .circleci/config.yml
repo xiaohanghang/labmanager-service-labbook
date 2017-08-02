@@ -38,7 +38,7 @@ jobs:
           name: Pip install requirements, labmanager-common and pytest
           command: |
             sudo pip install -r requirements.txt
-            pip install -U git+https://github.com/gigantum/labmanager-common.git@integration
+            sudo pip install -U git+https://github.com/gigantum/labmanager-common.git@integration
             sudo pip install coveralls pytest-cov
 
       - run:
