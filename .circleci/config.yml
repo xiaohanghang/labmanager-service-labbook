@@ -6,7 +6,9 @@ jobs:
     python:
       version: 3.6.1
     steps:
-      - add_ssh_keys
+      - add_ssh_keys:
+          fingerprints:
+            - ea:b1:46:7f:12:95:74:48:0c:b1:35:3d:ef:10:27:df
       - checkout
       - run: 
           name: Install build essentials
