@@ -40,7 +40,7 @@ jobs:
             sudo pip install -r requirements.txt
             git clone -b integration --single-branch https://github.com/gigantum/labmanager-common.git
             export CWD=`pwd`
-            sudo pip install --find-links --no-index file:///${CWD}/labmanager-common
+            sudo pip install --find-links --no-index file:///home/circleci/project/labmanager-common
             sudo pip install coveralls pytest-cov
 
       - run:
