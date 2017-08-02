@@ -6,6 +6,7 @@ jobs:
     python:
       version: 3.6.1
     steps:
+      - add_ssh_keys
       - checkout
       - run: 
           name: Install build essentials
@@ -20,7 +21,7 @@ jobs:
             cd ~/leveldb
             git clone https://github.com/google/leveldb.git
             cd leveldb/
-            make;
+            make
 
       - run:
           name: Handle linking LevelDB libraries
