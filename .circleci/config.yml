@@ -7,11 +7,6 @@ jobs:
       version: 3.6.1
     steps:
       - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "ea:b1:46:7f:12:95:74:48:0c:b1:35:3d:ef:10:27:df"
-            - "c8:82:5f:ee:fc:8a:e6:41:53:ba:90:d0:c5:2a:ec:53"
-
       - run: 
           name: Install build essentials
           command: |
@@ -43,7 +38,8 @@ jobs:
           name: Pip install requirements, labmanager-common and pytest
           command: |
             sudo pip install -r requirements.txt
-            sudo pip install -U git+ssh://github.com/gigantum/labmanager-common.git@integration
+            git clone -b integration --single-branch https://github.com/gigantum/labmanager-common.git
+            sudo pip install --find-links --no-index file:///home/circleci/labmanager-common
             sudo pip install coveralls pytest-cov
 
       - run:
