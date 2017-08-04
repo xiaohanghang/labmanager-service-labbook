@@ -23,6 +23,8 @@ from flask_cors import CORS, cross_origin
 import blueprint
 
 from lmcommon.configuration import Configuration
+from lmcommon.logging import LMLogger
+from lmcommon.environment import EnvironmentRepositoryManager
 
 # Load config data for the LabManager instance
 config = Configuration()
@@ -39,6 +41,16 @@ app.config['DEBUG'] = config.config["flask"]["DEBUG"]
 
 # Register service
 app.register_blueprint(blueprint.complete_labbook_service)
+
+# Setup local environment repositories
+lmlog = LMLogger()
+lmlog.logger.info("Cloning/Updating environment repositories.")
+
+erm = EnvironmentRepositoryManager()
+erm.update_repositories()
+lmlog.logger.info("Indexing environment repositories.")
+erm.index_repositories()
+lmlog.logger.info("Environment repositories ready.")
 
 if __name__ == '__main__':
     app.run()
