@@ -60,7 +60,7 @@ class EnvironmentInfo(ObjectType):
         Returns:
             str
         """
-        return "{}&{}&{}&{}".format(id_data["component_class"], id_data["repo"],
+        return "{}&{}&{}&{}&{}".format(id_data["component_class"], id_data["repo"],
                                     id_data["namespace"], id_data["component"], id_data["version"])
 
     @staticmethod

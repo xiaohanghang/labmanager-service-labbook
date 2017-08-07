@@ -51,8 +51,8 @@ class EnvironmentAuthor(ObjectType):
         Returns:
             str
         """
-        return "{}&{}&{}&{}".format(id_data["component_class"], id_data["repo"],
-                                    id_data["namespace"], id_data["component"], id_data["version"])
+        return "{}&{}&{}&{}&{}".format(id_data["component_class"], id_data["repo"],
+                                       id_data["namespace"], id_data["component"], id_data["version"])
 
     @staticmethod
     def parse_type_id(type_id):
