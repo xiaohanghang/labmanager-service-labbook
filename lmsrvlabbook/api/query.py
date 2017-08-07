@@ -22,12 +22,15 @@ import graphene
 from graphene import resolve_only_args
 
 from lmcommon.labbook import LabBook
+from lmcommon.environment import ComponentRepository
 
 from lmsrvcore.auth.user import get_logged_in_user
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbook import Labbook, LabbookSummary
+from lmsrvlabbook.api.objects.baseimage import BaseImage
 from lmsrvlabbook.api.connections.labbook import LabbookConnection
+from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
 
 
 class LabbookQuery(graphene.AbstractType):
@@ -39,6 +42,9 @@ class LabbookQuery(graphene.AbstractType):
 
     # Connection to locally available labbooks
     local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
+
+    # Base Image Interface
+    available_base_images = graphene.relay.ConnectionField(BaseImageConnection)
 
     @resolve_only_args
     def resolve_labbook(self, owner, name):
@@ -91,3 +97,31 @@ class LabbookQuery(graphene.AbstractType):
             edge_objs.append(LabbookConnection.Edge(node=LabbookSummary.create(id_data), cursor=cursor))
 
         return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_available_base_images(self, args, context, info):
+        """Method to return a all graphene BaseImages that are available
+
+        Returns:
+            list(Labbook)
+        """
+        repo = ComponentRepository()
+        edges = repo.get_component_list("base_image")
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        # Get LabbookSummary instances
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            id_data = {'component_data': edge,
+                       'component_class': 'base_image',
+                       'repo': edge['repository'],
+                       'namespace': edge['namespace'],
+                       'component': edge['info']['name'],
+                       'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
+                       }
+            edge_objs.append(BaseImageConnection.Edge(node=BaseImage.create(id_data), cursor=cursor))
+
+        return BaseImageConnection(edges=edge_objs, page_info=lbc.page_info)
