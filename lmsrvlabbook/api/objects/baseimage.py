@@ -84,6 +84,9 @@ class BaseImage(ObjectType):
             dict
         """
         split = type_id.split("&")
+        if len(split) != 5:
+            raise ValueError("Invalid Type ID format. Failed to parse.")
+
         return {"component_class": split[0], "repo": split[1], "namespace": split[2],
                 "component": split[3], "version": split[4]}
 
