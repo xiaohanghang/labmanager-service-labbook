@@ -17,10 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import json
-import os
-from datetime import datetime
-
 import graphene
 
 from lmcommon.labbook import LabBook
@@ -32,9 +28,9 @@ from lmsrvlabbook.api.objects.baseimage import BaseImage
 
 class EnvironmentComponentClass(graphene.Enum):
     base_image = 0
-    dev_env = 0
-    package_manager = 0
-    custom = 0
+    dev_env = 1
+    package_manager = 2
+    custom = 3
 
 
 class AddEnvironmentComponent(graphene.relay.ClientIDMutation):
