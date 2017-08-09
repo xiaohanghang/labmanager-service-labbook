@@ -17,97 +17,46 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import pytest
-import tempfile
-import os
-import uuid
-import shutil
 from snapshottest import snapshot
-
+from lmsrvlabbook.tests.fixtures import schema_and_env_index
 from graphene.test import Client
-import graphene
 from mock import patch
 
-from lmcommon.environment import RepositoryManager
 from lmcommon.configuration import Configuration
-
-from lmsrvlabbook.api.query import LabbookQuery
-from lmsrvlabbook.api.mutation import LabbookMutations
-
-
-# Create ObjectType clases, since the EnvironmentQueries and EnvironmentMutations
-# are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
-
-@pytest.fixture(scope="module")
-def mock_config_file():
-    """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-  
-environment:
-  repo_url:
-    - "https://github.com/gig-dev/environment-components.git"
-    
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        # get environment data and index
-        erm = RepositoryManager(fp.name)
-        erm.update_repositories()
-        erm.index_repositories()
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
 
 
 class TestEnvironmentBaseImageQueries(object):
-    def test_get_available_base_images(self, mock_config_file, snapshot):
+    def test_get_available_base_images(self, schema_and_env_index, snapshot):
         """Test getting the available base images"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(schema_and_env_index[2])
 
             query = """
                     {
-                      availableBaseImages(first: 3){
-                        edges{
-                          node{
+                      availableBaseImages(first: 3) {
+                        edges {
+                          node {
                             id
-                            info{                              
+                            component{
+                              repository
+                                namespace
+                              name
+                              componentClass
+                              version
+                            }
+                            info {
                               name
                               humanName
                               versionMajor
                               versionMinor
                             }
-                            author{
+                            author {
                               organization
                             }
                             availablePackageManagers
-                            server
-                            namespace
-                            repo
+                            server        
                             tag
                           }
                         }
@@ -116,12 +65,12 @@ class TestEnvironmentBaseImageQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_base_images_pagination(self, mock_config_file, snapshot):
+    def test_get_available_base_images_pagination(self, schema_and_env_index, snapshot):
         """Test getting the available base images"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(schema_and_env_index[2])
 
             query = """
                     {
@@ -129,14 +78,22 @@ class TestEnvironmentBaseImageQueries(object):
                         edges{
                           node{
                             id
+                            component{
+                              repository
+                              namespace
+                              name
+                              componentClass
+                              version
+                            }
                             info{                              
                               name
                               humanName
                               versionMajor
                               versionMinor
                             }
+                            server
+                            repository
                             namespace
-                            repo
                             tag
                           }
                           cursor
@@ -161,8 +118,9 @@ class TestEnvironmentBaseImageQueries(object):
                               versionMajor
                               versionMinor
                             }
+                            server
                             namespace
-                            repo
+                            repository
                             tag
                           }
                           cursor
@@ -175,12 +133,12 @@ class TestEnvironmentBaseImageQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_base_images_pagination_reverse(self, mock_config_file, snapshot):
+    def test_get_available_base_images_pagination_reverse(self, schema_and_env_index, snapshot):
         """Test getting the available base images using pagination from the end"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(schema_and_env_index[2])
 
             query = """
                     {
@@ -194,8 +152,9 @@ class TestEnvironmentBaseImageQueries(object):
                               versionMajor
                               versionMinor
                             }
+                            server
                             namespace
-                            repo
+                            repository
                             tag
                           }
                           cursor
@@ -221,8 +180,9 @@ class TestEnvironmentBaseImageQueries(object):
                               versionMajor
                               versionMinor
                             }
+                            server
                             namespace
-                            repo
+                            repository
                             tag
                           }
                           cursor
@@ -236,12 +196,12 @@ class TestEnvironmentBaseImageQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_base_image_by_node(self, mock_config_file, snapshot):
+    def test_get_base_image_by_node(self, schema_and_env_index, snapshot):
         """Test getting the available base images"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(schema_and_env_index[2])
 
             query = """
                         {
@@ -253,18 +213,25 @@ class TestEnvironmentBaseImageQueries(object):
                                 versionMajor
                                 versionMinor
                               }
+                              component{
+                                repository
+                                namespace
+                                name
+                                componentClass
+                                version
+                              }
                             }
                           }
                         }
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_base_image_versions(self, mock_config_file, snapshot):
+    def test_get_available_base_image_versions(self, schema_and_env_index, snapshot):
         """Test getting the available base image versions for a given component"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(schema_and_env_index[2])
 
             query = """
                     {
@@ -287,12 +254,12 @@ class TestEnvironmentBaseImageQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_base_image_versions_pagination(self, mock_config_file, snapshot):
+    def test_get_available_base_image_versions_pagination(self, schema_and_env_index, snapshot):
         """Test getting the available base image versions for a given component with pagination"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(schema_and_env_index[2])
 
             query = """
                     {
@@ -346,12 +313,12 @@ class TestEnvironmentBaseImageQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_base_image_versions_pagination_reverse(self, mock_config_file, snapshot):
+    def test_get_available_base_image_versions_pagination_reverse(self, schema_and_env_index, snapshot):
         """Test getting the available base image versions for a given component with pagination"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(schema_and_env_index[2])
 
             query = """
                     {

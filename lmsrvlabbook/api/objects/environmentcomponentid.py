@@ -20,49 +20,43 @@
 # SOFTWARE.
 import graphene
 
-from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
-from lmsrvlabbook.api.objects.environmentinfo import EnvironmentInfo
-from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
-
 from lmcommon.environment import ComponentRepository
-
 from lmsrvcore.api import ObjectType
 
 
-class BaseImage(ObjectType):
-    """A type that represents a Base Image Environment Component"""
+class EnvironmentComponentClass(graphene.Enum):
+    """Enumeration indicating the different classes of Environment Components
+
+    base_image - base docker images
+    dev_env - development environments
+    package_manager - dependencies installed via package managers
+    custom - complex dependencies that are installed via custom docker snippets
+    """
+    base_image = 0
+    dev_env = 1
+    package_manager = 2
+    custom = 3
+
+
+class EnvironmentComponent(ObjectType):
+    """A type that represents the identifiable information for an environment component"""
     class Meta:
         interfaces = (graphene.relay.Node, )
 
-    # Component ID information for supporting Mutations
-    component = graphene.Field(EnvironmentComponent, required=True)
+    # Name of the repository in which this component is stored
+    repository = graphene.String()
 
-    # The name of the current branch
-    author = graphene.Field(EnvironmentAuthor, required=True)
+    # The namespace in the given repository in which this component is stored
+    namespace = graphene.String()
 
-    # The name of the current branch
-    info = graphene.Field(EnvironmentInfo, required=True)
+    # The the name of the component. Must be unique within the repo/namespace
+    name = graphene.String()
 
-    # The class of Operating System used (e.g. ubuntu)
-    os_class = graphene.String(required=True)
+    # The COMPONENT spec revision. <major_version>.<minor_version> from the YAML file.
+    version = graphene.String()
 
-    # The release of the Operating System used (e.g. 16.04)
-    os_release = graphene.String(required=True)
-
-    # The container registry server used to pull the image
-    server = graphene.String(required=True)
-
-    # The namespace to used on the container registry server when pulling the image
-    namespace = graphene.String(required=True)
-
-    # The repo to use on the container registry server when pulling the image
-    repository = graphene.String(required=True)
-
-    # The image tag to use on the container registry server when pulling the image
-    tag = graphene.String(required=True)
-
-    # The image tag to use on the container registry server when pulling the image
-    available_package_managers = graphene.List(graphene.String, required=True)
+    # The class of component (e.g. base_image, dev_env)
+    component_class = graphene.Field(EnvironmentComponentClass)
 
     @staticmethod
     def to_type_id(id_data):
@@ -96,17 +90,26 @@ class BaseImage(ObjectType):
 
     @staticmethod
     def create(id_data):
-        """Method to create a graphene BaseImage object based on the type node ID or id_data
+        """Method to create a graphene Component object based on the type node ID or id data
+
+            id data
+            {
+                "component_class": class component (e.g. base_image, dev_env),
+                "repo": Name of the repository in which this component is stored
+                "namespace": The namespace in the given repository in which this component is stored
+                "component": The the name of the component. Must be unique within the repo/namespace
+                "version": The COMPONENT spec revision. <major_version>.<minor_version> from the YAML file.
+            }
 
         Args:
             id_data(dict): A dictionary of variables that uniquely ID the instance
 
         Returns:
-            Environment
+            EnvironmentAuthor
         """
         if "type_id" in id_data:
             # Parse ID components
-            id_data.update(EnvironmentAuthor.parse_type_id(id_data["type_id"]))
+            id_data.update(EnvironmentComponent.parse_type_id(id_data["type_id"]))
             del id_data["type_id"]
 
         if 'component_data' not in id_data:
@@ -123,17 +126,10 @@ class BaseImage(ObjectType):
             # data has already been loaded
             component_data = id_data['component_data']
 
-        # Extract Package Manager Names
-        package_managers = [pm['name'] for pm in component_data['available_package_managers']]
-
-        return BaseImage(id=BaseImage.to_type_id(id_data),
-                         author=EnvironmentAuthor.create(id_data),
-                         info=EnvironmentInfo.create(id_data),
-                         component=EnvironmentComponent.create(id_data),
-                         os_class=component_data['os_class'],
-                         os_release=component_data['os_release'],
-                         server=component_data['image']['server'],
-                         namespace=component_data['image']['namespace'],
-                         repository=component_data['image']['repo'],
-                         tag=component_data['image']['tag'],
-                         available_package_managers=package_managers)
+        return EnvironmentComponent(id=EnvironmentComponent.to_type_id(id_data),
+                                    repository=component_data["###repository###"],
+                                    namespace=component_data["###namespace###"],
+                                    name=id_data["component"],
+                                    version=id_data["version"],
+                                    component_class=EnvironmentComponentClass[id_data['component_class']].value,
+                                    )

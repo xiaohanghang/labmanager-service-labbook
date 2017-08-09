@@ -18,10 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
-import tempfile
+from lmsrvlabbook.tests.fixtures import schema_and_env_index
 import os
-import uuid
-import shutil
 from snapshottest import snapshot
 
 from graphene.test import Client
@@ -30,70 +28,21 @@ from mock import patch
 import yaml
 
 from lmcommon.configuration import Configuration
-from lmcommon.environment import RepositoryManager
 from lmcommon.labbook import LabBook
-
-from lmsrvlabbook.api.mutation import LabbookMutations
-from lmsrvlabbook.api.query import LabbookQuery
-
-
-# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
-
-@pytest.fixture()
-def mock_config_file():
-    """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-
-environment:
-  repo_url:
-    - "https://github.com/gig-dev/environment-components.git"
-    
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-
-        # Setup the component repo
-        erm = RepositoryManager(fp.name)
-        erm.update_repositories()
-        erm.index_repositories()
-
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
 
 
 class TestAddComponentMutations(object):
-    def test_add_base_image(self, mock_config_file, snapshot):
+    def test_add_base_image(self, schema_and_env_index, snapshot):
         """Test listing labbooks"""
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(schema_and_env_index[0])
 
         labbook_dir = lb.new(name="labbook1", description="my first labbook",
                              owner={"username": "default"})
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(schema_and_env_index[2])
 
             # Add a base image
             query = """
@@ -129,10 +78,70 @@ class TestAddComponentMutations(object):
         assert data['info']['name'] == 'ubuntu1604-python3'
         assert data['info']['version_major'] == 0
         assert data['info']['version_minor'] == 4
-        assert data['namespace'] == 'gigantum'
+        assert data['image']['namespace'] == 'gigdev'
+        assert data['image']['repo'] == 'ubuntu1604-python3'
+        assert data['###namespace###'] == 'gigantum'
 
         # Verify git/notes
         log = lb.git.log()
         assert len(log) == 4
         assert "gtmNOTE" in log[0]["message"]
         assert 'ubuntu1604-python3' in log[0]["message"]
+
+    def test_add_dev_env(self, schema_and_env_index, snapshot):
+        """Test listing labbooks"""
+        lb = LabBook(schema_and_env_index[0])
+
+        labbook_dir = lb.new(name="labbook2", description="my first labbook",
+                             owner={"username": "default"})
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+            # Make and validate request
+            client = Client(schema_and_env_index[2])
+
+            # Add a base image
+            query = """
+            mutation myEnvMutation{
+              addEnvironmentComponent(input: {componentClass: dev_env,
+              repository: "gig-dev_environment-components",
+              namespace: "gigantum", component: "jupyter-ubuntu",
+              version: "0.1", labbookName: "labbook2"}) {
+                clientMutationId
+              }
+            }
+            """
+            client.execute(query)
+
+        # Validate the LabBook .gigantum/env/ directory
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base_image')) is True
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'dev_env')) is True
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'custom')) is True
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'entrypoint.sh')) is True
+
+        # Verify file
+        component_file = os.path.join(labbook_dir,
+                                      '.gigantum',
+                                      'env',
+                                      'dev_env',
+                                      "gig-dev_environment-components_gigantum_jupyter-ubuntu.yaml")
+        assert os.path.exists(component_file) is True
+
+        with open(component_file, 'rt') as cf:
+            data = yaml.load(cf)
+
+        assert data['info']['name'] == 'jupyter-ubuntu'
+        assert data['info']['version_major'] == 0
+        assert data['info']['version_minor'] == 1
+        assert data['###namespace###'] == 'gigantum'
+        assert len(data['install_commands']) == 1
+        assert data['install_commands'][0] == 'pip3 install jupyter'
+        assert "exec_commands" in data
+        assert "exposed_tcp_ports" in data
+
+        # Verify git/notes
+        log = lb.git.log()
+        assert len(log) == 4
+        assert "gtmNOTE" in log[0]["message"]
+        assert 'jupyter-ubuntu' in log[0]["message"]

@@ -24,13 +24,7 @@ from lmcommon.environment import ComponentManager
 from lmsrvcore.auth.user import get_logged_in_user
 
 from lmsrvlabbook.api.objects.baseimage import BaseImage
-
-
-class EnvironmentComponentClass(graphene.Enum):
-    base_image = 0
-    dev_env = 1
-    package_manager = 2
-    custom = 3
+from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponentClass
 
 
 class AddEnvironmentComponent(graphene.relay.ClientIDMutation):
