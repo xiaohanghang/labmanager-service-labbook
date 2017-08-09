@@ -124,9 +124,7 @@ class BaseImage(ObjectType):
             component_data = id_data['component_data']
 
         # Extract Package Manager Names
-        package_managers = []
-        for pm in component_data['available_package_managers']:
-            package_managers.append(pm['name'])
+        package_managers = [pm['name'] for pm in component_data['available_package_managers']]
 
         return BaseImage(id=BaseImage.to_type_id(id_data),
                          author=EnvironmentAuthor.create(id_data),

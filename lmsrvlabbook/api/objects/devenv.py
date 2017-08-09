@@ -46,23 +46,17 @@ class DevEnv(ObjectType):
     # The class of Operating System this works with (e.g. ubuntu)
     os_base_class = graphene.String(required=True)
 
-    # The release of the Operating System used (e.g. 16.04)
-    os_release = graphene.String(required=True)
+    # The type of development environment (e.g. web, xforward)
+    development_environment_class = graphene.String(required=True)
 
-    # The container registry server used to pull the image
-    server = graphene.String(required=True)
-
-    # The namespace to used on the container registry server when pulling the image
-    namespace = graphene.String(required=True)
-
-    # The repo to use on the container registry server when pulling the image
-    repository = graphene.String(required=True)
+    # The installation commands for the docker file
+    install_commands = graphene.List(graphene.String, required=True)
 
     # The image tag to use on the container registry server when pulling the image
-    tag = graphene.String(required=True)
+    exec_commands = graphene.List(graphene.String, required=True)
 
     # The image tag to use on the container registry server when pulling the image
-    available_package_managers = graphene.List(graphene.String, required=True)
+    exposed_tcp_ports = graphene.List(graphene.String, required=True)
 
     @staticmethod
     def to_type_id(id_data):
@@ -96,7 +90,7 @@ class DevEnv(ObjectType):
 
     @staticmethod
     def create(id_data):
-        """Method to create a graphene BaseImage object based on the type node ID or id_data
+        """Method to create a graphene DevEnv object based on the type node ID or id_data
 
         Args:
             id_data(dict): A dictionary of variables that uniquely ID the instance
@@ -123,19 +117,12 @@ class DevEnv(ObjectType):
             # data has already been loaded
             component_data = id_data['component_data']
 
-        # Extract Package Manager Names
-        package_managers = []
-        for pm in component_data['available_package_managers']:
-            package_managers.append(pm['name'])
-
-        return BaseImage(id=BaseImage.to_type_id(id_data),
-                         author=EnvironmentAuthor.create(id_data),
-                         info=EnvironmentInfo.create(id_data),
-                         component=EnvironmentComponent.create(id_data),
-                         os_class=component_data['os_class'],
-                         os_release=component_data['os_release'],
-                         server=component_data['image']['server'],
-                         namespace=component_data['image']['namespace'],
-                         repository=component_data['image']['repo'],
-                         tag=component_data['image']['tag'],
-                         available_package_managers=package_managers)
+        return DevEnv(id=DevEnv.to_type_id(id_data),
+                      author=EnvironmentAuthor.create(id_data),
+                      info=EnvironmentInfo.create(id_data),
+                      component=EnvironmentComponent.create(id_data),
+                      os_base_class=component_data['os_base_class'],
+                      development_environment_class=component_data['development_environment_class'],
+                      install_commands=component_data['install_commands'],
+                      exec_commands=component_data['exec_commands'],
+                      exposed_tcp_ports=component_data['exposed_tcp_ports'])
