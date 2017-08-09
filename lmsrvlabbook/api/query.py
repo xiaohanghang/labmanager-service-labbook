@@ -120,8 +120,8 @@ class LabbookQuery(graphene.AbstractType):
         for edge, cursor in zip(lbc.edges, lbc.cursors):
             id_data = {'component_data': edge,
                        'component_class': 'base_image',
-                       'repo': edge['repository'],
-                       'namespace': edge['namespace'],
+                       'repo': edge['###repository###'],
+                       'namespace': edge['###namespace###'],
                        'component': edge['info']['name'],
                        'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
                        }

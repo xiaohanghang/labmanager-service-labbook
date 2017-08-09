@@ -22,7 +22,6 @@ import graphene
 
 from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
 from lmsrvlabbook.api.objects.environmentinfo import EnvironmentInfo
-from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
 
 from lmcommon.environment import ComponentRepository
 
@@ -33,9 +32,6 @@ class BaseImage(ObjectType):
     """A type that represents a Base Image Environment Component"""
     class Meta:
         interfaces = (graphene.relay.Node, )
-
-    # Component ID information for supporting Mutations
-    component = graphene.Field(EnvironmentComponent, required=True)
 
     # The name of the current branch
     author = graphene.Field(EnvironmentAuthor, required=True)
@@ -56,7 +52,7 @@ class BaseImage(ObjectType):
     namespace = graphene.String(required=True)
 
     # The repo to use on the container registry server when pulling the image
-    repository = graphene.String(required=True)
+    repo = graphene.String(required=True)
 
     # The image tag to use on the container registry server when pulling the image
     tag = graphene.String(required=True)
@@ -123,19 +119,13 @@ class BaseImage(ObjectType):
             # data has already been loaded
             component_data = id_data['component_data']
 
-        # Extract Package Manager Names
-        package_managers = []
-        for pm in component_data['available_package_managers']:
-            package_managers.append(pm['name'])
-
         return BaseImage(id=BaseImage.to_type_id(id_data),
                          author=EnvironmentAuthor.create(id_data),
                          info=EnvironmentInfo.create(id_data),
-                         component=EnvironmentComponent.create(id_data),
                          os_class=component_data['os_class'],
                          os_release=component_data['os_release'],
                          server=component_data['image']['server'],
                          namespace=component_data['image']['namespace'],
-                         repository=component_data['image']['repo'],
+                         repo=component_data['image']['repo'],
                          tag=component_data['image']['tag'],
-                         available_package_managers=package_managers)
+                         available_package_managers=component_data['available_package_managers'])
