@@ -129,7 +129,9 @@ class TestAddComponentMutations(object):
         assert data['info']['name'] == 'ubuntu1604-python3'
         assert data['info']['version_major'] == 0
         assert data['info']['version_minor'] == 4
-        assert data['namespace'] == 'gigantum'
+        assert data['image']['namespace'] == 'gigdev'
+        assert data['image']['repo'] == 'ubuntu1604-python3'
+        assert data['###namespace###'] == 'gigantum'
 
         # Verify git/notes
         log = lb.git.log()
