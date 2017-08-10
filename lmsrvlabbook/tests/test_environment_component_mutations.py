@@ -190,7 +190,7 @@ class TestAddComponentMutations(object):
 
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
-        pprint.pprint(os.listdir(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')))
+
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'apt_docker.yaml'))
 
         with open(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'apt_docker.yaml')) as pkg_yaml:
