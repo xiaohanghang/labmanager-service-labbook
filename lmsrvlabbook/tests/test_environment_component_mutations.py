@@ -88,7 +88,37 @@ class TestAddComponentMutations(object):
         assert 'ubuntu1604-python3' in log[0]["message"]
 
     def test_add_package(self, schema_and_env_index, snapshot):
-        pass
+        """Test listing labbooks"""
+        lb = LabBook(schema_and_env_index[0])
+
+        labbook_dir = lb.new(name="catbook-package-tester", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+            # Make and validate request
+            client = Client(schema_and_env_index[2])
+
+            # Add a base image
+            query = """
+            mutation myPkgMutation {
+              addEnvironmentPackage(input: {
+                labbookName: "catbook-package-tester",
+                packageName: "docker",
+                packageManager: "apt") {
+                clientMutationId
+              }
+            }
+            """
+            client.execute(query)
+
+        # Validate the LabBook .gigantum/env/ directory
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'apt_docker.yaml'))
+
+        with open(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'apt_docker.yaml') as pkg_yaml:
+            packge_info_dict = yaml.load(pkg_yaml)
+
 
     def test_add_dev_env(self, schema_and_env_index, snapshot):
         """Test listing labbooks"""
