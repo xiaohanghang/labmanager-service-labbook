@@ -18,15 +18,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
-from lmsrvlabbook.tests.fixtures import schema_and_env_index
-import os
-from snapshottest import snapshot
-
-from graphene.test import Client
-import graphene
-from mock import patch
 import yaml
+import os
 
+from snapshottest import snapshot
+from graphene.test import Client
+from mock import patch
+
+from lmsrvlabbook.tests.fixtures import schema_and_env_index
 from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 
@@ -87,6 +86,9 @@ class TestAddComponentMutations(object):
         assert len(log) == 4
         assert "gtmNOTE" in log[0]["message"]
         assert 'ubuntu1604-python3' in log[0]["message"]
+
+    def test_add_package(self, schema_and_env_index, snapshot):
+        pass
 
     def test_add_dev_env(self, schema_and_env_index, snapshot):
         """Test listing labbooks"""
