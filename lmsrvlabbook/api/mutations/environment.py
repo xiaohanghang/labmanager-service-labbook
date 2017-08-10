@@ -57,13 +57,13 @@ class BuildImage(graphene.relay.ClientIDMutation):
         else:
             client = docker.from_env()
 
-        # Get Dockerfile directory
-        env_dir = os.path.join(Configuration().config['git']['working_directory'], username, owner,
-                               input.get('labbook_name'), '.gigantum', 'env')
-        env_dir = os.path.expanduser(env_dir)
+        labbook_dir = os.path.join(Configuration().config['git']['working_directory'], username, owner,
+                               input.get('labbook_name'))
+        labbook_dir = os.path.expanduser(labbook_dir)
 
-        # Build image
-        client.images.build(path=env_dir, tag='{}-{}-{}'.format(username, owner, input.get('labbook_name')), pull=True)
+        tag='{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+        image_builder = ImageBuilder(labbook_dir)
+        docker_image = image_builder.build_image(docker_client=client, tag=tag)
 
         id_data = {"username": username,
                    "owner": owner,
