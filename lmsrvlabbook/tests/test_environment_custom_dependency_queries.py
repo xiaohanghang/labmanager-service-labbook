@@ -65,7 +65,7 @@ class TestEnvironmentCustomDependencyQueries(object):
             snapshot.assert_match(client.execute(query))
 
     def test_get_available_custom_deps_pagination(self, schema_and_env_index, snapshot):
-        """Test getting the available base images"""
+        """Test getting the available custom dependencies"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
@@ -145,7 +145,7 @@ class TestEnvironmentCustomDependencyQueries(object):
             snapshot.assert_match(client.execute(query))
 
     def test_get_available_custom_deps_pagination_reverse(self, schema_and_env_index, snapshot):
-        """Test getting the available development environments using pagination from the end"""
+        """Test getting the available custom dependencies using pagination from the end"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
@@ -226,7 +226,7 @@ class TestEnvironmentCustomDependencyQueries(object):
             snapshot.assert_match(client.execute(query))
 
     def test_get_custom_deps_by_node(self, schema_and_env_index, snapshot):
-        """Test getting the available base images"""
+        """Test getting the available custom dependency by node ID"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
