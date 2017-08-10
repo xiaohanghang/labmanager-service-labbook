@@ -19,14 +19,13 @@
 # SOFTWARE.
 import os
 
-import docker
 import graphene
-
-from lmcommon.configuration import Configuration
-
-from lmsrvcore.auth.user import get_logged_in_user
+import docker
 
 from lmsrvlabbook.api.objects.environment import Environment
+from lmsrvcore.auth.user import get_logged_in_user
+from lmcommon.configuration import Configuration
+from lmcommon.imagebuilder import ImageBuilder
 
 
 class BuildImage(graphene.relay.ClientIDMutation):
