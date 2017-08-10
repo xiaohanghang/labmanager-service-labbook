@@ -19,7 +19,7 @@
 # SOFTWARE.
 import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer,\
-    CreateNote, AddEnvironmentComponent
+    CreateNote, AddEnvironmentComponent, AddEnvironmentPackage
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -31,3 +31,4 @@ class LabbookMutations(graphene.AbstractType):
     start_container = StartContainer.Field()
     create_note = CreateNote.Field()
     add_environment_component = AddEnvironmentComponent.Field()
+    add_environment_package = AddEnvironmentPackage.Field()
