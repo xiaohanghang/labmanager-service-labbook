@@ -173,7 +173,7 @@ class TestAddComponentMutations(object):
             }
             """
             client.execute(query)
-            import pprint;
+
             # Add a base image
             pkg_query = """
             mutation myPkgMutation {
