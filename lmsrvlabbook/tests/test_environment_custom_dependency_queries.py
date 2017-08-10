@@ -25,51 +25,9 @@ from mock import patch
 from lmcommon.configuration import Configuration
 
 
-class TestEnvironmentDevEnvQueries(object):
-    def test_get_available_dev_envs(self, schema_and_env_index, snapshot):
-        """Test getting the available development environments"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
-            # Make and validate request
-            client = Client(schema_and_env_index[2])
-
-            query = """
-                    {
-                      availableDevEnvs(first: 3) {
-                        edges {
-                          node {
-                            id
-                            component {
-                              repository
-                              namespace
-                              name
-                              componentClass
-                              version
-                            }
-                            info {
-                              name
-                              humanName
-                              versionMajor
-                              versionMinor
-                            }
-                            author {
-                              organization
-                            }
-                            osBaseClass
-                            developmentEnvironmentClass
-                            installCommands
-                            exposedTcpPorts
-                            execCommands
-                          }
-                        }
-                      }
-                    }
-
-            """
-            snapshot.assert_match(client.execute(query))
-
-    def test_get_available_dev_envs_pagination(self, schema_and_env_index, snapshot):
-        """Test getting the available dev envs with pagination"""
+class TestEnvironmentCustomDependencyQueries(object):
+    def test_get_available_custom_deps(self, schema_and_env_index, snapshot):
+        """Test getting the available custom dependencies"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
@@ -77,45 +35,7 @@ class TestEnvironmentDevEnvQueries(object):
 
             query = """
                    {
-                  availableDevEnvs(first: 1) {
-                    edges {
-                      node {
-                        id
-                        component {
-                          repository
-                          namespace
-                          name
-                          componentClass
-                          version
-                        }
-                        info {
-                          name
-                          humanName
-                          versionMajor
-                          versionMinor
-                        }
-                        author {
-                          organization
-                        }
-                        osBaseClass
-                        developmentEnvironmentClass
-                        installCommands
-                        exposedTcpPorts
-                        execCommands
-                      }
-                      cursor
-                    }
-                    pageInfo {
-                      hasNextPage
-                    }
-                  }
-                }
-            """
-            snapshot.assert_match(client.execute(query))
-
-            query = """
-                    {
-                      availableDevEnvs(first: 3, after: "MA==") {
+                      availableCustomDependencies(first: 3) {
                         edges {
                           node {
                             id
@@ -136,22 +56,16 @@ class TestEnvironmentDevEnvQueries(object):
                               organization
                             }
                             osBaseClass
-                            developmentEnvironmentClass
-                            installCommands
-                            exposedTcpPorts
-                            execCommands
+                            docker
                           }
-                        }
-                        pageInfo {
-                          hasNextPage
                         }
                       }
                     }
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_envs_pagination_reverse(self, schema_and_env_index, snapshot):
-        """Test getting the available development environments using pagination from the end"""
+    def test_get_available_custom_deps_pagination(self, schema_and_env_index, snapshot):
+        """Test getting the available custom dependencies"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
@@ -159,7 +73,7 @@ class TestEnvironmentDevEnvQueries(object):
 
             query = """
                     {
-                      availableDevEnvs(last: 1) {
+                      availableCustomDependencies(first: 1) {
                         edges {
                           node {
                             id
@@ -180,24 +94,103 @@ class TestEnvironmentDevEnvQueries(object):
                               organization
                             }
                             osBaseClass
-                            developmentEnvironmentClass
-                            installCommands
-                            exposedTcpPorts
-                            execCommands
+                            docker
                           }
+                          cursor
                         }
                         pageInfo {
-                          hasPreviousPage
                           hasNextPage
+                          hasPreviousPage
                         }
                       }
-                    }            
+                    }
+
+            """
+            snapshot.assert_match(client.execute(query))
+
+            query = """
+ {
+                      availableCustomDependencies(first: 2, after: "MA==") {
+                        edges {
+                          node {
+                            id
+                            component {
+                              repository
+                              namespace
+                              name
+                              componentClass
+                              version
+                            }
+                            info {
+                              name
+                              humanName
+                              versionMajor
+                              versionMinor
+                            }
+                            author {
+                              organization
+                            }
+                            osBaseClass
+                            docker
+                          }
+                          cursor
+                        }
+                        pageInfo {
+                          hasNextPage
+                          hasPreviousPage
+                        }
+                      }
+                    }
+            """
+            snapshot.assert_match(client.execute(query))
+
+    def test_get_available_custom_deps_pagination_reverse(self, schema_and_env_index, snapshot):
+        """Test getting the available custom dependencies using pagination from the end"""
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+            # Make and validate request
+            client = Client(schema_and_env_index[2])
+
+            query = """
+                    {
+                      availableCustomDependencies(last: 1) {
+                        edges {
+                          node {
+                            id
+                            component {
+                              repository
+                              namespace
+                              name
+                              componentClass
+                              version
+                            }
+                            info {
+                              name
+                              humanName
+                              versionMajor
+                              versionMinor
+                            }
+                            author {
+                              organization
+                            }
+                            osBaseClass
+                            docker
+                          }
+                          cursor
+                        }
+                        pageInfo {
+                          hasNextPage
+                          hasPreviousPage
+                        }
+                      }
+                    }
+
                     """
             snapshot.assert_match(client.execute(query))
 
             query = """
                     {
-                      availableDevEnvs(last: 3, before: "Mg==") {
+                      availableCustomDependencies(last: 2, before: "MQ==") {
                         edges {
                           node {
                             id
@@ -218,23 +211,22 @@ class TestEnvironmentDevEnvQueries(object):
                               organization
                             }
                             osBaseClass
-                            developmentEnvironmentClass
-                            installCommands
-                            exposedTcpPorts
-                            execCommands
+                            docker
                           }
+                          cursor
                         }
                         pageInfo {
-                          hasPreviousPage
                           hasNextPage
+                          hasPreviousPage
                         }
                       }
                     }
-                    """
+
+                   """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_dev_env_by_node(self, schema_and_env_index, snapshot):
-        """Test getting a dev env by node ID"""
+    def test_get_custom_deps_by_node(self, schema_and_env_index, snapshot):
+        """Test getting the available custom dependency by node ID"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
@@ -242,8 +234,8 @@ class TestEnvironmentDevEnvQueries(object):
 
             query = """
                         {
-                          node(id: "RGV2RW52OmRldl9lbnYmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtLWRldiZqdXB5dGVyLXVidW50dSYwLjE=") {
-                            ... on DevEnv {
+                          node(id: "Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjE=") {
+                            ... on CustomDependency {
                               info {
                                 name
                                 humanName
@@ -263,7 +255,7 @@ class TestEnvironmentDevEnvQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_env_versions(self, schema_and_env_index, snapshot):
+    def test_get_available_custom_deps_versions(self, schema_and_env_index, snapshot):
         """Test getting the available versions for a given component"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
@@ -272,12 +264,18 @@ class TestEnvironmentDevEnvQueries(object):
 
             query = """
                         {
-                          availableDevEnvVersions(first: 3, 
-                            repository: "gig-dev_environment-components",
-                            namespace: "gigantum", component: "jupyter-ubuntu") {
+                          availableCustomDependenciesVersions(repository: "gig-dev_environment-components",
+                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
                             edges {
                               node {
                                 id
+                                component {
+                                  repository
+                                  namespace
+                                  name
+                                  componentClass
+                                  version
+                                }
                                 info {
                                   name
                                   humanName
@@ -285,13 +283,18 @@ class TestEnvironmentDevEnvQueries(object):
                                   versionMinor
                                 }
                               }
+                              cursor
+                            }
+                            pageInfo {
+                              hasNextPage
+                              hasPreviousPage
                             }
                           }
                         }
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_env_versions_pagination(self, schema_and_env_index, snapshot):
+    def test_get_available_custom_deps_versions_pagination(self, schema_and_env_index, snapshot):
         """Test getting the available versions for a given component with pagination"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
@@ -299,13 +302,19 @@ class TestEnvironmentDevEnvQueries(object):
             client = Client(schema_and_env_index[2])
 
             query = """
-                       {
-                          availableDevEnvVersions(first: 1, 
-                            repository: "gig-dev_environment-components",
-                            namespace: "gigantum", component: "jupyter-ubuntu") {
+                        {
+                          availableCustomDependenciesVersions(first: 2, repository: "gig-dev_environment-components",
+                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
                             edges {
                               node {
                                 id
+                                component {
+                                  repository
+                                  namespace
+                                  name
+                                  componentClass
+                                  version
+                                }
                                 info {
                                   name
                                   humanName
@@ -315,7 +324,7 @@ class TestEnvironmentDevEnvQueries(object):
                               }
                               cursor
                             }
-                            pageInfo{
+                            pageInfo {
                               hasNextPage
                               hasPreviousPage
                             }
@@ -325,13 +334,20 @@ class TestEnvironmentDevEnvQueries(object):
             snapshot.assert_match(client.execute(query))
 
             query = """                    
-                       {
-                          availableDevEnvVersions(first: 1, after: "MA==" 
-                            repository: "gig-dev_environment-components",
-                            namespace: "gigantum", component: "jupyter-ubuntu") {
+                        {
+                          availableCustomDependenciesVersions(first: 2, after: "MQ==", 
+                                                    repository: "gig-dev_environment-components",
+                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
                             edges {
                               node {
                                 id
+                                component {
+                                  repository
+                                  namespace
+                                  name
+                                  componentClass
+                                  version
+                                }
                                 info {
                                   name
                                   humanName
@@ -341,7 +357,7 @@ class TestEnvironmentDevEnvQueries(object):
                               }
                               cursor
                             }
-                            pageInfo{
+                            pageInfo {
                               hasNextPage
                               hasPreviousPage
                             }
@@ -350,7 +366,7 @@ class TestEnvironmentDevEnvQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_env_versions_pagination_reverse(self, schema_and_env_index, snapshot):
+    def test_get_available_custom_deps_versions_pagination_reverse(self, schema_and_env_index, snapshot):
         """Test getting the available versions for a given component with pagination in reverse"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
@@ -358,13 +374,19 @@ class TestEnvironmentDevEnvQueries(object):
             client = Client(schema_and_env_index[2])
 
             query = """
-                       {
-                          availableDevEnvVersions(last: 1, 
-                            repository: "gig-dev_environment-components",
-                            namespace: "gigantum", component: "jupyter-ubuntu") {
+                        {
+                          availableCustomDependenciesVersions(last: 2, repository: "gig-dev_environment-components",
+                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
                             edges {
                               node {
                                 id
+                                component {
+                                  repository
+                                  namespace
+                                  name
+                                  componentClass
+                                  version
+                                }
                                 info {
                                   name
                                   humanName
@@ -374,7 +396,7 @@ class TestEnvironmentDevEnvQueries(object):
                               }
                               cursor
                             }
-                            pageInfo{
+                            pageInfo {
                               hasNextPage
                               hasPreviousPage
                             }
@@ -384,13 +406,20 @@ class TestEnvironmentDevEnvQueries(object):
             snapshot.assert_match(client.execute(query))
 
             query = """                    
-                       {
-                          availableDevEnvVersions(last: 3, before: "MQ==" 
-                            repository: "gig-dev_environment-components",
-                            namespace: "gigantum", component: "jupyter-ubuntu") {
+                        {
+                          availableCustomDependenciesVersions(last: 2, before: "MQ==",
+                                                    repository: "gig-dev_environment-components",
+                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
                             edges {
                               node {
                                 id
+                                component {
+                                  repository
+                                  namespace
+                                  name
+                                  componentClass
+                                  version
+                                }
                                 info {
                                   name
                                   humanName
@@ -400,7 +429,7 @@ class TestEnvironmentDevEnvQueries(object):
                               }
                               cursor
                             }
-                            pageInfo{
+                            pageInfo {
                               hasNextPage
                               hasPreviousPage
                             }
