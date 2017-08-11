@@ -105,7 +105,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
         container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
         image_builder = ImageBuilder(labbook_dir)
-        container = image_builder.run_container(client, container_name)
+        container = image_builder.run_container(client, container_name, lb)
 
         id_data = {"username": username,
                    "owner": owner,
