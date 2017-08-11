@@ -46,7 +46,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
         if "owner" not in input:
             owner = username
         else:
-            owner = input["username"]
+            owner = input["owner"]
 
         # TODO: Move environment code into a library
         docker_client_version = os.environ.get("DOCKER_CLIENT_VERSION")
@@ -93,7 +93,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
         if "owner" not in input:
             owner = username
         else:
-            owner = input["username"]
+            owner = input["owner"]
 
         # TODO: Move environment code into a library
         client = docker.from_env()
