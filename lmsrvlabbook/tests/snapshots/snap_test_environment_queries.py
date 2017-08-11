@@ -187,3 +187,87 @@ RUN pip3 install Pillow==4.2.1
         }
     }
 }
+
+snapshots['TestEnvironmentServiceQueries.test_get_package_manager 1'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'packageManagerDependencies': {
+                    'edges': [
+                    ],
+                    'pageInfo': {
+                        'hasNextPage': False
+                    }
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestEnvironmentServiceQueries.test_get_package_manager 2'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'packageManagerDependencies': {
+                    'edges': [
+                        {
+                            'cursor': 'MA==',
+                            'node': {
+                                'id': 'UGFja2FnZU1hbmFnZXI6cGFja2FnZV9tYW5hZ2VyJmFwdC1nZXQmZG9ja2Vy',
+                                'packageManager': 'apt-get',
+                                'packageName': 'docker',
+                                'packageVersion': None
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasNextPage': True
+                    }
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestEnvironmentServiceQueries.test_get_package_manager 3'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'packageManagerDependencies': {
+                    'edges': [
+                        {
+                            'cursor': 'MQ==',
+                            'node': {
+                                'id': 'UGFja2FnZU1hbmFnZXI6cGFja2FnZV9tYW5hZ2VyJmFwdC1nZXQmbHhtbA==',
+                                'packageManager': 'apt-get',
+                                'packageName': 'lxml',
+                                'packageVersion': None
+                            }
+                        },
+                        {
+                            'cursor': 'Mg==',
+                            'node': {
+                                'id': 'UGFja2FnZU1hbmFnZXI6cGFja2FnZV9tYW5hZ2VyJnBpcDMmbnVtcHk=',
+                                'packageManager': 'pip3',
+                                'packageName': 'numpy',
+                                'packageVersion': '1.12'
+                            }
+                        },
+                        {
+                            'cursor': 'Mw==',
+                            'node': {
+                                'id': 'UGFja2FnZU1hbmFnZXI6cGFja2FnZV9tYW5hZ2VyJnBpcDMmcmVxdWVzdHM=',
+                                'packageManager': 'pip3',
+                                'packageName': 'requests',
+                                'packageVersion': None
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasNextPage': False
+                    }
+                }
+            }
+        }
+    }
+}

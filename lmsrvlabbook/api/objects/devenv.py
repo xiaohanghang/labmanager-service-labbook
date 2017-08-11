@@ -96,11 +96,11 @@ class DevEnv(ObjectType):
             id_data(dict): A dictionary of variables that uniquely ID the instance
 
         Returns:
-            Environment
+            DevEnv
         """
         if "type_id" in id_data:
             # Parse ID components
-            id_data.update(EnvironmentAuthor.parse_type_id(id_data["type_id"]))
+            id_data.update(DevEnv.parse_type_id(id_data["type_id"]))
             del id_data["type_id"]
 
         if 'component_data' not in id_data:

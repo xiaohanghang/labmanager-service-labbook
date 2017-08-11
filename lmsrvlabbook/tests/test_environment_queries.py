@@ -279,3 +279,74 @@ class TestEnvironmentServiceQueries(object):
 
             # Test again
             snapshot.assert_match(client.execute(query))
+
+    def test_get_package_manager(self, schema_and_env_index, snapshot):
+        """Test getting the a LabBook's package manager dependencies"""
+        # Create labbook
+        lb = LabBook(schema_and_env_index[0])
+        lb.new(owner={"username": "default"}, name="labbook4", description="my first labbook10000")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+            # Make and validate request
+            client = Client(schema_and_env_index[2])
+
+            query = """
+                        {
+                          labbook(owner: "default", name: "labbook4") {
+                            environment {
+                             packageManagerDependencies(first: 1) {
+                                edges {
+                                  node {
+                                    id
+                                    packageName
+                                    packageManager
+                                    packageVersion
+                                  }
+                                  cursor
+                                }
+                                pageInfo {
+                                  hasNextPage
+                                }
+                              }
+                            }
+                          }
+                        }
+                        """
+            # should be null
+            snapshot.assert_match(client.execute(query))
+
+            # Add a base image
+            cm = ComponentManager(lb)
+            cm.add_package("apt-get", "docker")
+            cm.add_package("apt-get", "lxml")
+            cm.add_package("pip3", "requests")
+            cm.add_package("pip3", "numpy", "1.12")
+
+            # Test again
+            snapshot.assert_match(client.execute(query))
+
+            query = """
+                       {
+                         labbook(owner: "default", name: "labbook4") {
+                           environment {
+                            packageManagerDependencies(first: 4, after: "MA==") {
+                               edges {
+                                 node {
+                                   id
+                                   packageName
+                                   packageManager
+                                   packageVersion
+                                 }
+                                 cursor
+                               }
+                               pageInfo {
+                                 hasNextPage
+                               }
+                             }
+                           }
+                         }
+                       }
+                       """
+            # should be null
+            snapshot.assert_match(client.execute(query))
