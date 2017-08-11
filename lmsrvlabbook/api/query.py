@@ -30,9 +30,11 @@ from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvlabbook.api.objects.labbook import Labbook, LabbookSummary
 from lmsrvlabbook.api.objects.baseimage import BaseImage
 from lmsrvlabbook.api.objects.devenv import DevEnv
+from lmsrvlabbook.api.objects.customdependency import CustomDependency
 from lmsrvlabbook.api.connections.labbook import LabbookConnection
 from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
 from lmsrvlabbook.api.connections.devenv import DevEnvConnection
+from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection
 
 
 class LabbookQuery(graphene.AbstractType):
@@ -55,6 +57,12 @@ class LabbookQuery(graphene.AbstractType):
     available_dev_env_versions = graphene.relay.ConnectionField(DevEnvConnection, repository=graphene.String(),
                                                                 namespace=graphene.String(),
                                                                 component=graphene.String())
+    # Custom Dependency Repository Interface
+    available_custom_dependencies = graphene.relay.ConnectionField(CustomDependencyConnection)
+    available_custom_dependencies_versions = graphene.relay.ConnectionField(CustomDependencyConnection,
+                                                                            repository=graphene.String(),
+                                                                            namespace=graphene.String(),
+                                                                            component=graphene.String())
 
     @resolve_only_args
     def resolve_labbook(self, owner, name):
@@ -225,3 +233,62 @@ class LabbookQuery(graphene.AbstractType):
             edge_objs.append(DevEnvConnection.Edge(node=DevEnv.create(id_data), cursor=cursor))
 
         return DevEnvConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_available_custom_dependencies(self, args, context, info):
+        """Method to return all graphene CustomDependencies that are available (at the latest version)
+
+        Returns:
+            CustomDependencyConnection
+        """
+        repo = ComponentRepository()
+        edges = repo.get_component_list("custom")
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        # Get BaseImage instances
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            id_data = {'component_data': edge,
+                       'component_class': 'custom',
+                       'repo': edge['###repository###'],
+                       'namespace': edge['###namespace###'],
+                       'component': edge['info']['name'],
+                       'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
+                       }
+            edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
+
+        return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_available_custom_dependencies_versions(self, args, context, info):
+        """Method to return all versions of a Custom Dependency component
+
+        Returns:
+            CustomDependencyConnection
+        """
+        repo = ComponentRepository()
+        edges = repo.get_component_versions("custom",
+                                            args['repository'],
+                                            args['namespace'],
+                                            args['component'])
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        # Get BaseImage instances
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            id_data = {'component_data': edge[1],
+                       'component_class': 'custom',
+                       'repo': args['repository'],
+                       'namespace': args['namespace'],
+                       'component': args['component'],
+                       'version': edge[0]
+                       }
+            edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
+
+        return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)

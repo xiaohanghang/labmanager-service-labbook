@@ -29,8 +29,8 @@ from lmcommon.environment import ComponentRepository
 from lmsrvcore.api import ObjectType
 
 
-class DevEnv(ObjectType):
-    """A type that represents a Development Environment Environment Component"""
+class CustomDependency(ObjectType):
+    """A type that represents a Custom Dependency Environment Component"""
     class Meta:
         interfaces = (graphene.relay.Node, )
 
@@ -46,17 +46,8 @@ class DevEnv(ObjectType):
     # The class of Operating System this works with (e.g. ubuntu)
     os_base_class = graphene.String(required=True)
 
-    # The type of development environment (e.g. web, xforward)
-    development_environment_class = graphene.String(required=True)
-
-    # The installation commands for the docker file
-    install_commands = graphene.List(graphene.String, required=True)
-
-    # The image tag to use on the container registry server when pulling the image
-    exec_commands = graphene.List(graphene.String, required=True)
-
-    # The image tag to use on the container registry server when pulling the image
-    exposed_tcp_ports = graphene.List(graphene.String, required=True)
+    # Custom snippet to insert into the LabBook's Dockerfile
+    docker = graphene.String(required=True)
 
     @staticmethod
     def to_type_id(id_data):
@@ -90,17 +81,17 @@ class DevEnv(ObjectType):
 
     @staticmethod
     def create(id_data):
-        """Method to create a graphene DevEnv object based on the type node ID or id_data
+        """Method to create a graphene CustomDependency object based on the type node ID or id_data
 
         Args:
             id_data(dict): A dictionary of variables that uniquely ID the instance
 
         Returns:
-            DevEnv
+            CustomDependency
         """
         if "type_id" in id_data:
             # Parse ID components
-            id_data.update(DevEnv.parse_type_id(id_data["type_id"]))
+            id_data.update(EnvironmentAuthor.parse_type_id(id_data["type_id"]))
             del id_data["type_id"]
 
         if 'component_data' not in id_data:
@@ -117,12 +108,9 @@ class DevEnv(ObjectType):
             # data has already been loaded
             component_data = id_data['component_data']
 
-        return DevEnv(id=DevEnv.to_type_id(id_data),
-                      author=EnvironmentAuthor.create(id_data),
-                      info=EnvironmentInfo.create(id_data),
-                      component=EnvironmentComponent.create(id_data),
-                      os_base_class=component_data['os_base_class'],
-                      development_environment_class=component_data['development_environment_class'],
-                      install_commands=component_data['install_commands'],
-                      exec_commands=component_data['exec_commands'],
-                      exposed_tcp_ports=component_data['exposed_tcp_ports'])
+        return CustomDependency(id=CustomDependency.to_type_id(id_data),
+                                author=EnvironmentAuthor.create(id_data),
+                                info=EnvironmentInfo.create(id_data),
+                                component=EnvironmentComponent.create(id_data),
+                                os_base_class=component_data['os_base_class'],
+                                docker=component_data['docker'])

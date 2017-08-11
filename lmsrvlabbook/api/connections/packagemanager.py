@@ -18,17 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer,\
-    CreateNote, AddEnvironmentComponent, AddEnvironmentPackage
+from lmsrvlabbook.api.objects.packagemanager import PackageManager
 
 
-class LabbookMutations(graphene.AbstractType):
-    """Entry point for all graphql mutations"""
-    create_labbook = CreateLabbook.Field()
-    create_branch = CreateBranch.Field()
-    checkout_branch = CheckoutBranch.Field()
-    build_image = BuildImage.Field()
-    start_container = StartContainer.Field()
-    create_note = CreateNote.Field()
-    add_environment_component = AddEnvironmentComponent.Field()
-    add_environment_package = AddEnvironmentPackage.Field()
+class PackageManagerConnection(graphene.relay.Connection):
+    """A Connection for paging through available Package manager installed packages"""
+    class Meta:
+        node = PackageManager
+
+

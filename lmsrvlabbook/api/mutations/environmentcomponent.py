@@ -27,6 +27,40 @@ from lmsrvlabbook.api.objects.baseimage import BaseImage
 from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponentClass
 
 
+class AddEnvironmentPackage(graphene.relay.ClientIDMutation):
+    """Mutation to add a new package to labbook. """
+
+    class Input:
+        labbook_name = graphene.String(required=True)
+        owner = graphene.String()
+        package_manager = graphene.String(required=True)
+        package_name = graphene.String(required=True)
+        package_version = graphene.String()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+
+        if not input.get("owner"):
+            owner = username
+        else:
+            owner = input.get("owner")
+
+        # Load LabBook instance
+        lb = LabBook()
+        lb.from_name(username, owner, input.get('labbook_name'))
+
+        # Create Component Manager
+        cm = ComponentManager(lb)
+
+        cm.add_package(package_manager=input.get('package_manager'),
+                       package_name=input.get('package_name'),
+                       package_version=input.get('package_version'))
+
+        return AddEnvironmentPackage()
+
+
 class AddEnvironmentComponent(graphene.relay.ClientIDMutation):
     """Mutation to add a new environment component to a LabBook"""
 
