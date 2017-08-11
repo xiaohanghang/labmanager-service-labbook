@@ -104,16 +104,14 @@ class StartContainer(graphene.relay.ClientIDMutation):
                                    input.get('labbook_name'))
         labbook_dir = os.path.expanduser(labbook_dir)
 
-        # Start container
-        client.containers.run('{}-{}-{}'.format(username, owner, input.get('labbook_name')),
-                              detach=True,
-                              name='{}-{}-{}'.format(username, owner, input.get('labbook_name')),
-                              ports={"8888/tcp": "8888"},
-                              volumes={labbook_dir: {'bind': '/mnt/labbook', 'mode': 'rw'}})
+        container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+
+        image_builder = ImageBuilder(labbook_dir)
+        container = image_builder.run_container(client, container_name)
 
         id_data = {"username": username,
                    "owner": owner,
                    "name": input.get("labbook_name")}
 
-        return BuildImage(environment=Environment.create(id_data))
+        return StartContainer(environment=Environment.create(id_data))
 
