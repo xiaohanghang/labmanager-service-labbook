@@ -26,7 +26,7 @@ from lmsrvlabbook.api.objects.environment import Environment
 from lmsrvcore.auth.user import get_logged_in_user
 from lmcommon.configuration import Configuration
 from lmcommon.imagebuilder import ImageBuilder
-
+from lmcommon.labbook import LabBook
 
 class BuildImage(graphene.relay.ClientIDMutation):
     """Mutator to build a LabBook's Docker Image"""
@@ -46,7 +46,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
         if "owner" not in input:
             owner = username
         else:
-            owner = input["username"]
+            owner = input["owner"]
 
         # TODO: Move environment code into a library
         docker_client_version = os.environ.get("DOCKER_CLIENT_VERSION")
@@ -93,27 +93,23 @@ class StartContainer(graphene.relay.ClientIDMutation):
         if "owner" not in input:
             owner = username
         else:
-            owner = input["username"]
+            owner = input["owner"]
 
         # TODO: Move environment code into a library
         client = docker.from_env()
 
-        # Get Dockerfile directory
-        labbook_dir = os.path.join(Configuration().config['git']['working_directory'],
-                                   username, owner,
-                                   input.get('labbook_name'))
-        labbook_dir = os.path.expanduser(labbook_dir)
+        # Load the labbook to retrieve root directory.
+        lb = LabBook()
+        lb.from_name(username, owner, input.get('labbook_name'))
+        labbook_dir = lb.root_dir
 
-        # Start container
-        client.containers.run('{}-{}-{}'.format(username, owner, input.get('labbook_name')),
-                              detach=True,
-                              name='{}-{}-{}'.format(username, owner, input.get('labbook_name')),
-                              ports={"8888/tcp": "8888"},
-                              volumes={labbook_dir: {'bind': '/mnt/labbook', 'mode': 'rw'}})
+        container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+        image_builder = ImageBuilder(labbook_dir)
+        container = image_builder.run_container(client, container_name)
 
         id_data = {"username": username,
                    "owner": owner,
                    "name": input.get("labbook_name")}
 
-        return BuildImage(environment=Environment.create(id_data))
+        return StartContainer(environment=Environment.create(id_data))
 
