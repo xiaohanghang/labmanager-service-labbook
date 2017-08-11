@@ -26,7 +26,7 @@ from lmsrvlabbook.api.objects.environment import Environment
 from lmsrvcore.auth.user import get_logged_in_user
 from lmcommon.configuration import Configuration
 from lmcommon.imagebuilder import ImageBuilder
-
+from lmcommon.labbook import LabBook
 
 class BuildImage(graphene.relay.ClientIDMutation):
     """Mutator to build a LabBook's Docker Image"""
@@ -98,14 +98,12 @@ class StartContainer(graphene.relay.ClientIDMutation):
         # TODO: Move environment code into a library
         client = docker.from_env()
 
-        # Get Dockerfile directory
-        labbook_dir = os.path.join(Configuration().config['git']['working_directory'],
-                                   username, owner,
-                                   input.get('labbook_name'))
-        labbook_dir = os.path.expanduser(labbook_dir)
+        # Load the labbook to retrieve root directory.
+        lb = LabBook()
+        lb.from_name(username, owner, input.get('labbook_name'))
+        labbook_dir = lb.root_dir
 
         container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
-
         image_builder = ImageBuilder(labbook_dir)
         container = image_builder.run_container(client, container_name)
 
