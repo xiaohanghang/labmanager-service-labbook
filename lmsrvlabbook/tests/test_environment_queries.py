@@ -217,3 +217,65 @@ class TestEnvironmentServiceQueries(object):
 
             # Test again
             snapshot.assert_match(client.execute(query))
+
+    def test_get_custom(self, schema_and_env_index, snapshot):
+        """Test getting the a LabBook's custom dependencies"""
+        # Create labbook
+        lb = LabBook(schema_and_env_index[0])
+        lb.new(owner={"username": "default"}, name="labbook3", description="my first labbook10000")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+            # Make and validate request
+            client = Client(schema_and_env_index[2])
+
+            query = """
+                        {
+                          labbook(owner: "default", name: "labbook3") {
+                            environment {
+                             customDependencies(first: 1) {
+                                edges {
+                                  node {
+                                    id
+                                    component {
+                                      repository
+                                      namespace
+                                      name
+                                      componentClass
+                                      version
+                                    }
+                                    info {
+                                      name
+                                      humanName
+                                      versionMajor
+                                      versionMinor
+                                    }
+                                    author {
+                                      organization
+                                    }
+                                    osBaseClass
+                                    docker
+                                  }
+                                  cursor
+                                }
+                                pageInfo {
+                                  hasNextPage
+                                }
+                              }
+                            }
+                          }
+                        }            
+                        """
+            # should be null
+            snapshot.assert_match(client.execute(query))
+
+            # Add a base image
+            cm = ComponentManager(lb)
+            cm.add_component("custom",
+                             "gig-dev_environment-components",
+                             "gigantum",
+                             "ubuntu-python3-pillow",
+                             "0.3")
+
+            # Test again
+            snapshot.assert_match(client.execute(query))

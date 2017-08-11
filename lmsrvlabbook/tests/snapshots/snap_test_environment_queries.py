@@ -129,3 +129,61 @@ snapshots['TestEnvironmentServiceQueries.test_get_dev_env 2'] = {
         }
     }
 }
+
+snapshots['TestEnvironmentServiceQueries.test_get_custom 1'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'customDependencies': {
+                    'edges': [
+                    ],
+                    'pageInfo': {
+                        'hasNextPage': False
+                    }
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestEnvironmentServiceQueries.test_get_custom 2'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'customDependencies': {
+                    'edges': [
+                        {
+                            'cursor': 'MA==',
+                            'node': {
+                                'author': {
+                                    'organization': 'Aperture Science'
+                                },
+                                'component': {
+                                    'componentClass': 'custom',
+                                    'name': 'ubuntu-python3-pillow',
+                                    'namespace': 'gigantum',
+                                    'repository': 'gig-dev_environment-components',
+                                    'version': '0.3'
+                                },
+                                'docker': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
+RUN pip3 install Pillow==4.2.1 
+''',
+                                'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjM=',
+                                'info': {
+                                    'humanName': 'Pillow',
+                                    'name': 'ubuntu-python3-pillow',
+                                    'versionMajor': 0,
+                                    'versionMinor': 3
+                                },
+                                'osBaseClass': 'ubuntu'
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasNextPage': False
+                    }
+                }
+            }
+        }
+    }
+}

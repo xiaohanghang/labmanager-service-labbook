@@ -36,6 +36,7 @@ from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
 from lmsrvlabbook.api.objects.environmentinfo import EnvironmentInfo
 from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
 from lmsrvlabbook.api.connections.devenv import DevEnvConnection, DevEnv
+from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection, CustomDependency
 from lmsrvlabbook.api.objects.baseimage import BaseImage
 
 
@@ -77,6 +78,9 @@ class Environment(ObjectType):
 
     # The LabBook's Dev Envs
     dev_envs = graphene.ConnectionField(DevEnvConnection)
+
+    # The LabBook's Custom dependencies
+    custom_dependencies = graphene.ConnectionField(CustomDependencyConnection)
 
     @staticmethod
     def to_type_id(id_data):
@@ -257,3 +261,52 @@ class Environment(ObjectType):
         else:
             return DevEnvConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
                                                                                 has_previous_page=False))
+
+    def resolve_custom_dependencies(self, args, context, info):
+        """Method to get the LabBook's custom deps
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # TODO: Implement better method to share data between resolvers
+        # The id field is populated at this point, so should be able to use that info for now
+        id_data = {"username": get_logged_in_user()}
+        id_data.update(Environment.parse_type_id(self.id))
+
+        # Get base image data
+        lb = LabBook()
+        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        cm = ComponentManager(lb)
+
+        edges = cm.get_component_list("custom")
+
+        if edges:
+            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in
+                       enumerate(edges)]
+
+            # Process slicing and cursor args
+            lbc = ListBasedConnection(edges, cursors, args)
+            lbc.apply()
+
+            # Get DevEnv instances
+            edge_objs = []
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                id_data = {'component_data': edge,
+                           'component_class': 'custom',
+                           'repo': edge['###repository###'],
+                           'namespace': edge['###namespace###'],
+                           'component': edge['info']['name'],
+                           'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
+                           }
+                edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
+
+            return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
+
+        else:
+            return CustomDependencyConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
+                                                                                          has_previous_page=False))
