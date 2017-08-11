@@ -20,13 +20,23 @@
 # SOFTWARE.
 import graphene
 import os
+import base64
 
 import docker
 from docker.errors import ImageNotFound, NotFound
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmcommon.environment.componentmanager import ComponentManager
+from lmcommon.labbook import LabBook
 
+from lmsrvcore.auth.user import get_logged_in_user
 from lmsrvcore.api import ObjectType
+from lmsrvcore.api.connections import ListBasedConnection
+
+from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
+from lmsrvlabbook.api.objects.environmentinfo import EnvironmentInfo
+from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
+from lmsrvlabbook.api.connections.devenv import DevEnvConnection, DevEnv
+from lmsrvlabbook.api.objects.baseimage import BaseImage
 
 
 class ImageStatus(graphene.Enum):
@@ -61,6 +71,12 @@ class Environment(ObjectType):
 
     # The name of the current branch
     container_status = graphene.Field(ContainerStatus)
+
+    # The LabBook's Base Image
+    base_image = graphene.Field(BaseImage)
+
+    # The LabBook's Dev Envs
+    dev_envs = graphene.ConnectionField(DevEnvConnection)
 
     @staticmethod
     def to_type_id(id_data):
@@ -143,3 +159,101 @@ class Environment(ObjectType):
 
         return Environment(id=Environment.to_type_id(id_data),
                            image_status=image_status.value, container_status=container_status.value)
+
+    def resolve_base_image(self, args, context, info):
+        """Method to get the LabBook's base image
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # TODO: Implement better method to share data between resolvers
+        # The id field is populated at this point, so should be able to use that info for now
+        id_data = {"username": get_logged_in_user()}
+        id_data.update(Environment.parse_type_id(self.id))
+
+        # Get base image data
+        lb = LabBook()
+        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        cm = ComponentManager(lb)
+
+        component_data = cm.get_component_list("base_image")
+
+        if component_data:
+            component_data = component_data[0]
+            # Switch ID data to a BaseImage
+            id_data["component_class"] = "base_image"
+            id_data["repo"] = component_data["###repository###"]
+            id_data["namespace"] = component_data["###namespace###"]
+            id_data["component"] = component_data['info']['name']
+            id_data["version"] = "{}.{}".format(component_data['info']['version_major'],
+                                                component_data['info']['version_minor'])
+
+            package_managers = [pm['name'] for pm in component_data['available_package_managers']]
+
+            return BaseImage(id=BaseImage.to_type_id(id_data),
+                             author=EnvironmentAuthor.create(id_data),
+                             info=EnvironmentInfo.create(id_data),
+                             component=EnvironmentComponent.create(id_data),
+                             os_class=component_data['os_class'],
+                             os_release=component_data['os_release'],
+                             server=component_data['image']['server'],
+                             namespace=component_data['image']['namespace'],
+                             repository=component_data['image']['repo'],
+                             tag=component_data['image']['tag'],
+                             available_package_managers=package_managers)
+        else:
+            return None
+
+    def resolve_dev_envs(self, args, context, info):
+        """Method to get the LabBook's dev envs
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # TODO: Implement better method to share data between resolvers
+        # The id field is populated at this point, so should be able to use that info for now
+        id_data = {"username": get_logged_in_user()}
+        id_data.update(Environment.parse_type_id(self.id))
+
+        # Get base image data
+        lb = LabBook()
+        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        cm = ComponentManager(lb)
+
+        edges = cm.get_component_list("dev_env")
+
+        if edges:
+            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in
+                       enumerate(edges)]
+
+            # Process slicing and cursor args
+            lbc = ListBasedConnection(edges, cursors, args)
+            lbc.apply()
+
+            # Get DevEnv instances
+            edge_objs = []
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                id_data = {'component_data': edge,
+                           'component_class': 'dev_env',
+                           'repo': edge['###repository###'],
+                           'namespace': edge['###namespace###'],
+                           'component': edge['info']['name'],
+                           'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
+                           }
+                edge_objs.append(DevEnvConnection.Edge(node=DevEnv.create(id_data), cursor=cursor))
+
+            return DevEnvConnection(edges=edge_objs, page_info=lbc.page_info)
+
+        else:
+            return DevEnvConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
+                                                                                has_previous_page=False))

@@ -30,7 +30,9 @@ from mock import patch
 
 from lmcommon.labbook import LabBook
 from lmcommon.configuration import Configuration
+from lmcommon.environment import ComponentManager
 
+from lmsrvlabbook.tests.fixtures import schema_and_env_index
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
 
@@ -95,3 +97,123 @@ class TestEnvironmentServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
+    def test_get_base_image(self, schema_and_env_index, snapshot):
+        """Test getting the a LabBook's base image"""
+        # Create labbook
+        lb = LabBook(schema_and_env_index[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook10000")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+            # Make and validate request
+            client = Client(schema_and_env_index[2])
+
+            query = """
+                    {
+                      labbook(owner: "default", name: "labbook1") {
+                        environment {
+                          baseImage {
+                            id
+                            component {
+                              repository
+                              namespace
+                              name
+                              componentClass
+                              version
+                            }
+                            info {
+                              name
+                              humanName
+                              versionMajor
+                              versionMinor
+                            }
+                            author {
+                              organization
+                            }
+                            availablePackageManagers
+                            server
+                            tag
+                          }
+                        }
+                      }
+                    }
+            """
+            # should be null
+            snapshot.assert_match(client.execute(query))
+
+            # Add a base image
+            cm = ComponentManager(lb)
+            cm.add_component("base_image",
+                             "gig-dev_environment-components",
+                             "gigantum",
+                             "ubuntu1604-python3",
+                             "0.4")
+
+            # Test again
+            snapshot.assert_match(client.execute(query))
+
+    def test_get_dev_env(self, schema_and_env_index, snapshot):
+        """Test getting the a LabBook's development environment"""
+        # Create labbook
+        lb = LabBook(schema_and_env_index[0])
+        lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook10000")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+            # Make and validate request
+            client = Client(schema_and_env_index[2])
+
+            query = """
+                    {
+                      labbook(owner: "default", name: "labbook2") {
+                        environment {
+                          devEnvs(first: 1) {
+                            edges {
+                              node {
+                                id
+                                component {
+                                  repository
+                                  namespace
+                                  name
+                                  componentClass
+                                  version
+                                }
+                                info {
+                                  name
+                                  humanName
+                                  versionMajor
+                                  versionMinor
+                                }
+                                author {
+                                  organization
+                                }
+                                osBaseClass
+                                developmentEnvironmentClass
+                                installCommands
+                                exposedTcpPorts
+                                execCommands
+                              }
+                              cursor
+                            }
+                            pageInfo {
+                              hasNextPage
+                              hasPreviousPage
+                            }
+                          }   
+                        }
+                      }
+                    }
+            """
+            # should be null
+            snapshot.assert_match(client.execute(query))
+
+            # Add a base image
+            cm = ComponentManager(lb)
+            cm.add_component("dev_env",
+                             "gig-dev_environment-components",
+                             "gigantum",
+                             "jupyter-ubuntu",
+                             "0.1")
+
+            # Test again
+            snapshot.assert_match(client.execute(query))
