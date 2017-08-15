@@ -17,40 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
-from flask_cors import CORS, cross_origin
 
-import blueprint
 
-from lmcommon.configuration import Configuration
-from lmcommon.logging import LMLogger
-from lmcommon.environment import RepositoryManager
+def get_logged_in_user():
+    """A Method to get the current logged in user's username
 
-# Load config data for the LabManager instance
-config = Configuration()
+    Currently this is faked out until we actually have a user model
 
-# Create Flask app and configure
-app = Flask("lmsrvlabbook")
-
-if config.config["flask"]["allow_cors"]:
-    # Allow CORS
-    CORS(app)
-
-# Set Debug mode
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
-
-# Register service
-app.register_blueprint(blueprint.complete_labbook_service)
-
-# Setup local environment repositories
-lmlog = LMLogger()
-lmlog.logger.info("Cloning/Updating environment repositories.")
-
-erm = RepositoryManager()
-erm.update_repositories()
-lmlog.logger.info("Indexing environment repositories.")
-erm.index_repositories()
-lmlog.logger.info("Environment repositories ready.")
-
-if __name__ == '__main__':
-    app.run()
+    Returns:
+        str
+    """
+    return "default"

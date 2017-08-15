@@ -1,0 +1,35 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6.1
+    python:
+      version: 3.6.1
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: 
+          name: Install build essentials
+          command: |
+            sudo apt-get update
+            sudo apt-get install build-essential libsnappy-dev libleveldb-dev
+      
+      - run:
+          name: Set Git credentials
+          command: git config --global user.email "noreply@gigantum.io" && git config --global user.name "CircleCI"
+
+      - run:
+          name: Pip install requirements, labmanager-common and pytest
+          command: |
+            sudo pip install -r requirements.txt
+            git clone -b integration --single-branch https://github.com/gigantum/labmanager-common.git
+            export CWD=`pwd`
+            sudo pip install --find-links --no-index file:///home/circleci/project/labmanager-common
+            sudo pip install coveralls pytest-cov
+
+      - run:
+          name: Run unit and coverage tests
+          command: |
+            pytest --cov=lmcommon .
+            coveralls
+

@@ -17,40 +17,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
-from flask_cors import CORS, cross_origin
+import graphene
+from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer,\
+    CreateNote, AddEnvironmentComponent, AddEnvironmentPackage
 
-import blueprint
 
-from lmcommon.configuration import Configuration
-from lmcommon.logging import LMLogger
-from lmcommon.environment import RepositoryManager
-
-# Load config data for the LabManager instance
-config = Configuration()
-
-# Create Flask app and configure
-app = Flask("lmsrvlabbook")
-
-if config.config["flask"]["allow_cors"]:
-    # Allow CORS
-    CORS(app)
-
-# Set Debug mode
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
-
-# Register service
-app.register_blueprint(blueprint.complete_labbook_service)
-
-# Setup local environment repositories
-lmlog = LMLogger()
-lmlog.logger.info("Cloning/Updating environment repositories.")
-
-erm = RepositoryManager()
-erm.update_repositories()
-lmlog.logger.info("Indexing environment repositories.")
-erm.index_repositories()
-lmlog.logger.info("Environment repositories ready.")
-
-if __name__ == '__main__':
-    app.run()
+class LabbookMutations(graphene.AbstractType):
+    """Entry point for all graphql mutations"""
+    create_labbook = CreateLabbook.Field()
+    create_branch = CreateBranch.Field()
+    checkout_branch = CheckoutBranch.Field()
+    build_image = BuildImage.Field()
+    start_container = StartContainer.Field()
+    create_note = CreateNote.Field()
+    add_environment_component = AddEnvironmentComponent.Field()
+    add_environment_package = AddEnvironmentPackage.Field()
