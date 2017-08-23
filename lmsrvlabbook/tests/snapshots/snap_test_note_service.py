@@ -217,3 +217,114 @@ snapshots['TestNoteService.test_get_full_note 1'] = {
         }
     }
 }
+
+snapshots['TestNoteService.test_create_user_note 1'] = {
+    'data': {
+        'createUserNote': {
+            'note': {
+                'freeText': '''## A title
+- sdf
+ - ghfg''',
+                'message': 'I think this is a thing'
+            }
+        }
+    }
+}
+
+snapshots['TestNoteService.test_create_user_note 2'] = {
+    'data': {
+        'labbook': {
+            'notes': {
+                'edges': [
+                    {
+                        'node': {
+                            'freeText': '''## A title
+- sdf
+ - ghfg''',
+                            'message': 'I think this is a thing',
+                            'objects': {
+                                'edges': [
+                                    {
+                                        'node': {
+                                            'key': 'objectkey1',
+                                            'type': 'PNG',
+                                            'value': "b'\\xdaw\\xb0\\xd3\\x1e\\xc5\\x00\\x10\\xb7\\xef\\x81W'"
+                                        }
+                                    }
+                                ]
+                            },
+                            'tags': [
+                                'tag1',
+                                'tag2'
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
+
+snapshots['TestNoteService.test_create_user_note_no_details 1'] = {
+    'data': {
+        'createUserNote': {
+            'note': {
+                'freeText': None,
+                'message': 'I think this is a thing'
+            }
+        }
+    }
+}
+
+snapshots['TestNoteService.test_create_user_note_no_details 2'] = {
+    'data': {
+        'labbook': {
+            'notes': {
+                'edges': [
+                    {
+                        'node': {
+                            'freeText': None,
+                            'message': 'I think this is a thing'
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
+
+snapshots['TestNoteService.test_get_required_note 1'] = {
+    'data': {
+        'createNote': {
+            'note': {
+                'message': 'Added a new file in this test'
+            }
+        }
+    }
+}
+
+snapshots['TestNoteService.test_get_required_note 2'] = {
+    'data': {
+        'labbook': {
+            'notes': {
+                'edges': [
+                    {
+                        'cursor': 'MA==',
+                        'node': {
+                            'author': 'noreply@gigantum.io',
+                            'freeText': None,
+                            'level': 'AUTO_MAJOR',
+                            'message': 'Added a new file in this test',
+                            'objects': {
+                                'edges': [
+                                ]
+                            },
+                            'tags': [
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
