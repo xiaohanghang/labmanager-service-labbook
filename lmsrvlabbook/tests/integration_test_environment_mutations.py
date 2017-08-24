@@ -29,7 +29,7 @@ from docker.errors import ImageNotFound
 from graphene.test import Client
 from mock import patch
 
-from lmcommon.configuration import Configuration
+from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.labbook import LabBook
 from lmsrvcore.auth.user import get_logged_in_user
 
@@ -50,7 +50,7 @@ class Mutation(LabbookMutations, graphene.ObjectType):
 @pytest.fixture()
 def reset_images():
     """A pytest fixture that checks if the test images exist and deletes them"""
-    client = docker.from_env()
+    client = get_docker_client()
     try:
         client.images.get("{}-{}".format(get_logged_in_user(), 'labbook-build'))
         client.images.remove("{}-{}".format(get_logged_in_user(), 'labbook-build'))

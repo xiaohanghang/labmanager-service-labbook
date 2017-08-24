@@ -27,6 +27,7 @@ from docker.errors import ImageNotFound, NotFound
 
 from lmcommon.environment.componentmanager import ComponentManager
 from lmcommon.labbook import LabBook
+from lmcommon.configuration import get_docker_client
 
 from lmsrvcore.auth.user import get_logged_in_user
 from lmsrvcore.api import ObjectType
@@ -142,11 +143,7 @@ class Environment(ObjectType):
         # TODO: Move environment interaction to a library
         docker_client_version = os.environ.get("DOCKER_CLIENT_VERSION")
 
-        if docker_client_version:
-            # This is needed for CircleCI, may be needed for other deployment envs as well.
-            client = docker.from_env(version=docker_client_version)
-        else:
-            client = docker.from_env()
+        client = get_docker_client()
 
         # Check if the image exists
         try:
