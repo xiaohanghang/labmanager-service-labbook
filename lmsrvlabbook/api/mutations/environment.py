@@ -63,7 +63,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
 
         tag='{}-{}-{}'.format(username, owner, input.get('labbook_name'))
         image_builder = ImageBuilder(labbook_dir)
-        docker_image = image_builder.build_image(docker_client=client, image_tag=tag)
+        docker_image = image_builder.build_image(docker_client=client, image_tag=tag, background=True)
 
         id_data = {"username": username,
                    "owner": owner,
