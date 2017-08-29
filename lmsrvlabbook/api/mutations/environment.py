@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import time
 
 import graphene
 import docker
@@ -27,6 +28,9 @@ from lmsrvcore.auth.user import get_logged_in_user
 from lmcommon.configuration import (Configuration, get_docker_client)
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.labbook import LabBook
+from lmcommon.logging import LMLogger
+
+logger = LMLogger.get_logger()
 
 
 class BuildImage(graphene.relay.ClientIDMutation):
@@ -60,16 +64,27 @@ class BuildImage(graphene.relay.ClientIDMutation):
                                    'labbooks',
                                    input.get('labbook_name'))
         labbook_dir = os.path.expanduser(labbook_dir)
-
         tag = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+
+        logger.info("BuildImage starting for labbook directory={}, tag={}".format(labbook_dir, tag))
+
+        start_time = time.time()
         image_builder = ImageBuilder(labbook_dir)
         image_builder.build_image(docker_client=client, image_tag=tag, background=True)
+        end_time = time.time()
+
+        logger.info("Dispatched docker build for labbook directory={}, tag={} (elapsed time {})"
+                    .format(labbook_dir, tag, end_time-start_time))
 
         id_data = {"username": username,
                    "owner": owner,
                    "name": input.get("labbook_name")}
-        
-        return BuildImage(environment=Environment.create(id_data))
+
+        env_start_time = time.time()
+        env = Environment.create(id_data)
+        env_end_time = time.time()
+        logger.info("Created environment from BuildImage mutation in {}s".format(env_end_time-env_start_time))
+        return BuildImage(environment=env)
 
 
 class StartContainer(graphene.relay.ClientIDMutation):
