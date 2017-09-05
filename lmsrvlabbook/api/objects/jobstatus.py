@@ -64,25 +64,20 @@ class JobStatus(ObjectType):
         return {"job_id": type_id}
 
     @staticmethod
-    def create(id_data):
+    def create(job_id):
         """Method to create a graphene JobStatus object based on the type node ID or id_data
 
         Args:
-            id_data(dict):
 
         Returns:
             DevEnv
         """
-        if "type_id" in id_data:
-            # Parse ID components
-            id_data.update(JobStatus.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
+        logger.info('Retrieving query for JobStatus on task_id `{}`...'.format(job_id))
 
         d = Dispatcher()
 
-        logger.info('Retrieving query for JobStatus on task_id `{}`...'.format(id_data['job_id']))
-        job_ref = d.query_task(id_data['job_id'])
-        logger.info('Retrieved reference {} for task_id `{}`'.format(str(job_ref), id_data['job_id']))
+        job_ref = d.query_task(job_id)
+        logger.info('Retrieved reference {} for job_id `{}`'.format(str(job_ref), job_id))
 
         return JobStatus(status=job_ref.get('status'),
                          started_at=job_ref.get('started_at'),

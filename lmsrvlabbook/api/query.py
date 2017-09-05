@@ -22,6 +22,7 @@ import graphene
 from graphene import resolve_only_args
 
 from lmcommon.labbook import LabBook
+from lmcommon.logging import LMLogger
 from lmcommon.environment import ComponentRepository
 
 from lmsrvcore.auth.user import get_logged_in_user
@@ -36,6 +37,8 @@ from lmsrvlabbook.api.connections.labbook import LabbookConnection
 from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
 from lmsrvlabbook.api.connections.devenv import DevEnvConnection
 from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection
+
+logger = LMLogger.get_logger()
 
 
 class LabbookQuery(graphene.AbstractType):
@@ -98,6 +101,7 @@ class LabbookQuery(graphene.AbstractType):
         Returns:
             JobStatus
         """
+        logger.info("Resolving jobStatus({})".format(job_id))
         return JobStatus.create(job_id)
 
     def resolve_local_labbooks(self, args, context, info):
