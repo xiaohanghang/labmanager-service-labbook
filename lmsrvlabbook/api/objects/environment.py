@@ -18,13 +18,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 import graphene
+
 import os
 import base64
 
 import docker
 from docker.errors import ImageNotFound, NotFound
 
+from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment.componentmanager import ComponentManager
 from lmcommon.labbook import LabBook
 from lmcommon.configuration import get_docker_client
@@ -86,6 +89,9 @@ class Environment(ObjectType):
 
     # The LabBook's Custom dependencies
     custom_dependencies = graphene.ConnectionField(CustomDependencyConnection)
+
+    # All jobs running in the background labmanager
+    running_jobs = graphene.List(graphene.String)
 
     @staticmethod
     def to_type_id(id_data):
@@ -359,3 +365,9 @@ class Environment(ObjectType):
         else:
             return CustomDependencyConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
                                                                                           has_previous_page=False))
+
+    def resolve_running_jobs(self, args, context, info):
+        """Return all currently running background jobs and their info. """
+
+        dispatcher = Dispatcher()
+        return dispatcher.jobs

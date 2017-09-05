@@ -17,6 +17,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import multiprocessing
+import threading
+import time
 import pytest
 import tempfile
 import os
@@ -27,7 +30,9 @@ from snapshottest import snapshot
 from graphene.test import Client
 import graphene
 from mock import patch
+import rq
 
+from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
 from lmcommon.configuration import Configuration
 from lmcommon.environment import ComponentManager
@@ -350,3 +355,75 @@ class TestEnvironmentServiceQueries(object):
                        """
             # should be null
             snapshot.assert_match(client.execute(query))
+
+
+    def test_simple_background_jobs_query(self, schema_and_env_index, snapshot):
+        """Test getting the a LabBook's base image"""
+        # Create labbook
+        lb = LabBook(schema_and_env_index[0])
+        lb.new(owner={"username": "default"}, name="labbook-background-unittest", description="my first labbook10000")
+
+        def run_worker():
+            try:
+                with rq.Connection():
+                    qs = 'labmanager_jobs'
+                    w = rq.Worker(qs)
+                    w.work()
+            except Exception as e:
+                print("WORKER ERROR!! {}".format(e))
+
+        # This task is used to kill the worker. Sometimes if tests fail the worker runs forever and
+        # holds up the entire process. This gives each test 25 seconds to run before killing the worker
+        # and forcing the test to fail.
+        def watch_proc(p):
+            count = 0
+            while count < 25:
+                count = count + 1
+                time.sleep(1)
+            try:
+                p.terminate()
+            except:
+                pass
+
+        worker_proc = multiprocessing.Process(target=run_worker)
+        worker_proc.start()
+
+        watchdog_thread = threading.Thread(target=watch_proc, args=(worker_proc,))
+        watchdog_thread.start()
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+            # Make and validate request
+            client = Client(schema_and_env_index[2])
+
+            d = Dispatcher()
+            assert worker_proc.is_alive()
+            j1 = d.dispatch_task(jobs.test_sleep, args=(4,))
+            assert worker_proc.is_alive()
+            #d.dispatch_task(jobs.test_sleep, args=(4,))
+            #assert worker_proc.is_alive()
+
+            time.sleep(2)
+
+            assert d.query_task(j1).get('status') == 'started'
+
+            query = """
+                     {
+                       labbook(owner: "default", name: "labbook-background-unittest") {
+                         environment {
+                           runningJobs
+                         }
+                       }
+                     }
+             """
+            # should be null
+            try:
+                assert d.query_task(j1).get('status') == 'started'
+                snapshot.assert_match(client.execute(query))
+            except Exception as e:
+                time.sleep(12)
+                worker_proc.terminate()
+                raise e
+
+        time.sleep(12)
+        worker_proc.terminate()

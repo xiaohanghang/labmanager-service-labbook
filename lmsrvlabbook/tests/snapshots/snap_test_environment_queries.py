@@ -271,3 +271,17 @@ snapshots['TestEnvironmentServiceQueries.test_get_package_manager 3'] = {
         }
     }
 }
+
+snapshots['TestEnvironmentServiceQueries.test_simple_background_jobs_query 1'] = {
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 28,
+                    'line': 5
+                }
+            ],
+            'message': 'Cannot query field "runningJobs" on type "Environment".'
+        }
+    ]
+}

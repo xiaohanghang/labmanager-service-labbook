@@ -31,6 +31,7 @@ from lmsrvlabbook.api.objects.labbook import Labbook, LabbookSummary
 from lmsrvlabbook.api.objects.baseimage import BaseImage
 from lmsrvlabbook.api.objects.devenv import DevEnv
 from lmsrvlabbook.api.objects.customdependency import CustomDependency
+from lmsrvlabbook.api.objects.jobstatus import JobStatus
 from lmsrvlabbook.api.connections.labbook import LabbookConnection
 from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
 from lmsrvlabbook.api.connections.devenv import DevEnvConnection
@@ -43,6 +44,9 @@ class LabbookQuery(graphene.AbstractType):
     node = graphene.relay.Node.Field()
 
     labbook = graphene.Field(Labbook, owner=graphene.String(), name=graphene.String())
+
+    # Used to query for specific background jobs. Input in th format of rq:job:uuid.
+    job_status = graphene.Field(JobStatus, job_id=graphene.String())
 
     # Connection to locally available labbooks
     local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
@@ -81,6 +85,20 @@ class LabbookQuery(graphene.AbstractType):
         #id_data = {"username": get_logged_in_user(), "name": name, "owner": owner}
         id_data = {"name": name, "owner": owner}
         return Labbook.create(id_data)
+
+    @resolve_only_args
+    def resolve_job_status(self, job_id):
+        """Method to return a graphene Labbok instance based on the name
+
+        Uses the "currently logged in" user
+
+        Args:
+            job_id(dict): Contains user details
+
+        Returns:
+            JobStatus
+        """
+        return JobStatus.create(job_id)
 
     def resolve_local_labbooks(self, args, context, info):
         """Method to return a all graphene LabbookSummary instances for the logged in user
