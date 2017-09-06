@@ -356,8 +356,7 @@ class TestEnvironmentServiceQueries(object):
             # should be null
             snapshot.assert_match(client.execute(query))
 
-
-    def test_simple_background_jobs_query(self, schema_and_env_index, snapshot):
+    def test_simple_background_jobs_query(self, schema_and_env_index):
         """Test getting the a LabBook's base image"""
         # Create labbook
         lb = LabBook(schema_and_env_index[0])
@@ -397,13 +396,10 @@ class TestEnvironmentServiceQueries(object):
             client = Client(schema_and_env_index[2])
 
             d = Dispatcher()
-            assert worker_proc.is_alive()
-            j1 = d.dispatch_task(jobs.test_sleep, args=(4,))
-            assert worker_proc.is_alive()
-            #d.dispatch_task(jobs.test_sleep, args=(4,))
-            #assert worker_proc.is_alive()
+            j1 = d.dispatch_task(jobs.test_sleep, args=(2,))
+            j2 = d.dispatch_task(jobs.test_sleep, args=(2,))
 
-            time.sleep(2)
+            time.sleep(0.5)
 
             assert d.query_task(j1).get('status') == 'started'
 
@@ -411,19 +407,22 @@ class TestEnvironmentServiceQueries(object):
                      {
                        labbook(owner: "default", name: "labbook-background-unittest") {
                          environment {
-                           runningJobs
+                           backgroundJobs
                          }
                        }
                      }
              """
-            # should be null
+
             try:
                 assert d.query_task(j1).get('status') == 'started'
-                snapshot.assert_match(client.execute(query))
+                result = client.execute(query)
+                #import pprint; pprint.pprint(result)
+                assert j1 in result['data']['labbook']['environment']['backgroundJobs']
+                assert j2 in result['data']['labbook']['environment']['backgroundJobs']
             except Exception as e:
-                time.sleep(12)
+                time.sleep(5)
                 worker_proc.terminate()
                 raise e
 
-        time.sleep(12)
+        time.sleep(5)
         worker_proc.terminate()

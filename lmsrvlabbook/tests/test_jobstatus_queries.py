@@ -47,6 +47,7 @@ class Query(LabbookQuery, graphene.ObjectType):
 class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
+
 @pytest.fixture()
 def mock_config_file():
     """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
@@ -128,7 +129,7 @@ class TestLabBookServiceQueries(object):
                     status
                 }
             }
-            """ % job_id.decode()
+            """ % job_id
 
             try:
                 snapshot.assert_match(client.execute(query))
@@ -159,7 +160,7 @@ class TestLabBookServiceQueries(object):
                     status
                 }
             }
-            """ % job_id.decode()
+            """ % job_id
 
             try:
                 snapshot.assert_match(client.execute(query))
@@ -190,7 +191,7 @@ class TestLabBookServiceQueries(object):
                     status
                 }
             }
-            """ % job_id.decode()
+            """ % job_id
 
             try:
                 snapshot.assert_match(client.execute(query))
@@ -225,7 +226,7 @@ class TestLabBookServiceQueries(object):
                     status
                 }
             }
-            """ % job_id2.decode()
+            """ % job_id2
 
             try:
                 snapshot.assert_match(client.execute(query))

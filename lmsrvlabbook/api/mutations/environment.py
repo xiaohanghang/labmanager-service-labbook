@@ -43,6 +43,9 @@ class BuildImage(graphene.relay.ClientIDMutation):
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
 
+    # The background job key, this may be None
+    background_job_key = graphene.Field(graphene.String)
+
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
@@ -70,7 +73,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
 
         start_time = time.time()
         image_builder = ImageBuilder(labbook_dir)
-        image_builder.build_image(docker_client=client, image_tag=tag, background=True)
+        img = image_builder.build_image(docker_client=client, image_tag=tag, background=True)
         end_time = time.time()
 
         logger.info("Dispatched docker build for labbook directory={}, tag={} (elapsed time {})"
@@ -84,7 +87,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
         env = Environment.create(id_data)
         env_end_time = time.time()
         logger.info("Created environment from BuildImage mutation in {}s".format(env_end_time-env_start_time))
-        return BuildImage(environment=env)
+        return BuildImage(environment=env, background_job_key=img['background_job_key'])
 
 
 class StartContainer(graphene.relay.ClientIDMutation):
@@ -96,6 +99,9 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
+
+    # The background job key, this may be None
+    background_job_key = graphene.Field(graphene.String)
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
@@ -117,11 +123,11 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
         container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
         image_builder = ImageBuilder(labbook_dir)
-        container = image_builder.run_container(client, container_name, lb, background=False)
+        cnt = image_builder.run_container(client, container_name, lb, background=True)
 
         id_data = {"username": username,
                    "owner": owner,
                    "name": input.get("labbook_name")}
 
-        return StartContainer(environment=Environment.create(id_data))
+        return StartContainer(environment=Environment.create(id_data), background_job_key=cnt['background_job_key'])
 
