@@ -137,3 +137,102 @@ class TestLabBookServiceQueries(object):
                 raise
 
             w.terminate()
+
+    def test_query_failed_task(self, mock_config_file, snapshot, temporary_worker):
+        """Test listing labbooks"""
+
+        w, d = temporary_worker
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            job_id = d.dispatch_task(jobs.test_exit_fail)
+
+            time.sleep(1)
+
+            query = """
+            {
+                jobStatus(jobId: "%s") {
+                    result
+                    status
+                }
+            }
+            """ % job_id.decode()
+
+            try:
+                snapshot.assert_match(client.execute(query))
+            except:
+                w.terminate()
+                raise
+
+            w.terminate()
+
+    def test_query_started_task(self, mock_config_file, snapshot, temporary_worker):
+        """Test listing labbooks"""
+
+        w, d = temporary_worker
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            job_id = d.dispatch_task(jobs.test_sleep, args=(2,))
+
+            time.sleep(1)
+
+            query = """
+            {
+                jobStatus(jobId: "%s") {
+                    result
+                    status
+                }
+            }
+            """ % job_id.decode()
+
+            try:
+                snapshot.assert_match(client.execute(query))
+            except:
+                time.sleep(3)
+                w.terminate()
+                raise
+
+            time.sleep(3)
+            w.terminate()
+
+    def test_query_queued_task(self, mock_config_file, snapshot, temporary_worker):
+        """Test listing labbooks"""
+
+        w, d = temporary_worker
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            job_id1 = d.dispatch_task(jobs.test_sleep, args=(2,))
+            job_id2 = d.dispatch_task(jobs.test_sleep, args=(2,))
+
+
+            time.sleep(0.5)
+
+            query = """
+            {
+                jobStatus(jobId: "%s") {
+                    result
+                    status
+                }
+            }
+            """ % job_id2.decode()
+
+            try:
+                snapshot.assert_match(client.execute(query))
+            except:
+                time.sleep(5)
+                w.terminate()
+                raise
+
+            time.sleep(5)
+            w.terminate()
