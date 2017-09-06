@@ -23,6 +23,7 @@ from graphene import resolve_only_args
 
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
+from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository
 
 from lmsrvcore.auth.user import get_logged_in_user
@@ -37,6 +38,7 @@ from lmsrvlabbook.api.connections.labbook import LabbookConnection
 from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
 from lmsrvlabbook.api.connections.devenv import DevEnvConnection
 from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection
+from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
 
 logger = LMLogger.get_logger()
 
@@ -50,6 +52,9 @@ class LabbookQuery(graphene.AbstractType):
 
     # Used to query for specific background jobs. Input in th format of rq:job:uuid.
     job_status = graphene.Field(JobStatus, job_id=graphene.String())
+
+    # All background jobs in the system: Queued, Completed, Failed, and Started.
+    background_jobs = graphene.relay.ConnectionField(JobStatusConnection)
 
     # Connection to locally available labbooks
     local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
@@ -103,6 +108,27 @@ class LabbookQuery(graphene.AbstractType):
         """
         logger.info("Resolving jobStatus({})".format(job_id))
         return JobStatus.create(job_id)
+
+    def resolve_background_jobs(self, args, context, info):
+        """Method to return a all background jobs the system is aware of: Queued, Started, Finished, Failed.
+
+        Returns:
+            list(JobStatus)
+        """
+        job_dispatcher = Dispatcher()
+        edges = job_dispatcher.all_jobs
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            id_data = {'job_id': edge}
+            edge_objs.append(JobStatusConnection.Edge(node=JobStatus.create(id_data), cursor=cursor))
+
+        return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
 
     def resolve_local_labbooks(self, args, context, info):
         """Method to return a all graphene LabbookSummary instances for the logged in user

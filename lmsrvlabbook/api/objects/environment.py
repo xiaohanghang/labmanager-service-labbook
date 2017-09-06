@@ -90,9 +90,6 @@ class Environment(ObjectType):
     # The LabBook's Custom dependencies
     custom_dependencies = graphene.ConnectionField(CustomDependencyConnection)
 
-    # All jobs running in the background labmanager
-    background_jobs = graphene.List(graphene.String)
-
     @staticmethod
     def to_type_id(id_data):
         """Method to generate a single string that uniquely identifies this object
@@ -365,9 +362,3 @@ class Environment(ObjectType):
         else:
             return CustomDependencyConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
                                                                                           has_previous_page=False))
-
-    def resolve_background_jobs(self, args, context, info):
-        """Return known background jobs in the backend. """
-
-        dispatcher = Dispatcher()
-        return dispatcher.all_jobs
