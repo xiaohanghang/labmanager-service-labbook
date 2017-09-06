@@ -31,6 +31,6 @@ jobs:
           name: Run unit and coverage tests
           command: |
             redis-server &
-            pytest --cov=lmcommon .
+            pytest --cov=lmsrvlabbook .
             coveralls
 
