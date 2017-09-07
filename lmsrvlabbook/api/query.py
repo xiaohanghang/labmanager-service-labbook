@@ -116,8 +116,9 @@ class LabbookQuery(graphene.AbstractType):
             list(JobStatus)
         """
         job_dispatcher = Dispatcher()
+
         edges = job_dispatcher.all_jobs
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+        cursors = [base64.b64encode("{}".format(cnt).encode('utf-8')) for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
         lbc = ListBasedConnection(edges, cursors, args)
@@ -125,8 +126,7 @@ class LabbookQuery(graphene.AbstractType):
 
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'job_id': edge}
-            edge_objs.append(JobStatusConnection.Edge(node=JobStatus.create(id_data), cursor=cursor))
+            edge_objs.append(JobStatusConnection.Edge(node=JobStatus.create(edge), cursor=cursor))
 
         return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
 

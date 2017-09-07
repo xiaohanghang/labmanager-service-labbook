@@ -34,6 +34,7 @@ class JobStatus(ObjectType):
     class Meta:
         interfaces = (graphene.relay.Node,)
 
+    job_key = graphene.Field(graphene.String)
     status = graphene.Field(graphene.String)
     started_at = graphene.Field(graphene.String)
     finished_at = graphene.Field(graphene.String)
@@ -73,13 +74,14 @@ class JobStatus(ObjectType):
             DevEnv
         """
         logger.info('Retrieving query for JobStatus on task_id `{}`...'.format(job_id))
-
+        logger.info('Note: {} decoded is {}'.format(job_id, job_id.encode()))
         d = Dispatcher()
 
         job_ref = d.query_task(job_id)
         logger.info('Retrieved reference {} for job_id `{}`'.format(str(job_ref), job_id))
 
-        return JobStatus(status=job_ref.get('status'),
+        return JobStatus(job_key=job_id,
+                         status=job_ref.get('status'),
                          started_at=job_ref.get('started_at'),
                          finished_at=job_ref.get('ended_at'),
                          result=job_ref.get('result'))
