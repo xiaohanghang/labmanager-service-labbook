@@ -66,7 +66,7 @@ class JobStatus(ObjectType):
 
     @staticmethod
     def create(job_id):
-        """Method to create a graphene JobStatus object based on the type node ID or id_data
+        """Method to retrieve status info for given background job.
 
         Args:
 

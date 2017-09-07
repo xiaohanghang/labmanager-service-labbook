@@ -71,22 +71,17 @@ class BuildImage(graphene.relay.ClientIDMutation):
 
         logger.info("BuildImage starting for labbook directory={}, tag={}".format(labbook_dir, tag))
 
-        start_time = time.time()
         image_builder = ImageBuilder(labbook_dir)
         img = image_builder.build_image(docker_client=client, image_tag=tag, background=True)
-        end_time = time.time()
 
-        logger.info("Dispatched docker build for labbook directory={}, tag={} (elapsed time {})"
-                    .format(labbook_dir, tag, end_time-start_time))
+        logger.info("Dispatched docker build for labbook directory={}, tag={}, job_key={}"
+                    .format(labbook_dir, tag, img.get('background_job_key')))
 
         id_data = {"username": username,
                    "owner": owner,
                    "name": input.get("labbook_name")}
 
-        env_start_time = time.time()
         env = Environment.create(id_data)
-        env_end_time = time.time()
-        logger.info("Created environment from BuildImage mutation in {}s".format(env_end_time-env_start_time))
         return BuildImage(environment=env, background_job_key=img['background_job_key'])
 
 
@@ -129,5 +124,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
                    "owner": owner,
                    "name": input.get("labbook_name")}
 
-        return StartContainer(environment=Environment.create(id_data), background_job_key=cnt['background_job_key'])
+        logger.info("Dispatched StartContainer to background, labbook_dir={}, job_key={}".format(
+            labbook_dir, cnt.get('background_job_key')))
 
+        return StartContainer(environment=Environment.create(id_data), background_job_key=cnt['background_job_key'])
