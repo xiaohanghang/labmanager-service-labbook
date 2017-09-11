@@ -22,6 +22,8 @@ import graphene
 from graphene import resolve_only_args
 
 from lmcommon.labbook import LabBook
+from lmcommon.logging import LMLogger
+from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository
 
 from lmsrvcore.auth.user import get_logged_in_user
@@ -31,10 +33,14 @@ from lmsrvlabbook.api.objects.labbook import Labbook, LabbookSummary
 from lmsrvlabbook.api.objects.baseimage import BaseImage
 from lmsrvlabbook.api.objects.devenv import DevEnv
 from lmsrvlabbook.api.objects.customdependency import CustomDependency
+from lmsrvlabbook.api.objects.jobstatus import JobStatus
 from lmsrvlabbook.api.connections.labbook import LabbookConnection
 from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
 from lmsrvlabbook.api.connections.devenv import DevEnvConnection
 from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection
+from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
+
+logger = LMLogger.get_logger()
 
 
 class LabbookQuery(graphene.AbstractType):
@@ -43,6 +49,13 @@ class LabbookQuery(graphene.AbstractType):
     node = graphene.relay.Node.Field()
 
     labbook = graphene.Field(Labbook, owner=graphene.String(), name=graphene.String())
+
+    # Used to query for specific background jobs.
+    # job_id is in the format of `rq:job:uuid`, though it should never need to be parsed.
+    job_status = graphene.Field(JobStatus, job_id=graphene.String())
+
+    # All background jobs in the system: Queued, Completed, Failed, and Started.
+    background_jobs = graphene.relay.ConnectionField(JobStatusConnection)
 
     # Connection to locally available labbooks
     local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
@@ -81,6 +94,42 @@ class LabbookQuery(graphene.AbstractType):
         #id_data = {"username": get_logged_in_user(), "name": name, "owner": owner}
         id_data = {"name": name, "owner": owner}
         return Labbook.create(id_data)
+
+    @resolve_only_args
+    def resolve_job_status(self, job_id):
+        """Method to return a graphene Labbok instance based on the name
+
+        Uses the "currently logged in" user
+
+        Args:
+            job_id(dict): Contains user details
+
+        Returns:
+            JobStatus
+        """
+        logger.info("Resolving jobStatus({})".format(job_id))
+        return JobStatus.create(job_id)
+
+    def resolve_background_jobs(self, args, context, info):
+        """Method to return a all background jobs the system is aware of: Queued, Started, Finished, Failed.
+
+        Returns:
+            list(JobStatus)
+        """
+        job_dispatcher = Dispatcher()
+
+        edges = job_dispatcher.all_jobs
+        cursors = [base64.b64encode("{}".format(cnt).encode('utf-8')) for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            edge_objs.append(JobStatusConnection.Edge(node=JobStatus.create(edge), cursor=cursor))
+
+        return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
 
     def resolve_local_labbooks(self, args, context, info):
         """Method to return a all graphene LabbookSummary instances for the logged in user

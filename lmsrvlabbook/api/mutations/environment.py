@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import time
 
 import graphene
 import docker
@@ -27,6 +28,9 @@ from lmsrvcore.auth.user import get_logged_in_user
 from lmcommon.configuration import (Configuration, get_docker_client)
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.labbook import LabBook
+from lmcommon.logging import LMLogger
+
+logger = LMLogger.get_logger()
 
 
 class BuildImage(graphene.relay.ClientIDMutation):
@@ -38,6 +42,9 @@ class BuildImage(graphene.relay.ClientIDMutation):
 
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
+
+    # The background job key, this may be None
+    background_job_key = graphene.Field(graphene.String)
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
@@ -60,16 +67,22 @@ class BuildImage(graphene.relay.ClientIDMutation):
                                    'labbooks',
                                    input.get('labbook_name'))
         labbook_dir = os.path.expanduser(labbook_dir)
+        tag = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
 
-        tag='{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+        logger.info("BuildImage starting for labbook directory={}, tag={}".format(labbook_dir, tag))
+
         image_builder = ImageBuilder(labbook_dir)
-        docker_image = image_builder.build_image(docker_client=client, image_tag=tag)
+        img = image_builder.build_image(docker_client=client, image_tag=tag, background=True)
+
+        logger.info("Dispatched docker build for labbook directory={}, tag={}, job_key={}"
+                    .format(labbook_dir, tag, img.get('background_job_key')))
 
         id_data = {"username": username,
                    "owner": owner,
                    "name": input.get("labbook_name")}
-        
-        return BuildImage(environment=Environment.create(id_data))
+
+        env = Environment.create(id_data)
+        return BuildImage(environment=env, background_job_key=img['background_job_key'])
 
 
 class StartContainer(graphene.relay.ClientIDMutation):
@@ -81,6 +94,9 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
+
+    # The background job key, this may be None
+    background_job_key = graphene.Field(graphene.String)
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
@@ -102,11 +118,13 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
         container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
         image_builder = ImageBuilder(labbook_dir)
-        container = image_builder.run_container(client, container_name, lb)
+        cnt = image_builder.run_container(client, container_name, lb, background=True)
 
         id_data = {"username": username,
                    "owner": owner,
                    "name": input.get("labbook_name")}
 
-        return StartContainer(environment=Environment.create(id_data))
+        logger.info("Dispatched StartContainer to background, labbook_dir={}, job_key={}".format(
+            labbook_dir, cnt.get('background_job_key')))
 
+        return StartContainer(environment=Environment.create(id_data), background_job_key=cnt['background_job_key'])

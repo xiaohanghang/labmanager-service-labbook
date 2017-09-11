@@ -12,7 +12,7 @@ jobs:
           name: Install build essentials
           command: |
             sudo apt-get update
-            sudo apt-get install build-essential libsnappy-dev libleveldb-dev
+            sudo apt-get install build-essential libsnappy-dev libleveldb-dev redis-server
       
       - run:
           name: Set Git credentials
@@ -30,6 +30,7 @@ jobs:
       - run:
           name: Run unit and coverage tests
           command: |
-            pytest --cov=lmcommon .
+            redis-server &
+            pytest --cov=lmsrvlabbook .
             coveralls
 

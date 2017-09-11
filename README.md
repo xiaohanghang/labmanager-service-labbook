@@ -44,6 +44,23 @@ system and python dependencies. Follow the installation steps in the README file
     
 ## Running the dev server
 
+Note: Before running the lab manager, Redis needs to be running in the background. Redis is used as a backend for
+background job scheduling for long running tasks (e.g., building a docker image).
+
+To start redis on an Ubuntu host:
+
+```
+sudo apt-get install redis-server
+sudo service redis-server start
+```
+
+Alternatively, run Redis manually in the background
+
+```
+brew install redis-server
+redis-server &
+```
+
 To run the dev server you must setup your python path so all dependencies are found and run the `service.py` file:
 
 ```
