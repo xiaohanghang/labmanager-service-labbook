@@ -78,9 +78,10 @@ class JobStatus(ObjectType):
         """Method to retrieve status info for given background job.
 
         Args:
+            job_id(str): Unique key of the background job.
 
         Returns:
-            DevEnv
+            JobStatus
         """
         logger.info('Retrieving query for JobStatus on task_id `{}`...'.format(job_id))
         logger.info('Note: {} decoded is {}'.format(job_id, job_id.encode()))

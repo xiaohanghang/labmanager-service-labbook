@@ -50,7 +50,8 @@ class LabbookQuery(graphene.AbstractType):
 
     labbook = graphene.Field(Labbook, owner=graphene.String(), name=graphene.String())
 
-    # Used to query for specific background jobs. Input in th format of rq:job:uuid.
+    # Used to query for specific background jobs.
+    # job_id is in the format of `rq:job:uuid`, though it should never need to be parsed.
     job_status = graphene.Field(JobStatus, job_id=graphene.String())
 
     # All background jobs in the system: Queued, Completed, Failed, and Started.
