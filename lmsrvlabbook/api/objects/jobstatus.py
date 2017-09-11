@@ -29,15 +29,24 @@ logger = LMLogger.get_logger()
 
 
 class JobStatus(ObjectType):
-    """A type that represents a Development Environment Environment Component"""
+    """A query to get the status of a background task launched with the Dispatcher"""
 
     class Meta:
         interfaces = (graphene.relay.Node,)
 
+    # The Dispatcher returns a unique opaque id of the background job.
     job_key = graphene.Field(graphene.String)
+
+    # Status is either: queued, failed, started, finished.
     status = graphene.Field(graphene.String)
+
+    # Timestamp the task was put into the queue
     started_at = graphene.Field(graphene.String)
+
+    # Timestampo the task was regarded as either failed or finished.
     finished_at = graphene.Field(graphene.String)
+
+    # Result.. None if no result or void method.
     result = graphene.Field(graphene.String)
 
     @staticmethod
