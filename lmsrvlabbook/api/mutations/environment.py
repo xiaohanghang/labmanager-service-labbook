@@ -29,6 +29,7 @@ from lmcommon.configuration import (Configuration, get_docker_client)
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
+from lmcommon.activity.services import stop_labbook_monitor, start_labbook_monitor
 
 logger = LMLogger.get_logger()
 
@@ -126,5 +127,8 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
         logger.info("Dispatched StartContainer to background, labbook_dir={}, job_key={}".format(
             labbook_dir, cnt.get('background_job_key')))
+
+        # Start monitoring lab book environment for activity
+        start_labbook_monitor(lb)
 
         return StartContainer(environment=Environment.create(id_data), background_job_key=cnt['background_job_key'])
