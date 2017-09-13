@@ -43,7 +43,7 @@ class JobStatus(ObjectType):
     # Timestamp the task was put into the queue
     started_at = graphene.Field(graphene.String)
 
-    # Timestampo the task was regarded as either failed or finished.
+    # Timestamp the task was regarded as either failed or finished.
     finished_at = graphene.Field(graphene.String)
 
     # Result.. None if no result or void method.
