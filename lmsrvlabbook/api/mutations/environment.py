@@ -57,9 +57,6 @@ class BuildImage(graphene.relay.ClientIDMutation):
         else:
             owner = input["owner"]
 
-        # TODO: Move environment code into a library
-        docker_client_version = os.environ.get("DOCKER_CLIENT_VERSION")
-
         client = get_docker_client()
 
         labbook_dir = os.path.join(Configuration().config['git']['working_directory'],

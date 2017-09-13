@@ -143,9 +143,6 @@ class Environment(ObjectType):
             id_data.update(Environment.parse_type_id(id_data["type_id"]))
             del id_data["type_id"]
 
-        # TODO: Move environment interaction to a library
-        docker_client_version = os.environ.get("DOCKER_CLIENT_VERSION")
-
         client = get_docker_client()
 
         # Check if the image exists
