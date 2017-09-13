@@ -27,6 +27,7 @@ from lmsrvlabbook.api.objects.environment import Environment
 from lmsrvcore.auth.user import get_logged_in_user
 from lmcommon.configuration import (Configuration, get_docker_client)
 from lmcommon.imagebuilder import ImageBuilder
+from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 
@@ -128,3 +129,39 @@ class StartContainer(graphene.relay.ClientIDMutation):
             labbook_dir, cnt.get('background_job_key')))
 
         return StartContainer(environment=Environment.create(id_data), background_job_key=cnt['background_job_key'])
+
+
+class StopContainer(graphene.relay.ClientIDMutation):
+    """Mutation to stop a Docker container. """
+
+    class Input:
+        owner = graphene.String()
+        labbook_name = graphene.String(required=True)
+
+    # Return the Environment instance
+    environment = graphene.Field(lambda: Environment)
+
+    # The background job key, this may be None
+    background_job_key = graphene.Field(graphene.String)
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+
+        if "owner" not in input:
+            owner = username
+        else:
+            owner = input["owner"]
+
+        container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+        logger.info("Preparing to stop container by name `{}`".format(container_name))
+
+        d = Dispatcher()
+        job_ref = d.dispatch_task(jobs.stop_docker_container, args=(container_name,))
+        logger.info("Dispatched StopContainer to background, container = `{}`".format(container_name))
+        id_data = {"username": username,
+                   "owner": owner,
+                   "name": input.get("labbook_name")}
+
+        return StartContainer(environment=Environment.create(id_data), background_job_key=job_ref)
