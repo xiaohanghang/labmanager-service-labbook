@@ -164,4 +164,4 @@ class StopContainer(graphene.relay.ClientIDMutation):
                    "owner": owner,
                    "name": input.get("labbook_name")}
 
-        return StartContainer(environment=Environment.create(id_data), background_job_key=job_ref)
+        return StopContainer(environment=Environment.create(id_data), background_job_key=job_ref)
