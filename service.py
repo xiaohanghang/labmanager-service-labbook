@@ -19,6 +19,7 @@
 # SOFTWARE.
 from flask import Flask
 from flask_cors import CORS, cross_origin
+import getpass
 
 import blueprint
 
@@ -53,4 +54,7 @@ erm.index_repositories()
 lmlog.logger.info("Environment repositories ready.")
 
 if __name__ == '__main__':
-    app.run()
+    if getpass.getuser() == "giguser":
+        app.run(host="0.0.0.0")
+    else:
+        app.run()
