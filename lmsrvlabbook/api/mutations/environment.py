@@ -70,8 +70,12 @@ class BuildImage(graphene.relay.ClientIDMutation):
 
         logger.info("BuildImage starting for labbook directory={}, tag={}".format(labbook_dir, tag))
 
-        image_builder = ImageBuilder(labbook_dir)
-        img = image_builder.build_image(docker_client=client, image_tag=tag, background=True)
+        try:
+            image_builder = ImageBuilder(labbook_dir)
+            img = image_builder.build_image(docker_client=client, image_tag=tag, background=True)
+        except Exception as e:
+            logger.exception(e)
+            raise
 
         logger.info("Dispatched docker build for labbook directory={}, tag={}, job_key={}"
                     .format(labbook_dir, tag, img.get('background_job_key')))
@@ -88,7 +92,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
     """Mutator to start a LabBook's Docker Image in a container"""
 
     class Input:
-        owner = graphene.String()
+        owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
 
     # Return the Environment instance
@@ -117,7 +121,12 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
         container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
         image_builder = ImageBuilder(labbook_dir)
-        cnt = image_builder.run_container(client, container_name, lb, background=True)
+
+        try:
+            cnt = image_builder.run_container(client, container_name, lb, background=True)
+        except Exception as e:
+            logger.exception("Cannot run container, got {} exception: {}".format(type(e), e), exc_info=True)
+            raise
 
         id_data = {"username": username,
                    "owner": owner,
@@ -126,10 +135,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
         logger.info("Dispatched StartContainer to background, labbook_dir={}, job_key={}".format(
             labbook_dir, cnt.get('background_job_key')))
 
-        # Start monitoring lab book environment for activity
-        start_labbook_monitor(lb)
-
-        return StartContainer(environment=Environment.create(id_data), background_job_key=cnt['background_job_key'])
+        return StartContainer(environment=Environment.create(id_data), background_job_key=cnt.get('background_job_key'))
 
 
 class StopContainer(graphene.relay.ClientIDMutation):

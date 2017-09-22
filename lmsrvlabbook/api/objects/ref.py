@@ -23,7 +23,6 @@ import os
 
 from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
-#from lmcommon.labbook import LabBook
 
 from lmsrvcore.auth.user import get_logged_in_user
 

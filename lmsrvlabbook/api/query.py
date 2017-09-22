@@ -90,8 +90,6 @@ class LabbookQuery(graphene.AbstractType):
         Returns:
             Labbook
         """
-        # TODO: Lookup name based on logged in user when available
-        #id_data = {"username": get_logged_in_user(), "name": name, "owner": owner}
         id_data = {"name": name, "owner": owner}
         return Labbook.create(id_data)
 
