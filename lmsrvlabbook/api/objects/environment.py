@@ -31,6 +31,7 @@ from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment.componentmanager import ComponentManager
 from lmcommon.labbook import LabBook
 from lmcommon.configuration import get_docker_client
+from lmcommon.logging import LMLogger
 
 from lmsrvcore.auth.user import get_logged_in_user
 from lmsrvcore.api import ObjectType
@@ -44,25 +45,37 @@ from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnec
 from lmsrvlabbook.api.connections.packagemanager import PackageManagerConnection, PackageManager
 from lmsrvlabbook.api.objects.baseimage import BaseImage
 
+logger = LMLogger.get_logger()
+
 
 class ImageStatus(graphene.Enum):
     """An enumeration for Docker image status"""
+
     # The image has not be built locally yet
     DOES_NOT_EXIST = 0
+
     # The image is being built
     BUILD_IN_PROGRESS = 1
+
     # The image has been built and the Dockerfile has yet to change
     EXISTS = 2
+
     # The image has been built and the Dockerfile has been edited
     STALE = 3
+
+    # The image failed to build
+    BUILD_FAILED = 4
 
 
 class ContainerStatus(graphene.Enum):
     """An enumeration for container image status"""
+
     # The container is not running
     NOT_RUNNING = 0
+
     # The container is starting
     STARTING = 1
+
     # The container is running
     RUNNING = 2
 
@@ -117,7 +130,7 @@ class Environment(ObjectType):
 
     @staticmethod
     def create(id_data):
-        """Method to create a graphene LabBookCommit object based on the type node ID or owner+name+hash
+        """Method to create a graphene Environment object based on the type node ID or owner+name+hash
 
         id_data should at a minimum contain either `type_id` or `owner` & `name` & `hash`
 
@@ -145,16 +158,41 @@ class Environment(ObjectType):
 
         client = get_docker_client()
 
-        # Check if the image exists
+        labbook_key = "{}-{}-{}".format(id_data["username"], id_data["owner"], id_data["name"])
+
+        dispatcher = Dispatcher()
+        lb_jobs = [dispatcher.query_task(j) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
+
+        for j in lb_jobs:
+            logger.info("Current job for lb: status {}, meta {}".format(j.get('status'), j.get('meta')))
+
+        # First, check if image exists or not -- The first step of building an image untags any existing ones.
+        # Therefore, we know that if one exists, there most likely is not one being built.
         try:
-            client.images.get("{}-{}-{}".format(id_data["username"], id_data["owner"], id_data["name"]))
+            client.images.get(labbook_key)
             image_status = ImageStatus.EXISTS
         except ImageNotFound:
             image_status = ImageStatus.DOES_NOT_EXIST
 
+        if any([j.get('status') == 'failed' and j['meta'].get('method') == 'build_image' for j in lb_jobs]):
+            logger.info("Image status for {} is BUILD_FAILED".format(labbook_key))
+            if image_status == ImageStatus.EXISTS:
+                # The indication that there's a failed job is probably lingering from a while back, so don't
+                # change the status to FAILED. Only do that if there is no Docker image.
+                logger.warning(f'Got failed build_image for labbook {labbook_key}, but image exists.')
+            else:
+                image_status = ImageStatus.BUILD_FAILED
+
+        if any([j['status'] in ['started', 'queued'] and j['meta'].get('method') == 'build_image' for j in lb_jobs]):
+            logger.info(f"Image status for {labbook_key} is BUILD_IN_PROGRESS")
+            # build_image being in progress takes precedence over if image already exists (unlikely event).
+            if image_status == ImageStatus.EXISTS:
+                logger.warning(f'Got started/queued build_image for labbook {labbook_key}, but image exists.')
+            image_status = ImageStatus.BUILD_IN_PROGRESS
+
         # Check if the container is running by looking up the container
         try:
-            container = client.containers.get("{}-{}-{}".format(id_data["username"], id_data["owner"], id_data["name"]))
+            container = client.containers.get(labbook_key)
             if container.status == "running":
                 container_status = ContainerStatus.RUNNING
             else:
@@ -163,7 +201,8 @@ class Environment(ObjectType):
             container_status = ContainerStatus.NOT_RUNNING
 
         return Environment(id=Environment.to_type_id(id_data),
-                           image_status=image_status.value, container_status=container_status.value)
+                           image_status=image_status.value,
+                           container_status=container_status.value)
 
     def resolve_base_image(self, args, context, info):
         """Method to get the LabBook's base image
