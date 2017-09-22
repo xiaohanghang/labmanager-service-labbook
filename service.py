@@ -20,6 +20,8 @@
 from flask import Flask
 from flask_cors import CORS, cross_origin
 import getpass
+import shutil
+import os
 
 import blueprint
 
@@ -52,6 +54,18 @@ erm.update_repositories()
 lmlog.logger.info("Indexing environment repositories.")
 erm.index_repositories()
 lmlog.logger.info("Environment repositories ready.")
+
+# Empty container-container share dir as it is ephemeral
+lmlog.logger.info("Emptying container-container share folder.")
+share_dir = os.path.join(os.path.sep, 'mnt', 'share')
+for item in os.listdir(share_dir):
+    item_path = os.path.join(share_dir, item)
+    if os.path.isfile(item_path):
+        os.unlink(item_path)
+    else:
+        shutil.rmtree(item_path)
+
+lmlog.logger.info("LabManager Ready")
 
 if __name__ == '__main__':
     if getpass.getuser() == "giguser":
