@@ -56,14 +56,18 @@ erm.index_repositories()
 lmlog.logger.info("Environment repositories ready.")
 
 # Empty container-container share dir as it is ephemeral
-lmlog.logger.info("Emptying container-container share folder.")
 share_dir = os.path.join(os.path.sep, 'mnt', 'share')
-for item in os.listdir(share_dir):
-    item_path = os.path.join(share_dir, item)
-    if os.path.isfile(item_path):
-        os.unlink(item_path)
-    else:
-        shutil.rmtree(item_path)
+lmlog.logger.info("Emptying container-container share folder: {}.".format(share_dir))
+try:
+    for item in os.listdir(share_dir):
+        item_path = os.path.join(share_dir, item)
+        if os.path.isfile(item_path):
+            os.unlink(item_path)
+        else:
+            shutil.rmtree(item_path)
+except Exception as e:
+    lmlog.logger.error("Failed to empty share folder: {}.".format(e))
+    raise
 
 lmlog.logger.info("LabManager Ready")
 
