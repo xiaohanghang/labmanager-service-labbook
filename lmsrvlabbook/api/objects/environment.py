@@ -164,7 +164,7 @@ class Environment(ObjectType):
         lb_jobs = [dispatcher.query_task(j) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
 
         for j in lb_jobs:
-            logger.info("Current job for lb: status {}, meta {}".format(j.get('status'), j.get('meta')))
+            logger.debug("Current job for lb: status {}, meta {}".format(j.get('status'), j.get('meta')))
 
         # First, check if image exists or not -- The first step of building an image untags any existing ones.
         # Therefore, we know that if one exists, there most likely is not one being built.

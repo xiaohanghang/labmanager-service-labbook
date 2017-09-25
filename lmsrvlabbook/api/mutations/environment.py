@@ -174,4 +174,9 @@ class StopContainer(graphene.relay.ClientIDMutation):
                    "owner": owner,
                    "name": input.get("labbook_name")}
 
+        # Stop monitoring lab book environment for activity
+        lb = LabBook()
+        lb.from_name(username, owner, input.get('labbook_name'))
+        stop_labbook_monitor(lb)
+
         return StopContainer(environment=Environment.create(id_data), background_job_key=job_ref)
