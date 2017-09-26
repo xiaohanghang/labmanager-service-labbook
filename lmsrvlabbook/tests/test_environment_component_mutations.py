@@ -46,15 +46,25 @@ class TestAddComponentMutations(object):
             # Add a base image
             query = """
             mutation myEnvMutation{
-              addEnvironmentComponent(input: {componentClass: base_image,
-              repository: "gig-dev_environment-components",
-              namespace: "gigantum", component: "ubuntu1604-python3",
-              version: "0.4", labbookName: "labbook1"}) {
+              addEnvironmentComponent(input: {
+                componentClass: base_image,
+                repository: "gig-dev_environment-components",
+                namespace: "gigantum",
+                component: "ubuntu1604-python3",
+                version: "0.4",
+                labbookName: "labbook1"
+              }) {
                 clientMutationId
+                environmentComponent {
+                    name
+                }
               }
             }
             """
-            client.execute(query)
+            result = client.execute(query)
+
+        import pprint; pprint.pprint(result)
+        assert result['data']['addEnvironmentComponent']['environment_component']['name']
 
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base_image')) is True
@@ -182,11 +192,15 @@ class TestAddComponentMutations(object):
                 packageManager: "apt"
               }) {
                 clientMutationId
+                environmentPackage {
+                    packageName
+                }
               }
             }
             """
-            client.execute(pkg_query)
+            result = client.execute(pkg_query)
 
+        assert result['data']['addEnvironmentPackage']
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
 
