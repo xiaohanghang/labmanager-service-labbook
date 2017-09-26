@@ -21,6 +21,8 @@
 import graphene
 from lmsrvcore.api import ObjectType
 
+# Note (BVB): id_data['component_class'] can probably be removed altogether. Kept for now to get unit tests working.
+
 
 class PackageManager(ObjectType):
     """A type that represents a Package Manager based Environment Component"""
