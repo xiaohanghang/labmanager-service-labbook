@@ -64,7 +64,7 @@ class TestAddComponentMutations(object):
             result = client.execute(query)
 
         import pprint; pprint.pprint(result)
-        assert result['data']['addEnvironmentComponent']['environment_component']['name']
+        assert result['data']['addEnvironmentComponent']['environmentComponent']['name'] == 'ubuntu1604-python3'
 
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base_image')) is True
@@ -200,6 +200,7 @@ class TestAddComponentMutations(object):
             """
             result = client.execute(pkg_query)
 
+        import pprint; pprint.pprint(result)
         assert result['data']['addEnvironmentPackage']
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True

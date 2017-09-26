@@ -63,6 +63,7 @@ class AddEnvironmentPackage(graphene.relay.ClientIDMutation):
                        package_version=input.get('package_version'))
 
         id_data = {
+            'component_class': 'package_manager',
             'package_manager': input.get('package_manager'),
             'package_name': input.get('package_name'),
             'package_version': input.get('package_version')
@@ -114,7 +115,7 @@ class AddEnvironmentComponent(graphene.relay.ClientIDMutation):
                          input.get('version'))
 
         id_data = {
-            'component_class': input.get('component_class'),
+            'component_class': EnvironmentComponentClass.get(input.get('component_class')).name,
             'repo': input.get('repository'),
             'namespace': input.get('namespace'),
             'component': input.get('component'),
@@ -126,4 +127,4 @@ class AddEnvironmentComponent(graphene.relay.ClientIDMutation):
             logger.exception(e)
             raise
 
-        return AddEnvironmentComponent(id_data=id_data)
+        return AddEnvironmentComponent(environment_component=env_component)
