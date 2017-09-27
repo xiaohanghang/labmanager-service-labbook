@@ -18,19 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
-    CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer
+from lmsrvlabbook.api.objects.jobstatus import JobStatus
 
 
-class LabbookMutations(graphene.AbstractType):
-    """Entry point for all graphql mutations"""
-    create_labbook = CreateLabbook.Field()
-    create_branch = CreateBranch.Field()
-    checkout_branch = CheckoutBranch.Field()
-    build_image = BuildImage.Field()
-    start_container = StartContainer.Field()
-    stop_container = StopContainer.Field()
-    create_note = CreateNote.Field()
-    create_user_note = CreateUserNote.Field()
-    add_environment_component = AddEnvironmentComponent.Field()
-    add_environment_package = AddEnvironmentPackage.Field()
+class JobStatusConnection(graphene.relay.Connection):
+    """A Connection for paging through all background jobs the system is aware of. """
+    class Meta:
+        node = JobStatus
+
+

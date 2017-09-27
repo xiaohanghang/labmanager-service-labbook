@@ -51,7 +51,6 @@ class NoteObject(ObjectType, NoteObjectType):
     class Meta:
         interfaces = (graphene.relay.Node,)
 
-
     @staticmethod
     def to_type_id(id_data):
         """Method to generate a single string that uniquely identifies this object

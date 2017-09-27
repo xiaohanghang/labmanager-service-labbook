@@ -300,3 +300,178 @@ class TestNoteService(object):
             assert type(response['data']['labbook']['notes']['edges'][0]['node']['timestamp']) == str
             assert len(response['data']['labbook']['notes']['edges'][0]['node']['commit']) == 40
             assert len(response['data']['labbook']['notes']['edges'][0]['node']['linkedCommit']) == 40
+
+    def test_get_required_note(self, mock_config_file, snapshot):
+        """Test creating and getting a note with only the required fields populated"""
+
+        # Create labbook
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name="notes-test-1", description="my first labbook10000")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Create a file in the LabBook and commit it
+            working_dir = lb.git.config["working_directory"]
+            labbook_dir = os.path.join(working_dir, "default", "default", "labbooks", "notes-test-1")
+            with open(os.path.join(labbook_dir, "code", "test1.txt"), 'wt') as dt:
+                dt.write("Some content")
+            lb.git.add(os.path.join(labbook_dir, "code", "test1.txt"))
+            commit = lb.git.commit("a test commit")
+
+            # Create a note
+            query = """
+               mutation makenote {
+                 createNote(input: {
+                   labbookName: "notes-test-1",
+                   owner: "default",
+                   level: AUTO_MAJOR,
+                   message: "Added a new file in this test",
+                   linkedCommit: \"""" + str(commit) + """\",
+                 })
+                 {
+                   note {
+                     message              
+                   }
+                 }
+               }
+               """
+
+            snapshot.assert_match(client.execute(query))
+
+            query = """
+               {
+                   labbook(name: "notes-test-1", owner: "default") {
+                       notes(first:1) {
+                           edges {
+                               node {                                                                                       
+                                   message
+                                   author
+                                   level
+                                   tags
+                                   freeText
+                                   objects {
+                                       edges {
+                                           node {
+                                               key
+                                               type
+                                               value
+                                           }
+                                           cursor
+                                       }
+                                   }
+                               }
+                               cursor
+                           }                        
+                       }
+                   }
+               }
+               """
+            snapshot.assert_match(client.execute(query))
+
+    def test_create_user_note(self, mock_config_file, snapshot):
+        """Test creating and getting a user note"""
+
+        # Create labbook
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name="user-note-test", description="testing user notes")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Create a user note
+            query = """
+            mutation makeUserNote {
+              createUserNote(input: {
+                labbookName: "user-note-test",
+                message: "I think this is a thing",
+                freeText: "## A title\\n- sdf\\n - ghfg",
+                tags: ["tag1", "tag2"],
+                objects: [{key: "objectkey1", type: "PNG", value: "2new0x7FABC374FX"}]
+              })
+              {
+                note {
+                  message
+                  freeText
+                }
+              }
+            }
+            """
+
+            snapshot.assert_match(client.execute(query))
+
+            query = """
+            {
+                labbook(name: "user-note-test", owner: "default") {
+                    notes(first:1) {
+                        edges {
+                            node {
+                                message
+                                freeText
+                                objects{
+                                    edges{
+                                        node{
+                                            key
+                                            type
+                                            value
+                                        }
+                                    }
+                                }
+                                tags
+                            }
+                        }
+                    }
+                }
+            }
+            """
+            snapshot.assert_match(client.execute(query))
+
+    def test_create_user_note_no_details(self, mock_config_file, snapshot):
+        """Test creating and getting a user note with no markdown body or tags"""
+
+        # Create labbook
+        lb = LabBook(mock_config_file[0])
+        lb.new(owner={"username": "default"}, name="user-note-test", description="testing user notes")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Create a user note
+            query = """
+            mutation makeUserNote {
+              createUserNote(input: {
+                labbookName: "user-note-test",
+                message: "I think this is a thing",
+              })
+              {
+                note {
+                  message
+                  freeText
+                }
+              }
+            }
+            """
+
+            snapshot.assert_match(client.execute(query))
+
+            query = """
+            {
+                labbook(name: "user-note-test", owner: "default") {
+                    notes(first:1) {
+                        edges {
+                            node {
+                                message
+                                freeText
+                            }
+                        }
+                    }
+                }
+            }
+            """
+            snapshot.assert_match(client.execute(query))

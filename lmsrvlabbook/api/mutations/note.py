@@ -91,3 +91,67 @@ class CreateNote(graphene.relay.ClientIDMutation):
                         objects=note['objects'])
 
         return CreateNote(note=note_obj)
+
+
+class CreateUserNote(graphene.relay.ClientIDMutation):
+    """Mutation to create a new user note entry in the activity feed of lab book
+
+    The log level is set to USER_NOTE automatically and the `linked_commit` is an empty string
+
+    """
+
+    class Input:
+        labbook_name = graphene.String(required=True)
+        owner = graphene.String()
+        message = graphene.String(required=True)
+        free_text = graphene.String()
+        tags = graphene.List(graphene.String)
+        objects = graphene.List(NoteObjectInput)
+
+    # Return the Note
+    note = graphene.Field(lambda: Note)
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        # TODO: Lookup name based on logged in user when available
+        username = get_logged_in_user()
+
+        if not input.get("owner"):
+            owner = username
+        else:
+            owner = input.get("owner")
+
+        # Load LabBook instance
+        lb = LabBook()
+        lb.from_name(username, owner, input.get('labbook_name'))
+
+        # Create NoteStore instance
+        note_db = NoteStore(lb)
+
+        note_data = {'linked_commit': None,
+                     'message': input.get('message'),
+                     'level': NoteLogLevelEnum.USER_NOTE,
+                     'tags': input.get('tags'),
+                     'free_text': input.get('free_text'),
+                     'objects': input.get('objects')}
+
+        # Create a note record
+        note_commit = note_db.create_note(note_data)
+
+        # Read data back to ensure it was written
+        note = note_db.get_note(note_commit.hexsha)
+
+        note_obj = Note(id=Note.to_type_id({'name': input.get('labbook_name'),
+                                            'owner': owner,
+                                            'commit': note_commit}),
+                        commit=note['note_commit'],
+                        linked_commit=note['linked_commit'],
+                        level=note['level'].value,
+                        tags=note['tags'],
+                        timestamp=note['timestamp'],
+                        message=note['message'],
+                        author=note['author']['email'],
+                        free_text=note['free_text'],
+                        objects=note['objects'])
+
+        return CreateUserNote(note=note_obj)
