@@ -393,3 +393,34 @@ snapshots['TestLabBookServiceQueries.test_get_labbook 1'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status 1'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+                {
+                    'cursor': 'MA==',
+                    'node': {
+                        'description': 'my first labbook1',
+                        'environment': {
+                            'containerStatus': 'NOT_RUNNING',
+                            'imageStatus': 'DOES_NOT_EXIST'
+                        },
+                        'name': 'labbook1'
+                    }
+                },
+                {
+                    'cursor': 'MQ==',
+                    'node': {
+                        'description': 'my first labbook2',
+                        'environment': {
+                            'containerStatus': 'NOT_RUNNING',
+                            'imageStatus': 'DOES_NOT_EXIST'
+                        },
+                        'name': 'labbook2'
+                    }
+                }
+            ]
+        }
+    }
+}
