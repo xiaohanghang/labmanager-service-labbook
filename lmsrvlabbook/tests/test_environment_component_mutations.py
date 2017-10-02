@@ -194,6 +194,7 @@ class TestAddComponentMutations(object):
                 clientMutationId
                 environmentPackage {
                     packageName
+                    packageManager
                 }
               }
             }
@@ -201,7 +202,9 @@ class TestAddComponentMutations(object):
             result = client.execute(pkg_query)
 
         import pprint; pprint.pprint(result)
-        assert result['data']['addEnvironmentPackage']
+        assert result['data']['addEnvironmentPackage']['environmentPackage']['packageName'] == 'docker'
+        assert result['data']['addEnvironmentPackage']['environmentPackage']['packageManager'] == 'apt'
+
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
 
