@@ -81,9 +81,9 @@ class TestBackgroundJobs(object):
 
         time.sleep(0.25)
 
-        t1 = d.dispatch_task(jobs.test_exit_fail)
-        t2 = d.dispatch_task(jobs.test_exit_success)
-        t3 = d.dispatch_task(jobs.test_sleep, args=(1,))
+        t1 = d.dispatch_task(jobs.test_exit_fail).key_str
+        t2 = d.dispatch_task(jobs.test_exit_success).key_str
+        t3 = d.dispatch_task(jobs.test_sleep, args=(1,)).key_str
 
         with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
             # Make and validate request
@@ -108,7 +108,7 @@ class TestBackgroundJobs(object):
                 assert w.is_alive()
                 time1 = time.time()
                 result = client.execute(query)
-                import pprint; pprint.pprint(result)
+                import pprint; print('----'); pprint.pprint(result); print('-<<<')
                 time2 = time.time()
                 tdiff = time2 - time1
                 assert tdiff < 0.25, "Query should not take more than a few millis (took {}s)".format(tdiff)

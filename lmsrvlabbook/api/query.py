@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import base64
+from typing import List
+
 import graphene
 from graphene import resolve_only_args
 
@@ -93,7 +95,7 @@ class LabbookQuery(graphene.AbstractType):
         return Labbook.create(id_data)
 
     @resolve_only_args
-    def resolve_job_status(self, job_id):
+    def resolve_job_status(self, job_id: str):
         """Method to return a graphene Labbok instance based on the name
 
         Uses the "currently logged in" user
@@ -104,7 +106,7 @@ class LabbookQuery(graphene.AbstractType):
         Returns:
             JobStatus
         """
-        logger.info("Resolving jobStatus({})".format(job_id))
+        logger.info(f"Resolving jobStatus {job_id} (type {type(job_id)})")
         return JobStatus.create(job_id)
 
     def resolve_background_jobs(self, args, context, info):
@@ -115,8 +117,8 @@ class LabbookQuery(graphene.AbstractType):
         """
         job_dispatcher = Dispatcher()
 
-        edges = job_dispatcher.all_jobs
-        cursors = [base64.b64encode("{}".format(cnt).encode('utf-8')) for cnt, x in enumerate(edges)]
+        edges: List[str] = [j.job_key.key_str for j in job_dispatcher.all_jobs]
+        cursors = [base64.b64encode(f"{str(cnt)}".encode('utf-8')) for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
         lbc = ListBasedConnection(edges, cursors, args)

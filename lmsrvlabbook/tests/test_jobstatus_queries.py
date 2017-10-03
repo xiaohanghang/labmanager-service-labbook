@@ -22,6 +22,7 @@ import tempfile
 import multiprocessing
 import threading
 import os
+import pprint
 import uuid
 import shutil
 import time
@@ -129,9 +130,10 @@ class TestLabBookServiceQueries(object):
                     status
                 }
             }
-            """ % job_id
+            """ % job_id.key_str
 
             try:
+                pprint.pprint(query)
                 snapshot.assert_match(client.execute(query))
             except:
                 w.terminate()
@@ -163,6 +165,7 @@ class TestLabBookServiceQueries(object):
             """ % job_id
 
             try:
+                pprint.pprint(query)
                 snapshot.assert_match(client.execute(query))
             except:
                 w.terminate()
