@@ -40,14 +40,26 @@ from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.connections.note import NoteConnection
 
 
-class LabbookSummary(ObjectType):
-    """A type representing a summary of a LabBook used for listing LabBooks
+class Labbook(ObjectType):
+    """A type representing a LabBook and all of its contents
 
     LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
 
     """
     class Meta:
         interfaces = (graphene.relay.Node, GitRepository)
+
+    # The name of the current branch
+    active_branch = graphene.Field(LabbookRef)
+
+    # List of branches
+    branches = graphene.relay.ConnectionField(LabbookRefConnection)
+
+    # Environment Information
+    environment = graphene.Field(Environment)
+
+    # Connection to Note Entries
+    notes = graphene.relay.ConnectionField(NoteConnection)
 
     @staticmethod
     def to_type_id(id_data):
@@ -102,82 +114,53 @@ class LabbookSummary(ObjectType):
         lb = LabBook()
         lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
 
-        return LabbookSummary(id=Labbook.to_type_id(id_data),
-                              name=lb.name, description=lb.description,
-                              owner=Owner.create(id_data))
-
-
-class Labbook(LabbookSummary):
-    """A type representing a LabBook and all of its contents
-
-    LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
-
-    """
-    class Meta:
-        interfaces = (graphene.relay.Node, GitRepository)
-
-    # The name of the current branch
-    active_branch = graphene.Field(LabbookRef)
-
-    # List of branches
-    branches = graphene.relay.ConnectionField(LabbookRefConnection)
-
-    # Environment Information
-    environment = graphene.Field(Environment)
-
-    # Connection to Note Entries
-    notes = graphene.relay.ConnectionField(NoteConnection)
-
-    @staticmethod
-    def create(id_data):
-        """Method to create a graphene LabBook object based on the node ID or owner+name
-
-        id_data should at a minimum contain either `type_id` or `owner` & `name`
-
-            {
-                "type_id": <unique id for this object Type),
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-            }
-
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance. Can be a node ID or other vars
-
-        Returns:
-            Labbook
-        """
-        if "type_id" in id_data:
-            id_data.update(Labbook.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
-
-        if "username" not in id_data:
-            id_data["username"] = get_logged_in_user()
-
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-
-        # Get the git information
-        if "git" not in id_data:
-            git = get_git_interface(Configuration().config["git"])
-            git.set_working_directory(os.path.join(git.working_directory,
-                                                   id_data["username"],
-                                                   id_data["owner"],
-                                                   "labbooks",
-                                                   id_data["name"]))
-        else:
-            git = id_data["git"]
-
-        # Get the current checked out branch name
-        id_data["branch"] = git.get_current_branch_name()
-
-        # Share git instance to speed up IO
-        id_data["git"] = git
-
         return Labbook(id=Labbook.to_type_id(id_data),
                        name=lb.name, description=lb.description,
                        owner=Owner.create(id_data),
-                       active_branch=LabbookRef.create(id_data),
-                       environment=Environment.create(id_data))
+                       _id_data=id_data)
+
+    def resolve_active_branch(self, args, context, info):
+        """Method to get the active branch
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # Get the git information
+        if "git" not in self._id_data:
+            git = get_git_interface(Configuration().config["git"])
+            git.set_working_directory(os.path.join(git.working_directory,
+                                                   self._id_data["username"],
+                                                   self._id_data["owner"],
+                                                   "labbooks",
+                                                   self._id_data["name"]))
+        else:
+            git = self._id_data["git"]
+
+        # Get the current checked out branch name
+        self._id_data["branch"] = git.get_current_branch_name()
+
+        # Share git instance to speed up IO
+        self._id_data["git"] = git
+
+        return LabbookRef.create(self._id_data)
+
+    def resolve_environment(self, args, context, info):
+        """Method to get the environment data
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        return Environment.create(self._id_data)
 
     def resolve_branches(self, args, context, info):
         """Method to page through branch Refs

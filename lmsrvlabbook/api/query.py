@@ -29,7 +29,7 @@ from lmcommon.environment import ComponentRepository
 from lmsrvcore.auth.user import get_logged_in_user
 from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects.labbook import Labbook, LabbookSummary
+from lmsrvlabbook.api.objects.labbook import Labbook
 from lmsrvlabbook.api.objects.baseimage import BaseImage
 from lmsrvlabbook.api.objects.devenv import DevEnv
 from lmsrvlabbook.api.objects.customdependency import CustomDependency
@@ -77,8 +77,7 @@ class LabbookQuery(graphene.AbstractType):
                                                                             namespace=graphene.String(),
                                                                             component=graphene.String())
 
-    @resolve_only_args
-    def resolve_labbook(self, owner, name):
+    def resolve_labbook(self, args, context, info):
         """Method to return a graphene Labbok instance based on the name
 
         Uses the "currently logged in" user
@@ -90,7 +89,7 @@ class LabbookQuery(graphene.AbstractType):
         Returns:
             Labbook
         """
-        id_data = {"name": name, "owner": owner}
+        id_data = {"name": args.get('name'), "owner": args.get('owner')}
         return Labbook.create(id_data)
 
     @resolve_only_args
@@ -130,7 +129,7 @@ class LabbookQuery(graphene.AbstractType):
         return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
 
     def resolve_local_labbooks(self, args, context, info):
-        """Method to return a all graphene LabbookSummary instances for the logged in user
+        """Method to return a all graphene Labbook instances for the logged in user
 
         Uses the "currently logged in" user
 
@@ -153,13 +152,13 @@ class LabbookQuery(graphene.AbstractType):
         lbc = ListBasedConnection(edges, cursors, args)
         lbc.apply()
 
-        # Get LabbookSummary instances
+        # Get Labbook instances
         id_data = {"username": username}
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
             id_data["name"] = edge["name"]
             id_data["owner"] = edge["owner"]
-            edge_objs.append(LabbookConnection.Edge(node=LabbookSummary.create(id_data), cursor=cursor))
+            edge_objs.append(LabbookConnection.Edge(node=Labbook.create(id_data), cursor=cursor))
 
         return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)
 

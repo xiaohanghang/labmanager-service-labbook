@@ -25,6 +25,7 @@ class ObjectType(graphene.ObjectType):
     """New root object type that enforces standard interface to set and parse Type Ids and populate an instance
 
     """
+    _id_data = None
 
     @classmethod
     def get_node(cls, node_id, context, info):
