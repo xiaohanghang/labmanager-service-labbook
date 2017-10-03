@@ -161,10 +161,10 @@ class Environment(ObjectType):
         labbook_key = "{}-{}-{}".format(id_data["username"], id_data["owner"], id_data["name"])
 
         dispatcher = Dispatcher()
-        lb_jobs = [dispatcher.query_task(j) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
+        lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
 
         for j in lb_jobs:
-            logger.debug("Current job for lb: status {}, meta {}".format(j.get('status'), j.get('meta')))
+            logger.debug("Current job for lb: status {}, meta {}".format(j.status, j.meta))
 
         # First, check if image exists or not -- The first step of building an image untags any existing ones.
         # Therefore, we know that if one exists, there most likely is not one being built.
@@ -174,7 +174,7 @@ class Environment(ObjectType):
         except ImageNotFound:
             image_status = ImageStatus.DOES_NOT_EXIST
 
-        if any([j.get('status') == 'failed' and j['meta'].get('method') == 'build_image' for j in lb_jobs]):
+        if any([j.status == 'failed' and j.meta.get('method') == 'build_image' for j in lb_jobs]):
             logger.info("Image status for {} is BUILD_FAILED".format(labbook_key))
             if image_status == ImageStatus.EXISTS:
                 # The indication that there's a failed job is probably lingering from a while back, so don't
@@ -183,7 +183,7 @@ class Environment(ObjectType):
             else:
                 image_status = ImageStatus.BUILD_FAILED
 
-        if any([j['status'] in ['started', 'queued'] and j['meta'].get('method') == 'build_image' for j in lb_jobs]):
+        if any([j.status in ['started', 'queued'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
             logger.info(f"Image status for {labbook_key} is BUILD_IN_PROGRESS")
             # build_image being in progress takes precedence over if image already exists (unlikely event).
             if image_status == ImageStatus.EXISTS:
