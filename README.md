@@ -70,7 +70,7 @@ export PYTHONPATH=$PYTHONPATH:<labmanager-service-labbook root dir>:<labmanager-
 python service.py
 ```
 
-Navigate your browser to [http://127.0.0.1:5000/labbook/](http://127.0.0.1:5000/labbook/) and you should see the
+Navigate your browser to [http://127.0.0.1:10001/labbook/](http://127.0.0.1:10001/labbook/) and you should see the
 GraphiQL interface.
 
 

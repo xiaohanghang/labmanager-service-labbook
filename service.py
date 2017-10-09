@@ -73,6 +73,6 @@ lmlog.logger.info("LabManager Ready")
 
 if __name__ == '__main__':
     if getpass.getuser() == "giguser":
-        app.run(host="0.0.0.0")
+        app.run(host="0.0.0.0", port=10001)
     else:
-        app.run()
+        app.run(port=10001)
