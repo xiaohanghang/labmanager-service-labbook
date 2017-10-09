@@ -17,18 +17,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import pytest
-import tempfile
 import os
-import uuid
+import pprint
+import pytest
 import shutil
+import tempfile
+import time
+import uuid
+
 from snapshottest import snapshot
 
 from graphene.test import Client
 import graphene
 from mock import patch
+import requests
 
 from lmcommon.configuration import Configuration
+from lmcommon.dispatcher import Dispatcher, JobKey
+from lmcommon.environment import ComponentManager, RepositoryManager
+from lmcommon.labbook import LabBook
 
 from lmsrvlabbook.api.mutation import LabbookMutations
 from lmsrvlabbook.api.query import LabbookQuery
@@ -52,7 +59,11 @@ def mock_config_file():
 
     with tempfile.NamedTemporaryFile(mode="wt") as fp:
         # Write a temporary config file
-        fp.write("""core:
+        fp.write("""
+environment:
+  repo_url:
+    - "https://github.com/gig-dev/environment-components.git"        
+core:
   team_mode: false 
 git:
   backend: 'filesystem'
@@ -62,6 +73,10 @@ git:
         # Create test client
         schema = graphene.Schema(query=Query,
                                  mutation=Mutation)
+
+        erm = RepositoryManager(fp.name)
+        erm.update_repositories()
+        erm.index_repositories()
 
         yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
 
@@ -267,7 +282,10 @@ class TestLabBookServiceMutations(object):
               }
             }
             """
-            variables = {"labbook_name": "test-lab-book3", "branch_name": "dev-branch-5"}
+            variables = {
+                "labbook_name": "test-lab-book3",
+                "branch_name": "dev-branch-5"
+            }
 
             client.execute(query, variable_values=variables)
 
@@ -285,3 +303,71 @@ class TestLabBookServiceMutations(object):
             }
             """
             snapshot.assert_match(client.execute(query))
+
+    # def test_export_and_import_lb(self, mock_config_file, snapshot):
+    #     with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+    #         # Make and validate request
+    #         client = Client(mock_config_file[2])
+    #
+    #         lb_name = "mutation-export-import-unittest"
+    #         lb = LabBook(mock_config_file[0])
+    #         lb.new(name=lb_name, description="Import/Export Mutation Testing.",
+    #                owner={"username": "test"})
+    #         cm = ComponentManager(lb)
+    #         cm.add_component("base_image", "gig-dev_environment-components", "gigantum", "ubuntu1604-python3", "0.4")
+    #         cm.add_component("dev_env", "gig-dev_environment-components", "gigantum", "jupyter-ubuntu", "0.1")
+    #         pprint.pprint(f"NEW TEST LB IN: {lb.root_dir}")
+    #
+    #         export_query = """
+    #         mutation export {
+    #           exportLabbook(input: {
+    #             user: "test",
+    #             owner: "test",
+    #             labbookName: "%s"
+    #           }) {
+    #             jobKey
+    #           }
+    #         }
+    #         """ % lb.name
+    #         r = client.execute(export_query)
+    #         pprint.pprint(r)
+    #
+    #         # Sleep while the background job completes, and then delete new lb.
+    #         time.sleep(3)
+    #         d = Dispatcher()
+    #         job_status = d.query_task(JobKey(r['data']['exportLabbook']['jobKey']))
+    #
+    #         # Delete existing labbook in file system.
+    #         shutil.rmtree(lb.root_dir)
+    #
+    #         assert job_status.status == 'finished'
+    #         assert not os.path.exists(lb.root_dir)
+    #         assert os.path.exists(job_status.result)
+    #         pprint.pprint(job_status.result)
+    #
+    #         try:
+    #             os.remove(job_status.result)
+    #         except:
+    #             pass
+    #
+    #             # # Now, import the labbook that was just exported.
+    #             # export_query = """
+    #             # mutation import {
+    #             #   importLabbook(input: {
+    #             #     user: "test",
+    #             #     owner: "test",
+    #             #   }) {
+    #             #     jobKey
+    #             #   }
+    #             # }
+    #             # """
+    #             #
+    #             # files = {'archiveFile': open(job_status.result, 'rb')}
+    #             # qry = {"query": export_query}
+    #             # r = requests.post('http://localhost:5000/labbook/', data=qry, files=files)
+    #             #
+    #             # time.sleep(0.5)
+    #             # pprint.pprint(r)
+    #             # time.sleep(2)
+    #             #
+    #             # assert False

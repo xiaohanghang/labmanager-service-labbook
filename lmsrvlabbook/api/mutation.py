@@ -19,18 +19,45 @@
 # SOFTWARE.
 import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
-    CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer
+    CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook, \
+    ExportLabbook
 
 
 class LabbookMutations(graphene.AbstractType):
     """Entry point for all graphql mutations"""
+
+    # Import a labbook from an uploaded file (Archive as zip).
+    import_labbook = ImportLabbook.Field()
+
+    # Export a labbook and return URL to its zipped archive.
+    export_labbook = ExportLabbook.Field()
+
+    # Create a new labbook on the file system.
     create_labbook = CreateLabbook.Field()
+
+    # Create a new git branch for a given labbook.
     create_branch = CreateBranch.Field()
+
+    # Update a given labbook to be at the tip of a particular git branch.
     checkout_branch = CheckoutBranch.Field()
+
+    # Build a docker image for a given Labbook.
     build_image = BuildImage.Field()
+
+    # Start a labbook's Docker container.
     start_container = StartContainer.Field()
+
+    # Start a labbook's Docker container.
     stop_container = StopContainer.Field()
+
+    # Create a note in the labbook's current working branch
     create_note = CreateNote.Field()
+
+    # ???
     create_user_note = CreateUserNote.Field()
+
+    # Add a development environment or complex dependency to Labbook environment.
     add_environment_component = AddEnvironmentComponent.Field()
+
+    # Add a package to a Labbook environment (e.g., pip package, apt)
     add_environment_package = AddEnvironmentPackage.Field()

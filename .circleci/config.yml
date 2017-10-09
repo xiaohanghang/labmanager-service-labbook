@@ -21,6 +21,7 @@ jobs:
       - run:
           name: Pip install requirements, labmanager-common and pytest
           command: |
+            sudo mkdir /home/circleci/gigantum
             sudo pip install -r requirements.txt
             git clone -b integration --single-branch https://github.com/gigantum/labmanager-common.git
             export CWD=`pwd`
