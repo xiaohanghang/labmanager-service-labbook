@@ -138,6 +138,7 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
         }
         dispatcher = Dispatcher()
         job_key = dispatcher.dispatch_task(jobs.import_labboook_from_zip, kwargs=job_kwargs, metadata=job_metadata)
-        logger.info(f"Importing LabBook {archive_path} in background job with key {job_key.key_str}")
+
+        logger.info(f"Importing LabBook {labbook_archive_path} in background job with key {job_key.key_str}")
 
         return ImportLabbook(job_key=job_key.key_str)
