@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS, cross_origin
 import getpass
 import shutil
@@ -44,6 +44,14 @@ app.config['DEBUG'] = config.config["flask"]["DEBUG"]
 
 # Register service
 app.register_blueprint(blueprint.complete_labbook_service)
+
+
+@app.route("/ping")
+@cross_origin(headers=["Content-Type", "Authorization"])
+def ping():
+    """Unauthorized endpoint for validating the API is up"""
+    return jsonify(config.config['build_info'])
+
 
 # Setup local environment repositories
 lmlog = LMLogger()
