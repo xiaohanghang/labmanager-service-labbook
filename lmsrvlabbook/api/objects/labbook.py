@@ -116,7 +116,7 @@ class Labbook(ObjectType):
 
         return Labbook(id=Labbook.to_type_id(id_data),
                        name=lb.name, description=lb.description,
-                       owner=Owner.create(id_data),
+                       owner=Owner.create(id_data), environment=Environment.create(id_data),
                        _id_data=id_data)
 
     def resolve_active_branch(self, args, context, info):
@@ -148,19 +148,6 @@ class Labbook(ObjectType):
         self._id_data["git"] = git
 
         return LabbookRef.create(self._id_data)
-
-    def resolve_environment(self, args, context, info):
-        """Method to get the environment data
-
-        Args:
-            args:
-            context:
-            info:
-
-        Returns:
-
-        """
-        return Environment.create(self._id_data)
 
     def resolve_branches(self, args, context, info):
         """Method to page through branch Refs
