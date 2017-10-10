@@ -467,3 +467,32 @@ class TestLabBookServiceQueries(object):
             }
             """
             snapshot.assert_match(client.execute(query))
+
+    def test_list_labbooks_container_status_no_labbooks(self, mock_config_file, snapshot):
+        """Test listing labbooks when none exist"""
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+            # Make and validate request
+            client = Client(mock_config_file[2])
+
+            # Get LabBooks for the "logged in user" - Currently just "default"
+            query = """
+            {
+                localLabbooks {
+                    edges {
+                        node {
+                            name
+                            description
+                            environment{
+                                imageStatus
+                                containerStatus
+                            }
+                        }
+                        cursor
+                    }
+                }
+            }
+            """
+            snapshot.assert_match(client.execute(query))
+

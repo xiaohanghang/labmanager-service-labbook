@@ -424,3 +424,12 @@ snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status 1'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status_no_labbooks 1'] = {
+    'data': {
+        'localLabbooks': {
+            'edges': [
+            ]
+        }
+    }
+}

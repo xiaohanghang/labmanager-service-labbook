@@ -146,9 +146,12 @@ class LabbookQuery(graphene.AbstractType):
 
         # Collect all labbooks for all owners
         edges = []
-        for key in labbooks.keys():
-            edges.extend(labbooks[key])
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+        cursors = []
+        if labbooks:
+            for key in labbooks.keys():
+                edges.extend(labbooks[key])
+            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
+                                                                                              x in enumerate(edges)]
 
         # Process slicing and cursor args
         lbc = ListBasedConnection(edges, cursors, args)
