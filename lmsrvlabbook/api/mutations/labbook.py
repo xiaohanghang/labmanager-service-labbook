@@ -111,7 +111,8 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
         owner = graphene.String(required=True)
         user = graphene.String(required=True)
 
-    job_key = graphene.String()
+    import_job_key = graphene.String()
+    build_image_job_key = graphene.String()
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
@@ -141,4 +142,24 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
         job_key = dispatcher.dispatch_task(jobs.import_labboook_from_zip, kwargs=job_kwargs, metadata=job_metadata)
         logger.info(f"Importing LabBook {labbook_archive_path} in background job with key {job_key.key_str}")
 
-        return ImportLabbook(job_key=job_key.key_str)
+        assumed_lb_name = context.files['archiveFile'].filename.replace('.lbk', '').split('_')[0]
+        working_directory = Configuration().config['git']['working_directory']
+        inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+                                             assumed_lb_name)
+        build_img_kwargs = {
+            'path': os.path.join(inferred_lb_directory, '.gigantum', 'env'),
+            'tag': f"{input.get('user')}-{input.get('owner')}-{assumed_lb_name}",
+            'pull': True,
+            'nocache': False
+        }
+        build_img_metadata = {
+            'method': 'build_image',
+            'labbook': f"{input.get('user')}-{input.get('owner')}-{assumed_lb_name}"
+        }
+        logger.info(f"Queueing job to build imported labbook at assumed directory `{inferred_lb_directory}`")
+        build_image_job_key = dispatcher.dispatch_task(jobs.build_docker_image, kwargs=build_img_kwargs,
+                                                       dependent_job=job_key, metadata=build_img_metadata)
+        logger.info(f"Adding dependent job {build_image_job_key} to build "
+                    f"Docker image for labbook `{inferred_lb_directory}`")
+
+        return ImportLabbook(import_job_key=job_key.key_str, build_image_job_key=build_image_job_key.key_str)
