@@ -111,11 +111,12 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
         owner = graphene.String(required=True)
         user = graphene.String(required=True)
 
-    job_key = graphene.String()
+    import_job_key = graphene.String()
+    build_image_job_key = graphene.String()
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        if not input or not input.get('archiveFile'):
+        if not context.files.get('archiveFile'):
             logger.error('No file "archiveFile" associated with request')
             raise ValueError('No file archiveFile in request context')
 
@@ -127,9 +128,10 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
         archive_temp_dir = os.path.join(tempfile.gettempdir(), 'labbook_imports', str(uuid.uuid4()))
         logger.info(f"Making new directory in {archive_temp_dir}")
         os.makedirs(archive_temp_dir, exist_ok=True)
-        context.files.get('archiveFile').save(archive_temp_dir)
 
-        labbook_archive_path = os.path.join(archive_temp_dir, context.files['archivePath'].filename)
+        labbook_archive_path = os.path.join(archive_temp_dir, context.files['archiveFile'].filename)
+        context.files.get('archiveFile').save(labbook_archive_path)
+
         job_metadata = {'method': 'import_labbook_from_zip'}
         job_kwargs = {
             'archive_path': labbook_archive_path,
@@ -138,6 +140,26 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
         }
         dispatcher = Dispatcher()
         job_key = dispatcher.dispatch_task(jobs.import_labboook_from_zip, kwargs=job_kwargs, metadata=job_metadata)
-        logger.info(f"Importing LabBook {archive_path} in background job with key {job_key.key_str}")
+        logger.info(f"Importing LabBook {labbook_archive_path} in background job with key {job_key.key_str}")
 
-        return ImportLabbook(job_key=job_key.key_str)
+        assumed_lb_name = context.files['archiveFile'].filename.replace('.lbk', '').split('_')[0]
+        working_directory = Configuration().config['git']['working_directory']
+        inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+                                             assumed_lb_name)
+        build_img_kwargs = {
+            'path': os.path.join(inferred_lb_directory, '.gigantum', 'env'),
+            'tag': f"{input.get('user')}-{input.get('owner')}-{assumed_lb_name}",
+            'pull': True,
+            'nocache': False
+        }
+        build_img_metadata = {
+            'method': 'build_image',
+            'labbook': f"{input.get('user')}-{input.get('owner')}-{assumed_lb_name}"
+        }
+        logger.info(f"Queueing job to build imported labbook at assumed directory `{inferred_lb_directory}`")
+        build_image_job_key = dispatcher.dispatch_task(jobs.build_docker_image, kwargs=build_img_kwargs,
+                                                       dependent_job=job_key, metadata=build_img_metadata)
+        logger.info(f"Adding dependent job {build_image_job_key} to build "
+                    f"Docker image for labbook `{inferred_lb_directory}`")
+
+        return ImportLabbook(import_job_key=job_key.key_str, build_image_job_key=build_image_job_key.key_str)
