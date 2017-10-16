@@ -28,7 +28,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbook import Labbook
@@ -141,7 +141,7 @@ class LabbookQuery(graphene.AbstractType):
         lb = LabBook()
 
         # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
         labbooks = lb.list_local_labbooks(username=username)
 
         # Collect all labbooks for all owners

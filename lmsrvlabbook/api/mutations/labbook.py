@@ -28,7 +28,7 @@ from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.notes import NoteStore, NoteLogLevel
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvlabbook.api.objects.labbook import Labbook
 
 logger = LMLogger.get_logger()
@@ -47,7 +47,7 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         # Create a new empty LabBook
         lb = LabBook()

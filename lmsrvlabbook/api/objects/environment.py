@@ -33,7 +33,7 @@ from lmcommon.labbook import LabBook
 from lmcommon.configuration import get_docker_client
 from lmcommon.logging import LMLogger
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api import ObjectType
 from lmsrvcore.api.connections import ListBasedConnection
 
@@ -149,7 +149,7 @@ class Environment(ObjectType):
         """
         if "username" not in id_data:
             # TODO: Lookup name based on logged in user when available
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
 
         if "type_id" in id_data:
             # Parse ID components
@@ -217,7 +217,7 @@ class Environment(ObjectType):
         """
         # TODO: Implement better method to share data between resolvers
         # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_user()}
+        id_data = {"username": get_logged_in_username()}
         id_data.update(Environment.parse_type_id(self.id))
 
         # Get base image data
@@ -266,7 +266,7 @@ class Environment(ObjectType):
         """
         # TODO: Implement better method to share data between resolvers
         # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_user()}
+        id_data = {"username": get_logged_in_username()}
         id_data.update(Environment.parse_type_id(self.id))
 
         # Get base image data
@@ -315,7 +315,7 @@ class Environment(ObjectType):
         """
         # TODO: Implement better method to share data between resolvers
         # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_user()}
+        id_data = {"username": get_logged_in_username()}
         id_data.update(Environment.parse_type_id(self.id))
 
         # Get base image data
@@ -363,7 +363,7 @@ class Environment(ObjectType):
         """
         # TODO: Implement better method to share data between resolvers
         # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_user()}
+        id_data = {"username": get_logged_in_username()}
         id_data.update(Environment.parse_type_id(self.id))
 
         # Get base image data

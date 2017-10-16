@@ -24,7 +24,7 @@ import graphene
 import docker
 
 from lmsrvlabbook.api.objects.environment import Environment
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 from lmcommon.configuration import (Configuration, get_docker_client)
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.dispatcher import Dispatcher, jobs
@@ -51,7 +51,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         if "owner" not in input:
             owner = username
@@ -104,7 +104,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         if "owner" not in input:
             owner = username
@@ -157,7 +157,7 @@ class StopContainer(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         if "owner" not in input:
             owner = username

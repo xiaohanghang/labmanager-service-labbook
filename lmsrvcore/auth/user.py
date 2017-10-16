@@ -17,14 +17,27 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from lmsrvcore.auth.identity import get_identity_manager_instance
+from lmcommon.logging import LMLogger
 
 
-def get_logged_in_user():
+def get_logged_in_username(token: str = None):
     """A Method to get the current logged in user's username
 
-    Currently this is faked out until we actually have a user model
+
+    Args:
+        token(str): A string containing the Bearer Token
 
     Returns:
         str
     """
-    return "default"
+    mgr = get_identity_manager_instance()
+    user = mgr.authenticate(token)
+
+    if not user:
+        logger = LMLogger()
+        logger.logger.error("Failed to load load a user identity.")
+        raise ValueError("Failed to load load a user identity.")
+
+    return user.username
+

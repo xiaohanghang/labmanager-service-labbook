@@ -28,11 +28,10 @@ import blueprint
 from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
-
-# Load config data for the LabManager instance
-config = Configuration()
+from lmcommon.auth.identity import AuthenticationError
 
 # Create Flask app and configure
+config = Configuration()
 app = Flask("lmsrvlabbook")
 
 if config.config["flask"]["allow_cors"]:
@@ -42,10 +41,19 @@ if config.config["flask"]["allow_cors"]:
 # Set Debug mode
 app.config['DEBUG'] = config.config["flask"]["DEBUG"]
 
-# Register service
+# Register LabBook service
 app.register_blueprint(blueprint.complete_labbook_service)
 
 
+# Set auth error handler
+@app.errorhandler(AuthenticationError)
+def handle_auth_error(ex):
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
+
+
+# Set Unauth'd route for API health-check
 @app.route("/ping")
 @cross_origin(headers=["Content-Type", "Authorization"])
 def ping():

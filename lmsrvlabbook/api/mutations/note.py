@@ -25,7 +25,7 @@ import graphene
 
 from lmcommon.labbook import LabBook
 from lmcommon.notes import NoteStore
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvlabbook.api.objects.note import Note, NoteLogLevelEnum
 from lmsrvlabbook.api.objects.noteobject import NoteObjectInput
@@ -50,7 +50,7 @@ class CreateNote(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         if not input.get("owner"):
             owner = username
@@ -114,7 +114,7 @@ class CreateUserNote(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         if not input.get("owner"):
             owner = username
