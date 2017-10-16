@@ -82,6 +82,7 @@ class CreateNote(graphene.relay.ClientIDMutation):
                                             'commit': note_commit}),
                         commit=note['note_commit'],
                         linked_commit=note["linked_commit"],
+                        note_detail_key=note["note_detail_key"],
                         level=note['level'].value,
                         tags=note['tags'],
                         timestamp=note['timestamp'],
@@ -128,7 +129,8 @@ class CreateUserNote(graphene.relay.ClientIDMutation):
         # Create NoteStore instance
         note_db = NoteStore(lb)
 
-        note_data = {'linked_commit': None,
+        note_data = {'note_detail_key': None,
+                     'linked_commit': None,
                      'message': input.get('message'),
                      'level': NoteLogLevelEnum.USER_NOTE,
                      'tags': input.get('tags'),
@@ -146,6 +148,7 @@ class CreateUserNote(graphene.relay.ClientIDMutation):
                                             'commit': note_commit}),
                         commit=note['note_commit'],
                         linked_commit=note['linked_commit'],
+                        note_detail_key=note['note_detail_key'],
                         level=note['level'].value,
                         tags=note['tags'],
                         timestamp=note['timestamp'],

@@ -50,6 +50,9 @@ class Note(ObjectType):
     # The git commit hash this note references
     linked_commit = graphene.ID()
 
+    # The git commit hash this note references
+    note_detail_key = graphene.ID()
+
     # The short summary message of the note
     message = graphene.String()
 
@@ -139,6 +142,7 @@ class Note(ObjectType):
         return Note(id=Note.to_type_id(id_data),
                     commit=note['note_commit'],
                     linked_commit=note['linked_commit'],
+                    note_detail_key=note['note_detail_key'],
                     level=note['level'].value,
                     timestamp=note['timestamp'],
                     author=note['author']['email'],
@@ -167,7 +171,7 @@ class Note(ObjectType):
             note_db = NoteStore(lb)
 
             # Get detailed record
-            detail = note_db.get_detail_record(self.linked_commit)
+            detail = note_db.get_detail_record(self.note_detail_key)
             edges = detail["objects"]
 
         else:
@@ -184,7 +188,7 @@ class Note(ObjectType):
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
             id_data = self.parse_type_id(self.id)
-            id_data.update({"linked_commit": self.linked_commit,
+            id_data.update({"note_detail_key": self.note_detail_key,
                             "note_object_key": edge.key})
             edge_objs.append(NoteObjectConnection.Edge(node=NoteObject.create(id_data), cursor=cursor))
 
@@ -214,7 +218,7 @@ class Note(ObjectType):
             note_db = NoteStore(lb)
 
             # Get detailed record
-            detail = note_db.get_detail_record(self.linked_commit)
+            detail = note_db.get_detail_record(self.note_detail_key)
             return detail["free_text"]
 
         else:

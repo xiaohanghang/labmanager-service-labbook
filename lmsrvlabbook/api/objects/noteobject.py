@@ -61,7 +61,7 @@ class NoteObject(ObjectType, NoteObjectType):
         Returns:
             str
         """
-        return "{}&{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["linked_commit"],
+        return "{}&{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["note_detail_key"],
                                     id_data["note_object_key"])
 
     @staticmethod
@@ -75,7 +75,7 @@ class NoteObject(ObjectType, NoteObjectType):
             dict
         """
         split = type_id.split("&")
-        return {"owner": split[0], "name": split[1], "linked_commit": split[2], "note_object_key": split[3]}
+        return {"owner": split[0], "name": split[1], "note_detail_key": split[2], "note_object_key": split[3]}
 
     @staticmethod
     def create(id_data):
@@ -111,7 +111,7 @@ class NoteObject(ObjectType, NoteObjectType):
 
         if "note_detail_record" not in id_data:
             # get the detail record from notes storage.
-            note_detail = note_db.get_detail_record(id_data["linked_commit"])
+            note_detail = note_db.get_detail_record(id_data["note_detail_key"])
         else:
             note_detail = id_data["note_detail_record"]
 
