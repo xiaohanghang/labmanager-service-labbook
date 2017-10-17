@@ -28,11 +28,14 @@ import blueprint
 from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
-from lmcommon.auth.identity import AuthenticationError
+from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 
-# Create Flask app and configure
-config = Configuration()
+# Create Flask app
 app = Flask("lmsrvlabbook")
+
+# Load configuration class into the flask application
+app.config["LABMGR_CONFIG"] = config = Configuration()
+app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
 if config.config["flask"]["allow_cors"]:
     # Allow CORS

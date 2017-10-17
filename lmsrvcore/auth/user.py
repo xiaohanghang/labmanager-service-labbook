@@ -17,27 +17,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from lmsrvcore.auth.identity import get_identity_manager_instance
+from flask import current_app
 from lmcommon.logging import LMLogger
 
 
-def get_logged_in_username(token: str = None):
+def get_logged_in_username():
     """A Method to get the current logged in user's username
 
-
-    Args:
-        token(str): A string containing the Bearer Token
 
     Returns:
         str
     """
-    mgr = get_identity_manager_instance()
-    user = mgr.authenticate(token)
+    user = current_app.current_user
 
     if not user:
         logger = LMLogger()
-        logger.logger.error("Failed to load load a user identity.")
-        raise ValueError("Failed to load load a user identity.")
+        logger.logger.error("Failed to load load a user identity from request context.")
+        raise ValueError("Failed to load load a user identity from request context.")
 
     return user.username
 

@@ -52,7 +52,7 @@ schema = graphene.Schema(query=Query, mutation=Mutation)
 complete_labbook_service.add_url_rule('/labbook/',
                                       view_func=GraphQLView.as_view('graphql', schema=schema,
                                                                     graphiql=config.config["flask"]["DEBUG"],
-                                                                    middleware=[AuthorizationMiddleware]),
+                                                                    middleware=[AuthorizationMiddleware()]),
                                       methods=['GET', 'POST', 'OPTION'])
 
 

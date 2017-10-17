@@ -17,31 +17,32 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import g
-
-from lmcommon.auth.identity import get_identity_manager, AuthenticationError
-from lmcommon.configuration import Configuration
+from flask import current_app
+from lmcommon.auth.identity import AuthenticationError
 
 
-# TODO: Store user identity in a cache or the session to reduce overhead between requests
 def get_identity_manager_instance():
-    id_mrg = getattr(g, '_identity_mgr', None)
-    if id_mrg is None:
-        id_mrg = g._identity_mgr = get_identity_manager(Configuration())
-    return id_mrg
+    """Method to retrieve the id manager from the flask application"""
+    if "LABMGR_ID_MGR" not in current_app.config:
+        raise AuthenticationError("Application mis-configured. Missing identity manager instance.", 401)
+
+    return current_app.config["LABMGR_ID_MGR"]
 
 
 class AuthorizationMiddleware(object):
-    def resolve(self, next, root, info, context, **args):
-
+    """Middlewere to enforce authentication requirements and parse JWT"""
+    def resolve(self, next, root, args, context, info, **kwargs):
+        # Get the identity manager class
         id_mgr = get_identity_manager_instance()
 
+        # Pull the token out of the header if available
         token = None
-        if "Authorization" in info.headers:
-            _, token = info.headers["Authorization"].split("Bearer ")
+        if "Authorization" in context.headers:
+            _, token = context.headers["Authorization"].split("Bearer ")
             if not token:
                 raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
 
-        id_mgr.authenticate(token)
+        # Authenticate and set current user context on each request
+        current_app.current_user = id_mgr.authenticate(token)
 
-        return next(root, info, context, **args)
+        return next(root, args, context, info, **kwargs)
