@@ -82,7 +82,6 @@ class LabbookCommit(ObjectType):
             LabbookCommit
         """
         if "username" not in id_data:
-            # TODO: Lookup name based on logged in user when available
             id_data["username"] = get_logged_in_username()
 
         if "type_id" in id_data:

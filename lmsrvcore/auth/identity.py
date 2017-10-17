@@ -38,8 +38,11 @@ class AuthorizationMiddleware(object):
         # Pull the token out of the header if available
         token = None
         if "Authorization" in context.headers:
-            _, token = context.headers["Authorization"].split("Bearer ")
-            if not token:
+            if "Bearer" in context.headers["Authorization"]:
+                _, token = context.headers["Authorization"].split("Bearer ")
+                if not token:
+                    raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
+            else:
                 raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
 
         # Authenticate and set current user context on each request

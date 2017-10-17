@@ -140,7 +140,6 @@ class LabbookQuery(graphene.AbstractType):
         """
         lb = LabBook()
 
-        # TODO: Lookup name based on logged in user when available
         username = get_logged_in_username()
         labbooks = lb.list_local_labbooks(username=username)
 
