@@ -206,7 +206,7 @@ class Labbook(ObjectType):
 
     def resolve_files(self, args, context, info):
         lb = LabBook()
-        lb.from_name(get_logged_in_user(), self.owner.username, self.name)
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
         edges = lb.listdir(show_hidden=False)
@@ -219,7 +219,7 @@ class Labbook(ObjectType):
         edge_objs = []
         try:
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_user(),
+                id_data = {"user": get_logged_in_username(),
                            "owner": self.owner.username,
                            "name": self.name,
                            "enc_file_data": base64.b64encode(json.dumps(edge).encode())}

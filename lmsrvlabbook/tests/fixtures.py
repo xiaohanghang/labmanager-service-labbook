@@ -84,7 +84,7 @@ def fixture_working_dir():
     schema = graphene.Schema(query=Query, mutation=Mutation)
 
     with app.app_context():
-        # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
+        # within this block, current_app points to app. Set current usert explicitly (this is done in the middleware)
         current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
 
         yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
