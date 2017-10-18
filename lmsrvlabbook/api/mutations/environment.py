@@ -103,7 +103,6 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
         username = get_logged_in_username()
 
         if "owner" not in input:
@@ -136,7 +135,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
             labbook_dir, cnt.get('background_job_key')))
 
         # Start monitoring lab book environment for activity
-        start_labbook_monitor(lb)
+        start_labbook_monitor(lb, username)
 
         return StartContainer(environment=Environment.create(id_data), background_job_key=cnt.get('background_job_key'))
 
@@ -156,7 +155,6 @@ class StopContainer(graphene.relay.ClientIDMutation):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
         username = get_logged_in_username()
 
         if "owner" not in input:
@@ -177,6 +175,6 @@ class StopContainer(graphene.relay.ClientIDMutation):
         # Stop monitoring lab book environment for activity
         lb = LabBook()
         lb.from_name(username, owner, input.get('labbook_name'))
-        stop_labbook_monitor(lb)
+        stop_labbook_monitor(lb, username)
 
         return StopContainer(environment=Environment.create(id_data), background_job_key=job_ref)
