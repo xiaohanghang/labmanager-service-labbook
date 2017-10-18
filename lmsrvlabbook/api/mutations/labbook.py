@@ -163,3 +163,119 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
                     f"Docker image for labbook `{inferred_lb_directory}`")
 
         return ImportLabbook(import_job_key=job_key.key_str, build_image_job_key=build_image_job_key.key_str)
+
+
+class AddLabbookFile(graphene.relay.ClientIDMutation):
+    class Input:
+        user = graphene.String(required=True)
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        file_path = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        if not context.files.get('newFile'):
+            logger.error('No file "newFile" associated with request')
+            raise ValueError('No file newFile in request context')
+
+        try:
+            working_directory = Configuration().config['git']['working_directory']
+            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+                                                 input['labbook_name'])
+            lb = LabBook()
+            lb.from_directory(inferred_lb_directory)
+
+            if context.files['newFile'].filename != os.path.basename(input['file_path']):
+                raise ValueError('Filename of request file and `file_path` do not match')
+
+            # Create a new unique directory in /tmp
+            labbook_archive_path = os.path.join(tempfile.gettempdir(), context.files['newFile'].filename)
+            context.files.get('newFile').save(labbook_archive_path)
+            lb.insert_file(src_file=labbook_archive_path, dst_dir=os.path.dirname(input['file_path']))
+            logger.info(f"Removing copied temp file {labbook_archive_path}")
+            os.remove(labbook_archive_path)
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return AddLabbookFile(success=True)
+
+
+class DeleteLabbookFile(graphene.ClientIDMutation):
+    class Input:
+        user = graphene.String(required=True)
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        file_path = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            working_directory = Configuration().config['git']['working_directory']
+            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+                                                 input['labbook_name'])
+            lb = LabBook()
+            lb.from_directory(inferred_lb_directory)
+            lb.delete_file(relative_path=input['file_path'])
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return DeleteLabbookFile(success=True)
+
+
+class MoveLabbookFile(graphene.ClientIDMutation):
+    class Input:
+        user = graphene.String(required=True)
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        src_path = graphene.String(required=True)
+        dst_path = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            working_directory = Configuration().config['git']['working_directory']
+            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+                                                 input['labbook_name'])
+            lb = LabBook()
+            lb.from_directory(inferred_lb_directory)
+            full_path = lb.move_file(input['src_path'], input['dst_path'])
+            logger.info(f"Moved file to `{full_path}`")
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return MoveLabbookFile(success=True)
+
+
+class MakeLabbookDirectory(graphene.ClientIDMutation):
+    class Input:
+        user = graphene.String(required=True)
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        dir_name = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            working_directory = Configuration().config['git']['working_directory']
+            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+                                                 input['labbook_name'])
+            lb = LabBook()
+            lb.from_directory(inferred_lb_directory)
+            full_path = lb.makedir(input['dir_name'])
+            logger.info(f"Made new directory in `{full_path}`")
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return MakeLabbookDirectory(success=True)

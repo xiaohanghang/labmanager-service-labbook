@@ -17,27 +17,33 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import graphene
-import os
 import base64
+import json
+import graphene
 
-from lmcommon.labbook import LabBook
-from lmcommon.gitlib import get_git_interface
+import os
+
 from lmcommon.configuration import Configuration
+from lmcommon.logging import LMLogger
+from lmcommon.gitlib import get_git_interface
+from lmcommon.labbook import LabBook
 from lmcommon.notes import NoteStore
 
 from lmsrvcore.auth.user import get_logged_in_user
-
 from lmsrvcore.api import ObjectType
+from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
-from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects.ref import LabbookRef
-from lmsrvlabbook.api.objects.environment import Environment
-from lmsrvlabbook.api.objects.note import Note
-from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.connections.note import NoteConnection
+from lmsrvlabbook.api.connections.ref import LabbookRefConnection
+from lmsrvlabbook.api.objects.environment import Environment
+from lmsrvlabbook.api.objects.labbookfile import LabbookFile
+from lmsrvlabbook.api.objects.note import Note
+from lmsrvlabbook.api.objects.ref import LabbookRef
+from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection
+
+logger = LMLogger.get_logger()
 
 
 class Labbook(ObjectType):
@@ -57,6 +63,9 @@ class Labbook(ObjectType):
 
     # Environment Information
     environment = graphene.Field(Environment)
+
+    # List of files and directories
+    files = graphene.relay.ConnectionField(LabbookFileConnection)
 
     # Connection to Note Entries
     notes = graphene.relay.ConnectionField(NoteConnection)
@@ -193,6 +202,32 @@ class Labbook(ObjectType):
 
         return LabbookRefConnection(edges=edge_objs,
                                     page_info=lbc.page_info)
+
+    def resolve_files(self, args, context, info):
+        lb = LabBook()
+        lb.from_name(get_logged_in_user(), self.owner.username, self.name)
+
+        # Get all files and directories, with the exception of anything in .git or .gigantum
+        edges = lb.listdir(show_hidden=False)
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        edge_objs = []
+        try:
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                id_data = {"user": get_logged_in_user(),
+                           "owner": self.owner.username,
+                           "name": self.name,
+                           "enc_file_data": base64.b64encode(json.dumps(edge).encode())}
+                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
+
+            return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
+        except Exception as e:
+            logger.exception(e)
+            raise
 
     def resolve_notes(self, args, context, info):
         """Method to page through branch Refs
