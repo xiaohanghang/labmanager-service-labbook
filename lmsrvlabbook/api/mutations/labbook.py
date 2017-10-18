@@ -46,12 +46,13 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
         username = get_logged_in_username()
 
         # Create a new empty LabBook
         lb = LabBook()
+        # TODO: Set owner/namespace properly once supported fully
         lb.new(owner={"username": username},
+               username=username,
                name=input.get('name'),
                description=input.get('description'))
 
