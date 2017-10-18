@@ -33,6 +33,6 @@ jobs:
           command: |
             redis-server &
             rqscheduler --interval=2 2> /dev/null &
-            pytest --cov=lmsrvlabbook .
+            pytest --cov=lmsrvlabbook --cov=lmsrvcore .
             coveralls
 

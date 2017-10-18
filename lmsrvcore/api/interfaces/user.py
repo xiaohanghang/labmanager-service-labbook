@@ -23,4 +23,7 @@ import graphene
 class User(graphene.Interface):
     """Interface representing a user in the system"""
     username = graphene.String()
+    email = graphene.String()
+    given_name = graphene.String()
+    family_name = graphene.String()
 

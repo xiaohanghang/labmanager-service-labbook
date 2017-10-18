@@ -26,7 +26,6 @@ import graphene
 from flask import Flask
 import json
 
-from lmcommon.environment import RepositoryManager
 from lmcommon.configuration import Configuration
 from lmcommon.auth.identity import get_identity_manager
 
@@ -97,17 +96,3 @@ def fixture_flask_context():
     with app.app_context():
         # within this block, current_app points to app.
         yield
-
-
-@pytest.fixture(scope="module")
-def fixture_working_dir_env_repo_scoped(fixture_working_dir):
-    """A pytest fixture that creates a temporary working directory, a config file to match, creates the schema,
-    and populates the environment component repository.
-    Module scope modifier attached
-    """
-    # get environment data and index
-    erm = RepositoryManager(fixture_working_dir[0])
-    erm.update_repositories()
-    erm.index_repositories()
-
-    yield fixture_working_dir

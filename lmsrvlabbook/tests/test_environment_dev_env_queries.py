@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from snapshottest import snapshot
-from lmsrvlabbook.tests.fixtures import schema_and_env_index
+from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped
 from graphene.test import Client
 from mock import patch
 
@@ -26,12 +26,12 @@ from lmcommon.configuration import Configuration
 
 
 class TestEnvironmentDevEnvQueries(object):
-    def test_get_available_dev_envs(self, schema_and_env_index, snapshot):
+    def test_get_available_dev_envs(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available development environments"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                     {
@@ -68,12 +68,12 @@ class TestEnvironmentDevEnvQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_envs_pagination(self, schema_and_env_index, snapshot):
+    def test_get_available_dev_envs_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available dev envs with pagination"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                    {
@@ -150,12 +150,12 @@ class TestEnvironmentDevEnvQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_envs_pagination_reverse(self, schema_and_env_index, snapshot):
+    def test_get_available_dev_envs_pagination_reverse(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available development environments using pagination from the end"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                     {
@@ -233,12 +233,12 @@ class TestEnvironmentDevEnvQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_dev_env_by_node(self, schema_and_env_index, snapshot):
+    def test_get_dev_env_by_node(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting a dev env by node ID"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                         {
@@ -263,12 +263,12 @@ class TestEnvironmentDevEnvQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_env_versions(self, schema_and_env_index, snapshot):
+    def test_get_available_dev_env_versions(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available versions for a given component"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                         {
@@ -291,12 +291,12 @@ class TestEnvironmentDevEnvQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_env_versions_pagination(self, schema_and_env_index, snapshot):
+    def test_get_available_dev_env_versions_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available versions for a given component with pagination"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                        {
@@ -350,12 +350,12 @@ class TestEnvironmentDevEnvQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_dev_env_versions_pagination_reverse(self, schema_and_env_index, snapshot):
+    def test_get_available_dev_env_versions_pagination_reverse(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available versions for a given component with pagination in reverse"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                        {
