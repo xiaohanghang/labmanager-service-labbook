@@ -433,39 +433,3 @@ snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status_no_labb
         }
     }
 }
-
-snapshots['TestLabBookServiceQueries.test_listdir 1'] = {
-    'data': {
-        'labbook': {
-            'files': {
-                'edges': [
-                    {
-                        'node': {
-                            'isDir': True,
-                            'key': 'code',
-                            'modifiedAt': '2017-10-17T14:16:08',
-                            'size': 4096
-                        }
-                    },
-                    {
-                        'node': {
-                            'isDir': True,
-                            'key': 'input',
-                            'modifiedAt': '2017-10-17T14:16:08',
-                            'size': 4096
-                        }
-                    },
-                    {
-                        'node': {
-                            'isDir': True,
-                            'key': 'output',
-                            'modifiedAt': '2017-10-17T14:16:08',
-                            'size': 4096
-                        }
-                    }
-                ]
-            },
-            'name': 'labbook1'
-        }
-    }
-}

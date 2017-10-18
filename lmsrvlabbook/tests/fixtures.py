@@ -29,6 +29,7 @@ import json
 from lmcommon.environment import RepositoryManager
 from lmcommon.configuration import Configuration
 from lmcommon.auth.identity import get_identity_manager
+from lmcommon.labbook import LabBook
 
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
@@ -51,7 +52,11 @@ def _create_temp_work_dir():
     os.makedirs(temp_dir)
 
     config = Configuration()
+    # Make sure the "test" environment components are always used
+    config.config["environment"]["repo_url"] = ["https://github.com/gig-dev/environment-components.git"]
+    # Set the working dir to the new temp dir
     config.config["git"]["working_directory"] = temp_dir
+    # Set the auth0 client to the test client (only contains 1 test user and is partitioned from prod)
     config.config["auth"]["client_id"] = "Z6Wl854wqCjNY0D4uJx8SyPyySyfKmAy"
     config_file = os.path.join(temp_dir, "temp_config.yaml")
     config.save(config_file)
@@ -123,6 +128,56 @@ def fixture_working_dir_env_repo_scoped():
     erm = RepositoryManager(config_file)
     erm.update_repositories()
     erm.index_repositories()
+
+    with app.app_context():
+        # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
+        current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+
+        yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+
+    # Remove the temp_dir
+    shutil.rmtree(temp_dir)
+
+
+@pytest.fixture(scope="module")
+def fixture_working_dir_populated_scoped():
+    """A pytest fixture that creates a temporary working directory, a config file to match, creates the schema,
+    and populates the environment component repository.
+    Module scope modifier attached
+    """
+    # Create temp dir
+    config_file, temp_dir = _create_temp_work_dir()
+
+    # Create user identity
+    user_dir = os.path.join(temp_dir, '.labmanager', 'identity')
+    os.makedirs(user_dir)
+    with open(os.path.join(user_dir, 'user.json'), 'wt') as user_file:
+        json.dump({"username": "default",
+                   "email": "jane@doe.com",
+                   "given_name": "Jane",
+                   "family_name": "Doe"}, user_file)
+
+    # Load User identity into app context
+    app = Flask("lmsrvlabbook")
+    app.config["LABMGR_CONFIG"] = Configuration()
+    app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
+
+    # Create test client
+    schema = graphene.Schema(query=Query, mutation=Mutation)
+
+    # Create a bunch of lab books
+    lb = LabBook(config_file)
+
+    lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
+    lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
+    lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
+    lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
+    lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
+    lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
+    lb.new(owner={"username": "default"}, name="labbook7", description="Turtle labbook 7")
+    lb.new(owner={"username": "default"}, name="labbook8", description="Lamb labbook 8")
+    lb.new(owner={"username": "default"}, name="labbook9", description="Taco labbook 9")
+    lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
 
     with app.app_context():
         # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)

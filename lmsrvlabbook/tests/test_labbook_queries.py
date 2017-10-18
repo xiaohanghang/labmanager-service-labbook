@@ -23,6 +23,7 @@ import os
 import uuid
 import shutil
 from snapshottest import snapshot
+from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_populated_scoped
 
 from graphene.test import Client
 import graphene
@@ -43,106 +44,20 @@ class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
 
-@pytest.fixture()
-def mock_config_file():
-    """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
-
-
-@pytest.fixture(scope='module')
-def mock_create_labbooks():
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        lb = LabBook(fp.name)
-
-        lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
-        lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
-        lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
-        lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
-        lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
-        lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
-        lb.new(owner={"username": "default"}, name="labbook7", description="Turtle labbook 7")
-        lb.new(owner={"username": "default"}, name="labbook8", description="Lamb labbook 8")
-        lb.new(owner={"username": "default"}, name="labbook9", description="Taco labbook 9")
-        lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
-
-
 class TestLabBookServiceQueries(object):
-    # def test_list_users(self, mock_config_file, snapshot):
-    #     """Test listing users"""
-    #     # Create labbooks
-    #     lb = LabBook(mock_config_file[0])
-    #     lb.new(owner={"username": "test1"}, name="labbook1", description="my first labbook")
-    #     lb.new(owner={"username": "test2"}, name="labbook1", description="my first labbook")
-    #     lb.new(owner={"username": "test3"}, name="labbook1", description="my first labbook")
-    #
-    #     # Mock the configuration class it it returns the same mocked config file
-    #     with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
-    #         # Make and validate request
-    #         client = Client(mock_config_file[2])
-    #
-    #         query = """
-    #         {
-    #           users {
-    #             username
-    #           }
-    #         }
-    #         """
-    #
-    #         snapshot.assert_match(client.execute(query))
 
-    def test_list_labbooks(self, mock_config_file, snapshot):
+    def test_list_labbooks(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""
 
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
         lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
         lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Get LabBooks for the "logged in user" - Currently just "default"
             query = """
@@ -160,10 +75,10 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_pagination_noargs(self, mock_create_labbooks, snapshot):
+    def test_pagination_noargs(self, fixture_working_dir_populated_scoped, snapshot):
         # Mock the configuration class it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
+            client = Client(fixture_working_dir_populated_scoped[2])
             query = """
                     {
                         localLabbooks {
@@ -183,10 +98,10 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
-    def test_pagination_first_only(self, mock_create_labbooks, snapshot):
+    def test_pagination_first_only(self, fixture_working_dir_populated_scoped, snapshot):
         # Mock the configuration class it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
+            client = Client(fixture_working_dir_populated_scoped[2])
             query = """
                     {
                         localLabbooks(first: 3) {
@@ -206,10 +121,10 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
-    def test_pagination_first_and_after(self, mock_create_labbooks, snapshot):
+    def test_pagination_first_and_after(self, fixture_working_dir_populated_scoped, snapshot):
         # Nominal case
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
+            client = Client(fixture_working_dir_populated_scoped[2])
             query = """
                     {
                         localLabbooks(first: 4, after: "Mg==") {
@@ -271,11 +186,11 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
-    def test_pagination_last_only(self, mock_create_labbooks, snapshot):
+    def test_pagination_last_only(self, fixture_working_dir_populated_scoped, snapshot):
 
         # Mock the configuration class it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
+            client = Client(fixture_working_dir_populated_scoped[2])
             query = """
                     {
                         localLabbooks(last: 3) {
@@ -295,11 +210,11 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
-    def test_pagination_last_and_before(self, mock_create_labbooks, snapshot):
+    def test_pagination_last_and_before(self, fixture_working_dir_populated_scoped, snapshot):
 
         # Mock the configuration class it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
+            client = Client(fixture_working_dir_populated_scoped[2])
             query = """
                     {
                         localLabbooks(last: 3, before: "Nw==") {
@@ -363,13 +278,13 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
-    def test_pagination(self, mock_create_labbooks, snapshot):
+    def test_pagination(self, fixture_working_dir_populated_scoped, snapshot):
         """Test pagination and cursors"""
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
             # Make and validate request
-            client = Client(mock_create_labbooks[2])
+            client = Client(fixture_working_dir_populated_scoped[2])
 
             # Get LabBooks for the "logged in user" - Currently just "default"
             query = """
@@ -410,16 +325,16 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(before_query))
 
-    def test_get_labbook(self, mock_config_file, snapshot):
+    def test_get_labbook(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""
         # Create labbooks
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Get LabBooks for a single user - Don't get the ID field since it is a UUID
             query = """
@@ -435,18 +350,18 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_list_labbooks_container_status(self, mock_config_file, snapshot):
+    def test_list_labbooks_container_status(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""
 
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
         lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
         lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Get LabBooks for the "logged in user" - Currently just "default"
             query = """
@@ -468,13 +383,13 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_list_labbooks_container_status_no_labbooks(self, mock_config_file, snapshot):
+    def test_list_labbooks_container_status_no_labbooks(self, fixture_working_dir, snapshot):
         """Test listing labbooks when none exist"""
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Get LabBooks for the "logged in user" - Currently just "default"
             query = """
@@ -496,10 +411,10 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_listdir(self, mock_create_labbooks, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+    def test_listdir(self, fixture_working_dir_populated_scoped, snapshot):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
             # Make and validate request
-            client = Client(mock_create_labbooks[2])
+            client = Client(fixture_working_dir_populated_scoped[2])
             query = """
             {
               labbook(name: "labbook1", owner: "default") {
@@ -520,12 +435,7 @@ class TestLabBookServiceQueries(object):
             result = client.execute(query)
             for n in result['data']['labbook']['files']['edges']:
                 node = n['node']
-                assert node['isDir'] == True
-                assert node['modifiedAt'] != None
+                assert node['isDir'] is True
+                assert node['modifiedAt'] is not None
                 assert type(node['size']) == int
                 assert node['key']
-
-    def test_move_file(self, mock_create_labbooks, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            # Make and validate request
-            client = Client(mock_create_labbooks[2])

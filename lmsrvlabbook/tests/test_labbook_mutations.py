@@ -26,6 +26,7 @@ import time
 import uuid
 
 from snapshottest import snapshot
+from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
 
 from graphene.test import Client
 import graphene
@@ -51,76 +52,29 @@ class Mutation(LabbookMutations, graphene.ObjectType):
 
 
 @pytest.fixture()
-def mock_config_file():
-    """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
+def mock_create_labbooks(fixture_working_dir):
+    # Create a labbook in the temporary directory
+    lb = LabBook(fixture_working_dir[0])
+    lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
 
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""
-environment:
-  repo_url:
-    - "https://github.com/gig-dev/environment-components.git"        
-core:
-  team_mode: false 
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
+    # Create a file in the dir
+    with open(os.path.join(fixture_working_dir[1], 'sillyfile'), 'w') as sf:
+        sf.write("1234567")
+        sf.seek(0)
+    lb.insert_file(sf.name, 'code')
 
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        erm = RepositoryManager(fp.name)
-        erm.update_repositories()
-        erm.index_repositories()
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
-
-
-@pytest.fixture()
-def mock_create_labbooks():
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-        lb = LabBook(fp.name)
-        lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
-        with open(os.path.join(temp_dir, 'sillyfile'), 'w') as sf:
-            sf.write("1234567")
-            sf.seek(0)
-        new_file = lb.insert_file(sf.name, 'code')
-        assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
-        # name of the config file, temporary working directory, the schema
-        yield fp.name, temp_dir, schema
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
+    assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
+    # name of the config file, temporary working directory, the schema
+    yield fixture_working_dir
 
 
 class TestLabBookServiceMutations(object):
-    def test_create_labbook(self, mock_config_file, snapshot):
+    def test_create_labbook(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create LabBook
             query = """
@@ -157,12 +111,12 @@ class TestLabBookServiceMutations(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_create_labbook_already_exists(self, mock_config_file, snapshot):
+    def test_create_labbook_already_exists(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create LabBook
             query = """
@@ -182,12 +136,12 @@ class TestLabBookServiceMutations(object):
             # Second should fail with an error message
             snapshot.assert_match(client.execute(query, variable_values=variables))
 
-    def test_create_branch(self, mock_config_file, snapshot):
+    def test_create_branch(self, fixture_working_dir, snapshot):
         """Test creating a new branch in a labbook"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create LabBook
             query = """
@@ -240,12 +194,12 @@ class TestLabBookServiceMutations(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_checkout_branch(self, mock_config_file, snapshot):
+    def test_checkout_branch(self, fixture_working_dir, snapshot):
         """Test checking out a new branch in a labbook"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create LabBook
             query = """
@@ -394,17 +348,17 @@ class TestLabBookServiceMutations(object):
             import pprint; pprint.pprint(res)
             assert res['data']['makeLabbookDirectory']['success'] == True
 
-    def test_insert_file(self, mock_config_file):
+    def test_insert_file(self, fixture_working_dir):
         # TODO - Pending on integration tests working.
         pass
 
-    # def test_export_and_import_lb(self, mock_config_file, snapshot):
-    #     with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+    # def test_export_and_import_lb(self, fixture_working_dir, snapshot):
+    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
     #         # Make and validate request
-    #         client = Client(mock_config_file[2])
+    #         client = Client(fixture_working_dir[2])
     #
     #         lb_name = "mutation-export-import-unittest"
-    #         lb = LabBook(mock_config_file[0])
+    #         lb = LabBook(fixture_working_dir[0])
     #         lb.new(name=lb_name, description="Import/Export Mutation Testing.",
     #                owner={"username": "test"})
     #         cm = ComponentManager(lb)

@@ -18,11 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
-import tempfile
 import os
-import uuid
-import shutil
 from snapshottest import snapshot
+from lmsrvlabbook.tests.fixtures import fixture_working_dir
 
 from graphene.test import Client
 import graphene
@@ -44,46 +42,20 @@ class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
 
-@pytest.fixture()
-def mock_config_file():
-    """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
-
-
 class TestNoteService(object):
     # TODO: Add additional testing once services are matured. Currently doesn't check any fields that can change
     # between tests (e.g. commit, linked_commit, datetime)
-    def test_create_note(self, mock_config_file, snapshot):
+    def test_create_note(self, fixture_working_dir, snapshot):
         """Test creating and getting a note"""
 
         # Create labbook
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="notes-test-1", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create a file in the LabBook and commit it
             working_dir = lb.git.config["working_directory"]
@@ -135,17 +107,17 @@ class TestNoteService(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_note_summaries(self, mock_config_file, snapshot):
+    def test_get_note_summaries(self, fixture_working_dir, snapshot):
         """Test creating and getting a note"""
 
         # Create labbook
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="notes-test-2", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create a file in the LabBook and commit it
             working_dir = lb.git.config["working_directory"]
@@ -201,17 +173,17 @@ class TestNoteService(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_full_note(self, mock_config_file, snapshot):
+    def test_get_full_note(self, fixture_working_dir, snapshot):
         """Test creating and getting a note"""
 
         # Create labbook
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="notes-test-1", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create a file in the LabBook and commit it
             working_dir = lb.git.config["working_directory"]
@@ -301,17 +273,17 @@ class TestNoteService(object):
             assert len(response['data']['labbook']['notes']['edges'][0]['node']['commit']) == 40
             assert len(response['data']['labbook']['notes']['edges'][0]['node']['linkedCommit']) == 40
 
-    def test_get_required_note(self, mock_config_file, snapshot):
+    def test_get_required_note(self, fixture_working_dir, snapshot):
         """Test creating and getting a note with only the required fields populated"""
 
         # Create labbook
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="notes-test-1", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create a file in the LabBook and commit it
             working_dir = lb.git.config["working_directory"]
@@ -371,17 +343,17 @@ class TestNoteService(object):
                """
             snapshot.assert_match(client.execute(query))
 
-    def test_create_user_note(self, mock_config_file, snapshot):
+    def test_create_user_note(self, fixture_working_dir, snapshot):
         """Test creating and getting a user note"""
 
         # Create labbook
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="user-note-test", description="testing user notes")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create a user note
             query = """
@@ -430,17 +402,17 @@ class TestNoteService(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_create_user_note_no_details(self, mock_config_file, snapshot):
+    def test_create_user_note_no_details(self, fixture_working_dir, snapshot):
         """Test creating and getting a user note with no markdown body or tags"""
 
         # Create labbook
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="user-note-test", description="testing user notes")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             # Create a user note
             query = """

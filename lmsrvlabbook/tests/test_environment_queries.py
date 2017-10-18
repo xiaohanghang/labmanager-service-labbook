@@ -17,27 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import multiprocessing
-import threading
-import time
-import pytest
-import tempfile
-import os
-import uuid
-import shutil
-from snapshottest import snapshot
-
 from graphene.test import Client
 import graphene
 from mock import patch
-import rq
 
-from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
 from lmcommon.configuration import Configuration
 from lmcommon.environment import ComponentManager
 
-from lmsrvlabbook.tests.fixtures import schema_and_env_index
+from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
 
@@ -52,43 +40,17 @@ class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
 
-@pytest.fixture()
-def mock_config_file():
-    """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
-
-
 class TestEnvironmentServiceQueries(object):
-    def test_get_environment_status(self, mock_config_file, snapshot):
+    def test_get_environment_status(self, fixture_working_dir, snapshot):
         """Test getting the a LabBook's environment status"""
         # Create labbooks
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook10", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             query = """
             {
@@ -102,16 +64,16 @@ class TestEnvironmentServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_base_image(self, schema_and_env_index, snapshot):
+    def test_get_base_image(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the a LabBook's base image"""
         # Create labbook
-        lb = LabBook(schema_and_env_index[0])
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                     {
@@ -157,16 +119,16 @@ class TestEnvironmentServiceQueries(object):
             # Test again
             snapshot.assert_match(client.execute(query))
 
-    def test_get_dev_env(self, schema_and_env_index, snapshot):
+    def test_get_dev_env(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the a LabBook's development environment"""
         # Create labbook
-        lb = LabBook(schema_and_env_index[0])
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                     {
@@ -223,16 +185,16 @@ class TestEnvironmentServiceQueries(object):
             # Test again
             snapshot.assert_match(client.execute(query))
 
-    def test_get_custom(self, schema_and_env_index, snapshot):
+    def test_get_custom(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the a LabBook's custom dependencies"""
         # Create labbook
-        lb = LabBook(schema_and_env_index[0])
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.new(owner={"username": "default"}, name="labbook3", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                         {
@@ -285,16 +247,16 @@ class TestEnvironmentServiceQueries(object):
             # Test again
             snapshot.assert_match(client.execute(query))
 
-    def test_get_package_manager(self, schema_and_env_index, snapshot):
+    def test_get_package_manager(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the a LabBook's package manager dependencies"""
         # Create labbook
-        lb = LabBook(schema_and_env_index[0])
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.new(owner={"username": "default"}, name="labbook4", description="my first labbook10000")
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                         {
