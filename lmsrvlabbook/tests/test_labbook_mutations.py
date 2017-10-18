@@ -84,6 +84,36 @@ git:
     shutil.rmtree(temp_dir)
 
 
+@pytest.fixture()
+def mock_create_labbooks():
+    # Create a temporary working directory
+    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
+    os.makedirs(temp_dir)
+
+    with tempfile.NamedTemporaryFile(mode="wt") as fp:
+        # Write a temporary config file
+        fp.write("""core:
+  team_mode: false 
+git:
+  backend: 'filesystem'
+  working_directory: '{}'""".format(temp_dir))
+        fp.seek(0)
+        # Create test client
+        schema = graphene.Schema(query=Query,
+                                 mutation=Mutation)
+        lb = LabBook(fp.name)
+        lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
+        with open(os.path.join(temp_dir, 'sillyfile'), 'w') as sf:
+            sf.write("1234567")
+            sf.seek(0)
+        new_file = lb.insert_file(sf.name, 'code')
+        assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
+        # name of the config file, temporary working directory, the schema
+        yield fp.name, temp_dir, schema
+    # Remove the temp_dir
+    shutil.rmtree(temp_dir)
+
+
 class TestLabBookServiceMutations(object):
     def test_create_labbook(self, mock_config_file, snapshot):
         """Test listing labbooks"""
@@ -303,6 +333,70 @@ class TestLabBookServiceMutations(object):
             }
             """
             snapshot.assert_match(client.execute(query))
+
+    def test_move_file(self, mock_create_labbooks):
+        """Test checking out a new branch in a labbook"""
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+            client = Client(mock_create_labbooks[2])
+            query = """
+            mutation MoveLabbookFile {
+              moveLabbookFile(
+                input: {
+                  user: "default",
+                  owner: "default",
+                  labbookName: "labbook1",
+                  srcPath: "code",
+                  dstPath: "input"
+                }) {
+                  success
+                }
+            }
+            """
+            res = client.execute(query)
+            assert res['data']['moveLabbookFile']['success'] == True
+
+    def test_delete_file(self, mock_create_labbooks):
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+            client = Client(mock_create_labbooks[2])
+            query = """
+            mutation deleteLabbookFile {
+              deleteLabbookFile(
+                input: {
+                  user: "default",
+                  owner: "default",
+                  labbookName: "labbook1",
+                  filePath: "code/sillyfile",
+                }) {
+                  success
+                }
+            }
+            """
+            res = client.execute(query)
+            assert res['data']['deleteLabbookFile']['success'] == True
+
+    def test_makedir(self, mock_create_labbooks):
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+            client = Client(mock_create_labbooks[2])
+            query = """
+            mutation makeLabbookDirectory {
+              makeLabbookDirectory(
+                input: {
+                  user: "default",
+                  owner: "default",
+                  labbookName: "labbook1",
+                  dirName: "output/new_folder",
+                }) {
+                  success
+                }
+            }
+            """
+            res = client.execute(query)
+            import pprint; pprint.pprint(res)
+            assert res['data']['makeLabbookDirectory']['success'] == True
+
+    def test_insert_file(self, mock_config_file):
+        # TODO - Pending on integration tests working.
+        pass
 
     # def test_export_and_import_lb(self, mock_config_file, snapshot):
     #     with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):

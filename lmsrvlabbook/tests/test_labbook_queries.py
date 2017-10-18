@@ -496,3 +496,36 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
+    def test_listdir(self, mock_create_labbooks, snapshot):
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+            # Make and validate request
+            client = Client(mock_create_labbooks[2])
+            query = """
+            {
+              labbook(name: "labbook1", owner: "default") {
+                name
+                files {
+                    edges {
+                        node {
+                            key
+                            modifiedAt
+                            size
+                            isDir
+                        }
+                    }
+                }
+              }
+            }
+            """
+            result = client.execute(query)
+            for n in result['data']['labbook']['files']['edges']:
+                node = n['node']
+                assert node['isDir'] == True
+                assert node['modifiedAt'] != None
+                assert type(node['size']) == int
+                assert node['key']
+
+    def test_move_file(self, mock_create_labbooks, snapshot):
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+            # Make and validate request
+            client = Client(mock_create_labbooks[2])
