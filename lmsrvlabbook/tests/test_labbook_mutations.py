@@ -33,18 +33,6 @@ from lmcommon.dispatcher import Dispatcher, JobKey
 from lmcommon.environment import ComponentManager, RepositoryManager
 from lmcommon.labbook import LabBook
 
-from lmsrvlabbook.api.mutation import LabbookMutations
-from lmsrvlabbook.api.query import LabbookQuery
-
-
-# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
 
 @pytest.fixture()
 def mock_create_labbooks(fixture_working_dir):

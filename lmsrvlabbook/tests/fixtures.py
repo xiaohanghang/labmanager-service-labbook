@@ -98,11 +98,11 @@ def fixture_working_dir():
     shutil.rmtree(temp_dir)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="class")
 def fixture_working_dir_env_repo_scoped():
     """A pytest fixture that creates a temporary working directory, a config file to match, creates the schema,
     and populates the environment component repository.
-    Module scope modifier attached
+    Class scope modifier attached
     """
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
@@ -139,11 +139,11 @@ def fixture_working_dir_env_repo_scoped():
     shutil.rmtree(temp_dir)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="class")
 def fixture_working_dir_populated_scoped():
     """A pytest fixture that creates a temporary working directory, a config file to match, creates the schema,
     and populates the environment component repository.
-    Module scope modifier attached
+    Class scope modifier attached
     """
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
