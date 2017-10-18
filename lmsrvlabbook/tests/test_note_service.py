@@ -29,18 +29,6 @@ from mock import patch
 from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 
-from lmsrvlabbook.api.query import LabbookQuery
-from lmsrvlabbook.api.mutation import LabbookMutations
-
-
-# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
 
 class TestNoteService(object):
     # TODO: Add additional testing once services are matured. Currently doesn't check any fields that can change
