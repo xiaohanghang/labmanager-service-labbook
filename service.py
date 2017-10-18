@@ -75,4 +75,4 @@ if __name__ == '__main__':
     if getpass.getuser() == "giguser":
         app.run(host="0.0.0.0", port=10001)
     else:
-        app.run(port=10001)
+        app.run(host="0.0.0.0", port=10001)
