@@ -25,6 +25,7 @@ import shutil
 import graphene
 from flask import Flask, current_app
 import json
+from mock import patch
 
 from lmcommon.environment import RepositoryManager
 from lmcommon.configuration import Configuration
@@ -57,7 +58,7 @@ def _create_temp_work_dir():
     # Set the working dir to the new temp dir
     config.config["git"]["working_directory"] = temp_dir
     # Set the auth0 client to the test client (only contains 1 test user and is partitioned from prod)
-    config.config["auth"]["client_id"] = "Z6Wl854wqCjNY0D4uJx8SyPyySyfKmAy"
+    config.config["auth"]["audience"] = "io.gigantum.api.dev"
     config_file = os.path.join(temp_dir, "temp_config.yaml")
     config.save(config_file)
 
@@ -80,19 +81,20 @@ def fixture_working_dir():
                    "given_name": "Jane",
                    "family_name": "Doe"}, user_file)
 
-    # Load User identity into app context
-    app = Flask("lmsrvlabbook")
-    app.config["LABMGR_CONFIG"] = Configuration()
-    app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
-
     # Create test client
     schema = graphene.Schema(query=Query, mutation=Mutation)
 
-    with app.app_context():
-        # within this block, current_app points to app. Set current usert explicitly (this is done in the middleware)
-        current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+    with patch.object(Configuration, 'find_default_config', lambda self: config_file):
+        # Load User identity into app context
+        app = Flask("lmsrvlabbook")
+        app.config["LABMGR_CONFIG"] = Configuration()
+        app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
-        yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+        with app.app_context():
+            # within this block, current_app points to app. Set current usert explicitly(this is done in the middleware)
+            current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+
+            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
@@ -116,11 +118,6 @@ def fixture_working_dir_env_repo_scoped():
                    "given_name": "Jane",
                    "family_name": "Doe"}, user_file)
 
-    # Load User identity into app context
-    app = Flask("lmsrvlabbook")
-    app.config["LABMGR_CONFIG"] = Configuration()
-    app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
-
     # Create test client
     schema = graphene.Schema(query=Query, mutation=Mutation)
 
@@ -129,11 +126,17 @@ def fixture_working_dir_env_repo_scoped():
     erm.update_repositories()
     erm.index_repositories()
 
-    with app.app_context():
-        # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
-        current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+    with patch.object(Configuration, 'find_default_config', lambda self: config_file):
+        # Load User identity into app context
+        app = Flask("lmsrvlabbook")
+        app.config["LABMGR_CONFIG"] = Configuration()
+        app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
-        yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+        with app.app_context():
+            # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
+            current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+
+            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
@@ -157,11 +160,6 @@ def fixture_working_dir_populated_scoped():
                    "given_name": "Jane",
                    "family_name": "Doe"}, user_file)
 
-    # Load User identity into app context
-    app = Flask("lmsrvlabbook")
-    app.config["LABMGR_CONFIG"] = Configuration()
-    app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
-
     # Create test client
     schema = graphene.Schema(query=Query, mutation=Mutation)
 
@@ -179,11 +177,17 @@ def fixture_working_dir_populated_scoped():
     lb.new(owner={"username": "default"}, name="labbook9", description="Taco labbook 9")
     lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
 
-    with app.app_context():
-        # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
-        current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+    with patch.object(Configuration, 'find_default_config', lambda self: config_file):
+        # Load User identity into app context
+        app = Flask("lmsrvlabbook")
+        app.config["LABMGR_CONFIG"] = Configuration()
+        app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
-        yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+        with app.app_context():
+            # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
+            current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+
+            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)

@@ -19,10 +19,11 @@
 # SOFTWARE.
 import pytest
 from flask import current_app
-import os
+from mock import patch
 
 from lmsrvcore.auth.identity import get_identity_manager_instance, AuthorizationMiddleware, AuthenticationError
-from lmsrvcore.tests.fixtures import fixture_working_dir, fixture_flask_context
+from lmsrvcore.tests.fixtures import fixture_working_dir
+from lmcommon.configuration import Configuration
 
 from lmcommon.auth.local import LocalIdentityManager
 
@@ -40,7 +41,7 @@ class MockFlaskContext(object):
 
 
 class TestAuthIdentity(object):
-    def test_get_identity_manager_instance(self, fixture_working_dir, fixture_flask_context):
+    def test_get_identity_manager_instance(self, fixture_working_dir):
         """Test getting identity manager in a flask app"""
 
         # Test normal
@@ -57,7 +58,7 @@ class TestAuthIdentity(object):
         with pytest.raises(AuthenticationError):
             get_identity_manager_instance()
 
-    def test_authorization_middleware_user_local(self, fixture_working_dir, fixture_flask_context):
+    def test_authorization_middleware_user_local(self, fixture_working_dir):
         """Test authorization middlewhere when loading a user exists locally"""
 
         def next(root, args, context, info, **kwargs):
@@ -67,14 +68,16 @@ class TestAuthIdentity(object):
             assert info == "some info"
             assert kwargs["test_kwarg"] is True
 
-        fake_context = MockFlaskContext()
-        del fake_context.headers["Authorization"]
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
 
-        mw = AuthorizationMiddleware()
+            fake_context = MockFlaskContext()
+            del fake_context.headers["Authorization"]
 
-        mw.resolve(next, "something", ["a", "b"], fake_context, "some info", test_kwarg=True)
+            mw = AuthorizationMiddleware()
 
-    def test_authorization_middleware_bad_header(self, fixture_working_dir, fixture_flask_context):
+            mw.resolve(next, "something", ["a", "b"], fake_context, "some info", test_kwarg=True)
+
+    def test_authorization_middleware_bad_header(self, fixture_working_dir):
         """Test authorization middlewhere when a token header is malformed"""
 
         def next(root, args, context, info, **kwargs):

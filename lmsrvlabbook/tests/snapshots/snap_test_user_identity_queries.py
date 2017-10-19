@@ -10,7 +10,7 @@ snapshots = Snapshot()
 snapshots['TestUserIdentityQueries.test_logged_in_user 1'] = {
     'data': {
         'userIdentity': {
-            'email': 'test@test.com',
+            'email': 'jane@doe.com',
             'familyName': 'Doe',
             'givenName': 'Jane',
             'id': 'VXNlcklkZW50aXR5OmRlZmF1bHQ=',

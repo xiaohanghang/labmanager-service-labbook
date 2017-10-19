@@ -25,6 +25,7 @@ import shutil
 import graphene
 from flask import Flask
 import json
+from mock import patch
 
 from lmcommon.configuration import Configuration
 from lmcommon.auth.identity import get_identity_manager
@@ -51,7 +52,7 @@ def _create_temp_work_dir():
 
     config = Configuration()
     config.config["git"]["working_directory"] = temp_dir
-    config.config["auth"]["client_id"] = "Z6Wl854wqCjNY0D4uJx8SyPyySyfKmAy"
+    config.config["auth"]["audience"] = "io.gigantum.api.dev"
     config_file = os.path.join(temp_dir, "temp_config.yaml")
     config.save(config_file)
 
@@ -77,22 +78,16 @@ def fixture_working_dir():
     # Create test client
     schema = graphene.Schema(query=Query, mutation=Mutation)
 
-    yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+    with patch.object(Configuration, 'find_default_config', lambda self: config_file):
+        app = Flask("lmsrvlabbook")
+
+        # Load configuration class into the flask application
+        app.config["LABMGR_CONFIG"] = Configuration()
+        app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
+
+        with app.app_context():
+            # within this block, current_app points to app.
+            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
-
-
-@pytest.fixture
-def fixture_flask_context():
-    """A pytest fixture that creates a Flask app context so Authorization Middleware can run
-    """
-    app = Flask("lmsrvlabbook")
-
-    # Load configuration class into the flask application
-    app.config["LABMGR_CONFIG"] = Configuration()
-    app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
-
-    with app.app_context():
-        # within this block, current_app points to app.
-        yield
