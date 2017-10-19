@@ -22,7 +22,11 @@ import graphene
 
 from lmcommon.configuration import Configuration
 from lmsrvcore.api.objects.user import UserIdentity
+from lmcommon.logging import LMLogger
+
 from flask import current_app
+
+logger = LMLogger.get_logger()
 
 
 class RemoveUserIdentity(graphene.relay.ClientIDMutation):
@@ -38,6 +42,9 @@ class RemoveUserIdentity(graphene.relay.ClientIDMutation):
                                      '.labmanager', 'identity', 'user.json')
         if os.path.exists(identity_file):
             os.remove(identity_file)
+        else:
+            # Does not exist
+            logger.warning("Attempted to remove user identity, but no identity is stored locally.")
 
         # Wipe current user from session
         current_app.current_user = None
