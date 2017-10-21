@@ -72,7 +72,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
 
         try:
             image_builder = ImageBuilder(labbook_dir)
-            img = image_builder.build_image(docker_client=client, image_tag=tag, background=True)
+            img = image_builder.build_image(docker_client=client, image_tag=tag, username=username, background=True)
         except Exception as e:
             logger.exception(e)
             raise
