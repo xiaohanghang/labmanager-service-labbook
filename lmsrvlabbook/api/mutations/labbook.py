@@ -96,7 +96,7 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
             lb.from_directory(inferred_lb_directory)
 
             job_metadata = {'method': 'export_labbook_as_zip', 'labbook': lb.root_dir}
-            job_kwargs = {'labbook_path': lb.root_dir}
+            job_kwargs = {'labbook_path': lb.root_dir, 'lb_export_directory': os.path.join(working_directory, 'export')}
             dispatcher = Dispatcher()
             job_key = dispatcher.dispatch_task(jobs.export_labbook_as_zip, kwargs=job_kwargs, metadata=job_metadata)
             logger.info(f"Exporting LabBook {lb.root_dir} in background job with key {job_key.key_str}")

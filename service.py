@@ -30,68 +30,79 @@ from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
 from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 
-# Create Flask app
-app = Flask("lmsrvlabbook")
 
-# Load configuration class into the flask application
-app.config["LABMGR_CONFIG"] = config = Configuration()
-app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
+def init():
+    logger = LMLogger.get_logger()
 
-if config.config["flask"]["allow_cors"]:
-    # Allow CORS
-    CORS(app)
+    # Create Flask app
+    app = Flask("lmsrvlabbook")
 
-# Set Debug mode
-app.config['DEBUG'] = config.config["flask"]["DEBUG"]
+    # Load configuration class into the flask application
+    app.config["LABMGR_CONFIG"] = config = Configuration()
+    app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
-# Register LabBook service
-app.register_blueprint(blueprint.complete_labbook_service)
+    if config.config["flask"]["allow_cors"]:
+        # Allow CORS
+        CORS(app)
+
+    # Set Debug mode
+    app.config['DEBUG'] = config.config["flask"]["DEBUG"]
+
+    # Register LabBook service
+    app.register_blueprint(blueprint.complete_labbook_service)
+
+    # Set auth error handler
+    @app.errorhandler(AuthenticationError)
+    def handle_auth_error(ex):
+        response = jsonify(ex.error)
+        response.status_code = ex.status_code
+        return response
+
+    # Set Unauth'd route for API health-check
+    @app.route("/ping")
+    @cross_origin(headers=["Content-Type", "Authorization"])
+    def ping():
+        """Unauthorized endpoint for validating the API is up"""
+        return jsonify(config.config['build_info'])
+
+    logger.info("Cloning/Updating environment repositories.")
+
+    erm = RepositoryManager()
+    erm.update_repositories()
+    logger.info("Indexing environment repositories.")
+    erm.index_repositories()
+    logger.info("Environment repositories ready.")
+
+    # Empty container-container share dir as it is ephemeral
+    share_dir = os.path.join(os.path.sep, 'mnt', 'share')
+    logger.info("Emptying container-container share folder: {}.".format(share_dir))
+    try:
+        for item in os.listdir(share_dir):
+            item_path = os.path.join(share_dir, item)
+            if os.path.isfile(item_path):
+                os.unlink(item_path)
+            else:
+                shutil.rmtree(item_path)
+    except Exception as e:
+        logger.error(f"Failed to empty share folder: {e}.")
+        raise
+
+    return app
 
 
-# Set auth error handler
-@app.errorhandler(AuthenticationError)
-def handle_auth_error(ex):
-    response = jsonify(ex.error)
-    response.status_code = ex.status_code
-    return response
-
-
-# Set Unauth'd route for API health-check
-@app.route("/ping")
-@cross_origin(headers=["Content-Type", "Authorization"])
-def ping():
-    """Unauthorized endpoint for validating the API is up"""
-    return jsonify(config.config['build_info'])
-
-
-# Setup local environment repositories
-lmlog = LMLogger()
-lmlog.logger.info("Cloning/Updating environment repositories.")
-
-erm = RepositoryManager()
-erm.update_repositories()
-lmlog.logger.info("Indexing environment repositories.")
-erm.index_repositories()
-lmlog.logger.info("Environment repositories ready.")
-
-# Empty container-container share dir as it is ephemeral
-share_dir = os.path.join(os.path.sep, 'mnt', 'share')
-lmlog.logger.info("Emptying container-container share folder: {}.".format(share_dir))
-try:
-    for item in os.listdir(share_dir):
-        item_path = os.path.join(share_dir, item)
-        if os.path.isfile(item_path):
-            os.unlink(item_path)
+def launch() -> None:
+    logger = LMLogger.get_logger()
+    try:
+        app = init()
+        if getpass.getuser() == "giguser":
+            app.run(host="0.0.0.0", port=10001)
         else:
-            shutil.rmtree(item_path)
-except Exception as e:
-    lmlog.logger.error("Failed to empty share folder: {}.".format(e))
-    raise
+            app.run(port=10001)
+        logger.warning("Note: app.run completed, this may indicated failed server start.")
+    except Exception as e:
+        logger.exception(e)
+        raise
 
-lmlog.logger.info("LabManager Ready")
 
 if __name__ == '__main__':
-    if getpass.getuser() == "giguser":
-        app.run(host="0.0.0.0", port=10001)
-    else:
-        app.run(port=10001)
+    launch()
