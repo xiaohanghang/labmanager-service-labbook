@@ -29,7 +29,8 @@ from lmcommon.gitlib import get_git_interface
 from lmcommon.labbook import LabBook
 from lmcommon.notes import NoteStore
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
+
 from lmsrvcore.api import ObjectType
 from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvcore.api.interfaces import GitRepository
@@ -118,7 +119,7 @@ class Labbook(ObjectType):
             del id_data["type_id"]
 
         if "username" not in id_data:
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
 
         lb = LabBook()
         lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
@@ -172,7 +173,7 @@ class Labbook(ObjectType):
         # Get the git information
         git = get_git_interface(Configuration().config["git"])
         # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
-        git.set_working_directory(os.path.join(git.working_directory, get_logged_in_user(),
+        git.set_working_directory(os.path.join(git.working_directory, get_logged_in_username(),
                                                self.owner.username, "labbooks", self.name))
 
         # Get all edges and cursors. Here, cursors are just an index into the refs
@@ -205,7 +206,7 @@ class Labbook(ObjectType):
 
     def resolve_files(self, args, context, info):
         lb = LabBook()
-        lb.from_name(get_logged_in_user(), self.owner.username, self.name)
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
         edges = lb.listdir(show_hidden=False)
@@ -218,7 +219,7 @@ class Labbook(ObjectType):
         edge_objs = []
         try:
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_user(),
+                id_data = {"user": get_logged_in_username(),
                            "owner": self.owner.username,
                            "name": self.name,
                            "enc_file_data": base64.b64encode(json.dumps(edge).encode())}
@@ -242,7 +243,7 @@ class Labbook(ObjectType):
         """
         # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
         lb = LabBook()
-        lb.from_name(get_logged_in_user(), self.owner.username, self.name)
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         note_db = NoteStore(lb)
 

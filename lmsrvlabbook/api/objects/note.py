@@ -26,7 +26,7 @@ from graphene.types import datetime
 from lmcommon.labbook import LabBook
 from lmcommon.notes import NoteStore, NoteLogLevel
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvcore.api import ObjectType
 from lmsrvcore.api.connections import ListBasedConnection
@@ -120,7 +120,7 @@ class Note(ObjectType):
             del id_data["type_id"]
 
         if "username" not in id_data:
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
 
         if "summary" not in id_data:
             # Shortcut to generate a graphene Note type if the not summary has already been pulled from the
@@ -159,7 +159,7 @@ class Note(ObjectType):
         if "objects" not in self.__dict__:
             # TODO: Use dataloader to access the detail object data as this implementation can have redundent IO
             id_data = self.parse_type_id(self.id)
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
             lb = LabBook()
             lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
 
@@ -206,7 +206,7 @@ class Note(ObjectType):
         if "free_text" not in self.__dict__:
             # TODO: Use dataloader to access the detail object data as this implementation can have redundent IO
             id_data = self.parse_type_id(self.id)
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
             lb = LabBook()
             lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
 

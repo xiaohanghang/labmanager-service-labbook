@@ -24,7 +24,7 @@ import os
 from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvcore.api import ObjectType
 from lmsrvcore.api.interfaces import GitCommit
@@ -82,8 +82,7 @@ class LabbookCommit(ObjectType):
             LabbookCommit
         """
         if "username" not in id_data:
-            # TODO: Lookup name based on logged in user when available
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
 
         if "type_id" in id_data:
             # Parse ID components

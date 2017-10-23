@@ -25,6 +25,7 @@ import os
 
 from lmsrvlabbook.api import LabbookQuery, LabbookMutations
 from lmcommon.configuration import Configuration
+from lmsrvcore.auth.identity import AuthorizationMiddleware
 
 # ** This blueprint is the combined full LabBook service with all components served together from a single schema ** #
 
@@ -47,11 +48,12 @@ complete_labbook_service = Blueprint('complete_labbook_service', __name__)
 # Create Schema
 schema = graphene.Schema(query=Query, mutation=Mutation)
 
-# Add route
+# Add route and require authentication
 complete_labbook_service.add_url_rule('/labbook/',
-                                      view_func=GraphQLView.as_view('graphql',
-                                                                    schema=schema,
-                                                                    graphiql=config.config["flask"]["DEBUG"]))
+                                      view_func=GraphQLView.as_view('graphql', schema=schema,
+                                                                    graphiql=config.config["flask"]["DEBUG"],
+                                                                    middleware=[AuthorizationMiddleware()]),
+                                      methods=['GET', 'POST', 'OPTION'])
 
 
 if __name__ == '__main__':

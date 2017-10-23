@@ -17,35 +17,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import base64
-import datetime
-import json
-
 import graphene
-from graphene.types import datetime
-
-from lmcommon.labbook import LabBook
-from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.api.interfaces import User
 from lmsrvcore.api import ObjectType
 
+from flask import current_app
 
-class LabbookFile(ObjectType):
-    """A type representing a file or directory inside the labbook file system."""
 
+class UserIdentity(ObjectType):
+    """A type representing the identity of the logged in user"""
     class Meta:
-        interfaces = (graphene.relay.Node,)
-
-    # True indicates that path points to a directory
-    is_dir = graphene.Boolean()
-
-    # Modified at contains timestmap of last modified - NOT creation.
-    modified_at = datetime.DateTime()
-
-    # Relative path from labbook root directory.
-    key = graphene.String()
-
-    # Size in bytes.
-    size = graphene.Int()
+        interfaces = (graphene.relay.Node, User)
 
     @staticmethod
     def to_type_id(id_data):
@@ -57,7 +39,7 @@ class LabbookFile(ObjectType):
         Returns:
             str
         """
-        return f"{id_data['user']}&{id_data['owner']}&{id_data['name']}&{id_data['enc_file_data']}"
+        raise ValueError("UserIdentity type is set explicitly to the user. Do not call this method.")
 
     @staticmethod
     def parse_type_id(type_id):
@@ -69,26 +51,30 @@ class LabbookFile(ObjectType):
         Returns:
             dict
         """
-        tokens = type_id.split('&')
-        assert len(tokens) == 4, "type_id for LabbookFile should have 4 tokens"
-        return {'user': tokens[0],
-                'owner': tokens[1],
-                'name': tokens[2],
-                'enc_file_data': tokens[3].decode()}
+        return type_id
 
     @staticmethod
     def create(id_data):
-        if "username" not in id_data:
-            id_data["username"] = get_logged_in_username()
+        """Method to populate a complete ObjectType instance from a dictionary that uniquely identifies an instances
 
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        Args:
+            id_data:
 
-        dec_file_data = base64.b64decode(id_data['enc_file_data'])
-        file_info = json.loads(dec_file_data)
-        parsed_date = datetime.datetime.datetime.utcfromtimestamp(int(file_info['modified_at']))
+        Returns:
 
-        return LabbookFile(is_dir=file_info['is_dir'],
-                           modified_at=parsed_date,
-                           key=file_info['key'],
-                           size=file_info['size'])
+        """
+        # Get the user from the current flask context
+        try:
+            user = current_app.current_user
+        except AttributeError:
+            user = None
+
+        if user:
+            return UserIdentity(id=user.username,
+                                username=user.username,
+                                email=user.email,
+                                given_name=user.given_name,
+                                family_name=user.family_name)
+        else:
+            return None
+

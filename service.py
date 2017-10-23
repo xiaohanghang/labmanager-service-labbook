@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS, cross_origin
 import getpass
 import shutil
@@ -28,12 +28,14 @@ import blueprint
 from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
+from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 
-# Load config data for the LabManager instance
-config = Configuration()
-
-# Create Flask app and configure
+# Create Flask app
 app = Flask("lmsrvlabbook")
+
+# Load configuration class into the flask application
+app.config["LABMGR_CONFIG"] = config = Configuration()
+app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
 if config.config["flask"]["allow_cors"]:
     # Allow CORS
@@ -42,8 +44,25 @@ if config.config["flask"]["allow_cors"]:
 # Set Debug mode
 app.config['DEBUG'] = config.config["flask"]["DEBUG"]
 
-# Register service
+# Register LabBook service
 app.register_blueprint(blueprint.complete_labbook_service)
+
+
+# Set auth error handler
+@app.errorhandler(AuthenticationError)
+def handle_auth_error(ex):
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
+
+
+# Set Unauth'd route for API health-check
+@app.route("/ping")
+@cross_origin(headers=["Content-Type", "Authorization"])
+def ping():
+    """Unauthorized endpoint for validating the API is up"""
+    return jsonify(config.config['build_info'])
+
 
 # Setup local environment repositories
 lmlog = LMLogger()

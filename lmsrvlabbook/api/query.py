@@ -28,7 +28,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbook import Labbook
@@ -41,6 +41,8 @@ from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
 from lmsrvlabbook.api.connections.devenv import DevEnvConnection
 from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection
 from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
+
+from lmsrvcore.api.objects.user import UserIdentity
 
 logger = LMLogger.get_logger()
 
@@ -78,6 +80,9 @@ class LabbookQuery(graphene.AbstractType):
                                                                             repository=graphene.String(),
                                                                             namespace=graphene.String(),
                                                                             component=graphene.String())
+
+    # Get the current logged in user identity, primarily used when running offline
+    user_identity = graphene.Field(UserIdentity)
 
     def resolve_labbook(self, args, context, info):
         """Method to return a graphene Labbok instance based on the name
@@ -140,8 +145,7 @@ class LabbookQuery(graphene.AbstractType):
         """
         lb = LabBook()
 
-        # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
         labbooks = lb.list_local_labbooks(username=username)
 
         # Collect all labbooks for all owners
@@ -343,3 +347,12 @@ class LabbookQuery(graphene.AbstractType):
             edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
 
         return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_user_identity(self, args, context, info):
+        """Method to return a graphene UserIdentity instance based on the current logged (both on & offline) user
+
+        Returns:
+            UserIdentity
+        """
+        id_data = {}  # UserIdentity class does not use id_data. TODO: cleanup when restructuring API
+        return UserIdentity.create(id_data)

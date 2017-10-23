@@ -17,23 +17,38 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import current_app
+import os
+import graphene
+
+from lmcommon.configuration import Configuration
+from lmsrvcore.api.objects.user import UserIdentity
 from lmcommon.logging import LMLogger
 
+from flask import current_app
 
-def get_logged_in_username():
-    """A Method to get the current logged in user's username
+logger = LMLogger.get_logger()
 
 
-    Returns:
-        str
-    """
-    user = current_app.current_user
+class RemoveUserIdentity(graphene.relay.ClientIDMutation):
+    """Mutation to remove a locally stored user identity (no-op if not running in local mode)"""
 
-    if not user:
-        logger = LMLogger()
-        logger.logger.error("Failed to load load a user identity from request context.")
-        raise ValueError("Failed to load load a user identity from request context.")
+    # Return the Note
+    user_identity_edge = graphene.Field(lambda: UserIdentity)
 
-    return user.username
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        # Check if there is a local user identity, remove if needed
+        identity_file = os.path.join(Configuration().config['git']['working_directory'],
+                                     '.labmanager', 'identity', 'user.json')
+        if os.path.exists(identity_file):
+            os.remove(identity_file)
+        else:
+            # Does not exist
+            logger.warning("Attempted to remove user identity, but no identity is stored locally.")
+
+        # Wipe current user from session
+        current_app.current_user = None
+
+        return RemoveUserIdentity(user_identity_edge=UserIdentity.create({}))
+
 
