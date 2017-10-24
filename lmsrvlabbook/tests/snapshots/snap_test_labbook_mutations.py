@@ -363,3 +363,45 @@ snapshots['TestLabBookServiceMutations.test_delete_favorite 4'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceMutations.test_add_file 1'] = {
+    'data': {
+        'addLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'code/myfile.txt',
+                    'size': 22
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file 1'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'input',
+                    'size': 4096
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_makedir 1'] = {
+    'data': {
+        'makeLabbookDirectory': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': True,
+                    'key': 'output/new_folder',
+                    'size': 4096
+                }
+            }
+        }
+    }
+}
