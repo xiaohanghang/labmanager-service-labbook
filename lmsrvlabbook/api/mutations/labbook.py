@@ -20,6 +20,8 @@
 import os
 import uuid
 import tempfile
+import base64
+import json
 
 import graphene
 
@@ -30,6 +32,10 @@ from lmcommon.logging import LMLogger
 from lmcommon.notes import NoteStore, NoteLogLevel
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvlabbook.api.objects.labbook import Labbook
+
+from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
+from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteConnection
+from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection
 
 logger = LMLogger.get_logger()
 
@@ -175,7 +181,7 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
         labbook_name = graphene.String(required=True)
         file_path = graphene.String(required=True)
 
-    success = graphene.Boolean()
+    new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
@@ -184,8 +190,10 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
             raise ValueError('No file newFile in request context')
 
         try:
+            username = get_logged_in_username()
+
             working_directory = Configuration().config['git']['working_directory']
-            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+            inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
@@ -203,15 +211,34 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
             context.files.get('newFile').save(labbook_archive_path)
 
             # Insert into labbook
-            lb.insert_file(src_file=labbook_archive_path, dst_dir=os.path.dirname(input['file_path']))
+            new_path = lb.insert_file(src_file=labbook_archive_path, dst_dir=os.path.dirname(input['file_path']))
 
             logger.debug(f"Removing copied temp file {labbook_archive_path}")
             os.remove(labbook_archive_path)
+
+            # Create data to populate edge
+            file_info = os.stat(new_path)
+            file_data = {
+                          'key': input['file_path'],
+                          'is_dir': False,
+                          'size': file_info.st_size,
+                          'modified_at': file_info.st_mtime
+                        }
+            id_data = {'username': username,
+                       'user': username,
+                       'owner': input.get('owner'),
+                       'name': input.get('labbook_name'),
+                       'enc_file_data': base64.b64encode(json.dumps(file_data).encode())}
+
+            # TODO: Fix cursor implementation, this currently doesn't make sense
+            cursor = base64.b64encode(f"{0}".encode('utf-8'))
+
         except Exception as e:
             logger.exception(e)
             raise
 
-        return AddLabbookFile(success=True)
+        return AddLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile.create(id_data),
+                                                                               cursor=cursor))
 
 
 class DeleteLabbookFile(graphene.ClientIDMutation):
@@ -247,23 +274,44 @@ class MoveLabbookFile(graphene.ClientIDMutation):
         src_path = graphene.String(required=True)
         dst_path = graphene.String(required=True)
 
-    success = graphene.Boolean()
+    new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         try:
+            username = get_logged_in_username()
+
             working_directory = Configuration().config['git']['working_directory']
-            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+            inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
             full_path = lb.move_file(input['src_path'], input['dst_path'])
             logger.info(f"Moved file to `{full_path}`")
+
+            # Create data to populate edge
+            file_info = os.stat(full_path)
+            file_data = {
+                'key': input['dst_path'],
+                'is_dir': False,
+                'size': file_info.st_size,
+                'modified_at': file_info.st_mtime
+            }
+            id_data = {'username': username,
+                       'user': username,
+                       'owner': input.get('owner'),
+                       'name': input.get('labbook_name'),
+                       'enc_file_data': base64.b64encode(json.dumps(file_data).encode())}
+
+            # TODO: Fix cursor implementation, this currently doesn't make sense
+            cursor = base64.b64encode(f"{0}".encode('utf-8'))
+
         except Exception as e:
             logger.exception(e)
             raise
 
-        return MoveLabbookFile(success=True)
+        return MoveLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile.create(id_data),
+                                                                                cursor=cursor))
 
 
 class MakeLabbookDirectory(graphene.ClientIDMutation):
@@ -273,20 +321,115 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
         labbook_name = graphene.String(required=True)
         dir_name = graphene.String(required=True)
 
-    success = graphene.Boolean()
+    new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         try:
+            username = get_logged_in_username()
+
             working_directory = Configuration().config['git']['working_directory']
-            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+            inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
             full_path = lb.makedir(input['dir_name'])
             logger.info(f"Made new directory in `{full_path}`")
+
+            # Create data to populate edge
+            file_info = os.stat(full_path)
+            file_data = {
+                'key': input['dir_name'],
+                'is_dir': True,
+                'size': file_info.st_size,
+                'modified_at': file_info.st_mtime
+            }
+            id_data = {'username': username,
+                       'user': username,
+                       'owner': input.get('owner'),
+                       'name': input.get('labbook_name'),
+                       'enc_file_data': base64.b64encode(json.dumps(file_data).encode())}
+
+            # TODO: Fix cursor implementation, this currently doesn't make sense
+            cursor = base64.b64encode(f"{0}".encode('utf-8'))
+
         except Exception as e:
             logger.exception(e)
             raise
 
-        return MakeLabbookDirectory(success=True)
+        return MakeLabbookDirectory(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile.create(id_data),
+                                                                                     cursor=cursor))
+
+
+class AddLabbookFavorite(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        subdir = graphene.String(required=True)
+        key = graphene.String(required=True)
+        description = graphene.String(required=False)
+        is_dir = graphene.String(required=False)
+        index = graphene.Int(required=False)
+
+    new_favorite_edge = graphene.Field(LabbookFavoriteConnection.Edge)
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            username = get_logged_in_username()
+            lb = LabBook()
+            lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+
+            # Add Favorite
+            is_dir = False
+            if input.get('is_dir'):
+                is_dir = input.get('is_dir')
+
+            new_favorite = lb.create_favorite(input.get('subdir'), input.get('key'),
+                                              description=input.get('description'),
+                                              position=input.get('index'),
+                                              is_dir=is_dir)
+
+            # Create data to populate edge
+            id_data = {'username': username,
+                       'user': username,
+                       'owner': input.get('owner'),
+                       'name': input.get('labbook_name'),
+                       'subdir': input.get('subdir'),
+                       'favorite_data': new_favorite}
+
+            # Create cursor
+            cursor = base64.b64encode(f"{str(new_favorite['index'])}".encode('utf-8'))
+
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return AddLabbookFavorite(new_favorite_edge=LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data),
+                                                                                   cursor=cursor))
+
+
+class RemoveLabbookFavorite(graphene.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        subdir = graphene.String(required=True)
+        index = graphene.Int(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            username = get_logged_in_username()
+            lb = LabBook()
+            lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+
+            # Remove Favorite
+            lb.remove_favorite(input.get('subdir'), input.get('index'))
+
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return RemoveLabbookFavorite(success=True)

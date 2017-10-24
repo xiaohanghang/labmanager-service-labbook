@@ -15,10 +15,16 @@
 # SOFTWARE.
 
 import graphene
-from lmsrvlabbook.api.objects.labbook import LabbookFile
+from lmsrvlabbook.api.objects.labbookfile import LabbookFile, LabbookFavorite
 
 
 class LabbookFileConnection(graphene.relay.Connection):
     """A connection for paging through labbook files. """
     class Meta:
         node = LabbookFile
+
+
+class LabbookFavoriteConnection(graphene.relay.Connection):
+    """A connection for paging through labbook favorites. """
+    class Meta:
+        node = LabbookFavorite

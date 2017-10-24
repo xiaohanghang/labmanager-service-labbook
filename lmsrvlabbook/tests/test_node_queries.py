@@ -245,3 +245,69 @@ class TestLabBookServiceQueries(object):
             """ % first_note_id
 
             snapshot.assert_match(client.execute(node_note_query))
+
+    def test_favorites_node(self, fixture_working_dir, snapshot):
+        """Test listing labbook favorites"""
+
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        # Setup some favorites in code
+        with open(os.path.join(lb.root_dir, 'code', 'test1.txt'), 'wt') as test_file:
+            test_file.write("blah1")
+
+        # Create favorites
+        lb.create_favorite("code", "test1.txt", description="My file with stuff 1")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+
+            # Test bad node ids that index out of bounds
+            query = """
+                        {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjEwMA==") {
+                                ... on LabbookFavorite {
+                                    id
+                                    key
+                                    description
+                                    isDir
+                                    index
+                                }
+                            }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+            query = """
+                        {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJi0x") {
+                                ... on LabbookFavorite {
+                                    id
+                                    key
+                                    description
+                                    isDir
+                                    index
+                                }
+                            }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+            # Get the actual item
+            query = """
+                        {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=") {
+                                ... on LabbookFavorite {
+                                    id
+                                    key
+                                    description
+                                    isDir
+                                    index
+                                }
+                            }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+

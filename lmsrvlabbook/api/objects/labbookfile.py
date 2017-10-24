@@ -92,3 +92,86 @@ class LabbookFile(ObjectType):
                            modified_at=parsed_date,
                            key=file_info['key'],
                            size=file_info['size'])
+
+
+class LabbookFavorite(ObjectType):
+    """A type representing a file or directory that has been favorited in the labbook file system."""
+
+    class Meta:
+        interfaces = (graphene.relay.Node,)
+
+    # Index value indicating the order of the favorite
+    index = graphene.Int()
+
+    # Relative path from labbook root directory.
+    key = graphene.String()
+
+    # Short description about the favorite
+    description = graphene.String()
+
+    # True indicates that the favorite is a directory
+    is_dir = graphene.Boolean()
+
+    @staticmethod
+    def to_type_id(id_data):
+        """Method to generate a single string that uniquely identifies this object
+
+        Args:
+            id_data(dict):
+
+        Returns:
+            str
+        """
+        return f"{id_data['user']}&{id_data['owner']}&{id_data['name']}&{id_data['subdir']}&{id_data['index']}"
+
+    @staticmethod
+    def parse_type_id(type_id):
+        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
+
+        Args:
+            type_id (str): type unique identifier
+
+        Returns:
+            dict
+        """
+        tokens = type_id.split('&')
+        assert len(tokens) == 5, "type_id for LabbookFile should have 5 tokens"
+        return {'user': tokens[0],
+                'owner': tokens[1],
+                'name': tokens[2],
+                'subdir': tokens[3],
+                'index': tokens[4]}
+
+    @staticmethod
+    def create(id_data):
+
+        if 'favorite_data' in id_data:
+            item = id_data['favorite_data']
+
+            # Set id data so ID will auto-generate. Need to clean this up in the future so not so complex for developer
+            id_data['index'] = item['index']
+        else:
+            if "type_id" in id_data:
+                id_data = LabbookFavorite.parse_type_id(id_data['type_id'])
+
+            if "username" not in id_data:
+                id_data["username"] = get_logged_in_username()
+
+            lb = LabBook()
+            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+            data = lb.get_favorites(id_data['subdir'])
+
+            # Make sure index is valid
+            if int(id_data["index"]) > len(data) - 1:
+                raise ValueError("Invalid favorite index value")
+            if int(id_data["index"]) < 0:
+                raise ValueError("Invalid favorite index value")
+
+            # Pull out single entry
+            item = data[int(id_data['index'])]
+
+        return LabbookFavorite(id=LabbookFavorite.to_type_id(id_data),
+                               index=item["index"],
+                               key=item['key'],
+                               description=item['description'],
+                               is_dir=item['is_dir'])
