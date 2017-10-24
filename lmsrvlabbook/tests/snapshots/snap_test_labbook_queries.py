@@ -433,3 +433,66 @@ snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status_no_labb
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_list_favorites 1'] = {
+    'data': {
+        'labbook': {
+            'favorites': {
+                'edges': [
+                    {
+                        'node': {
+                            'description': 'My file with stuff 1',
+                            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                            'index': 0,
+                            'isDir': False,
+                            'key': 'code/test1.txt'
+                        }
+                    },
+                    {
+                        'node': {
+                            'description': 'My file with stuff 2',
+                            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjE=',
+                            'index': 1,
+                            'isDir': False,
+                            'key': 'code/test2.txt'
+                        }
+                    }
+                ]
+            },
+            'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_list_favorites 2'] = {
+    'data': {
+        'labbook': {
+            'favorites': {
+                'edges': [
+                    {
+                        'node': {
+                            'description': 'Data dir 1',
+                            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
+                            'index': 0,
+                            'isDir': True,
+                            'key': 'input/data1/'
+                        }
+                    }
+                ]
+            },
+            'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_list_favorites 3'] = {
+    'data': {
+        'labbook': {
+            'favorites': {
+                'edges': [
+                ]
+            },
+            'name': 'labbook1'
+        }
+    }
+}

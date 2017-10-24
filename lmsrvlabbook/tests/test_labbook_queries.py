@@ -439,3 +439,91 @@ class TestLabBookServiceQueries(object):
                 assert node['modifiedAt'] is not None
                 assert type(node['size']) == int
                 assert node['key']
+
+    def test_list_favorites(self, fixture_working_dir, snapshot):
+        """Test listing labbook favorites"""
+
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        # Setup some favorites in code
+        with open(os.path.join(lb.root_dir, 'code', 'test1.txt'), 'wt') as test_file:
+            test_file.write("blah1")
+        with open(os.path.join(lb.root_dir, 'code', 'test2.txt'), 'wt') as test_file:
+            test_file.write("blah2")
+
+        # Setup a favorite dir in input
+        os.makedirs(os.path.join(lb.root_dir, 'input', 'data1'))
+
+        # Create favorites
+        lb.create_favorite("code", "test1.txt", description="My file with stuff 1")
+        lb.create_favorite("code", "test2.txt", description="My file with stuff 2")
+        lb.create_favorite("input", "data1/", description="Data dir 1", is_dir=True)
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+
+            # Get LabBooks for the "logged in user" - Currently just "default"
+            query = """
+                        {
+                          labbook(name: "labbook1", owner: "default") {
+                            name
+                            favorites(subdir: "code") {
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
+                                    }
+                                }
+                            }
+                          }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+            # Get LabBooks for the "logged in user" - Currently just "default"
+            query = """
+                                    {
+                                      labbook(name: "labbook1", owner: "default") {
+                                        name
+                                        favorites(subdir: "input") {
+                                            edges {
+                                                node {
+                                                    id
+                                                    index
+                                                    key
+                                                    description
+                                                    isDir
+                                                }
+                                            }
+                                        }
+                                      }
+                                    }
+                                    """
+            snapshot.assert_match(client.execute(query))
+
+            # Get LabBooks for the "logged in user" - Currently just "default"
+            query = """
+                                    {
+                                      labbook(name: "labbook1", owner: "default") {
+                                        name
+                                        favorites(subdir: "output") {
+                                            edges {
+                                                node {
+                                                    id
+                                                    index
+                                                    key
+                                                    description
+                                                    isDir
+                                                }
+                                            }
+                                        }
+                                      }
+                                    }
+                                    """
+            snapshot.assert_match(client.execute(query))

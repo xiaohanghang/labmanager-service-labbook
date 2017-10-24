@@ -71,3 +71,49 @@ snapshots['TestLabBookServiceQueries.test_node_notes 1'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_favorites_node 1'] = {
+    'data': {
+        'node': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 29,
+                    'line': 3
+                }
+            ],
+            'message': 'Invalid favorite index value'
+        }
+    ]
+}
+
+snapshots['TestLabBookServiceQueries.test_favorites_node 2'] = {
+    'data': {
+        'node': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 29,
+                    'line': 3
+                }
+            ],
+            'message': 'Invalid favorite index value'
+        }
+    ]
+}
+
+snapshots['TestLabBookServiceQueries.test_favorites_node 3'] = {
+    'data': {
+        'node': {
+            'description': 'My file with stuff 1',
+            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+            'index': 0,
+            'isDir': False,
+            'key': 'code/test1.txt'
+        }
+    }
+}

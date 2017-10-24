@@ -20,6 +20,7 @@
 import os
 import uuid
 import tempfile
+import base64
 
 import graphene
 
@@ -30,6 +31,9 @@ from lmcommon.logging import LMLogger
 from lmcommon.notes import NoteStore, NoteLogLevel
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvlabbook.api.objects.labbook import Labbook
+
+from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite
+from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteConnection
 
 logger = LMLogger.get_logger()
 
@@ -280,3 +284,73 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
             raise
 
         return MakeLabbookDirectory(success=True)
+
+
+class AddLabbookFavorite(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        subdir = graphene.String(required=True)
+        key = graphene.String(required=True)
+        description = graphene.String(required=False)
+        is_dir = graphene.String(required=False)
+        index = graphene.Int(required=False)
+
+    new_favorite_edge = graphene.Field(LabbookFavoriteConnection.Edge)
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            username = get_logged_in_username()
+            lb = LabBook()
+            lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+
+            # Add Favorite
+            new_favorite = lb.create_favorite(input.get('subdir'), input.get('key'),
+                                              description=input.get('description'),
+                                              position=input.get('index'),
+                                              is_dir=input.get('is_dir'))
+
+            # Create data to populate edge
+            id_data = {'username': username,
+                       'owner': input.get('owner'),
+                       'name': input.get('labbook_name'),
+                       'subdir': input.get('subdir'),
+                       'favorite_data': new_favorite}
+
+            # Create cursor
+            cursor = base64.b64encode(f"{str(new_favorite['index'])}".encode('utf-8'))
+
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return AddLabbookFavorite(new_favorite_edge=LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data),
+                                                                                   cursor=cursor))
+
+
+class RemoveLabbookFavorite(graphene.ClientIDMutation):
+    class Input:
+        user = graphene.String(required=True)
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        subdir = graphene.String(required=True)
+        index = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            username = get_logged_in_username()
+            lb = LabBook()
+            lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+
+            # Remove Favorite
+            lb.remove_favorite(input.get('subdir'), input.get('index'))
+
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return RemoveLabbookFavorite(success=True)

@@ -20,7 +20,8 @@
 import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
     CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook, \
-    ExportLabbook, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity
+    ExportLabbook, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
+    AddLabbookFavorite, RemoveLabbookFavorite
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -73,3 +74,9 @@ class LabbookMutations(graphene.AbstractType):
 
     # Remove a locally stored user identity (no-op for non-local installations)
     remove_user_identity = RemoveUserIdentity.Field()
+
+    # Add a favorite file or dir in a labbook subdirectory (code, input, output)
+    add_favorite = AddLabbookFavorite.Field()
+
+    # Remove a favorite file or dir in a labbook subdirectory (code, input, output)
+    remove_favorite = RemoveLabbookFavorite.Field()

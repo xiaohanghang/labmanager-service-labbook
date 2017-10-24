@@ -39,10 +39,10 @@ from lmsrvcore.api.objects import Owner
 from lmsrvlabbook.api.connections.note import NoteConnection
 from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.objects.environment import Environment
-from lmsrvlabbook.api.objects.labbookfile import LabbookFile
 from lmsrvlabbook.api.objects.note import Note
 from lmsrvlabbook.api.objects.ref import LabbookRef
-from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection
+from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
+from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection, LabbookFavoriteConnection
 
 logger = LMLogger.get_logger()
 
@@ -67,6 +67,9 @@ class Labbook(ObjectType):
 
     # List of files and directories
     files = graphene.relay.ConnectionField(LabbookFileConnection)
+
+    # List of favorites for a given subdir (code, input, output)
+    favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection, subdir=graphene.String())
 
     # Connection to Note Entries
     notes = graphene.relay.ConnectionField(NoteConnection)
@@ -268,3 +271,30 @@ class Labbook(ObjectType):
             edge_objs.append(NoteConnection.Edge(node=Note.create(id_data), cursor=cursor))
 
         return NoteConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_favorites(self, args, context, info):
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+
+        # Get all files and directories, with the exception of anything in .git or .gigantum
+        edges = lb.get_favorites(args.get('subdir'))
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        edge_objs = []
+        try:
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                id_data = {"user": get_logged_in_username(),
+                           "owner": self.owner.username,
+                           "name": self.name,
+                           "subdir": args.get('subdir'),
+                           "favorite_data": edge}
+                edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data), cursor=cursor))
+
+            return LabbookFavoriteConnection(edges=edge_objs, page_info=lbc.page_info)
+        except Exception as e:
+            logger.exception(e)
+            raise
