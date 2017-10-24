@@ -316,13 +316,18 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
             lb.from_name(username, input.get('owner'), input.get('labbook_name'))
 
             # Add Favorite
+            is_dir = False
+            if input.get('is_dir'):
+                is_dir = input.get('is_dir')
+
             new_favorite = lb.create_favorite(input.get('subdir'), input.get('key'),
                                               description=input.get('description'),
                                               position=input.get('index'),
-                                              is_dir=input.get('is_dir'))
+                                              is_dir=is_dir)
 
             # Create data to populate edge
             id_data = {'username': username,
+                       'user': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
                        'subdir': input.get('subdir'),
@@ -341,11 +346,10 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
 
 class RemoveLabbookFavorite(graphene.ClientIDMutation):
     class Input:
-        user = graphene.String(required=True)
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         subdir = graphene.String(required=True)
-        index = graphene.String(required=True)
+        index = graphene.Int(required=True)
 
     success = graphene.Boolean()
 

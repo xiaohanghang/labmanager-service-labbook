@@ -399,5 +399,241 @@ class TestLabBookServiceMutations(object):
             # Fail because filenames don't match
             snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
 
+    def test_add_favorite(self, mock_create_labbooks, snapshot):
+        """Method to test adding a favorite"""
+        client = Client(mock_create_labbooks[2])
+
+        # Verify no favs
+        fav_query = """
+                   {
+                     labbook(name: "labbook1", owner: "default") {
+                       name
+                       favorites(subdir: "code") {
+                           edges {
+                               node {
+                                   id
+                                   index
+                                   key
+                                   description
+                                   isDir
+                               }
+                           }
+                       }
+                     }
+                   }
+                   """
+        snapshot.assert_match(client.execute(fav_query))
+
+        test_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                 'labbook1', 'code', 'test.txt')
+        with open(test_file, 'wt') as tf:
+            tf.write("a test file...")
+
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "code",
+              key: "test.txt",
+              description: "my test favorite"
+            }) {
+              newFavoriteEdge{
+                node{
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                   }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Verify the favorite is there
+        snapshot.assert_match(client.execute(fav_query))
+
+    def test_add_favorite_at_index(self, mock_create_labbooks, snapshot):
+        """Method to test adding a favorite"""
+        client = Client(mock_create_labbooks[2])
+
+        # Verify no favs
+        fav_query = """
+                   {
+                     labbook(name: "labbook1", owner: "default") {
+                       name
+                       favorites(subdir: "code") {
+                           edges {
+                               node {
+                                   id
+                                   index
+                                   key
+                                   description
+                                   isDir
+                               }
+                           }
+                       }
+                     }
+                   }
+                   """
+        snapshot.assert_match(client.execute(fav_query))
+
+        test_file_root = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                 'labbook1', 'code')
+        with open(os.path.join(test_file_root, 'test1.txt'), 'wt') as tf:
+            tf.write("a test file 1")
+        with open(os.path.join(test_file_root, 'test2.txt'), 'wt') as tf:
+            tf.write("a test file 2")
+        with open(os.path.join(test_file_root, 'test3.txt'), 'wt') as tf:
+            tf.write("a test file 3")
+
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "code",
+              key: "test1.txt",
+              description: "my test favorite 1"
+            }) {
+              newFavoriteEdge{
+                node{
+                   index
+                   key
+                   description
+                   }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "code",
+              key: "test2.txt",
+              description: "my test favorite 2"
+            }) {
+              newFavoriteEdge{
+                node{
+                   index
+                   key
+                   description
+                   }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "code",
+              key: "test3.txt",
+              description: "my test favorite 3",
+              index: 1
+            }) {
+              newFavoriteEdge{
+                node{
+                   index
+                   key
+                   description
+                   }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Verify the favorites are there
+        snapshot.assert_match(client.execute(fav_query))
+
+    def test_delete_favorite(self, mock_create_labbooks, snapshot):
+        """Method to test adding a favorite"""
+        client = Client(mock_create_labbooks[2])
+
+        test_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                 'labbook1', 'code', 'test.txt')
+        with open(test_file, 'wt') as tf:
+            tf.write("a test file...")
+
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "code",
+              key: "test.txt",
+              description: "my test favorite"
+            }) {
+              newFavoriteEdge{
+                node{
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                   }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Verify the favorite is there
+        fav_query = """
+                           {
+                             labbook(name: "labbook1", owner: "default") {
+                               name
+                               favorites(subdir: "code") {
+                                   edges {
+                                       node {
+                                           id
+                                           index
+                                           key
+                                           description
+                                           isDir
+                                       }
+                                   }
+                               }
+                             }
+                           }
+                           """
+        snapshot.assert_match(client.execute(fav_query))
+
+        # Delete a favorite in code
+        query = """
+        mutation deleteFavorite {
+          removeFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "code",
+              index: 0
+            }) {
+              success
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Make sure favorite is gone now
+        snapshot.assert_match(client.execute(fav_query))
 
 
