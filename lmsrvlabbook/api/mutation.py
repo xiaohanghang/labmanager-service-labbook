@@ -20,7 +20,7 @@
 import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
     CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook, \
-    ExportLabbook, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity
+    ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -61,6 +61,9 @@ class LabbookMutations(graphene.AbstractType):
 
     # Add a package to a Labbook environment (e.g., pip package, apt)
     add_environment_package = AddEnvironmentPackage.Field()
+
+    # Add a file to a labbook
+    add_labbook_file = AddLabbookFile.Field()
 
     # Move files or directory within a labbook
     move_labbook_file = MoveLabbookFile.Field()
