@@ -59,7 +59,7 @@ def init():
         return response
 
     # Set Unauth'd route for API health-check
-    @app.route("/ping")
+    @app.route("/ping/")
     @cross_origin(headers=["Content-Type", "Authorization"])
     def ping():
         """Unauthorized endpoint for validating the API is up"""

@@ -19,6 +19,8 @@
 # SOFTWARE.
 import os
 import pytest
+import tempfile
+from werkzeug.datastructures import FileStorage
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
@@ -290,7 +292,7 @@ class TestLabBookServiceMutations(object):
             }
             """
             res = client.execute(query)
-            assert res['data']['moveLabbookFile']['success'] == True
+            assert res['data']['moveLabbookFile']['success'] is True
 
     def test_delete_file(self, mock_create_labbooks):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
@@ -309,7 +311,7 @@ class TestLabBookServiceMutations(object):
             }
             """
             res = client.execute(query)
-            assert res['data']['deleteLabbookFile']['success'] == True
+            assert res['data']['deleteLabbookFile']['success'] is True
 
     def test_makedir(self, mock_create_labbooks):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
@@ -324,9 +326,78 @@ class TestLabBookServiceMutations(object):
                   dirName: "output/new_folder",
                 }) {
                   success
-                }
-            }
-            """
+                }}"""
             res = client.execute(query)
-            import pprint; pprint.pprint(res)
-            assert res['data']['makeLabbookDirectory']['success'] == True
+            assert res['data']['makeLabbookDirectory']['success'] is True
+
+    def test_add_file(self, mock_create_labbooks):
+        """Test adding a new file to a labbook"""
+        class DummyContext(object):
+            def __init__(self, file_handle):
+                self.files = {'newFile': file_handle}
+
+        client = Client(mock_create_labbooks[2])
+        query = """
+        mutation addLabbookFile {
+          addLabbookFile(
+            input: {
+              user: "default",
+              owner: "default",
+              labbookName: "labbook1",
+              filePath: "code/myfile.txt",
+            }) {
+              success
+            }
+        }
+        """
+        test_file = os.path.join(tempfile.gettempdir(), "myfile.txt")
+        with open(test_file, 'wt') as tf:
+            tf.write("THIS IS A FILE I MADE!")
+
+        with open(test_file, 'rb') as tf:
+            file = FileStorage(tf)
+
+            res = client.execute(query, context_value=DummyContext(file))
+            assert res['data']['addLabbookFile']['success'] is True
+
+            # Check for file
+            target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                       'labbook1', 'code', 'myfile.txt')
+            assert os.path.exists(target_file) is True
+            assert os.path.isfile(target_file) is True
+
+    def test_add_file_errors(self, mock_create_labbooks, snapshot):
+        """Test new file error handling"""
+        class DummyContext(object):
+            def __init__(self, file_handle):
+                self.files = {'newFile': file_handle}
+
+        client = Client(mock_create_labbooks[2])
+        query = """
+        mutation addLabbookFile {
+          addLabbookFile(
+            input: {
+              user: "default",
+              owner: "default",
+              labbookName: "labbook1",
+              filePath: "code/myfile2.txt",
+            }) {
+              success
+            }
+        }
+        """
+        test_file = os.path.join(tempfile.gettempdir(), "myfile.txt")
+        with open(test_file, 'wt') as tf:
+            tf.write("THIS IS A FILE I MADE!")
+
+        with open(test_file, 'rb') as tf:
+            file = FileStorage(tf)
+
+            # Fail because no file
+            snapshot.assert_match(client.execute(query, context_value=DummyContext(None)))
+
+            # Fail because filenames don't match
+            snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
+
+
+

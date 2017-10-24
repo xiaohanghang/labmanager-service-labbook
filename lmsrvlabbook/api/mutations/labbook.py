@@ -167,6 +167,8 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
 
 
 class AddLabbookFile(graphene.relay.ClientIDMutation):
+    """Mutation to add a file to a labbook. File should be sent in the `newFile` key as a multi-part/form upload.
+    file_path is the relative path from the labbook root."""
     class Input:
         user = graphene.String(required=True)
         owner = graphene.String(required=True)
@@ -188,14 +190,22 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
 
-            if context.files['newFile'].filename != os.path.basename(input['file_path']):
+            if os.path.basename(context.files['newFile'].filename) != os.path.basename(input['file_path']):
                 raise ValueError('Filename of request file and `file_path` do not match')
 
             # Create a new unique directory in /tmp
-            labbook_archive_path = os.path.join(tempfile.gettempdir(), context.files['newFile'].filename)
+            labbook_archive_path = os.path.join(tempfile.gettempdir(), uuid.uuid4().hex)
+            os.makedirs(labbook_archive_path)
+
+            # Write file to temp space
+            labbook_archive_path = os.path.join(labbook_archive_path,
+                                                os.path.basename(context.files['newFile'].filename))
             context.files.get('newFile').save(labbook_archive_path)
+
+            # Insert into labbook
             lb.insert_file(src_file=labbook_archive_path, dst_dir=os.path.dirname(input['file_path']))
-            logger.info(f"Removing copied temp file {labbook_archive_path}")
+
+            logger.debug(f"Removing copied temp file {labbook_archive_path}")
             os.remove(labbook_archive_path)
         except Exception as e:
             logger.exception(e)

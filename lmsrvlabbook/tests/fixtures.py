@@ -59,7 +59,6 @@ def _create_temp_work_dir():
     # Set the working dir to the new temp dir
     config.config["git"]["working_directory"] = temp_dir
     # Set the auth0 client to the test client (only contains 1 test user and is partitioned from prod)
-    import pprint; pprint.pprint(config.config)
     config.config["auth"]["audience"] = "io.gigantum.api.dev"
     config_file = os.path.join(temp_dir, "temp_config.yaml")
     config.save(config_file)
