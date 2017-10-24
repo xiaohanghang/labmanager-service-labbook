@@ -143,7 +143,7 @@ snapshots['TestLabBookServiceMutations.test_add_file_errors 1'] = {
                     'line': 3
                 }
             ],
-            'message': 'No file newFile in request context'
+            'message': 'No file uploadFile in request context'
         }
     ]
 }

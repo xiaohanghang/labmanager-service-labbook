@@ -123,21 +123,21 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        if not context.files.get('archiveFile'):
-            logger.error('No file "archiveFile" associated with request')
-            raise ValueError('No file archiveFile in request context')
+        if not context.files.get('uploadFile'):
+            logger.error('No file "uploadFile" associated with request')
+            raise ValueError('No file uploadFile in request context')
 
         logger.info(
             f"Handling ImportLabbook mutation: user={input.get('user')},"
-            f"owner={input.get('owner')}. Uploaded file {context.files.get('archiveFile').filename}")
+            f"owner={input.get('owner')}. Uploaded file {context.files.get('uploadFile').filename}")
 
         # Create a new unique directory in /tmp
         archive_temp_dir = os.path.join(tempfile.gettempdir(), 'labbook_imports', str(uuid.uuid4()))
         logger.info(f"Making new directory in {archive_temp_dir}")
         os.makedirs(archive_temp_dir, exist_ok=True)
 
-        labbook_archive_path = os.path.join(archive_temp_dir, context.files['archiveFile'].filename)
-        context.files.get('archiveFile').save(labbook_archive_path)
+        labbook_archive_path = os.path.join(archive_temp_dir, context.files['uploadFile'].filename)
+        context.files.get('uploadFile').save(labbook_archive_path)
 
         job_metadata = {'method': 'import_labbook_from_zip'}
         job_kwargs = {
@@ -149,7 +149,7 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
         job_key = dispatcher.dispatch_task(jobs.import_labboook_from_zip, kwargs=job_kwargs, metadata=job_metadata)
         logger.info(f"Importing LabBook {labbook_archive_path} in background job with key {job_key.key_str}")
 
-        assumed_lb_name = context.files['archiveFile'].filename.replace('.lbk', '').split('_')[0]
+        assumed_lb_name = context.files['uploadFile'].filename.replace('.lbk', '').split('_')[0]
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
                                              assumed_lb_name)
@@ -173,7 +173,7 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
 
 
 class AddLabbookFile(graphene.relay.ClientIDMutation):
-    """Mutation to add a file to a labbook. File should be sent in the `newFile` key as a multi-part/form upload.
+    """Mutation to add a file to a labbook. File should be sent in the `uploadFile` key as a multi-part/form upload.
     file_path is the relative path from the labbook root."""
     class Input:
         user = graphene.String(required=True)
@@ -185,9 +185,9 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        if not context.files.get('newFile'):
-            logger.error('No file "newFile" associated with request')
-            raise ValueError('No file newFile in request context')
+        if not context.files.get('uploadFile'):
+            logger.error('No file "uploadFile" associated with request')
+            raise ValueError('No file uploadFile in request context')
 
         try:
             username = get_logged_in_username()
@@ -198,7 +198,7 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
 
-            if os.path.basename(context.files['newFile'].filename) != os.path.basename(input['file_path']):
+            if os.path.basename(context.files['uploadFile'].filename) != os.path.basename(input['file_path']):
                 raise ValueError('Filename of request file and `file_path` do not match')
 
             # Create a new unique directory in /tmp
@@ -207,8 +207,8 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
 
             # Write file to temp space
             labbook_archive_path = os.path.join(labbook_archive_path,
-                                                os.path.basename(context.files['newFile'].filename))
-            context.files.get('newFile').save(labbook_archive_path)
+                                                os.path.basename(input['file_path']))
+            context.files.get('uploadFile').save(labbook_archive_path)
 
             # Insert into labbook
             new_path = lb.insert_file(src_file=labbook_archive_path, dst_dir=os.path.dirname(input['file_path']))

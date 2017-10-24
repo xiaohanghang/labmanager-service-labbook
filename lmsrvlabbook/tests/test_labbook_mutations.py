@@ -344,7 +344,7 @@ class TestLabBookServiceMutations(object):
         """Test adding a new file to a labbook"""
         class DummyContext(object):
             def __init__(self, file_handle):
-                self.files = {'newFile': file_handle}
+                self.files = {'uploadFile': file_handle}
 
         client = Client(mock_create_labbooks[2])
         query = """
@@ -385,7 +385,7 @@ class TestLabBookServiceMutations(object):
         """Test new file error handling"""
         class DummyContext(object):
             def __init__(self, file_handle):
-                self.files = {'newFile': file_handle}
+                self.files = {'uploadFile': file_handle}
 
         client = Client(mock_create_labbooks[2])
         query = """

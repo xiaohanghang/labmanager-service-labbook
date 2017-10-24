@@ -162,7 +162,7 @@ class TestLabbookMutation(object):
             }
             """
 
-            files = {'archiveFile': open(new_path, 'rb')}
+            files = {'uploadFile': open(new_path, 'rb')}
             qry = {"query": export_query}
             assert api_server_proc.is_alive()
             r = requests.post('http://localhost:10001/labbook/', data=qry, files=files)
