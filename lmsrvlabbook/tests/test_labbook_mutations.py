@@ -19,6 +19,8 @@
 # SOFTWARE.
 import os
 import pytest
+import tempfile
+from werkzeug.datastructures import FileStorage
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
@@ -290,7 +292,7 @@ class TestLabBookServiceMutations(object):
             }
             """
             res = client.execute(query)
-            assert res['data']['moveLabbookFile']['success'] == True
+            assert res['data']['moveLabbookFile']['success'] is True
 
     def test_delete_file(self, mock_create_labbooks):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
@@ -309,7 +311,7 @@ class TestLabBookServiceMutations(object):
             }
             """
             res = client.execute(query)
-            assert res['data']['deleteLabbookFile']['success'] == True
+            assert res['data']['deleteLabbookFile']['success'] is True
 
     def test_makedir(self, mock_create_labbooks):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
@@ -324,81 +326,78 @@ class TestLabBookServiceMutations(object):
                   dirName: "output/new_folder",
                 }) {
                   success
-                }
-            }
-            """
+                }}"""
             res = client.execute(query)
-            import pprint; pprint.pprint(res)
-            assert res['data']['makeLabbookDirectory']['success'] == True
+            assert res['data']['makeLabbookDirectory']['success'] is True
 
-    def test_insert_file(self, fixture_working_dir):
-        # TODO - Pending on integration tests working.
-        pass
+    def test_add_file(self, mock_create_labbooks):
+        """Test adding a new file to a labbook"""
+        class DummyContext(object):
+            def __init__(self, file_handle):
+                self.files = {'newFile': file_handle}
 
-    # def test_export_and_import_lb(self, fixture_working_dir, snapshot):
-    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-    #         # Make and validate request
-    #         client = Client(fixture_working_dir[2])
-    #
-    #         lb_name = "mutation-export-import-unittest"
-    #         lb = LabBook(fixture_working_dir[0])
-    #         lb.new(name=lb_name, description="Import/Export Mutation Testing.",
-    #                owner={"username": "test"})
-    #         cm = ComponentManager(lb)
-    #         cm.add_component("base_image", "gig-dev_environment-components", "gigantum", "ubuntu1604-python3", "0.4")
-    #         cm.add_component("dev_env", "gig-dev_environment-components", "gigantum", "jupyter-ubuntu", "0.1")
-    #         pprint.pprint(f"NEW TEST LB IN: {lb.root_dir}")
-    #
-    #         export_query = """
-    #         mutation export {
-    #           exportLabbook(input: {
-    #             user: "test",
-    #             owner: "test",
-    #             labbookName: "%s"
-    #           }) {
-    #             jobKey
-    #           }
-    #         }
-    #         """ % lb.name
-    #         r = client.execute(export_query)
-    #         pprint.pprint(r)
-    #
-    #         # Sleep while the background job completes, and then delete new lb.
-    #         time.sleep(3)
-    #         d = Dispatcher()
-    #         job_status = d.query_task(JobKey(r['data']['exportLabbook']['jobKey']))
-    #
-    #         # Delete existing labbook in file system.
-    #         shutil.rmtree(lb.root_dir)
-    #
-    #         assert job_status.status == 'finished'
-    #         assert not os.path.exists(lb.root_dir)
-    #         assert os.path.exists(job_status.result)
-    #         pprint.pprint(job_status.result)
-    #
-    #         try:
-    #             os.remove(job_status.result)
-    #         except:
-    #             pass
-    #
-    #             # # Now, import the labbook that was just exported.
-    #             # export_query = """
-    #             # mutation import {
-    #             #   importLabbook(input: {
-    #             #     user: "test",
-    #             #     owner: "test",
-    #             #   }) {
-    #             #     jobKey
-    #             #   }
-    #             # }
-    #             # """
-    #             #
-    #             # files = {'archiveFile': open(job_status.result, 'rb')}
-    #             # qry = {"query": export_query}
-    #             # r = requests.post('http://localhost:5000/labbook/', data=qry, files=files)
-    #             #
-    #             # time.sleep(0.5)
-    #             # pprint.pprint(r)
-    #             # time.sleep(2)
-    #             #
-    #             # assert False
+        client = Client(mock_create_labbooks[2])
+        query = """
+        mutation addLabbookFile {
+          addLabbookFile(
+            input: {
+              user: "default",
+              owner: "default",
+              labbookName: "labbook1",
+              filePath: "code/myfile.txt",
+            }) {
+              success
+            }
+        }
+        """
+        test_file = os.path.join(tempfile.gettempdir(), "myfile.txt")
+        with open(test_file, 'wt') as tf:
+            tf.write("THIS IS A FILE I MADE!")
+
+        with open(test_file, 'rb') as tf:
+            file = FileStorage(tf)
+
+            res = client.execute(query, context_value=DummyContext(file))
+            assert res['data']['addLabbookFile']['success'] is True
+
+            # Check for file
+            target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                       'labbook1', 'code', 'myfile.txt')
+            assert os.path.exists(target_file) is True
+            assert os.path.isfile(target_file) is True
+
+    def test_add_file_errors(self, mock_create_labbooks, snapshot):
+        """Test new file error handling"""
+        class DummyContext(object):
+            def __init__(self, file_handle):
+                self.files = {'newFile': file_handle}
+
+        client = Client(mock_create_labbooks[2])
+        query = """
+        mutation addLabbookFile {
+          addLabbookFile(
+            input: {
+              user: "default",
+              owner: "default",
+              labbookName: "labbook1",
+              filePath: "code/myfile2.txt",
+            }) {
+              success
+            }
+        }
+        """
+        test_file = os.path.join(tempfile.gettempdir(), "myfile.txt")
+        with open(test_file, 'wt') as tf:
+            tf.write("THIS IS A FILE I MADE!")
+
+        with open(test_file, 'rb') as tf:
+            file = FileStorage(tf)
+
+            # Fail because no file
+            snapshot.assert_match(client.execute(query, context_value=DummyContext(None)))
+
+            # Fail because filenames don't match
+            snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
+
+
+
