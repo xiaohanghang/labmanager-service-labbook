@@ -88,7 +88,8 @@ class LabbookFile(ObjectType):
         file_info = json.loads(dec_file_data)
         parsed_date = datetime.datetime.datetime.utcfromtimestamp(int(file_info['modified_at']))
 
-        return LabbookFile(is_dir=file_info['is_dir'],
+        return LabbookFile(id=LabbookFile.to_type_id(id_data),
+                           is_dir=file_info['is_dir'],
                            modified_at=parsed_date,
                            key=file_info['key'],
                            size=file_info['size'])

@@ -422,6 +422,7 @@ class TestLabBookServiceQueries(object):
                 files {
                     edges {
                         node {
+                            id
                             key
                             modifiedAt
                             size
@@ -439,6 +440,25 @@ class TestLabBookServiceQueries(object):
                 assert node['modifiedAt'] is not None
                 assert type(node['size']) == int
                 assert node['key']
+
+            query = """
+                        {
+                          labbook(name: "labbook1", owner: "default") {
+                            name
+                            files {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
+                                    }
+                                }
+                            }
+                          }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
 
     def test_list_favorites(self, fixture_working_dir, snapshot):
         """Test listing labbook favorites"""

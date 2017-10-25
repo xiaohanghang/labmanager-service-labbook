@@ -496,3 +496,39 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 3'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_listdir 1'] = {
+    'data': {
+        'labbook': {
+            'files': {
+                'edges': [
+                    {
+                        'node': {
+                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmInZXlKclpYa2lPaUFpWTI5a1pTSXNJQ0pwYzE5a2FYSWlPaUIwY25WbExDQWljMmw2WlNJNklEUXdPVFlzSUNKdGIyUnBabWxsWkY5aGRDSTZJREUxTURnNU1ERXpNREV1TWpoOSc=',
+                            'isDir': True,
+                            'key': 'code',
+                            'size': 4096
+                        }
+                    },
+                    {
+                        'node': {
+                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmInZXlKclpYa2lPaUFpYVc1d2RYUWlMQ0FpYVhOZlpHbHlJam9nZEhKMVpTd2dJbk5wZW1VaU9pQTBNRGsyTENBaWJXOWthV1pwWldSZllYUWlPaUF4TlRBNE9UQXhNekF4TGpJNGZRPT0n',
+                            'isDir': True,
+                            'key': 'input',
+                            'size': 4096
+                        }
+                    },
+                    {
+                        'node': {
+                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmInZXlKclpYa2lPaUFpYjNWMGNIVjBJaXdnSW1selgyUnBjaUk2SUhSeWRXVXNJQ0p6YVhwbElqb2dOREE1Tml3Z0ltMXZaR2xtYVdWa1gyRjBJam9nTVRVd09Ea3dNVE13TVM0eU9IMD0n',
+                            'isDir': True,
+                            'key': 'output',
+                            'size': 4096
+                        }
+                    }
+                ]
+            },
+            'name': 'labbook1'
+        }
+    }
+}
