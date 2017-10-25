@@ -438,9 +438,41 @@ class TestLabBookServiceQueries(object):
                 node = n['node']
                 assert node['isDir'] is True
                 assert node['modifiedAt'] is not None
+                assert type(node['modifiedAt']) == int
                 assert type(node['size']) == int
                 assert node['key']
 
+            query = """
+                        {
+                          labbook(name: "labbook1", owner: "default") {
+                            name
+                            files {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
+                                    }
+                                }
+                            }
+                          }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+    def test_list_files(self, fixture_working_dir_populated_scoped, snapshot):
+        # Add some extra files for listing
+        labbook_dir = os.path.join(fixture_working_dir_populated_scoped[1], 'default', 'default', 'labbooks',
+                                   'labbook1')
+        with open(os.path.join(labbook_dir, 'code', "test_file1.txt"), 'wt') as tf:
+            tf.write("file 1")
+        with open(os.path.join(labbook_dir, 'code', "test_file2.txt"), 'wt') as tf:
+            tf.write("file 2")
+
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir_populated_scoped[2])
             query = """
                         {
                           labbook(name: "labbook1", owner: "default") {

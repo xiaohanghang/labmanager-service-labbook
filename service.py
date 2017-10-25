@@ -19,7 +19,6 @@
 # SOFTWARE.
 from flask import Flask, jsonify
 from flask_cors import CORS, cross_origin
-import getpass
 import shutil
 import os
 
@@ -94,11 +93,9 @@ def launch() -> None:
     logger = LMLogger.get_logger()
     try:
         app = init()
-        if getpass.getuser() == "giguser":
-            app.run(host="0.0.0.0", port=10001)
-        else:
-            app.run(port=10001)
-        logger.warning("Note: app.run completed, this may indicated failed server start.")
+        # Run app on 0.0.0.0, assuming not an issue since it should be in a container
+        app.run(host="0.0.0.0", port=10001)
+
     except Exception as e:
         logger.exception(e)
         raise

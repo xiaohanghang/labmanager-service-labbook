@@ -117,3 +117,14 @@ snapshots['TestLabBookServiceQueries.test_favorites_node 3'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_file_node 1'] = {
+    'data': {
+        'node': {
+            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvdGVzdDEudHh0',
+            'isDir': False,
+            'key': 'code/test1.txt',
+            'size': 5
+        }
+    }
+}

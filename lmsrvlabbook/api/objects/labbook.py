@@ -225,7 +225,7 @@ class Labbook(ObjectType):
                 id_data = {"user": get_logged_in_username(),
                            "owner": self.owner.username,
                            "name": self.name,
-                           "enc_file_data": base64.b64encode(json.dumps(edge).encode())}
+                           "file_info": edge}
                 edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
 
             return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)

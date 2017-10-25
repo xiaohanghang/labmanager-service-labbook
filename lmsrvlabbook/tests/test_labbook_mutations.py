@@ -274,7 +274,7 @@ class TestLabBookServiceMutations(object):
             snapshot.assert_match(client.execute(query))
 
     def test_move_file(self, mock_create_labbooks, snapshot):
-        """Test checking out a new branch in a labbook"""
+        """Test moving a directory"""
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
             client = Client(mock_create_labbooks[2])
             query = """
@@ -298,6 +298,76 @@ class TestLabBookServiceMutations(object):
             }
             """
             snapshot.assert_match(client.execute(query))
+
+    def test_move_file_many(self, mock_create_labbooks, snapshot):
+        """Test moving a file around a bunch"""
+        labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')
+
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+            client = Client(mock_create_labbooks[2])
+            query1 = """
+            mutation MoveLabbookFile {
+              moveLabbookFile(
+                input: {
+                  user: "default",
+                  owner: "default",
+                  labbookName: "labbook1",
+                  srcPath: "code/sillyfile",
+                  dstPath: "input/sillyfile"
+                }) {
+                  newLabbookFileEdge {
+                    node{
+                      key
+                      isDir
+                      size
+                    }
+                  }
+                }
+            }
+            """
+            query2 = """
+            mutation MoveLabbookFile {
+              moveLabbookFile(
+                input: {
+                  user: "default",
+                  owner: "default",
+                  labbookName: "labbook1",
+                  srcPath: "input/sillyfile",
+                  dstPath: "code/sillyfile"
+                }) {
+                  newLabbookFileEdge {
+                    node{
+                      key
+                      isDir
+                      size
+                    }
+                  }
+                }
+            }
+            """
+            snapshot.assert_match(client.execute(query1))
+            assert os.path.exists(os.path.join(labbook_dir, 'input', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'input', 'sillyfile'))
+
+            snapshot.assert_match(client.execute(query2))
+            assert os.path.exists(os.path.join(labbook_dir, 'code', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'code', 'sillyfile'))
+
+            snapshot.assert_match(client.execute(query1))
+            assert os.path.exists(os.path.join(labbook_dir, 'input', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'input', 'sillyfile'))
+
+            snapshot.assert_match(client.execute(query2))
+            assert os.path.exists(os.path.join(labbook_dir, 'code', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'code', 'sillyfile'))
+
+            snapshot.assert_match(client.execute(query1))
+            assert os.path.exists(os.path.join(labbook_dir, 'input', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'input', 'sillyfile'))
+
+            snapshot.assert_match(client.execute(query2))
+            assert os.path.exists(os.path.join(labbook_dir, 'code', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'code', 'sillyfile'))
 
     def test_delete_file(self, mock_create_labbooks):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
@@ -358,6 +428,7 @@ class TestLabBookServiceMutations(object):
             }) {
               newLabbookFileEdge {
                 node{
+                  id
                   key
                   isDir
                   size

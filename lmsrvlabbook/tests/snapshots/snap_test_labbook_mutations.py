@@ -369,6 +369,7 @@ snapshots['TestLabBookServiceMutations.test_add_file 1'] = {
         'addLabbookFile': {
             'newLabbookFileEdge': {
                 'node': {
+                    'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvbXlmaWxlLnR4dA==',
                     'isDir': False,
                     'key': 'code/myfile.txt',
                     'size': 22
@@ -383,8 +384,8 @@ snapshots['TestLabBookServiceMutations.test_move_file 1'] = {
         'moveLabbookFile': {
             'newLabbookFileEdge': {
                 'node': {
-                    'isDir': False,
-                    'key': 'input',
+                    'isDir': True,
+                    'key': 'input/',
                     'size': 4096
                 }
             }
@@ -398,8 +399,92 @@ snapshots['TestLabBookServiceMutations.test_makedir 1'] = {
             'newLabbookFileEdge': {
                 'node': {
                     'isDir': True,
-                    'key': 'output/new_folder',
+                    'key': 'output/new_folder/',
                     'size': 4096
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file_many 1'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'input/sillyfile',
+                    'size': 7
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file_many 2'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'code/sillyfile',
+                    'size': 7
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file_many 3'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'input/sillyfile',
+                    'size': 7
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file_many 4'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'code/sillyfile',
+                    'size': 7
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file_many 5'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'input/sillyfile',
+                    'size': 7
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file_many 6'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'code/sillyfile',
+                    'size': 7
                 }
             }
         }

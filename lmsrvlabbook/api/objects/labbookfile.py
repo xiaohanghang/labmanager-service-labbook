@@ -20,6 +20,7 @@
 import base64
 import datetime
 import json
+import os
 
 import graphene
 from graphene.types import datetime
@@ -38,8 +39,8 @@ class LabbookFile(ObjectType):
     # True indicates that path points to a directory
     is_dir = graphene.Boolean()
 
-    # Modified at contains timestmap of last modified - NOT creation.
-    modified_at = datetime.DateTime()
+    # Modified at contains timestamp of last modified - NOT creation in epoch time.
+    modified_at = graphene.Int()
 
     # Relative path from labbook root directory.
     key = graphene.String()
@@ -57,7 +58,7 @@ class LabbookFile(ObjectType):
         Returns:
             str
         """
-        return f"{id_data['user']}&{id_data['owner']}&{id_data['name']}&{id_data['enc_file_data']}"
+        return f"{id_data['username']}&{id_data['owner']}&{id_data['name']}&{id_data['key']}"
 
     @staticmethod
     def parse_type_id(type_id):
@@ -71,28 +72,41 @@ class LabbookFile(ObjectType):
         """
         tokens = type_id.split('&')
         assert len(tokens) == 4, "type_id for LabbookFile should have 4 tokens"
-        return {'user': tokens[0],
+        return {'username': tokens[0],
                 'owner': tokens[1],
                 'name': tokens[2],
-                'enc_file_data': tokens[3].decode()}
+                'key': tokens[3]}
 
     @staticmethod
     def create(id_data):
-        if "username" not in id_data:
-            id_data["username"] = get_logged_in_username()
 
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        if "type_id" in id_data:
+            # Loading as node so need to populate file data
+            id_data = LabbookFile.parse_type_id(id_data['type_id'])
 
-        dec_file_data = base64.b64decode(id_data['enc_file_data'])
-        file_info = json.loads(dec_file_data)
-        parsed_date = datetime.datetime.datetime.utcfromtimestamp(int(file_info['modified_at']))
+            # TODO: remove check once username is no longer in query
+            if id_data["username"] != get_logged_in_username():
+                raise ValueError("Provided username does not equal logged in user")
+
+            lb = LabBook()
+            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+
+            # Create data to populate edge
+            id_data['file_info'] = lb._get_file_info(id_data['key'])
+
+        else:
+            # Loading from a query, so you have the file data already
+            if "username" not in id_data:
+                id_data["username"] = get_logged_in_username()
+
+        # Set key in id data if missing so to_type_id() works.
+        id_data['key'] = id_data['file_info']['key']
 
         return LabbookFile(id=LabbookFile.to_type_id(id_data),
-                           is_dir=file_info['is_dir'],
-                           modified_at=parsed_date,
-                           key=file_info['key'],
-                           size=file_info['size'])
+                           is_dir=id_data['file_info']['is_dir'],
+                           modified_at=round(id_data['file_info']['modified_at']),
+                           key=id_data['file_info']['key'],
+                           size=id_data['file_info']['size'])
 
 
 class LabbookFavorite(ObjectType):

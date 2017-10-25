@@ -311,3 +311,34 @@ class TestLabBookServiceQueries(object):
                         """
             snapshot.assert_match(client.execute(query))
 
+    def test_file_node(self, fixture_working_dir, snapshot):
+        """Test listing labbook favorites"""
+
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        # Setup some favorites in code
+        with open(os.path.join(lb.root_dir, 'code', 'test1.txt'), 'wt') as test_file:
+            test_file.write("blah1")
+
+        # Create favorites
+        lb.create_favorite("code", "test1.txt", description="My file with stuff 1")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+
+            query = """
+                        {
+                            node(id: "TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvdGVzdDEudHh0") {
+                                ... on LabbookFile {
+                                    id
+                                    key
+                                    isDir
+                                    size
+                                }
+                            }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))

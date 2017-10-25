@@ -211,26 +211,18 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
             context.files.get('uploadFile').save(labbook_archive_path)
 
             # Insert into labbook
-            new_path = lb.insert_file(src_file=labbook_archive_path, dst_dir=os.path.dirname(input['file_path']))
+            file_info = lb.insert_file(src_file=labbook_archive_path, dst_dir=os.path.dirname(input['file_path']))
 
             logger.debug(f"Removing copied temp file {labbook_archive_path}")
             os.remove(labbook_archive_path)
 
             # Create data to populate edge
-            file_info = os.stat(new_path)
-            file_data = {
-                          'key': input['file_path'],
-                          'is_dir': False,
-                          'size': file_info.st_size,
-                          'modified_at': file_info.st_mtime
-                        }
             id_data = {'username': username,
-                       'user': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
-                       'enc_file_data': base64.b64encode(json.dumps(file_data).encode())}
+                       'file_info': file_info}
 
-            # TODO: Fix cursor implementation, this currently doesn't make sense
+            # TODO: Fix cursor implementation, this currently doesn't make sense when adding edges
             cursor = base64.b64encode(f"{0}".encode('utf-8'))
 
         except Exception as e:
@@ -267,6 +259,8 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
 
 
 class MoveLabbookFile(graphene.ClientIDMutation):
+    """Method to move/rename a file or directory. If file, both src_path and dst_path should contain the file name.
+    If a directory, be sure to include the trailing slash"""
     class Input:
         user = graphene.String(required=True)
         owner = graphene.String(required=True)
@@ -286,22 +280,15 @@ class MoveLabbookFile(graphene.ClientIDMutation):
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
-            full_path = lb.move_file(input['src_path'], input['dst_path'])
-            logger.info(f"Moved file to `{full_path}`")
+            file_info = lb.move_file(input['src_path'], input['dst_path'])
+            logger.info(f"Moved file to `{input['dst_path']}`")
 
             # Create data to populate edge
-            file_info = os.stat(full_path)
-            file_data = {
-                'key': input['dst_path'],
-                'is_dir': False,
-                'size': file_info.st_size,
-                'modified_at': file_info.st_mtime
-            }
             id_data = {'username': username,
                        'user': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
-                       'enc_file_data': base64.b64encode(json.dumps(file_data).encode())}
+                       'file_info': file_info}
 
             # TODO: Fix cursor implementation, this currently doesn't make sense
             cursor = base64.b64encode(f"{0}".encode('utf-8'))
@@ -333,22 +320,15 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
-            full_path = lb.makedir(input['dir_name'])
-            logger.info(f"Made new directory in `{full_path}`")
+            file_info = lb.makedir(input['dir_name'])
+            logger.info(f"Made new directory in `{input['dir_name']}`")
 
             # Create data to populate edge
-            file_info = os.stat(full_path)
-            file_data = {
-                'key': input['dir_name'],
-                'is_dir': True,
-                'size': file_info.st_size,
-                'modified_at': file_info.st_mtime
-            }
             id_data = {'username': username,
                        'user': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
-                       'enc_file_data': base64.b64encode(json.dumps(file_data).encode())}
+                       'file_info': file_info}
 
             # TODO: Fix cursor implementation, this currently doesn't make sense
             cursor = base64.b64encode(f"{0}".encode('utf-8'))

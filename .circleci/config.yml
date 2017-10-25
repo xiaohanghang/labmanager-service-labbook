@@ -21,19 +21,22 @@ jobs:
       - run:
           name: Pip install requirements, labmanager-common and pytest
           command: |
-            sudo mkdir /home/circleci/gigantum
             sudo pip install -r requirements.txt
+            mkdir /home/circleci/gigantum
+            cd /home/circleci/gigantum
             git clone -b integration --single-branch https://github.com/gigantum/labmanager-common.git
             export CWD=`pwd`
-            sudo pip install --find-links --no-index file:///home/circleci/project/labmanager-common
+            sudo pip install --find-links --no-index file:///home/circleci/gigantum/labmanager-common
             sudo pip install coveralls pytest-cov
 
       - run:
           name: Run unit, integration and coverage tests
           command: |
+            cd /home/circleci/project
             redis-server &
             rqscheduler --interval=2 2> /dev/null &
-            pytest --cov=lmsrvlabbook .
+            pytest --cov=lmsrvlabbook lmsrvlabbook/
+            pytest --cov=lmsrvcore --cov-append lmsrvcore/
             sudo mkdir /mnt/share
             rq worker labmanager_jobs &
             pytest --cov=lmsrvlabbook --cov-append lmsrvlabbook/tests/int_labbook_mutations.py
