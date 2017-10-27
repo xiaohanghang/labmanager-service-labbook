@@ -39,7 +39,7 @@ from lmcommon.labbook import LabBook
 from lmsrvlabbook.api.mutation import LabbookMutations
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
-import service
+import serviceint as service
 
 
 @pytest.fixture()
