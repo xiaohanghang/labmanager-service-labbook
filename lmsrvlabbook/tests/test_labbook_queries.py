@@ -492,6 +492,27 @@ class TestLabBookServiceQueries(object):
                         """
             snapshot.assert_match(client.execute(query))
 
+            query = """
+            {
+              labbook(name: "labbook1", owner: "default") {
+                name
+                files(baseDir: "code") {
+                    edges {
+                        node {
+                            id
+                            key
+                            size
+                            isDir
+                        }
+                    }
+                }
+              }
+            }"""
+            r = client.execute(query)
+            nodes = r['data']['labbook']['files']['edges']
+            for n in [a['node'] for a in nodes]:
+                assert 'code/' in n['key']
+
     def test_list_favorites(self, fixture_working_dir, snapshot):
         """Test listing labbook favorites"""
 
