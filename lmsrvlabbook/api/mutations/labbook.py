@@ -198,8 +198,10 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
 
-            if os.path.basename(context.files['uploadFile'].filename) != os.path.basename(input['file_path']):
-                raise ValueError('Filename of request file and `file_path` do not match')
+            # TODO: revisit file path check
+            # DMK - removing as UI doesn't seem to be able to set the filename properly at the moment
+            # if os.path.basename(context.files['uploadFile'].filename) != os.path.basename(input['file_path']):
+            #     raise ValueError('Filename of request file and `file_path` do not match')
 
             # Create a new unique directory in /tmp
             labbook_archive_path = os.path.join(tempfile.gettempdir(), uuid.uuid4().hex)
