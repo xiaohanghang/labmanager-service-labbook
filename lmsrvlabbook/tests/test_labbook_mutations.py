@@ -489,8 +489,9 @@ class TestLabBookServiceMutations(object):
             # Fail because no file
             snapshot.assert_match(client.execute(query, context_value=DummyContext(None)))
 
+            # DMK - commenting out test because check is currently disabled
             # Fail because filenames don't match
-            snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
+            # snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
 
     def test_add_favorite(self, mock_create_labbooks, snapshot):
         """Method to test adding a favorite"""
