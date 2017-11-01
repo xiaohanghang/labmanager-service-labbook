@@ -513,6 +513,70 @@ class TestLabBookServiceQueries(object):
             for n in [a['node'] for a in nodes]:
                 assert 'code/' in n['key']
 
+    def test_list_subfolder_files(self, fixture_working_dir, snapshot):
+        # Add some extra files for listing
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="test-labbook", description="Cats labbook 1")
+
+        with open(os.path.join(lb.root_dir, 'code', "code_file.txt"), 'wt') as tf:
+            tf.write("file 1")
+        with open(os.path.join(lb.root_dir, 'input', "input_file.txt"), 'wt') as tf:
+            tf.write("file 2")
+        with open(os.path.join(lb.root_dir, 'output', "output_file.txt"), 'wt') as tf:
+            tf.write("file 3")
+
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+            query = """
+                        {
+                          labbook(name: "test-labbook", owner: "default") {
+                            name
+                            files {
+                              edges {
+                                node {
+                                  id
+                                  key
+                                  size
+                                  isDir
+                                }
+                              }
+                            }
+                            codeFiles {
+                              edges {
+                                node {
+                                  id
+                                  key
+                                  size
+                                  isDir
+                                }
+                              }
+                            }
+                            inputFiles {
+                              edges {
+                                node {
+                                  id
+                                  key
+                                  size
+                                  isDir
+                                }
+                              }
+                            }
+                            outputFiles {
+                              edges {
+                                node {
+                                  id
+                                  key
+                                  size
+                                  isDir
+                                }
+                              }
+                            }
+                          }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
     def test_list_favorites(self, fixture_working_dir, snapshot):
         """Test listing labbook favorites"""
 

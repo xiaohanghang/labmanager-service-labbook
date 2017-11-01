@@ -68,6 +68,11 @@ class Labbook(ObjectType):
     # List of files and directories
     files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String())
 
+    # List of files for each primary subdirectory
+    code_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("code/"))
+    input_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("input/"))
+    output_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("output/"))
+
     # List of favorites for a given subdir (code, input, output)
     favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection, subdir=graphene.String())
 
@@ -232,6 +237,15 @@ class Labbook(ObjectType):
         except Exception as e:
             logger.exception(e)
             raise
+
+    def resolve_code_files(self, args, context, info):
+        return self.resolve_files(args, context, info)
+
+    def resolve_input_files(self, args, context, info):
+        return self.resolve_files(args, context, info)
+
+    def resolve_output_files(self, args, context, info):
+        return self.resolve_files(args, context, info)
 
     def resolve_notes(self, args, context, info):
         """Method to page through branch Refs
