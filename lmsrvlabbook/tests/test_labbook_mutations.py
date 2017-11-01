@@ -388,6 +388,27 @@ class TestLabBookServiceMutations(object):
             res = client.execute(query)
             assert res['data']['deleteLabbookFile']['success'] is True
 
+    def test_delete_file(self, mock_create_labbooks):
+        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
+            client = Client(mock_create_labbooks[2])
+            # Note, deleting a file should work with and without a trailing / at the end.
+            query = """
+            mutation deleteLabbookFile {
+              deleteLabbookFile(
+                input: {
+                  user: "default",
+                  owner: "default",
+                  labbookName: "labbook1",
+                  filePath: "code/",
+                  isDirectory: true
+                }) {
+                  success
+                }
+            }
+            """
+            res = client.execute(query)
+            assert res['data']['deleteLabbookFile']['success'] is True
+
     def test_makedir(self, mock_create_labbooks, snapshot):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
             client = Client(mock_create_labbooks[2])

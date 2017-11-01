@@ -241,6 +241,7 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         file_path = graphene.String(required=True)
+        is_directory = graphene.Boolean(required=False)
 
     success = graphene.Boolean()
 
@@ -252,7 +253,7 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
-            lb.delete_file(relative_path=input['file_path'])
+            lb.delete_file(relative_path=input['file_path'], directory=input.get('is_directory') or False)
         except Exception as e:
             logger.exception(e)
             raise
