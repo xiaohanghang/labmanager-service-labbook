@@ -35,9 +35,9 @@ jobs:
             cd /home/circleci/project
             redis-server &
             rqscheduler --interval=2 2> /dev/null &
-            pytest --cov=lmsrvlabbook lmsrvlabbook/
+            pytest --cov=lmsrvlabbook --cov=lmsrvcore lmsrvlabbook/
             pytest --cov=lmsrvcore --cov-append lmsrvcore/
             sudo mkdir /mnt/share
             rq worker labmanager_jobs &
-            pytest --cov=lmsrvlabbook --cov-append lmsrvlabbook/tests/int_labbook_mutations.py
+            pytest --cov=lmsrvlabbook --cov=lmsrvcore --cov-append lmsrvlabbook/tests/int_labbook_mutations.py
             coveralls

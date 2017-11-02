@@ -17,22 +17,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import io
+import math
 import os
-import pytest
 import tempfile
-from werkzeug.datastructures import FileStorage
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
 
+import pytest
 from graphene.test import Client
-import graphene
 from mock import patch
-import requests
+from werkzeug.datastructures import FileStorage
 
 from lmcommon.configuration import Configuration
-from lmcommon.dispatcher import Dispatcher, JobKey
-from lmcommon.environment import ComponentManager, RepositoryManager
+from lmcommon.dispatcher.jobs import export_labbook_as_zip
 from lmcommon.labbook import LabBook
 
 
@@ -435,84 +434,111 @@ class TestLabBookServiceMutations(object):
         """Test adding a new file to a labbook"""
         class DummyContext(object):
             def __init__(self, file_handle):
-                self.files = {'uploadFile': file_handle}
+                self.files = {'uploadChunk': file_handle}
 
         client = Client(mock_create_labbooks[2])
-        query = """
-        mutation addLabbookFile {
-          addLabbookFile(
-            input: {
-              user: "default",
-              owner: "default",
-              labbookName: "labbook1",
-              filePath: "code/myfile.txt",
-            }) {
-              newLabbookFileEdge {
-                node{
-                  id
-                  key
-                  isDir
-                  size
-                }
-              }
-            }
-        }
-        """
-        test_file = os.path.join(tempfile.gettempdir(), "myfile.txt")
-        with open(test_file, 'wt') as tf:
-            tf.write("THIS IS A FILE I MADE!")
+
+        # Create file to upload
+        test_file = os.path.join(tempfile.gettempdir(), "myfile.bin")
+        with open(test_file, 'wb') as tf:
+            tf.write(os.urandom(9000000))
+
+        # Get upload params
+        chunk_size = 4194000
+        file_info = os.stat(test_file)
+        file_size = int(file_info.st_size / 1024)
+        total_chunks = int(math.ceil(file_info.st_size / chunk_size))
+
+        target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                   'labbook1', 'code', 'myfile.bin')
 
         with open(test_file, 'rb') as tf:
-            file = FileStorage(tf)
+            # Check for file to exist (shouldn't yet)
+            assert os.path.exists(target_file) is False
 
-            snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
+            for chunk_index in range(total_chunks):
+                # Upload a chunk
+                chunk = io.BytesIO()
+                chunk.write(tf.read(chunk_size))
+                chunk.seek(0)
+                file = FileStorage(chunk)
 
-            # Check for file
-            target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
-                                       'labbook1', 'code', 'myfile.txt')
-            assert os.path.exists(target_file) is True
-            assert os.path.isfile(target_file) is True
+                query = f"""
+                            mutation addLabbookFile{{
+                              addLabbookFile(input:{{owner:"default", user:"default",
+                                                      labbookName: "labbook1",
+                                                      filePath: "code/myfile.bin",
+                                chunkUploadParams:{{
+                                  uploadId: "jfdjfdjdisdjwdoijwlkfjd",
+                                  chunkSize: {chunk_size},
+                                  totalChunks: {total_chunks},
+                                  chunkIndex: {chunk_index},
+                                  fileSizeKb: {file_size},
+                                  filename: "{os.path.basename(test_file)}"
+                                }}
+                              }}) {{
+                                      newLabbookFileEdge {{
+                                        node{{
+                                          id
+                                          key
+                                          isDir
+                                          size
+                                        }}
+                                      }}
+                                    }}
+                            }}
+                            """
+                snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
+
+        # When done uploading, file should exist in the labbook
+        assert os.path.exists(target_file) is True
+        assert os.path.isfile(target_file) is True
 
     def test_add_file_errors(self, mock_create_labbooks, snapshot):
         """Test new file error handling"""
         class DummyContext(object):
             def __init__(self, file_handle):
-                self.files = {'uploadFile': file_handle}
+                self.files = {'blah': file_handle}
 
         client = Client(mock_create_labbooks[2])
-        query = """
-        mutation addLabbookFile {
-          addLabbookFile(
-            input: {
-              user: "default",
-              owner: "default",
-              labbookName: "labbook1",
-              filePath: "code/myfile2.txt",
-            }) {
-                  newLabbookFileEdge {
-                    node{
-                      key
-                      isDir
-                      modifiedAt
-                      size
-                    }
-                  }
-            }
-        }
-        """
-        test_file = os.path.join(tempfile.gettempdir(), "myfile.txt")
-        with open(test_file, 'wt') as tf:
-            tf.write("THIS IS A FILE I MADE!")
+        query = f"""
+                    mutation addLabbookFile{{
+                      addLabbookFile(input:{{owner:"default", user:"default",
+                                              labbookName: "labbook1",
+                                              filePath: "code/myfile.bin",
+                        chunkUploadParams:{{
+                          uploadId: "jfdjfdjdisdjwdoijwlkfjd",
+                          chunkSize: 100,
+                          totalChunks: 2,
+                          chunkIndex: 0,
+                          fileSizeKb: 200,
+                          filename: "myfile.bin"
+                        }}
+                      }}) {{
+                              newLabbookFileEdge {{
+                                node{{
+                                  id
+                                  key
+                                  isDir
+                                  size
+                                }}
+                              }}
+                            }}
+                    }}
+                    """
+        # Fail because no file
+        snapshot.assert_match(client.execute(query, context_value=DummyContext(None)))
 
-        with open(test_file, 'rb') as tf:
-            file = FileStorage(tf)
+        # DMK - commenting out test because check is currently disabled
+        # test_file = os.path.join(tempfile.gettempdir(), "myfile.txt")
 
-            # Fail because no file
-            snapshot.assert_match(client.execute(query, context_value=DummyContext(None)))
+        # with open(test_file, 'wt') as tf:
+        #     tf.write("THIS IS A FILE I MADE!")
 
-            # DMK - commenting out test because check is currently disabled
-            # Fail because filenames don't match
-            # snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
+        # with open(test_file, 'rb') as tf:
+        #     file = FileStorage(tf)
+        #     # Fail because filenames don't match
+        #     snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
 
     def test_add_favorite(self, mock_create_labbooks, snapshot):
         """Method to test adding a favorite"""
@@ -751,4 +777,82 @@ class TestLabBookServiceMutations(object):
         # Make sure favorite is gone now
         snapshot.assert_match(client.execute(fav_query))
 
+    def test_import_labbook(self, fixture_working_dir, snapshot):
+        """Test batch uploading, but not full import"""
+        class DummyContext(object):
+            def __init__(self, file_handle):
+                self.files = {'uploadChunk': file_handle}
 
+        client = Client(fixture_working_dir[2])
+
+        # Create a temporary labbook
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="test-export", description="Tester")
+
+        # Create a largeish file in the dir
+        with open(os.path.join(fixture_working_dir[1], 'testfile.bin'), 'wb') as testfile:
+            testfile.write(os.urandom(9000000))
+        lb.insert_file(testfile.name, 'input')
+
+        # Export labbook
+        zip_file = export_labbook_as_zip(lb.root_dir, tempfile.gettempdir())
+        lb_dir = lb.root_dir
+
+        # Get upload params
+        chunk_size = 4194304
+        file_info = os.stat(zip_file)
+        file_size = int(file_info.st_size / 1024)
+        total_chunks = int(math.ceil(file_info.st_size/chunk_size))
+
+        with open(zip_file, 'rb') as tf:
+            for chunk_index in range(total_chunks):
+                chunk = io.BytesIO()
+                chunk.write(tf.read(chunk_size))
+                chunk.seek(0)
+                file = FileStorage(chunk)
+
+                query = f"""
+                            mutation myMutation{{
+                              importLabbook(input:{{owner:"default", user:"default",
+                                chunkUploadParams:{{
+                                  uploadId: "jfdjfdjdisdjwdoijwlkfjd",
+                                  chunkSize: {chunk_size},
+                                  totalChunks: {total_chunks},
+                                  chunkIndex: {chunk_index},
+                                  fileSizeKb: {file_size},
+                                  filename: "{os.path.basename(zip_file)}"
+                                }}
+                              }}) {{
+                                importJobKey
+                                buildImageJobKey
+                              }}
+                            }}
+                            """
+                result = client.execute(query, context_value=DummyContext(file))
+                assert "errors" not in result
+                if chunk_index < total_chunks - 1:
+                    assert result['data']['importLabbook']['importJobKey'] is None
+                    assert result['data']['importLabbook']['buildImageJobKey'] is None
+                else:
+                    assert type(result['data']['importLabbook']['importJobKey']) == str
+                    assert type(result['data']['importLabbook']['buildImageJobKey']) == str
+                    assert "rq:job:" in result['data']['importLabbook']['importJobKey']
+                    assert "rq:job:" in result['data']['importLabbook']['buildImageJobKey']
+
+                    # TODO: Move this test to integration level test where working dir is properly mocked in the rq worker
+
+                    # # Wait up to 10s for import to complete...if fail raise exception
+                    # d = Dispatcher()
+                    # t_start = datetime.datetime.now()
+                    # success = False
+                    # while (datetime.datetime.now() - t_start).seconds < 10:
+                    #     status = d.query_task(JobKey(result['data']['importLabbook']['importJobKey']))
+                    #     if status.status == 'finished':
+                    #         success = True
+                    #         break
+                    #     elif status.status == 'failed':
+                    #         break
+                    # assert success is True
+                    # assert os.path.exists(abs_lb_path) is True
+
+                chunk.close()

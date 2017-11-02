@@ -17,15 +17,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Blueprint
-from flask_graphql import GraphQLView
-import graphene
 import json
 import os
 
-from lmsrvlabbook.api import LabbookQuery, LabbookMutations
+import graphene
+from flask import Blueprint
+from flask_graphql import GraphQLView
+
 from lmcommon.configuration import Configuration
 from lmsrvcore.auth.identity import AuthorizationMiddleware
+from lmsrvlabbook.api import LabbookQuery, LabbookMutations
+
 
 # ** This blueprint is the combined full LabBook service with all components served together from a single schema ** #
 

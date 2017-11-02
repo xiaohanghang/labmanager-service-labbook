@@ -131,23 +131,6 @@ snapshots['TestLabBookServiceMutations.test_checkout_branch 3'] = {
     }
 }
 
-snapshots['TestLabBookServiceMutations.test_add_file_errors 1'] = {
-    'data': {
-        'addLabbookFile': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 11,
-                    'line': 3
-                }
-            ],
-            'message': 'No file uploadFile in request context'
-        }
-    ]
-}
-
 snapshots['TestLabBookServiceMutations.test_add_file_errors 2'] = {
     'data': {
         'addLabbookFile': None
@@ -364,21 +347,6 @@ snapshots['TestLabBookServiceMutations.test_delete_favorite 4'] = {
     }
 }
 
-snapshots['TestLabBookServiceMutations.test_add_file 1'] = {
-    'data': {
-        'addLabbookFile': {
-            'newLabbookFileEdge': {
-                'node': {
-                    'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvbXlmaWxlLnR4dA==',
-                    'isDir': False,
-                    'key': 'code/myfile.txt',
-                    'size': 22
-                }
-            }
-        }
-    }
-}
-
 snapshots['TestLabBookServiceMutations.test_move_file 1'] = {
     'data': {
         'moveLabbookFile': {
@@ -489,4 +457,52 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 6'] = {
             }
         }
     }
+}
+
+snapshots['TestLabBookServiceMutations.test_add_file 1'] = {
+    'data': {
+        'addLabbookFile': {
+            'newLabbookFileEdge': None
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_add_file 2'] = {
+    'data': {
+        'addLabbookFile': {
+            'newLabbookFileEdge': None
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_add_file 3'] = {
+    'data': {
+        'addLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvbXlmaWxlLmJpbg==',
+                    'isDir': False,
+                    'key': 'code/myfile.bin',
+                    'size': 9000000
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_add_file_errors 1'] = {
+    'data': {
+        'addLabbookFile': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 23,
+                    'line': 3
+                }
+            ],
+            'message': 'No file "uploadChunk" associated with request'
+        }
+    ]
 }

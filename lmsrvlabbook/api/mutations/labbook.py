@@ -17,11 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
-import uuid
-import tempfile
 import base64
-import json
+import os
+import tempfile
+import uuid
 
 import graphene
 
@@ -30,12 +29,12 @@ from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.notes import NoteStore, NoteLogLevel
+from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvlabbook.api.objects.labbook import Labbook
-
-from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteConnection
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection
+from lmsrvlabbook.api.objects.labbook import Labbook
+from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
 
 logger = LMLogger.get_logger()
 
@@ -112,44 +111,37 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
         return ExportLabbook(job_key=job_key.key_str)
 
 
-class ImportLabbook(graphene.relay.ClientIDMutation):
-
+class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     class Input:
         owner = graphene.String(required=True)
         user = graphene.String(required=True)
+        chunk_upload_params = ChunkUploadInput(required=True)
 
     import_job_key = graphene.String()
     build_image_job_key = graphene.String()
 
     @classmethod
-    def mutate_and_get_payload(cls, input, context, info):
-        if not context.files.get('uploadFile'):
-            logger.error('No file "uploadFile" associated with request')
-            raise ValueError('No file uploadFile in request context')
+    def mutate_and_process_upload(cls, input, context, info):
+        if not cls.upload_file_path:
+            logger.error('No file uploaded')
+            raise ValueError('No file uploaded')
 
         logger.info(
             f"Handling ImportLabbook mutation: user={input.get('user')},"
-            f"owner={input.get('owner')}. Uploaded file {context.files.get('uploadFile').filename}")
-
-        # Create a new unique directory in /tmp
-        archive_temp_dir = os.path.join(tempfile.gettempdir(), 'labbook_imports', str(uuid.uuid4()))
-        logger.info(f"Making new directory in {archive_temp_dir}")
-        os.makedirs(archive_temp_dir, exist_ok=True)
-
-        labbook_archive_path = os.path.join(archive_temp_dir, context.files['uploadFile'].filename)
-        context.files.get('uploadFile').save(labbook_archive_path)
+            f"owner={input.get('owner')}. Uploaded file {cls.upload_file_path}")
 
         job_metadata = {'method': 'import_labbook_from_zip'}
         job_kwargs = {
-            'archive_path': labbook_archive_path,
+            'archive_path': cls.upload_file_path,
             'username': input.get('user'),
-            'owner': input.get('owner')
+            'owner': input.get('owner'),
+            'base_filename': cls.filename
         }
         dispatcher = Dispatcher()
         job_key = dispatcher.dispatch_task(jobs.import_labboook_from_zip, kwargs=job_kwargs, metadata=job_metadata)
-        logger.info(f"Importing LabBook {labbook_archive_path} in background job with key {job_key.key_str}")
+        logger.info(f"Importing LabBook {cls.upload_file_path} in background job with key {job_key.key_str}")
 
-        assumed_lb_name = context.files['uploadFile'].filename.replace('.lbk', '').split('_')[0]
+        assumed_lb_name = cls.filename.replace('.lbk', '').split('_')[0]
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
                                              assumed_lb_name)
@@ -172,7 +164,7 @@ class ImportLabbook(graphene.relay.ClientIDMutation):
         return ImportLabbook(import_job_key=job_key.key_str, build_image_job_key=build_image_job_key.key_str)
 
 
-class AddLabbookFile(graphene.relay.ClientIDMutation):
+class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     """Mutation to add a file to a labbook. File should be sent in the `uploadFile` key as a multi-part/form upload.
     file_path is the relative path from the labbook root."""
     class Input:
@@ -180,14 +172,15 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         file_path = graphene.String(required=True)
+        chunk_upload_params = ChunkUploadInput(required=True)
 
     new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
     @classmethod
-    def mutate_and_get_payload(cls, input, context, info):
-        if not context.files.get('uploadFile'):
-            logger.error('No file "uploadFile" associated with request')
-            raise ValueError('No file uploadFile in request context')
+    def mutate_and_process_upload(cls, input, context, info):
+        if not cls.upload_file_path:
+            logger.error('No file uploaded')
+            raise ValueError('No file uploaded')
 
         try:
             username = get_logged_in_username()
@@ -198,25 +191,12 @@ class AddLabbookFile(graphene.relay.ClientIDMutation):
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
 
-            # TODO: revisit file path check
-            # DMK - removing as UI doesn't seem to be able to set the filename properly at the moment
-            # if os.path.basename(context.files['uploadFile'].filename) != os.path.basename(input['file_path']):
-            #     raise ValueError('Filename of request file and `file_path` do not match')
-
-            # Create a new unique directory in /tmp
-            labbook_archive_path = os.path.join(tempfile.gettempdir(), uuid.uuid4().hex)
-            os.makedirs(labbook_archive_path)
-
-            # Write file to temp space
-            labbook_archive_path = os.path.join(labbook_archive_path,
-                                                os.path.basename(input['file_path']))
-            context.files.get('uploadFile').save(labbook_archive_path)
-
             # Insert into labbook
-            file_info = lb.insert_file(src_file=labbook_archive_path, dst_dir=os.path.dirname(input['file_path']))
+            file_info = lb.insert_file(src_file=cls.upload_file_path, dst_dir=os.path.dirname(input['file_path']),
+                                       base_filename=cls.filename)
 
-            logger.debug(f"Removing copied temp file {labbook_archive_path}")
-            os.remove(labbook_archive_path)
+            logger.debug(f"Removing copied temp file {cls.upload_file_path}")
+            os.remove(cls.upload_file_path)
 
             # Create data to populate edge
             id_data = {'username': username,
