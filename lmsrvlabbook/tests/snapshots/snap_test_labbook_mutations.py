@@ -506,3 +506,19 @@ snapshots['TestLabBookServiceMutations.test_add_file_errors 1'] = {
         }
     ]
 }
+
+snapshots['TestLabBookServiceMutations.test_rename_labbook 1'] = {
+    'data': {
+        'renameLabbook': {
+            'success': True
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_rename_labbook 2'] = {
+    'data': {
+        'renameLabbook': {
+            'success': True
+        }
+    }
+}
