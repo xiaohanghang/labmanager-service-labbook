@@ -21,6 +21,7 @@ import io
 import math
 import os
 import tempfile
+import datetime
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
@@ -856,3 +857,84 @@ class TestLabBookServiceMutations(object):
                     # assert os.path.exists(abs_lb_path) is True
 
                 chunk.close()
+
+    def test_rename_labbook(self, fixture_working_dir, snapshot):
+        """Test renaming a labbook"""
+        client = Client(fixture_working_dir[2])
+
+        # Create a temporary labbook
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="test-rename", description="Tester labbook")
+        original_dir = lb.root_dir
+
+        # rename (without the container being previously built)
+        query = f"""
+                    mutation myMutation{{
+                      renameLabbook(input:{{owner:"default", user:"default", 
+                      originalLabbookName: "test-rename",
+                      newLabbookName: "test-new-name"}}) {{
+                        success                        
+                      }}
+                    }}
+                    """
+        snapshot.assert_match(client.execute(query))
+
+        # Wait up to 15 seconds for the container to build successfully after renaming
+        query = """
+                   {
+                     labbook(owner: "default", name: "test-new-name") {
+                         environment {
+                           imageStatus
+                         }
+                     }
+                   }
+                   """
+        t_start = datetime.datetime.now()
+        success = False
+        while (datetime.datetime.now() - t_start).seconds < 10:
+            response = client.execute(query)
+            if response['data']['environment']['imageStatus'] == 'EXISTS':
+                success = True
+                break
+
+        # Verify everything worked
+        assert success is True
+        assert os.path.exists(original_dir) is False
+        assert os.path.exists(lb.root_dir) is True
+        assert original_dir != lb.root_dir
+
+        # rename again (this time the container will have been built)
+        query = f"""
+                    mutation myMutation{{
+                      renameLabbook(input:{{owner:"default", user:"default", 
+                      originalLabbookName: "test-new-name",
+                      newLabbookName: "test-renamed-again"}}) {{
+                        success                        
+                      }}
+                    }}
+                    """
+        snapshot.assert_match(client.execute(query))
+
+        # Wait up to 15 seconds for the container to build successfully after renaming
+        query = """
+                   {
+                     labbook(owner: "default", name: "test-renamed-again") {
+                         environment {
+                           imageStatus
+                         }
+                     }
+                   }
+                   """
+        t_start = datetime.datetime.now()
+        success = False
+        while (datetime.datetime.now() - t_start).seconds < 10:
+            response = client.execute(query)
+            if response['data']['environment']['imageStatus'] == 'EXISTS':
+                success = True
+                break
+
+        # Verify everything worked
+        assert success is True
+        assert os.path.exists(original_dir) is False
+        assert os.path.exists(lb.root_dir) is True
+        assert original_dir != lb.root_dir

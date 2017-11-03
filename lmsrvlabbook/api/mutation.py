@@ -21,7 +21,7 @@ import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
     CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
-    AddLabbookFavorite, RemoveLabbookFavorite
+    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -35,6 +35,9 @@ class LabbookMutations(graphene.AbstractType):
 
     # Create a new labbook on the file system.
     create_labbook = CreateLabbook.Field()
+
+    # Rename new labbook
+    rename_labbook = RenameLabbook.Field()
 
     # Create a new git branch for a given labbook.
     create_branch = CreateBranch.Field()

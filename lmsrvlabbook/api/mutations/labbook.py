@@ -19,16 +19,17 @@
 # SOFTWARE.
 import base64
 import os
-import tempfile
-import uuid
+from docker.errors import ImageNotFound
 
 import graphene
 
-from lmcommon.configuration import Configuration
+from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.notes import NoteStore, NoteLogLevel
+from lmcommon.imagebuilder import ImageBuilder
+
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteConnection
@@ -80,6 +81,55 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
                    "username": username}
         new_labbook = Labbook.create(id_data)
         return CreateLabbook(labbook=new_labbook)
+
+
+class RenameLabbook(graphene.ClientIDMutation):
+    """Rename a labbook"""
+    class Input:
+        user = graphene.String(required=True)
+        owner = graphene.String(required=True)
+        original_labbook_name = graphene.String(required=True)
+        new_labbook_name = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            # Load LabBook
+            username = get_logged_in_username()
+
+            working_directory = Configuration().config['git']['working_directory']
+            inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
+                                                 input['original_labbook_name'])
+            lb = LabBook()
+            lb.from_directory(inferred_lb_directory)
+
+            # Image names
+            old_tag = '{}-{}-{}'.format(username, input['owner'], input.get('original_labbook_name'))
+            new_tag = '{}-{}-{}'.format(username, input['owner'], input.get('new_labbook_name'))
+
+            # Rename LabBook
+            lb.rename(input['new_labbook_name'])
+            logger.info(f"Renamed LabBook from `{input['original_labbook_name']}` to `{input['new_labbook_name']}`")
+
+            # Build image with new name...should be fast and use the Docker cache
+            client = get_docker_client()
+            image_builder = ImageBuilder(lb.root_dir)
+            image_builder.build_image(docker_client=client, image_tag=new_tag, username=username, background=True)
+
+            # Delete old image if it had previously been built successfully
+            try:
+                client.images.get(old_tag)
+                client.images.remove(old_tag)
+            except ImageNotFound:
+                logger.warning(f"During renaming, original image {old_tag} not found, removal skipped.")
+
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return RenameLabbook(success=True)
 
 
 class ExportLabbook(graphene.relay.ClientIDMutation):
