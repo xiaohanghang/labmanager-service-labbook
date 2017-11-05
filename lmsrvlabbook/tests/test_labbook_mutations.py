@@ -21,6 +21,10 @@ import io
 import math
 import os
 import tempfile
+import datetime
+from zipfile import ZipFile
+from pkg_resources import resource_filename
+import getpass
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
@@ -856,3 +860,94 @@ class TestLabBookServiceMutations(object):
                     # assert os.path.exists(abs_lb_path) is True
 
                 chunk.close()
+
+    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
+    def test_rename_labbook(self, fixture_working_dir, snapshot):
+        """Test renaming a labbook"""
+        client = Client(fixture_working_dir[2])
+
+        # Create a dummy labbook to make sure directory structure is set up
+        lb_dummy = LabBook(fixture_working_dir[0])
+        lb_dummy.new(owner={"username": "default"}, name="dummy-lb", description="Tester dummy lb")
+
+        # Unzip test labbook into working directory
+        test_zip_file = os.path.join(resource_filename('lmsrvlabbook', 'tests'), 'data', 'test-labbook.zip')
+        labbooks_dir = os.path.join(fixture_working_dir[1], 'default', 'default', 'labbooks')
+        with ZipFile(test_zip_file) as zf:
+            zf.extractall(labbooks_dir)
+
+        original_dir = os.path.join(labbooks_dir, 'test-labbook')
+        new_dir = os.path.join(labbooks_dir, 'test-new-name')
+
+        # rename (without the container being previously built)
+        query = f"""
+                    mutation myMutation{{
+                      renameLabbook(input:{{owner:"default", user:"default", 
+                      originalLabbookName: "test-labbook",
+                      newLabbookName: "test-new-name"}}) {{
+                        success                        
+                      }}
+                    }}
+                    """
+        snapshot.assert_match(client.execute(query))
+
+        # Wait up to 15 seconds for the container to build successfully after renaming
+        query = """
+                   {
+                     labbook(owner: "default", name: "test-new-name") {
+                         environment {
+                           imageStatus
+                         }
+                     }
+                   }
+                   """
+        t_start = datetime.datetime.now()
+        success = False
+        while (datetime.datetime.now() - t_start).seconds < 15:
+            response = client.execute(query)
+            if response['data']['labbook']['environment']['imageStatus'] == 'EXISTS':
+                success = True
+                break
+
+        # Verify everything worked
+        assert success is True
+        assert os.path.exists(original_dir) is False
+        assert os.path.exists(new_dir) is True
+
+        original_dir = new_dir
+        new_dir = os.path.join(labbooks_dir, 'test-renamed-again')
+
+        # rename again (this time the container will have been built)
+        query = f"""
+                    mutation myMutation{{
+                      renameLabbook(input:{{owner:"default", user:"default", 
+                      originalLabbookName: "test-new-name",
+                      newLabbookName: "test-renamed-again"}}) {{
+                        success                        
+                      }}
+                    }}
+                    """
+        snapshot.assert_match(client.execute(query))
+
+        # Wait up to 15 seconds for the container to build successfully after renaming
+        query = """
+                   {
+                     labbook(owner: "default", name: "test-renamed-again") {
+                         environment {
+                           imageStatus
+                         }
+                     }
+                   }
+                   """
+        t_start = datetime.datetime.now()
+        success = False
+        while (datetime.datetime.now() - t_start).seconds < 15:
+            response = client.execute(query)
+            if response['data']['labbook']['environment']['imageStatus'] == 'EXISTS':
+                success = True
+                break
+
+        # Verify everything worked
+        assert success is True
+        assert os.path.exists(original_dir) is False
+        assert os.path.exists(new_dir) is True
