@@ -39,7 +39,8 @@ from lmcommon.labbook import LabBook
 from lmsrvlabbook.api.mutation import LabbookMutations
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
-import serviceint as service
+
+import service
 
 
 @pytest.fixture()
@@ -81,14 +82,14 @@ class TestLabbookMutation(object):
             assert os.path.exists('/tmp/dogs')
 
     def test_launch_api_server(self, fixture_working_dir_env_repo_scoped):
-        #with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-        proc = multiprocessing.Process(target=service.launch)
-        proc.daemon = True
-        proc.start()
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
+            proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
+            proc.daemon = True
+            proc.start()
 
-        time.sleep(4)
-        assert proc.is_alive()
-        proc.terminate()
+            time.sleep(4)
+            assert proc.is_alive()
+            proc.terminate()
 
 
     def test_insert_file(self, fixture_working_dir_env_repo_scoped):
@@ -97,7 +98,7 @@ class TestLabbookMutation(object):
 
     def test_export_and_import_lb(self, fixture_working_dir_env_repo_scoped):
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            api_server_proc = multiprocessing.Process(target=service.launch)
+            api_server_proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
             api_server_proc.daemon = True
             api_server_proc.start()
             assert api_server_proc.is_alive()

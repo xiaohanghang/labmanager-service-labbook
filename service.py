@@ -88,11 +88,19 @@ except Exception as e:
     raise
 
 
-def main() -> None:
+def main(debug=False) -> None:
     try:
         # Run app on 0.0.0.0, assuming not an issue since it should be in a container
-        app.run(host="0.0.0.0", port=10001)
-
+        # Please note: Debug mode must explicitly be set to False when running integration
+        # tests, due to properties of Flask werkzeug dynamic package reloading.
+        if debug:
+            # This is to support integration tests, which will call main
+            # with debug=False in order to avoid runtime reloading of Python code
+            # which causes the interpreter to crash.
+            app.run(host="0.0.0.0", port=10001, debug=debug)
+        else:
+            # If debug arg is not explicitly given then it is loaded from config
+            app.run(host="0.0.0.0", port=10001)
     except Exception as e:
         logger.exception(e)
         raise
