@@ -87,9 +87,9 @@ class ChunkUploadMutation(graphene.AbstractType):
         if args['chunk_index'] >= args['total_chunks']:
             raise ValueError("Invalid args. chunk_index >= total_chunks")
 
-        file_size_bytes = args['file_size_kb'] * 1024
+        file_size_bytes = args['file_size_kb'] * 1000
         # Do to loss of precision when rounding to kb, add roughly 1 kb
-        if args['chunk_size'] * args['total_chunks'] < file_size_bytes + 1025:
+        if args['chunk_size'] * args['total_chunks'] < file_size_bytes + 1001:
             raise ValueError("Invalid args. Not enough chunks expected")
 
     @staticmethod

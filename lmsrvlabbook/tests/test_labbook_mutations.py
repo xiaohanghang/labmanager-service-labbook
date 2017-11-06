@@ -450,7 +450,7 @@ class TestLabBookServiceMutations(object):
         # Get upload params
         chunk_size = 4194000
         file_info = os.stat(test_file)
-        file_size = int(file_info.st_size / 1024)
+        file_size = int(file_info.st_size / 1000)
         total_chunks = int(math.ceil(file_info.st_size / chunk_size))
 
         target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
@@ -805,7 +805,7 @@ class TestLabBookServiceMutations(object):
         # Get upload params
         chunk_size = 4194304
         file_info = os.stat(zip_file)
-        file_size = int(file_info.st_size / 1024)
+        file_size = int(file_info.st_size / 1000)
         total_chunks = int(math.ceil(file_info.st_size/chunk_size))
 
         with open(zip_file, 'rb') as tf:
