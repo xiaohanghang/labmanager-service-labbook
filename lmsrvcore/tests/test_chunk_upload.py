@@ -77,10 +77,10 @@ class TestChunkUpload(object):
         mut = MyMutation()
 
         args = {
-                  "uploadId": "dsffghfdsahgf",
-                  "chunkSize": 100,
-                  "totalChunks": 2,
-                  "chunkIndex": 1,
+                  "upload_id": "dsffghfdsahgf",
+                  "chunk_size": 100,
+                  "total_chunks": 2,
+                  "chunk_index": 1,
                   "file_size_kb": 200,
                   "filename": "test.txt"
                 }
