@@ -136,8 +136,17 @@ class ChunkUploadMutation(graphene.AbstractType):
                     return cls
         except Exception as e:
             logger.error(e)
-            # If an error occurred, Dump the body on the floor
-            _ = context.files.get('uploadChunk').stream.read()
+            # Something bad happened, so make best effort to dump all the files in the body on the floor.
+            # This is important because you must read all bytes out of a POST body when deployed with uwsgi/nginx
+            if context.files:
+                logger.error(f"Error occurred while processing a file chunk. Dumping all files in the body.")
+                for fs in context.files.keys():
+                    if context.files.get(fs):
+                        try:
+                            _ = context.files.get(fs).stream.read()
+                            logger.error(f"Dumped file key {fs}")
+                        except Exception:
+                            pass
             raise
 
     @abc.abstractclassmethod
