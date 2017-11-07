@@ -105,32 +105,40 @@ class ChunkUploadMutation(graphene.AbstractType):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        if "chunk_upload_params" in input:
-            chunk_params = input.get("chunk_upload_params")
+        try:
+            if "chunk_upload_params" in input:
+                chunk_params = input.get("chunk_upload_params")
+                logger.info(f"Processing chunk {chunk_params['chunk_index']} for {chunk_params['filename']}")
 
-            # Make sure the file is there
-            if 'uploadChunk' not in context.files:
-                msg = 'No file "uploadChunk" associated with request'
-                logger.error(msg)
-                raise ValueError(msg)
+                # Make sure the file is there
+                if 'uploadChunk' not in context.files:
+                    msg = 'No file "uploadChunk" associated with request'
+                    logger.error(msg)
+                    raise ValueError(msg)
 
-            # Validate input arguments
-            cls.validate_args(chunk_params)
+                # Validate input arguments
+                cls.validate_args(chunk_params)
 
-            # Write chunk to file
-            with open(cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename']), 'ab') as f:
-                f.seek(chunk_params['chunk_index'] * chunk_params['chunk_size'])
-                f.write(context.files.get('uploadChunk').stream.read())
+                # Write chunk to file
+                with open(cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename']), 'ab') as f:
+                    f.seek(chunk_params['chunk_index'] * chunk_params['chunk_size'])
+                    f.write(context.files.get('uploadChunk').stream.read())
 
-            # If last chunk, move on to mutation
-            if chunk_params['chunk_index'] == chunk_params['total_chunks'] - 1:
-                # Assume last chunk. Let mutation process
-                cls.upload_file_path = cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename'])
-                cls.filename = cls.get_filename(chunk_params['filename'])
-                return cls.mutate_and_process_upload(input, context, info)
-            else:
-                # Assume more chunks to go. Short circuit request
-                return cls
+                # If last chunk, move on to mutation
+                logger.info(f"Write for chunk {chunk_params['chunk_index']} complete")
+                if chunk_params['chunk_index'] == chunk_params['total_chunks'] - 1:
+                    # Assume last chunk. Let mutation process
+                    cls.upload_file_path = cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename'])
+                    cls.filename = cls.get_filename(chunk_params['filename'])
+                    return cls.mutate_and_process_upload(input, context, info)
+                else:
+                    # Assume more chunks to go. Short circuit request
+                    return cls
+        except Exception as e:
+            logger.error(e)
+            # If an error occurred, Dump the body on the floor
+            _ = context.files.get('uploadChunk').stream.read()
+            raise
 
     @abc.abstractclassmethod
     def mutate_and_process_upload(cls, input, context, info):
