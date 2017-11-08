@@ -33,7 +33,7 @@ from lmcommon.labbook import LabBook
 from lmcommon.configuration import get_docker_client
 from lmcommon.logging import LMLogger
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api import ObjectType
 from lmsrvcore.api.connections import ListBasedConnection
 
@@ -149,7 +149,7 @@ class Environment(ObjectType):
         """
         if "username" not in id_data:
             # TODO: Lookup name based on logged in user when available
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
 
         if "type_id" in id_data:
             # Parse ID components
@@ -161,10 +161,10 @@ class Environment(ObjectType):
         labbook_key = "{}-{}-{}".format(id_data["username"], id_data["owner"], id_data["name"])
 
         dispatcher = Dispatcher()
-        lb_jobs = [dispatcher.query_task(j) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
+        lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
 
         for j in lb_jobs:
-            logger.debug("Current job for lb: status {}, meta {}".format(j.get('status'), j.get('meta')))
+            logger.debug("Current job for lb: status {}, meta {}".format(j.status, j.meta))
 
         # First, check if image exists or not -- The first step of building an image untags any existing ones.
         # Therefore, we know that if one exists, there most likely is not one being built.
@@ -174,7 +174,7 @@ class Environment(ObjectType):
         except ImageNotFound:
             image_status = ImageStatus.DOES_NOT_EXIST
 
-        if any([j.get('status') == 'failed' and j['meta'].get('method') == 'build_image' for j in lb_jobs]):
+        if any([j.status == 'failed' and j.meta.get('method') == 'build_image' for j in lb_jobs]):
             logger.info("Image status for {} is BUILD_FAILED".format(labbook_key))
             if image_status == ImageStatus.EXISTS:
                 # The indication that there's a failed job is probably lingering from a while back, so don't
@@ -183,7 +183,7 @@ class Environment(ObjectType):
             else:
                 image_status = ImageStatus.BUILD_FAILED
 
-        if any([j['status'] in ['started', 'queued'] and j['meta'].get('method') == 'build_image' for j in lb_jobs]):
+        if any([j.status in ['started', 'queued'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
             logger.info(f"Image status for {labbook_key} is BUILD_IN_PROGRESS")
             # build_image being in progress takes precedence over if image already exists (unlikely event).
             if image_status == ImageStatus.EXISTS:
@@ -217,7 +217,7 @@ class Environment(ObjectType):
         """
         # TODO: Implement better method to share data between resolvers
         # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_user()}
+        id_data = {"username": get_logged_in_username()}
         id_data.update(Environment.parse_type_id(self.id))
 
         # Get base image data
@@ -266,7 +266,7 @@ class Environment(ObjectType):
         """
         # TODO: Implement better method to share data between resolvers
         # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_user()}
+        id_data = {"username": get_logged_in_username()}
         id_data.update(Environment.parse_type_id(self.id))
 
         # Get base image data
@@ -315,7 +315,7 @@ class Environment(ObjectType):
         """
         # TODO: Implement better method to share data between resolvers
         # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_user()}
+        id_data = {"username": get_logged_in_username()}
         id_data.update(Environment.parse_type_id(self.id))
 
         # Get base image data
@@ -363,7 +363,7 @@ class Environment(ObjectType):
         """
         # TODO: Implement better method to share data between resolvers
         # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_user()}
+        id_data = {"username": get_logged_in_username()}
         id_data.update(Environment.parse_type_id(self.id))
 
         # Get base image data

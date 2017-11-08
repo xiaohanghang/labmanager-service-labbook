@@ -31,7 +31,7 @@ from mock import patch
 
 from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.labbook import LabBook
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvlabbook.api.mutation import LabbookMutations
 from lmsrvlabbook.api.query import LabbookQuery
@@ -52,8 +52,8 @@ def reset_images():
     """A pytest fixture that checks if the test images exist and deletes them"""
     client = get_docker_client()
     try:
-        client.images.get("{}-{}".format(get_logged_in_user(), 'labbook-build'))
-        client.images.remove("{}-{}".format(get_logged_in_user(), 'labbook-build'))
+        client.images.get("{}-{}".format(get_logged_in_username(), 'labbook-build'))
+        client.images.remove("{}-{}".format(get_logged_in_username(), 'labbook-build'))
     except ImageNotFound:
         pass
 

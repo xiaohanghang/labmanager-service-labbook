@@ -25,36 +25,45 @@ from snapshottest import snapshot
 from graphene.test import Client
 from mock import patch
 
-from lmsrvlabbook.tests.fixtures import schema_and_env_index
+from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped
 from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 
 
 class TestAddComponentMutations(object):
-    def test_add_base_image(self, schema_and_env_index, snapshot):
+    def test_add_base_image(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test listing labbooks"""
-        lb = LabBook(schema_and_env_index[0])
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
 
         labbook_dir = lb.new(name="labbook1", description="my first labbook",
                              owner={"username": "default"})
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             # Add a base image
             query = """
             mutation myEnvMutation{
-              addEnvironmentComponent(input: {componentClass: base_image,
-              repository: "gig-dev_environment-components",
-              namespace: "gigantum", component: "ubuntu1604-python3",
-              version: "0.4", labbookName: "labbook1"}) {
+              addEnvironmentComponent(input: {
+                componentClass: base_image,
+                repository: "gig-dev_environment-components",
+                namespace: "gigantum",
+                component: "ubuntu1604-python3",
+                version: "0.4",
+                labbookName: "labbook1"
+              }) {
                 clientMutationId
+                environmentComponent {
+                    name
+                }
               }
             }
             """
-            client.execute(query)
+            result = client.execute(query)
+
+        assert result['data']['addEnvironmentComponent']['environmentComponent']['name'] == 'ubuntu1604-python3'
 
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base_image')) is True
@@ -87,17 +96,17 @@ class TestAddComponentMutations(object):
         assert "gtmNOTE" in log[0]["message"]
         assert 'ubuntu1604-python3' in log[0]["message"]
 
-    def test_add_dev_env(self, schema_and_env_index, snapshot):
+    def test_add_dev_env(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test listing labbooks"""
-        lb = LabBook(schema_and_env_index[0])
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
 
         labbook_dir = lb.new(name="labbook2", description="my first labbook",
                              owner={"username": "default"})
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             # Add a base image
             query = """
@@ -145,17 +154,17 @@ class TestAddComponentMutations(object):
         assert "gtmNOTE" in log[0]["message"]
         assert 'jupyter-ubuntu' in log[0]["message"]
 
-    def test_add_package(self, schema_and_env_index, snapshot):
+    def test_add_package(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test listing labbooks"""
-        lb = LabBook(schema_and_env_index[0])
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
 
         labbook_dir = lb.new(name="catbook-package-tester", description="LB to test package mutation",
                              owner={"username": "default"})
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             # Add a base image
             query = """
@@ -182,10 +191,18 @@ class TestAddComponentMutations(object):
                 packageManager: "apt"
               }) {
                 clientMutationId
+                environmentPackage {
+                    packageName
+                    packageManager
+                }
               }
             }
             """
-            client.execute(pkg_query)
+            result = client.execute(pkg_query)
+
+        import pprint; pprint.pprint(result)
+        assert result['data']['addEnvironmentPackage']['environmentPackage']['packageName'] == 'docker'
+        assert result['data']['addEnvironmentPackage']['environmentPackage']['packageManager'] == 'apt'
 
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
@@ -198,17 +215,17 @@ class TestAddComponentMutations(object):
             assert package_info_dict['name'] == 'docker'
             assert package_info_dict['package_manager'] == 'apt'
 
-    def test_add_custom_dep(self, schema_and_env_index, snapshot):
+    def test_add_custom_dep(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test adding a custom dependency"""
-        lb = LabBook(schema_and_env_index[0])
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
 
         labbook_dir = lb.new(name="labbook3", description="my first labbook",
                              owner={"username": "default"})
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             # Add a base image
             query = """

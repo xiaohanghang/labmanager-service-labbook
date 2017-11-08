@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import base64
+from typing import List
+
 import graphene
 from graphene import resolve_only_args
 
@@ -26,10 +28,10 @@ from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects.labbook import Labbook, LabbookSummary
+from lmsrvlabbook.api.objects.labbook import Labbook
 from lmsrvlabbook.api.objects.baseimage import BaseImage
 from lmsrvlabbook.api.objects.devenv import DevEnv
 from lmsrvlabbook.api.objects.customdependency import CustomDependency
@@ -39,6 +41,8 @@ from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
 from lmsrvlabbook.api.connections.devenv import DevEnvConnection
 from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection
 from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
+
+from lmsrvcore.api.objects.user import UserIdentity
 
 logger = LMLogger.get_logger()
 
@@ -77,8 +81,10 @@ class LabbookQuery(graphene.AbstractType):
                                                                             namespace=graphene.String(),
                                                                             component=graphene.String())
 
-    @resolve_only_args
-    def resolve_labbook(self, owner, name):
+    # Get the current logged in user identity, primarily used when running offline
+    user_identity = graphene.Field(UserIdentity)
+
+    def resolve_labbook(self, args, context, info):
         """Method to return a graphene Labbok instance based on the name
 
         Uses the "currently logged in" user
@@ -90,11 +96,11 @@ class LabbookQuery(graphene.AbstractType):
         Returns:
             Labbook
         """
-        id_data = {"name": name, "owner": owner}
+        id_data = {"name": args.get('name'), "owner": args.get('owner')}
         return Labbook.create(id_data)
 
     @resolve_only_args
-    def resolve_job_status(self, job_id):
+    def resolve_job_status(self, job_id: str):
         """Method to return a graphene Labbok instance based on the name
 
         Uses the "currently logged in" user
@@ -105,7 +111,7 @@ class LabbookQuery(graphene.AbstractType):
         Returns:
             JobStatus
         """
-        logger.info("Resolving jobStatus({})".format(job_id))
+        logger.info(f"Resolving jobStatus {job_id} (type {type(job_id)})")
         return JobStatus.create(job_id)
 
     def resolve_background_jobs(self, args, context, info):
@@ -116,8 +122,8 @@ class LabbookQuery(graphene.AbstractType):
         """
         job_dispatcher = Dispatcher()
 
-        edges = job_dispatcher.all_jobs
-        cursors = [base64.b64encode("{}".format(cnt).encode('utf-8')) for cnt, x in enumerate(edges)]
+        edges: List[str] = [j.job_key.key_str for j in job_dispatcher.all_jobs]
+        cursors = [base64.b64encode(f"{str(cnt)}".encode('utf-8')) for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
         lbc = ListBasedConnection(edges, cursors, args)
@@ -130,7 +136,7 @@ class LabbookQuery(graphene.AbstractType):
         return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
 
     def resolve_local_labbooks(self, args, context, info):
-        """Method to return a all graphene LabbookSummary instances for the logged in user
+        """Method to return a all graphene Labbook instances for the logged in user
 
         Uses the "currently logged in" user
 
@@ -139,27 +145,29 @@ class LabbookQuery(graphene.AbstractType):
         """
         lb = LabBook()
 
-        # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
         labbooks = lb.list_local_labbooks(username=username)
 
         # Collect all labbooks for all owners
         edges = []
-        for key in labbooks.keys():
-            edges.extend(labbooks[key])
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+        cursors = []
+        if labbooks:
+            for key in labbooks.keys():
+                edges.extend(labbooks[key])
+            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
+                                                                                              x in enumerate(edges)]
 
         # Process slicing and cursor args
         lbc = ListBasedConnection(edges, cursors, args)
         lbc.apply()
 
-        # Get LabbookSummary instances
+        # Get Labbook instances
         id_data = {"username": username}
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
             id_data["name"] = edge["name"]
             id_data["owner"] = edge["owner"]
-            edge_objs.append(LabbookConnection.Edge(node=LabbookSummary.create(id_data), cursor=cursor))
+            edge_objs.append(LabbookConnection.Edge(node=Labbook.create(id_data), cursor=cursor))
 
         return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)
 
@@ -339,3 +347,12 @@ class LabbookQuery(graphene.AbstractType):
             edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
 
         return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_user_identity(self, args, context, info):
+        """Method to return a graphene UserIdentity instance based on the current logged (both on & offline) user
+
+        Returns:
+            UserIdentity
+        """
+        id_data = {}  # UserIdentity class does not use id_data. TODO: cleanup when restructuring API
+        return UserIdentity.create(id_data)

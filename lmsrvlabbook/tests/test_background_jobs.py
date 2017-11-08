@@ -23,7 +23,7 @@ import pytest
 import time
 
 from snapshottest import snapshot
-from lmsrvlabbook.tests.fixtures import schema_and_env_index
+from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped
 from graphene.test import Client
 from mock import patch
 import redis
@@ -74,20 +74,20 @@ def temporary_worker():
 
 
 class TestBackgroundJobs(object):
-    def test_get_background_jobs_basics(self, temporary_worker, schema_and_env_index, snapshot):
+    def test_get_background_jobs_basics(self, temporary_worker, fixture_working_dir_env_repo_scoped, snapshot):
 
         w, d = temporary_worker
         assert w.is_alive()
 
         time.sleep(0.25)
 
-        t1 = d.dispatch_task(jobs.test_exit_fail)
-        t2 = d.dispatch_task(jobs.test_exit_success)
-        t3 = d.dispatch_task(jobs.test_sleep, args=(1,))
+        t1 = d.dispatch_task(jobs.test_exit_fail).key_str
+        t2 = d.dispatch_task(jobs.test_exit_success).key_str
+        t3 = d.dispatch_task(jobs.test_sleep, args=(1,)).key_str
 
-        with patch.object(Configuration, 'find_default_config', lambda self: schema_and_env_index[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(schema_and_env_index[2])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             query = """
                     {
@@ -108,7 +108,7 @@ class TestBackgroundJobs(object):
                 assert w.is_alive()
                 time1 = time.time()
                 result = client.execute(query)
-                import pprint; pprint.pprint(result)
+                import pprint; print('----'); pprint.pprint(result); print('-<<<')
                 time2 = time.time()
                 tdiff = time2 - time1
                 assert tdiff < 0.25, "Query should not take more than a few millis (took {}s)".format(tdiff)

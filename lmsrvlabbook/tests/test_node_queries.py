@@ -18,11 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
-import tempfile
 import os
-import uuid
-import shutil
 from snapshottest import snapshot
+from lmsrvlabbook.tests.fixtures import fixture_working_dir
 
 from graphene.test import Client
 import graphene
@@ -41,32 +39,6 @@ class Query(LabbookQuery, graphene.ObjectType):
 
 class Mutation(LabbookMutations, graphene.ObjectType):
     pass
-
-
-@pytest.fixture()
-def mock_config_file():
-    """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
 
 
 def create_stock_labbook(client, name: str, desc: str = "Example labbook by mutation."):
@@ -91,13 +63,13 @@ def create_stock_labbook(client, name: str, desc: str = "Example labbook by muta
 
 class TestLabBookServiceQueries(object):
 
-    def test_node_labbook_from_object(self, mock_config_file, snapshot):
-        lb = LabBook(mock_config_file[0])
+    def test_node_labbook_from_object(self, fixture_working_dir, snapshot):
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="cat-lab-book1", description="Test cat labbook from obj")
 
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             query = """
                     {
@@ -116,10 +88,10 @@ class TestLabBookServiceQueries(object):
 
             snapshot.assert_match(client.execute(query))
 
-    def test_node_labbook_from_mutation(self, mock_config_file, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+    def test_node_labbook_from_mutation(self, fixture_working_dir, snapshot):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             create_query = """
             mutation myCreateLabbook($name: String!, $desc: String!) {
@@ -154,10 +126,10 @@ class TestLabBookServiceQueries(object):
 
             snapshot.assert_match(client.execute(query))
 
-    def test_node_environment(self, mock_config_file, snapshot):
+    def test_node_environment(self, fixture_working_dir, snapshot):
 
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
-            client = Client(mock_config_file[2])
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            client = Client(fixture_working_dir[2])
             create_stock_labbook(client, "node-env-test-lb", "Example labbook by mutation.")
 
             env_query = """
@@ -194,14 +166,14 @@ class TestLabBookServiceQueries(object):
             """ % env_id
             snapshot.assert_match(client.execute(env_node_query))
 
-    def test_node_notes(self, mock_config_file, snapshot):
+    def test_node_notes(self, fixture_working_dir, snapshot):
         labbook_name="test-node-note-1"
 
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name=labbook_name, description="Labby McLabbook 99")
 
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
-            client = Client(mock_config_file[2])
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            client = Client(fixture_working_dir[2])
 
             working_dir = lb.git.config["working_directory"]
             labbook_dir = os.path.join(working_dir, "default", "default", "labbooks", labbook_name)
@@ -273,3 +245,100 @@ class TestLabBookServiceQueries(object):
             """ % first_note_id
 
             snapshot.assert_match(client.execute(node_note_query))
+
+    def test_favorites_node(self, fixture_working_dir, snapshot):
+        """Test listing labbook favorites"""
+
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        # Setup some favorites in code
+        with open(os.path.join(lb.root_dir, 'code', 'test1.txt'), 'wt') as test_file:
+            test_file.write("blah1")
+
+        # Create favorites
+        lb.create_favorite("code", "test1.txt", description="My file with stuff 1")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+
+            # Test bad node ids that index out of bounds
+            query = """
+                        {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjEwMA==") {
+                                ... on LabbookFavorite {
+                                    id
+                                    key
+                                    description
+                                    isDir
+                                    index
+                                }
+                            }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+            query = """
+                        {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJi0x") {
+                                ... on LabbookFavorite {
+                                    id
+                                    key
+                                    description
+                                    isDir
+                                    index
+                                }
+                            }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+            # Get the actual item
+            query = """
+                        {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=") {
+                                ... on LabbookFavorite {
+                                    id
+                                    key
+                                    description
+                                    isDir
+                                    index
+                                }
+                            }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+    def test_file_node(self, fixture_working_dir, snapshot):
+        """Test listing labbook favorites"""
+
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        # Setup some favorites in code
+        with open(os.path.join(lb.root_dir, 'code', 'test1.txt'), 'wt') as test_file:
+            test_file.write("blah1")
+
+        # Create favorites
+        lb.create_favorite("code", "test1.txt", description="My file with stuff 1")
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+
+            query = """
+                        {
+                            node(id: "TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvdGVzdDEudHh0") {
+                                ... on LabbookFile {
+                                    id
+                                    key
+                                    isDir
+                                    size
+                                }
+                            }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))

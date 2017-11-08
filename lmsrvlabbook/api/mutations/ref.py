@@ -25,7 +25,7 @@ from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvlabbook.api.objects.ref import LabbookRef
 from lmsrvlabbook.api.objects.labbook import Labbook
@@ -50,9 +50,9 @@ class CreateBranch(graphene.relay.ClientIDMutation):
             info:
         Returns:
         """
-        username = get_logged_in_user()
+        username = get_logged_in_username()
         if not input.get("owner"):
-            owner = get_logged_in_user()
+            owner = get_logged_in_username()
         else:
             owner = input.get("owner")
 
@@ -93,9 +93,9 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
             info:
         Returns:
         """
-        username = get_logged_in_user()
+        username = get_logged_in_username()
         if not input.get("owner"):
-            owner = get_logged_in_user()
+            owner = get_logged_in_username()
         else:
             owner = input.get("owner")
 

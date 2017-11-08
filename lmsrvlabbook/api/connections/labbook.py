@@ -18,12 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.objects.labbook import LabbookSummary
+from lmsrvlabbook.api.objects.labbook import Labbook
 
 
 class LabbookConnection(graphene.relay.Connection):
-    """A Connection for paging through labbook summaries"""
+    """A Connection for paging through labbooks that exist locally. """
     class Meta:
-        node = LabbookSummary
+        node = Labbook
 
 

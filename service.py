@@ -17,9 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS, cross_origin
-import getpass
 import shutil
 import os
 
@@ -28,12 +27,17 @@ import blueprint
 from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
+from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 
-# Load config data for the LabManager instance
-config = Configuration()
 
-# Create Flask app and configure
+logger = LMLogger.get_logger()
+
+# Create Flask app
 app = Flask("lmsrvlabbook")
+
+# Load configuration class into the flask application
+app.config["LABMGR_CONFIG"] = config = Configuration()
+app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
 if config.config["flask"]["allow_cors"]:
     # Allow CORS
@@ -42,22 +46,36 @@ if config.config["flask"]["allow_cors"]:
 # Set Debug mode
 app.config['DEBUG'] = config.config["flask"]["DEBUG"]
 
-# Register service
+# Register LabBook service
 app.register_blueprint(blueprint.complete_labbook_service)
 
-# Setup local environment repositories
-lmlog = LMLogger()
-lmlog.logger.info("Cloning/Updating environment repositories.")
+
+# Set auth error handler
+@app.errorhandler(AuthenticationError)
+def handle_auth_error(ex):
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
+
+
+# Set Unauth'd route for API health-check
+@app.route("/ping/")
+@cross_origin(headers=["Content-Type", "Authorization"])
+def ping():
+    """Unauthorized endpoint for validating the API is up"""
+    return jsonify(config.config['build_info'])
+
+logger.info("Cloning/Updating environment repositories.")
 
 erm = RepositoryManager()
 erm.update_repositories()
-lmlog.logger.info("Indexing environment repositories.")
+logger.info("Indexing environment repositories.")
 erm.index_repositories()
-lmlog.logger.info("Environment repositories ready.")
+logger.info("Environment repositories ready.")
 
 # Empty container-container share dir as it is ephemeral
 share_dir = os.path.join(os.path.sep, 'mnt', 'share')
-lmlog.logger.info("Emptying container-container share folder: {}.".format(share_dir))
+logger.info("Emptying container-container share folder: {}.".format(share_dir))
 try:
     for item in os.listdir(share_dir):
         item_path = os.path.join(share_dir, item)
@@ -66,13 +84,27 @@ try:
         else:
             shutil.rmtree(item_path)
 except Exception as e:
-    lmlog.logger.error("Failed to empty share folder: {}.".format(e))
+    logger.error(f"Failed to empty share folder: {e}.")
     raise
 
-lmlog.logger.info("LabManager Ready")
+
+def main(debug=False) -> None:
+    try:
+        # Run app on 0.0.0.0, assuming not an issue since it should be in a container
+        # Please note: Debug mode must explicitly be set to False when running integration
+        # tests, due to properties of Flask werkzeug dynamic package reloading.
+        if debug:
+            # This is to support integration tests, which will call main
+            # with debug=False in order to avoid runtime reloading of Python code
+            # which causes the interpreter to crash.
+            app.run(host="0.0.0.0", port=10001, debug=debug)
+        else:
+            # If debug arg is not explicitly given then it is loaded from config
+            app.run(host="0.0.0.0", port=10001)
+    except Exception as e:
+        logger.exception(e)
+        raise
+
 
 if __name__ == '__main__':
-    if getpass.getuser() == "giguser":
-        app.run(host="0.0.0.0")
-    else:
-        app.run()
+    main()

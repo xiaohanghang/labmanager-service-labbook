@@ -1,7 +1,3 @@
-# Copyright (c) 2017 FlashX, LLC
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
@@ -17,13 +13,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 import graphene
+from lmsrvlabbook.api.objects.labbookfile import LabbookFile, LabbookFavorite
 
 
-class User(graphene.Interface):
-    """Interface representing a user in the system"""
-    username = graphene.String()
-    email = graphene.String()
-    given_name = graphene.String()
-    family_name = graphene.String()
+class LabbookFileConnection(graphene.relay.Connection):
+    """A connection for paging through labbook files. """
+    class Meta:
+        node = LabbookFile
 
+
+class LabbookFavoriteConnection(graphene.relay.Connection):
+    """A connection for paging through labbook favorites. """
+    class Meta:
+        node = LabbookFavorite

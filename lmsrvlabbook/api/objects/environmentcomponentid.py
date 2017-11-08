@@ -131,5 +131,4 @@ class EnvironmentComponent(ObjectType):
                                     namespace=component_data["###namespace###"],
                                     name=id_data["component"],
                                     version=id_data["version"],
-                                    component_class=EnvironmentComponentClass[id_data['component_class']].value,
-                                    )
+                                    component_class=EnvironmentComponentClass[id_data['component_class']].value)

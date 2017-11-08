@@ -24,7 +24,7 @@ import graphene
 import docker
 
 from lmsrvlabbook.api.objects.environment import Environment
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 from lmcommon.configuration import (Configuration, get_docker_client)
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.dispatcher import Dispatcher, jobs
@@ -51,7 +51,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         if "owner" not in input:
             owner = username
@@ -72,7 +72,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
 
         try:
             image_builder = ImageBuilder(labbook_dir)
-            img = image_builder.build_image(docker_client=client, image_tag=tag, background=True)
+            img = image_builder.build_image(docker_client=client, image_tag=tag, username=username, background=True)
         except Exception as e:
             logger.exception(e)
             raise
@@ -103,8 +103,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         if "owner" not in input:
             owner = username
@@ -136,7 +135,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
             labbook_dir, cnt.get('background_job_key')))
 
         # Start monitoring lab book environment for activity
-        start_labbook_monitor(lb)
+        start_labbook_monitor(lb, username)
 
         return StartContainer(environment=Environment.create(id_data), background_job_key=cnt.get('background_job_key'))
 
@@ -156,8 +155,7 @@ class StopContainer(graphene.relay.ClientIDMutation):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_user()
+        username = get_logged_in_username()
 
         if "owner" not in input:
             owner = username
@@ -177,6 +175,6 @@ class StopContainer(graphene.relay.ClientIDMutation):
         # Stop monitoring lab book environment for activity
         lb = LabBook()
         lb.from_name(username, owner, input.get('labbook_name'))
-        stop_labbook_monitor(lb)
+        stop_labbook_monitor(lb, username)
 
         return StopContainer(environment=Environment.create(id_data), background_job_key=job_ref)

@@ -23,7 +23,7 @@ import graphene
 from lmcommon.labbook import LabBook
 from lmcommon.notes import NoteStore
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvcore.api import ObjectType
 
@@ -101,7 +101,7 @@ class NoteObject(ObjectType, NoteObjectType):
             del id_data["type_id"]
 
         if "username" not in id_data:
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
 
         lb = LabBook()
         lb.from_name(id_data["username"], id_data["owner"], id_data["name"])

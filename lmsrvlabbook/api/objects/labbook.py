@@ -17,37 +17,67 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import graphene
-import os
 import base64
+import json
+import graphene
 
-from lmcommon.labbook import LabBook
-from lmcommon.gitlib import get_git_interface
+import os
+
 from lmcommon.configuration import Configuration
+from lmcommon.logging import LMLogger
+from lmcommon.gitlib import get_git_interface
+from lmcommon.labbook import LabBook
 from lmcommon.notes import NoteStore
 
-from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvcore.api import ObjectType
+from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
-from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects.ref import LabbookRef
+from lmsrvlabbook.api.connections.note import NoteConnection
+from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.objects.environment import Environment
 from lmsrvlabbook.api.objects.note import Note
-from lmsrvlabbook.api.connections.ref import LabbookRefConnection
-from lmsrvlabbook.api.connections.note import NoteConnection
+from lmsrvlabbook.api.objects.ref import LabbookRef
+from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
+from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection, LabbookFavoriteConnection
+
+logger = LMLogger.get_logger()
 
 
-class LabbookSummary(ObjectType):
-    """A type representing a summary of a LabBook used for listing LabBooks
+class Labbook(ObjectType):
+    """A type representing a LabBook and all of its contents
 
     LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
 
     """
     class Meta:
         interfaces = (graphene.relay.Node, GitRepository)
+
+    # The name of the current branch
+    active_branch = graphene.Field(LabbookRef)
+
+    # List of branches
+    branches = graphene.relay.ConnectionField(LabbookRefConnection)
+
+    # Environment Information
+    environment = graphene.Field(Environment)
+
+    # List of files and directories
+    files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String())
+
+    # List of files for each primary subdirectory
+    code_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("code/"))
+    input_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("input/"))
+    output_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("output/"))
+
+    # List of favorites for a given subdir (code, input, output)
+    favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection, subdir=graphene.String())
+
+    # Connection to Note Entries
+    notes = graphene.relay.ConnectionField(NoteConnection)
 
     @staticmethod
     def to_type_id(id_data):
@@ -97,87 +127,45 @@ class LabbookSummary(ObjectType):
             del id_data["type_id"]
 
         if "username" not in id_data:
-            id_data["username"] = get_logged_in_user()
+            id_data["username"] = get_logged_in_username()
 
         lb = LabBook()
         lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-
-        return LabbookSummary(id=Labbook.to_type_id(id_data),
-                              name=lb.name, description=lb.description,
-                              owner=Owner.create(id_data))
-
-
-class Labbook(LabbookSummary):
-    """A type representing a LabBook and all of its contents
-
-    LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
-
-    """
-    class Meta:
-        interfaces = (graphene.relay.Node, GitRepository)
-
-    # The name of the current branch
-    active_branch = graphene.Field(LabbookRef)
-
-    # List of branches
-    branches = graphene.relay.ConnectionField(LabbookRefConnection)
-
-    # Environment Information
-    environment = graphene.Field(Environment)
-
-    # Connection to Note Entries
-    notes = graphene.relay.ConnectionField(NoteConnection)
-
-    @staticmethod
-    def create(id_data):
-        """Method to create a graphene LabBook object based on the node ID or owner+name
-
-        id_data should at a minimum contain either `type_id` or `owner` & `name`
-
-            {
-                "type_id": <unique id for this object Type),
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-            }
-
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance. Can be a node ID or other vars
-
-        Returns:
-            Labbook
-        """
-        if "type_id" in id_data:
-            id_data.update(Labbook.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
-
-        if "username" not in id_data:
-            id_data["username"] = get_logged_in_user()
-
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-
-        # Get the git information
-        if "git" not in id_data:
-            git = get_git_interface(Configuration().config["git"])
-            git.set_working_directory(os.path.join(git.working_directory,
-                                                   id_data["username"],
-                                                   id_data["owner"],
-                                                   "labbooks",
-                                                   id_data["name"]))
-        else:
-            git = id_data["git"]
-
-        # Get the current checked out branch name
-        id_data["branch"] = git.get_current_branch_name()
-
-        # Share git instance to speed up IO
-        id_data["git"] = git
 
         return Labbook(id=Labbook.to_type_id(id_data),
                        name=lb.name, description=lb.description,
-                       owner=Owner.create(id_data),
-                       active_branch=LabbookRef.create(id_data),
-                       environment=Environment.create(id_data))
+                       owner=Owner.create(id_data), environment=Environment.create(id_data),
+                       _id_data=id_data)
+
+    def resolve_active_branch(self, args, context, info):
+        """Method to get the active branch
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # Get the git information
+        if "git" not in self._id_data:
+            git = get_git_interface(Configuration().config["git"])
+            git.set_working_directory(os.path.join(git.working_directory,
+                                                   self._id_data["username"],
+                                                   self._id_data["owner"],
+                                                   "labbooks",
+                                                   self._id_data["name"]))
+        else:
+            git = self._id_data["git"]
+
+        # Get the current checked out branch name
+        self._id_data["branch"] = git.get_current_branch_name()
+
+        # Share git instance to speed up IO
+        self._id_data["git"] = git
+
+        return LabbookRef.create(self._id_data)
 
     def resolve_branches(self, args, context, info):
         """Method to page through branch Refs
@@ -193,7 +181,7 @@ class Labbook(LabbookSummary):
         # Get the git information
         git = get_git_interface(Configuration().config["git"])
         # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
-        git.set_working_directory(os.path.join(git.working_directory, get_logged_in_user(),
+        git.set_working_directory(os.path.join(git.working_directory, get_logged_in_username(),
                                                self.owner.username, "labbooks", self.name))
 
         # Get all edges and cursors. Here, cursors are just an index into the refs
@@ -224,6 +212,41 @@ class Labbook(LabbookSummary):
         return LabbookRefConnection(edges=edge_objs,
                                     page_info=lbc.page_info)
 
+    def resolve_files(self, args, context, info):
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+
+        # Get all files and directories, with the exception of anything in .git or .gigantum
+        edges = lb.listdir(base_path=args.get('base_dir'), show_hidden=False)
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        edge_objs = []
+        try:
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                id_data = {"user": get_logged_in_username(),
+                           "owner": self.owner.username,
+                           "name": self.name,
+                           "file_info": edge}
+                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
+
+            return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def resolve_code_files(self, args, context, info):
+        return self.resolve_files(args, context, info)
+
+    def resolve_input_files(self, args, context, info):
+        return self.resolve_files(args, context, info)
+
+    def resolve_output_files(self, args, context, info):
+        return self.resolve_files(args, context, info)
+
     def resolve_notes(self, args, context, info):
         """Method to page through branch Refs
 
@@ -237,7 +260,7 @@ class Labbook(LabbookSummary):
         """
         # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
         lb = LabBook()
-        lb.from_name(get_logged_in_user(), self.owner.username, self.name)
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         note_db = NoteStore(lb)
 
@@ -262,3 +285,30 @@ class Labbook(LabbookSummary):
             edge_objs.append(NoteConnection.Edge(node=Note.create(id_data), cursor=cursor))
 
         return NoteConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_favorites(self, args, context, info):
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+
+        # Get all files and directories, with the exception of anything in .git or .gigantum
+        edges = lb.get_favorites(args.get('subdir'))
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        edge_objs = []
+        try:
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                id_data = {"user": get_logged_in_username(),
+                           "owner": self.owner.username,
+                           "name": self.name,
+                           "subdir": args.get('subdir'),
+                           "favorite_data": edge}
+                edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data), cursor=cursor))
+
+            return LabbookFavoriteConnection(edges=edge_objs, page_info=lbc.page_info)
+        except Exception as e:
+            logger.exception(e)
+            raise

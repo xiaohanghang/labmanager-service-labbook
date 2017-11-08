@@ -18,15 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
-import tempfile
 import multiprocessing
 import threading
-import os
-import uuid
-import shutil
+import pprint
 import time
 
 from snapshottest import snapshot
+from lmsrvlabbook.tests.fixtures import fixture_working_dir
 
 from graphene.test import Client
 import graphene
@@ -47,31 +45,6 @@ class Query(LabbookQuery, graphene.ObjectType):
 class Mutation(LabbookMutations, graphene.ObjectType):
     pass
 
-
-@pytest.fixture()
-def mock_config_file():
-    """A pytest fixture that creates a temporary directory and a config file to match. Deletes directory after test"""
-    # Create a temporary working directory
-    temp_dir = os.path.join(tempfile.tempdir, uuid.uuid4().hex)
-    os.makedirs(temp_dir)
-
-    with tempfile.NamedTemporaryFile(mode="wt") as fp:
-        # Write a temporary config file
-        fp.write("""core:
-  team_mode: false 
-git:
-  backend: 'filesystem'
-  working_directory: '{}'""".format(temp_dir))
-        fp.seek(0)
-
-        # Create test client
-        schema = graphene.Schema(query=Query,
-                                 mutation=Mutation)
-
-        yield fp.name, temp_dir, schema  # name of the config file, temporary working directory, the schema
-
-    # Remove the temp_dir
-    shutil.rmtree(temp_dir)
 
 @pytest.fixture()
 def temporary_worker():
@@ -108,15 +81,15 @@ def temporary_worker():
 
 class TestLabBookServiceQueries(object):
 
-    def test_query_finished_task(self, mock_config_file, snapshot, temporary_worker):
+    def test_query_finished_task(self, fixture_working_dir, snapshot, temporary_worker):
         """Test listing labbooks"""
 
         w, d = temporary_worker
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             job_id = d.dispatch_task(jobs.test_exit_success)
 
@@ -129,9 +102,10 @@ class TestLabBookServiceQueries(object):
                     status
                 }
             }
-            """ % job_id
+            """ % job_id.key_str
 
             try:
+                pprint.pprint(query)
                 snapshot.assert_match(client.execute(query))
             except:
                 w.terminate()
@@ -139,15 +113,15 @@ class TestLabBookServiceQueries(object):
 
             w.terminate()
 
-    def test_query_failed_task(self, mock_config_file, snapshot, temporary_worker):
+    def test_query_failed_task(self, fixture_working_dir, snapshot, temporary_worker):
         """Test listing labbooks"""
 
         w, d = temporary_worker
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             job_id = d.dispatch_task(jobs.test_exit_fail)
 
@@ -163,6 +137,7 @@ class TestLabBookServiceQueries(object):
             """ % job_id
 
             try:
+                pprint.pprint(query)
                 snapshot.assert_match(client.execute(query))
             except:
                 w.terminate()
@@ -170,15 +145,15 @@ class TestLabBookServiceQueries(object):
 
             w.terminate()
 
-    def test_query_started_task(self, mock_config_file, snapshot, temporary_worker):
+    def test_query_started_task(self, fixture_working_dir, snapshot, temporary_worker):
         """Test listing labbooks"""
 
         w, d = temporary_worker
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             job_id = d.dispatch_task(jobs.test_sleep, args=(2,))
 
@@ -203,15 +178,15 @@ class TestLabBookServiceQueries(object):
             time.sleep(3)
             w.terminate()
 
-    def test_query_queued_task(self, mock_config_file, snapshot, temporary_worker):
+    def test_query_queued_task(self, fixture_working_dir, snapshot, temporary_worker):
         """Test listing labbooks"""
 
         w, d = temporary_worker
 
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_config_file[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(mock_config_file[2])
+            client = Client(fixture_working_dir[2])
 
             job_id1 = d.dispatch_task(jobs.test_sleep, args=(2,))
             job_id2 = d.dispatch_task(jobs.test_sleep, args=(2,))

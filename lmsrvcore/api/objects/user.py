@@ -17,37 +17,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import graphene
-
-from lmcommon.logging import LMLogger
-from lmcommon.dispatcher import Dispatcher, JobKey
-
+from lmsrvcore.api.interfaces import User
 from lmsrvcore.api import ObjectType
 
-logger = LMLogger.get_logger()
+from flask import current_app
 
 
-class JobStatus(ObjectType):
-    """A query to get the status of a background task launched with the Dispatcher"""
-
+class UserIdentity(ObjectType):
+    """A type representing the identity of the logged in user"""
     class Meta:
-        interfaces = (graphene.relay.Node,)
-
-    # The Dispatcher returns a unique opaque id of the background job.
-    job_key = graphene.Field(graphene.String)
-
-    # Status is either: queued, failed, started, finished.
-    status = graphene.Field(graphene.String)
-
-    # Timestamp the task was put into the queue
-    started_at = graphene.Field(graphene.String)
-
-    # Timestamp the task was regarded as either failed or finished.
-    finished_at = graphene.Field(graphene.String)
-
-    # Result.. None if no result or void method.
-    result = graphene.Field(graphene.String)
+        interfaces = (graphene.relay.Node, User)
 
     @staticmethod
     def to_type_id(id_data):
@@ -59,7 +39,7 @@ class JobStatus(ObjectType):
         Returns:
             str
         """
-        return "{}".format(id_data["job_id"])
+        raise ValueError("UserIdentity type is set explicitly to the user. Do not call this method.")
 
     @staticmethod
     def parse_type_id(type_id):
@@ -71,32 +51,30 @@ class JobStatus(ObjectType):
         Returns:
             dict
         """
-        return {"job_id": type_id}
+        return type_id
 
     @staticmethod
-    def create(job_id: str):
-        """Method to retrieve status info for given background job.
+    def create(id_data):
+        """Method to populate a complete ObjectType instance from a dictionary that uniquely identifies an instances
 
         Args:
-            job_id(str): Unique key of the background job.
+            id_data:
 
         Returns:
-            JobStatus
+
         """
+        # Get the user from the current flask context
         try:
-            logger.info(f'Retrieving query for JobStatus on task_id `{job_id}` ({type(job_id)})...')
-            d = Dispatcher()
+            user = current_app.current_user
+        except AttributeError:
+            user = None
 
-            task_ref = d.query_task(JobKey(job_id))
-            logger.info(f'Retrieved reference {str(task_ref)} for job_id `{job_id}`')
+        if user:
+            return UserIdentity(id=user.username,
+                                username=user.username,
+                                email=user.email,
+                                given_name=user.given_name,
+                                family_name=user.family_name)
+        else:
+            return None
 
-            js = JobStatus(job_key=task_ref.job_key.key_str,
-                           status=task_ref.status,
-                           started_at=task_ref.started_at,
-                           finished_at=task_ref.finished_at,
-                           result=task_ref.result)
-        except Exception as e:
-            logger.exception(e)
-            raise
-
-        return js
