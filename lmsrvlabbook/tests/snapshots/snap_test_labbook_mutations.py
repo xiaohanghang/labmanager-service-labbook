@@ -131,23 +131,6 @@ snapshots['TestLabBookServiceMutations.test_checkout_branch 3'] = {
     }
 }
 
-snapshots['TestLabBookServiceMutations.test_add_file_errors 2'] = {
-    'data': {
-        'addLabbookFile': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 11,
-                    'line': 3
-                }
-            ],
-            'message': 'Filename of request file and `file_path` do not match'
-        }
-    ]
-}
-
 snapshots['TestLabBookServiceMutations.test_move_file 1'] = {
     'data': {
         'moveLabbookFile': {
