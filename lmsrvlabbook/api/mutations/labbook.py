@@ -381,7 +381,7 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
         subdir = graphene.String(required=True)
         key = graphene.String(required=True)
         description = graphene.String(required=False)
-        is_dir = graphene.String(required=False)
+        is_dir = graphene.Boolean(required=False)
         index = graphene.Int(required=False)
 
     new_favorite_edge = graphene.Field(LabbookFavoriteConnection.Edge)

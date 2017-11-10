@@ -23,9 +23,7 @@ import os
 from lmcommon.logging import LMLogger
 from lmcommon.labbook import LabBook
 
-
 from lmsrvcore.auth.user import get_logged_in_username
-
 from lmsrvcore.api import ObjectType
 from lmsrvcore.api.connections import ListBasedConnection
 
@@ -113,7 +111,6 @@ class LabbookSection(ObjectType):
 
         if args.get("root"):
             base_dir = os.path.join(self._id_data['section_name'], args.get("root")) + os.path.sep
-
         else:
             base_dir = self._id_data['section_name'] + os.path.sep
         base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
@@ -149,7 +146,7 @@ class LabbookSection(ObjectType):
             lb = self._id_data["labbook_instance"]
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.get_favorites(args.get('subdir'))
+        edges = lb.get_favorites(self._id_data['section_name'])
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args

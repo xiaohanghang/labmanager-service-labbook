@@ -391,27 +391,6 @@ class TestLabBookServiceMutations(object):
             res = client.execute(query)
             assert res['data']['deleteLabbookFile']['success'] is True
 
-    def test_delete_file(self, mock_create_labbooks):
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            # Note, deleting a file should work with and without a trailing / at the end.
-            query = """
-            mutation deleteLabbookFile {
-              deleteLabbookFile(
-                input: {
-                  user: "default",
-                  owner: "default",
-                  labbookName: "labbook1",
-                  filePath: "code/",
-                  isDirectory: true
-                }) {
-                  success
-                }
-            }
-            """
-            res = client.execute(query)
-            assert res['data']['deleteLabbookFile']['success'] is True
-
     def test_makedir(self, mock_create_labbooks, snapshot):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
             client = Client(mock_create_labbooks[2])
@@ -553,14 +532,16 @@ class TestLabBookServiceMutations(object):
                    {
                      labbook(name: "labbook1", owner: "default") {
                        name
-                       favorites(subdir: "code") {
-                           edges {
-                               node {
-                                   id
-                                   index
-                                   key
-                                   description
-                                   isDir
+                       code{
+                           favorites{
+                               edges {
+                                   node {
+                                       id
+                                       index
+                                       key
+                                       description
+                                       isDir
+                                   }
                                }
                            }
                        }
@@ -602,6 +583,96 @@ class TestLabBookServiceMutations(object):
         # Verify the favorite is there
         snapshot.assert_match(client.execute(fav_query))
 
+    def test_add_favorite_dir(self, mock_create_labbooks, snapshot):
+        """Method to test adding a favorite"""
+        client = Client(mock_create_labbooks[2])
+
+        # Verify no favs
+        fav_query = """
+                   {
+                     labbook(name: "labbook1", owner: "default") {
+                       name
+                       input{
+                           favorites{
+                               edges {
+                                   node {
+                                       id
+                                       index
+                                       key
+                                       description
+                                       isDir
+                                   }
+                               }
+                           }
+                       }
+                     }
+                   }
+                   """
+        snapshot.assert_match(client.execute(fav_query))
+
+        os.makedirs(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                 'labbook1', 'input', 'sample1'))
+        os.makedirs(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                 'labbook1', 'input', 'sample2'))
+
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "input",
+              key: "sample1",
+              description: "my data dir",
+              isDir: true
+            }) {
+              newFavoriteEdge{
+                node{
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                   }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Verify the favorite is there
+        snapshot.assert_match(client.execute(fav_query))
+
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "input",
+              key: "sample2/",
+              description: "my data dir 2",
+              isDir: true
+            }) {
+              newFavoriteEdge{
+                node{
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                   }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Verify the favorite is there
+        snapshot.assert_match(client.execute(fav_query))
+
     def test_add_favorite_at_index(self, mock_create_labbooks, snapshot):
         """Method to test adding a favorite"""
         client = Client(mock_create_labbooks[2])
@@ -611,14 +682,16 @@ class TestLabBookServiceMutations(object):
                    {
                      labbook(name: "labbook1", owner: "default") {
                        name
-                       favorites(subdir: "code") {
-                           edges {
-                               node {
-                                   id
-                                   index
-                                   key
-                                   description
-                                   isDir
+                       code{
+                           favorites{
+                               edges {
+                                   node {
+                                       id
+                                       index
+                                       key
+                                       description
+                                       isDir
+                                   }
                                }
                            }
                        }
@@ -743,10 +816,11 @@ class TestLabBookServiceMutations(object):
 
         # Verify the favorite is there
         fav_query = """
-                           {
-                             labbook(name: "labbook1", owner: "default") {
-                               name
-                               favorites(subdir: "code") {
+                       {
+                         labbook(name: "labbook1", owner: "default") {
+                           name
+                           code{
+                               favorites{
                                    edges {
                                        node {
                                            id
@@ -757,9 +831,10 @@ class TestLabBookServiceMutations(object):
                                        }
                                    }
                                }
-                             }
                            }
-                           """
+                         }
+                       }
+                       """
         snapshot.assert_match(client.execute(fav_query))
 
         # Delete a favorite in code

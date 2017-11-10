@@ -434,69 +434,6 @@ snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status_no_labb
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_list_favorites 1'] = {
-    'data': {
-        'labbook': {
-            'favorites': {
-                'edges': [
-                    {
-                        'node': {
-                            'description': 'My file with stuff 1',
-                            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
-                            'index': 0,
-                            'isDir': False,
-                            'key': 'code/test1.txt'
-                        }
-                    },
-                    {
-                        'node': {
-                            'description': 'My file with stuff 2',
-                            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjE=',
-                            'index': 1,
-                            'isDir': False,
-                            'key': 'code/test2.txt'
-                        }
-                    }
-                ]
-            },
-            'name': 'labbook1'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_list_favorites 2'] = {
-    'data': {
-        'labbook': {
-            'favorites': {
-                'edges': [
-                    {
-                        'node': {
-                            'description': 'Data dir 1',
-                            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
-                            'index': 0,
-                            'isDir': True,
-                            'key': 'input/data1/'
-                        }
-                    }
-                ]
-            },
-            'name': 'labbook1'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_list_favorites 3'] = {
-    'data': {
-        'labbook': {
-            'favorites': {
-                'edges': [
-                ]
-            },
-            'name': 'labbook1'
-        }
-    }
-}
-
 snapshots['TestLabBookServiceQueries.test_listdir 1'] = {
     'data': {
         'labbook': {
@@ -899,6 +836,260 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 2'] = {
                     ]
                 }
             }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_walkdir 1'] = {
+    'data': {
+        'labbook': {
+            'files': {
+                'edges': [
+                    {
+                        'node': {
+                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUv',
+                            'isDir': True,
+                            'key': 'code/',
+                            'size': 4096
+                        }
+                    },
+                    {
+                        'node': {
+                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmlucHV0Lw==',
+                            'isDir': True,
+                            'key': 'input/',
+                            'size': 4096
+                        }
+                    },
+                    {
+                        'node': {
+                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJm91dHB1dC8=',
+                            'isDir': True,
+                            'key': 'output/',
+                            'size': 4096
+                        }
+                    }
+                ]
+            },
+            'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_list_favorites 1'] = {
+    'data': {
+        'labbook': {
+            'code': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'My file with stuff 1',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'index': 0,
+                                'isDir': False,
+                                'key': 'code/test1.txt'
+                            }
+                        },
+                        {
+                            'node': {
+                                'description': 'My file with stuff 2',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjE=',
+                                'index': 1,
+                                'isDir': False,
+                                'key': 'code/test2.txt'
+                            }
+                        },
+                        {
+                            'node': {
+                                'description': 'testing',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjI=',
+                                'index': 2,
+                                'isDir': True,
+                                'key': 'code/blah/'
+                            }
+                        }
+                    ]
+                }
+            },
+            'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_list_favorites 2'] = {
+    'data': {
+        'labbook': {
+            'input': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'Data dir 1',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'index': 0,
+                                'isDir': True,
+                                'key': 'input/data1/'
+                            }
+                        }
+                    ]
+                }
+            },
+            'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_list_favorites 3'] = {
+    'data': {
+        'labbook': {
+            'name': 'labbook1',
+            'output': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'Data dir 2',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'index': 0,
+                                'isDir': True,
+                                'key': 'output/data2/'
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_list_favorites 4'] = {
+    'data': {
+        'labbook': {
+            'code': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'My file with stuff 1',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'index': 0,
+                                'isDir': False,
+                                'key': 'code/test1.txt'
+                            }
+                        },
+                        {
+                            'node': {
+                                'description': 'My file with stuff 2',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjE=',
+                                'index': 1,
+                                'isDir': False,
+                                'key': 'code/test2.txt'
+                            }
+                        },
+                        {
+                            'node': {
+                                'description': 'testing',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjI=',
+                                'index': 2,
+                                'isDir': True,
+                                'key': 'code/blah/'
+                            }
+                        }
+                    ]
+                }
+            },
+            'input': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'Data dir 1',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'index': 0,
+                                'isDir': True,
+                                'key': 'input/data1/'
+                            }
+                        }
+                    ]
+                }
+            },
+            'name': 'labbook1',
+            'output': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'Data dir 2',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'index': 0,
+                                'isDir': True,
+                                'key': 'output/data2/'
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_list_favorite_and_files 1'] = {
+    'data': {
+        'labbook': {
+            'code': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'My file with stuff 2',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'index': 0,
+                                'isDir': False,
+                                'key': 'code/test2.txt'
+                            }
+                        },
+                        {
+                            'node': {
+                                'description': 'testing',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjE=',
+                                'index': 1,
+                                'isDir': True,
+                                'key': 'code/blah/'
+                            }
+                        }
+                    ]
+                },
+                'files': {
+                    'edges': [
+                        {
+                            'node': {
+                                'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvYmxhaC8=',
+                                'isDir': True,
+                                'key': 'code/blah/',
+                                'size': 4096
+                            }
+                        },
+                        {
+                            'node': {
+                                'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvdGVzdDEudHh0',
+                                'isDir': False,
+                                'key': 'code/test1.txt',
+                                'size': 5
+                            }
+                        },
+                        {
+                            'node': {
+                                'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvdGVzdDIudHh0',
+                                'isDir': False,
+                                'key': 'code/test2.txt',
+                                'size': 5
+                            }
+                        }
+                    ]
+                }
+            },
+            'name': 'labbook1'
         }
     }
 }

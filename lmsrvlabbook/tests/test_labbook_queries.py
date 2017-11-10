@@ -411,7 +411,7 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_listdir(self, fixture_working_dir_populated_scoped, snapshot):
+    def test_walkdir(self, fixture_working_dir_populated_scoped, snapshot):
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
             # Make and validate request
             client = Client(fixture_working_dir_populated_scoped[2])
@@ -461,29 +461,28 @@ class TestLabBookServiceQueries(object):
                         """
             snapshot.assert_match(client.execute(query))
 
-    def test_list_files_code(self, fixture_working_dir_populated_scoped, snapshot):
-        # Add some extra files for listing
-        labbook_dir = os.path.join(fixture_working_dir_populated_scoped[1], 'default', 'default', 'labbooks',
-                                   'labbook1')
+    def test_list_files_code(self, fixture_working_dir, snapshot):
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
 
         # Write data in code
-        with open(os.path.join(labbook_dir, 'code', "test_file1.txt"), 'wt') as tf:
+        with open(os.path.join(lb.root_dir, 'code', "test_file1.txt"), 'wt') as tf:
             tf.write("file 1")
-        with open(os.path.join(labbook_dir, 'code', "test_file2.txt"), 'wt') as tf:
+        with open(os.path.join(lb.root_dir, 'code', "test_file2.txt"), 'wt') as tf:
             tf.write("file 2!!!!!!!!!")
-        with open(os.path.join(labbook_dir, 'code', ".hidden_file.txt"), 'wt') as tf:
+        with open(os.path.join(lb.root_dir, 'code', ".hidden_file.txt"), 'wt') as tf:
             tf.write("Should be hidden")
 
         # Create subdirs and data
-        os.makedirs(os.path.join(labbook_dir, 'code', 'src', 'js'))
-        with open(os.path.join(labbook_dir, 'code', 'src', 'test.py'), 'wt') as tf:
+        os.makedirs(os.path.join(lb.root_dir, 'code', 'src', 'js'))
+        with open(os.path.join(lb.root_dir, 'code', 'src', 'test.py'), 'wt') as tf:
             tf.write("print('hello, world')")
-        with open(os.path.join(labbook_dir, 'code', 'src', 'js', 'test.js'), 'wt') as tf:
+        with open(os.path.join(lb.root_dir, 'code', 'src', 'js', 'test.js'), 'wt') as tf:
             tf.write("asdfasdf")
 
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(fixture_working_dir_populated_scoped[2])
+            client = Client(fixture_working_dir[2])
             query = """
                         {
                           labbook(name: "labbook1", owner: "default") {
@@ -549,30 +548,30 @@ class TestLabBookServiceQueries(object):
                         """
             snapshot.assert_match(client.execute(query))
 
-    def test_list_files_many(self, fixture_working_dir_populated_scoped, snapshot):
+    def test_list_files_many(self, fixture_working_dir, snapshot):
         # Add some extra files for listing
-        labbook_dir = os.path.join(fixture_working_dir_populated_scoped[1], 'default', 'default', 'labbooks',
-                                   'labbook1')
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
 
         # Write data in code
-        with open(os.path.join(labbook_dir, 'code', "test_file1.txt"), 'wt') as tf:
+        with open(os.path.join(lb.root_dir, 'code', "test_file1.txt"), 'wt') as tf:
             tf.write("file 1")
-        with open(os.path.join(labbook_dir, 'code', "test_file2.txt"), 'wt') as tf:
+        with open(os.path.join(lb.root_dir, 'code', "test_file2.txt"), 'wt') as tf:
             tf.write("file 2!!!!!!!!!")
-        with open(os.path.join(labbook_dir, 'code', ".hidden_file.txt"), 'wt') as tf:
+        with open(os.path.join(lb.root_dir, 'code', ".hidden_file.txt"), 'wt') as tf:
             tf.write("Should be hidden")
 
         # Create subdirs and data
-        os.makedirs(os.path.join(labbook_dir, 'input', 'subdir', 'data'))
-        os.makedirs(os.path.join(labbook_dir, 'output', 'empty'))
-        with open(os.path.join(labbook_dir, 'input', 'subdir', 'data.dat'), 'wt') as tf:
+        os.makedirs(os.path.join(lb.root_dir, 'input', 'subdir', 'data'))
+        os.makedirs(os.path.join(lb.root_dir, 'output', 'empty'))
+        with open(os.path.join(lb.root_dir, 'input', 'subdir', 'data.dat'), 'wt') as tf:
             tf.write("adsfasdfasdf")
-        with open(os.path.join(labbook_dir, 'output', 'result.dat'), 'wt') as tf:
+        with open(os.path.join(lb.root_dir, 'output', 'result.dat'), 'wt') as tf:
             tf.write("fgh")
 
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             # Make and validate request
-            client = Client(fixture_working_dir_populated_scoped[2])
+            client = Client(fixture_working_dir[2])
             query = """
                         {
                           labbook(name: "labbook1", owner: "default") {
@@ -664,70 +663,6 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(query))
 
-    def test_list_subfolder_files(self, fixture_working_dir, snapshot):
-        # Add some extra files for listing
-        lb = LabBook(fixture_working_dir[0])
-        lb.new(owner={"username": "default"}, name="test-labbook", description="Cats labbook 1")
-
-        with open(os.path.join(lb.root_dir, 'code', "code_file.txt"), 'wt') as tf:
-            tf.write("file 1")
-        with open(os.path.join(lb.root_dir, 'input', "input_file.txt"), 'wt') as tf:
-            tf.write("file 2")
-        with open(os.path.join(lb.root_dir, 'output', "output_file.txt"), 'wt') as tf:
-            tf.write("file 3")
-
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-            query = """
-                        {
-                          labbook(name: "test-labbook", owner: "default") {
-                            name
-                            files {
-                              edges {
-                                node {
-                                  id
-                                  key
-                                  size
-                                  isDir
-                                }
-                              }
-                            }
-                            codeFiles {
-                              edges {
-                                node {
-                                  id
-                                  key
-                                  size
-                                  isDir
-                                }
-                              }
-                            }
-                            inputFiles {
-                              edges {
-                                node {
-                                  id
-                                  key
-                                  size
-                                  isDir
-                                }
-                              }
-                            }
-                            outputFiles {
-                              edges {
-                                node {
-                                  id
-                                  key
-                                  size
-                                  isDir
-                                }
-                              }
-                            }
-                          }
-                        }
-                        """
-            snapshot.assert_match(client.execute(query))
-
     def test_list_favorites(self, fixture_working_dir, snapshot):
         """Test listing labbook favorites"""
 
@@ -741,12 +676,16 @@ class TestLabBookServiceQueries(object):
             test_file.write("blah2")
 
         # Setup a favorite dir in input
+        os.makedirs(os.path.join(lb.root_dir, 'code', 'blah'))
         os.makedirs(os.path.join(lb.root_dir, 'input', 'data1'))
+        os.makedirs(os.path.join(lb.root_dir, 'output', 'data2'))
 
         # Create favorites
         lb.create_favorite("code", "test1.txt", description="My file with stuff 1")
         lb.create_favorite("code", "test2.txt", description="My file with stuff 2")
+        lb.create_favorite("code", "blah/", description="testing", is_dir=True)
         lb.create_favorite("input", "data1/", description="Data dir 1", is_dir=True)
+        lb.create_favorite("output", "data2/", description="Data dir 2", is_dir=True)
 
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
@@ -758,14 +697,16 @@ class TestLabBookServiceQueries(object):
                         {
                           labbook(name: "labbook1", owner: "default") {
                             name
-                            favorites(subdir: "code") {
-                                edges {
-                                    node {
-                                        id
-                                        index
-                                        key
-                                        description
-                                        isDir
+                            code{
+                                favorites{
+                                    edges {
+                                        node {
+                                            id
+                                            index
+                                            key
+                                            description
+                                            isDir
+                                        }
                                     }
                                 }
                             }
@@ -774,44 +715,153 @@ class TestLabBookServiceQueries(object):
                         """
             snapshot.assert_match(client.execute(query))
 
-            # Get LabBooks for the "logged in user" - Currently just "default"
+            # Get input favorites
             query = """
-                                    {
-                                      labbook(name: "labbook1", owner: "default") {
-                                        name
-                                        favorites(subdir: "input") {
-                                            edges {
-                                                node {
-                                                    id
-                                                    index
-                                                    key
-                                                    description
-                                                    isDir
-                                                }
-                                            }
+                        {
+                          labbook(name: "labbook1", owner: "default") {
+                            name
+                            input{
+                                favorites{
+                                    edges {
+                                        node {
+                                            id
+                                            index
+                                            key
+                                            description
+                                            isDir
                                         }
-                                      }
                                     }
-                                    """
+                                }
+                            }
+                          }
+                        }
+                        """
             snapshot.assert_match(client.execute(query))
+
+            # Get output favorites
+            query = """
+                        {
+                          labbook(name: "labbook1", owner: "default") {
+                            name
+                            output{
+                                favorites{
+                                    edges {
+                                        node {
+                                            id
+                                            index
+                                            key
+                                            description
+                                            isDir
+                                        }
+                                    }
+                                }
+                            }
+                          }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+            # Get all favorites
+            query = """
+                        {
+                          labbook(name: "labbook1", owner: "default") {
+                            name
+                            code{
+                                favorites{
+                                    edges {
+                                        node {
+                                            id
+                                            index
+                                            key
+                                            description
+                                            isDir
+                                        }
+                                    }
+                                }
+                            }
+                            input{
+                                favorites{
+                                    edges {
+                                        node {
+                                            id
+                                            index
+                                            key
+                                            description
+                                            isDir
+                                        }
+                                    }
+                                }
+                            }
+                            output{
+                                favorites{
+                                    edges {
+                                        node {
+                                            id
+                                            index
+                                            key
+                                            description
+                                            isDir
+                                        }
+                                    }
+                                }
+                            }
+                          }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))
+
+    def test_list_favorite_and_files(self, fixture_working_dir, snapshot):
+        """Test listing labbook favorites"""
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        # Setup some favorites in code
+        with open(os.path.join(lb.root_dir, 'code', 'test1.txt'), 'wt') as test_file:
+            test_file.write("blah1")
+        with open(os.path.join(lb.root_dir, 'code', 'test2.txt'), 'wt') as test_file:
+            test_file.write("blah2")
+
+        # Setup a favorite dir in input
+        os.makedirs(os.path.join(lb.root_dir, 'code', 'blah'))
+
+        # Create favorites
+        lb.create_favorite("code", "test2.txt", description="My file with stuff 2")
+        lb.create_favorite("code", "blah/", description="testing", is_dir=True)
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
 
             # Get LabBooks for the "logged in user" - Currently just "default"
             query = """
-                                    {
-                                      labbook(name: "labbook1", owner: "default") {
-                                        name
-                                        favorites(subdir: "output") {
-                                            edges {
-                                                node {
-                                                    id
-                                                    index
-                                                    key
-                                                    description
-                                                    isDir
-                                                }
-                                            }
+                        {
+                          labbook(name: "labbook1", owner: "default") {
+                            name
+                            code{
+                                favorites{
+                                    edges {
+                                        node {
+                                            id
+                                            index
+                                            key
+                                            description
+                                            isDir
                                         }
-                                      }
                                     }
-                                    """
+                                }                                
+                                files {
+                                    edges {
+                                        node {
+                                            id
+                                            key
+                                            size
+                                            isDir
+                                        }
+                                    }
+                                }
+                            }
+                          }
+                        }
+                        """
             snapshot.assert_match(client.execute(query))
