@@ -86,7 +86,6 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
 class RenameLabbook(graphene.ClientIDMutation):
     """Rename a labbook"""
     class Input:
-        user = graphene.String(required=True)
         owner = graphene.String(required=True)
         original_labbook_name = graphene.String(required=True)
         new_labbook_name = graphene.String(required=True)
@@ -134,7 +133,6 @@ class RenameLabbook(graphene.ClientIDMutation):
 
 class ExportLabbook(graphene.relay.ClientIDMutation):
     class Input:
-        user = graphene.String(required=True)
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
 
@@ -142,10 +140,11 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        logger.info(f'Exporting LabBook: {input["user"]}/{input["owner"]}/{input["labbook_name"]}')
+        username = get_logged_in_username()
+        logger.info(f'Exporting LabBook: {username}/{input["owner"]}/{input["labbook_name"]}')
         try:
             working_directory = Configuration().config['git']['working_directory']
-            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+            inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
@@ -164,7 +163,6 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
 class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     class Input:
         owner = graphene.String(required=True)
-        user = graphene.String(required=True)
         chunk_upload_params = ChunkUploadInput(required=True)
 
     import_job_key = graphene.String()
@@ -176,14 +174,15 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
             logger.error('No file uploaded')
             raise ValueError('No file uploaded')
 
+        username = get_logged_in_username()
         logger.info(
-            f"Handling ImportLabbook mutation: user={input.get('user')},"
+            f"Handling ImportLabbook mutation: user={username},"
             f"owner={input.get('owner')}. Uploaded file {cls.upload_file_path}")
 
         job_metadata = {'method': 'import_labbook_from_zip'}
         job_kwargs = {
             'archive_path': cls.upload_file_path,
-            'username': input.get('user'),
+            'username': username,
             'owner': input.get('owner'),
             'base_filename': cls.filename
         }
@@ -193,17 +192,17 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
 
         assumed_lb_name = cls.filename.replace('.lbk', '').split('_')[0]
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
                                              assumed_lb_name)
         build_img_kwargs = {
             'path': os.path.join(inferred_lb_directory, '.gigantum', 'env'),
-            'tag': f"{input.get('user')}-{input.get('owner')}-{assumed_lb_name}",
+            'tag': f"{username}-{input.get('owner')}-{assumed_lb_name}",
             'pull': True,
             'nocache': False
         }
         build_img_metadata = {
             'method': 'build_image',
-            'labbook': f"{input.get('user')}-{input.get('owner')}-{assumed_lb_name}"
+            'labbook': f"{username}-{input.get('owner')}-{assumed_lb_name}"
         }
         logger.info(f"Queueing job to build imported labbook at assumed directory `{inferred_lb_directory}`")
         build_image_job_key = dispatcher.dispatch_task(jobs.build_docker_image, kwargs=build_img_kwargs,
@@ -218,7 +217,6 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     """Mutation to add a file to a labbook. File should be sent in the `uploadFile` key as a multi-part/form upload.
     file_path is the relative path from the labbook root."""
     class Input:
-        user = graphene.String(required=True)
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         file_path = graphene.String(required=True)
@@ -267,7 +265,6 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
 
 class DeleteLabbookFile(graphene.ClientIDMutation):
     class Input:
-        user = graphene.String(required=True)
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         file_path = graphene.String(required=True)
@@ -278,8 +275,9 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
         try:
+            username = get_logged_in_username()
             working_directory = Configuration().config['git']['working_directory']
-            inferred_lb_directory = os.path.join(working_directory, input['user'], input['owner'], 'labbooks',
+            inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
@@ -295,7 +293,6 @@ class MoveLabbookFile(graphene.ClientIDMutation):
     """Method to move/rename a file or directory. If file, both src_path and dst_path should contain the file name.
     If a directory, be sure to include the trailing slash"""
     class Input:
-        user = graphene.String(required=True)
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         src_path = graphene.String(required=True)
@@ -336,7 +333,6 @@ class MoveLabbookFile(graphene.ClientIDMutation):
 
 class MakeLabbookDirectory(graphene.ClientIDMutation):
     class Input:
-        user = graphene.String(required=True)
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         dir_name = graphene.String(required=True)

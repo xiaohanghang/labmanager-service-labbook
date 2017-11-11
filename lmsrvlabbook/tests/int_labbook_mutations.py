@@ -112,7 +112,7 @@ class TestLabbookMutation(object):
             lb_name = "mutation-export-import-unittest"
             lb = LabBook(fixture_working_dir_env_repo_scoped[0])
             lb.new(name=lb_name, description="Import/Export Mutation Testing.",
-                   owner={"username": "test"})
+                   owner={"username": "default"})
             cm = ComponentManager(lb)
             cm.add_component("base_image", "gig-dev_environment-components", "gigantum", "ubuntu1604-python3", "0.4")
             cm.add_component("dev_env", "gig-dev_environment-components", "gigantum", "jupyter-ubuntu", "0.1")
@@ -122,8 +122,7 @@ class TestLabbookMutation(object):
             export_query = """
             mutation export {
               exportLabbook(input: {
-                user: "test",
-                owner: "test",
+                owner: "default",
                 labbookName: "%s"
               }) {
                 jobKey
@@ -155,8 +154,7 @@ class TestLabbookMutation(object):
             export_query = """
             mutation import {
               importLabbook(input: {
-                user: "test",
-                owner: "test",
+                owner: "default",
               }) {
                 jobKey
               }
