@@ -110,7 +110,7 @@ class TestLabBookServiceMutations(object):
             query = """
             mutation myCreateLabbook($name: String!, $desc: String!){
               createLabbook(input: {name: $name, description: $desc}){
-                labbook{                  
+                labbook{
                   name
                   description
                 }
@@ -209,8 +209,8 @@ class TestLabBookServiceMutations(object):
             query = """
             mutation BranchLabBook($labbook_name: String!, $branch_name: String!) {
               createBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
-                branch {                  
-                  name                 
+                branch {
+                  name
                 }
               }
             }
@@ -284,7 +284,6 @@ class TestLabBookServiceMutations(object):
             mutation MoveLabbookFile {
               moveLabbookFile(
                 input: {
-                  user: "default",
                   owner: "default",
                   labbookName: "labbook1",
                   srcPath: "code",
@@ -312,7 +311,6 @@ class TestLabBookServiceMutations(object):
             mutation MoveLabbookFile {
               moveLabbookFile(
                 input: {
-                  user: "default",
                   owner: "default",
                   labbookName: "labbook1",
                   srcPath: "code/sillyfile",
@@ -332,7 +330,6 @@ class TestLabBookServiceMutations(object):
             mutation MoveLabbookFile {
               moveLabbookFile(
                 input: {
-                  user: "default",
                   owner: "default",
                   labbookName: "labbook1",
                   srcPath: "input/sillyfile",
@@ -379,7 +376,6 @@ class TestLabBookServiceMutations(object):
             mutation deleteLabbookFile {
               deleteLabbookFile(
                 input: {
-                  user: "default",
                   owner: "default",
                   labbookName: "labbook1",
                   filePath: "code/sillyfile",
@@ -399,7 +395,6 @@ class TestLabBookServiceMutations(object):
             mutation deleteLabbookFile {
               deleteLabbookFile(
                 input: {
-                  user: "default",
                   owner: "default",
                   labbookName: "labbook1",
                   filePath: "code/",
@@ -419,7 +414,6 @@ class TestLabBookServiceMutations(object):
             mutation makeLabbookDirectory {
               makeLabbookDirectory(
                 input: {
-                  user: "default",
                   owner: "default",
                   labbookName: "labbook1",
                   dirName: "output/new_folder",
@@ -469,7 +463,7 @@ class TestLabBookServiceMutations(object):
 
                 query = f"""
                             mutation addLabbookFile{{
-                              addLabbookFile(input:{{owner:"default", user:"default",
+                              addLabbookFile(input:{{owner:"default",
                                                       labbookName: "labbook1",
                                                       filePath: "code/myfile.bin",
                                 chunkUploadParams:{{
@@ -507,7 +501,7 @@ class TestLabBookServiceMutations(object):
         client = Client(mock_create_labbooks[2])
         query = f"""
                     mutation addLabbookFile{{
-                      addLabbookFile(input:{{owner:"default", user:"default",
+                      addLabbookFile(input:{{owner:"default",
                                               labbookName: "labbook1",
                                               filePath: "code/myfile.bin",
                         chunkUploadParams:{{
@@ -553,14 +547,16 @@ class TestLabBookServiceMutations(object):
                    {
                      labbook(name: "labbook1", owner: "default") {
                        name
-                       favorites(subdir: "code") {
-                           edges {
-                               node {
-                                   id
-                                   index
-                                   key
-                                   description
-                                   isDir
+                       code{
+                           favorites{
+                               edges {
+                                   node {
+                                       id
+                                       index
+                                       key
+                                       description
+                                       isDir
+                                   }
                                }
                            }
                        }
@@ -584,6 +580,96 @@ class TestLabBookServiceMutations(object):
               subdir: "code",
               key: "test.txt",
               description: "my test favorite"
+            }) {
+              newFavoriteEdge{
+                node {
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Verify the favorite is there
+        snapshot.assert_match(client.execute(fav_query))
+
+    def test_add_favorite_dir(self, mock_create_labbooks, snapshot):
+        """Method to test adding a favorite"""
+        client = Client(mock_create_labbooks[2])
+
+        # Verify no favs
+        fav_query = """
+                   {
+                     labbook(name: "labbook1", owner: "default") {
+                       name
+                       input{
+                           favorites{
+                               edges {
+                                   node {
+                                       id
+                                       index
+                                       key
+                                       description
+                                       isDir
+                                   }
+                               }
+                           }
+                       }
+                     }
+                   }
+                   """
+        snapshot.assert_match(client.execute(fav_query))
+
+        os.makedirs(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                 'labbook1', 'input', 'sample1'))
+        os.makedirs(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                 'labbook1', 'input', 'sample2'))
+
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "input",
+              key: "sample1",
+              description: "my data dir",
+              isDir: true
+            }) {
+              newFavoriteEdge{
+                node{
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                   }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Verify the favorite is there
+        snapshot.assert_match(client.execute(fav_query))
+
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              subdir: "input",
+              key: "sample2/",
+              description: "my data dir 2",
+              isDir: true
             }) {
               newFavoriteEdge{
                 node{
@@ -611,14 +697,16 @@ class TestLabBookServiceMutations(object):
                    {
                      labbook(name: "labbook1", owner: "default") {
                        name
-                       favorites(subdir: "code") {
-                           edges {
-                               node {
-                                   id
-                                   index
-                                   key
-                                   description
-                                   isDir
+                       code{
+                           favorites{
+                               edges {
+                                   node {
+                                       id
+                                       index
+                                       key
+                                       description
+                                       isDir
+                                   }
                                }
                            }
                        }
@@ -743,10 +831,11 @@ class TestLabBookServiceMutations(object):
 
         # Verify the favorite is there
         fav_query = """
-                           {
-                             labbook(name: "labbook1", owner: "default") {
-                               name
-                               favorites(subdir: "code") {
+                       {
+                         labbook(name: "labbook1", owner: "default") {
+                           name
+                           code{
+                               favorites{
                                    edges {
                                        node {
                                            id
@@ -757,9 +846,10 @@ class TestLabBookServiceMutations(object):
                                        }
                                    }
                                }
-                             }
                            }
-                           """
+                         }
+                       }
+                       """
         snapshot.assert_match(client.execute(fav_query))
 
         # Delete a favorite in code
@@ -817,7 +907,7 @@ class TestLabBookServiceMutations(object):
 
                 query = f"""
                             mutation myMutation{{
-                              importLabbook(input:{{owner:"default", user:"default",
+                              importLabbook(input:{{owner:"default",
                                 chunkUploadParams:{{
                                   uploadId: "jfdjfdjdisdjwdoijwlkfjd",
                                   chunkSize: {chunk_size},
@@ -882,10 +972,10 @@ class TestLabBookServiceMutations(object):
         # rename (without the container being previously built)
         query = f"""
                     mutation myMutation{{
-                      renameLabbook(input:{{owner:"default", user:"default", 
+                      renameLabbook(input:{{owner:"default",
                       originalLabbookName: "test-labbook",
                       newLabbookName: "test-new-name"}}) {{
-                        success                        
+                        success
                       }}
                     }}
                     """
@@ -920,10 +1010,10 @@ class TestLabBookServiceMutations(object):
         # rename again (this time the container will have been built)
         query = f"""
                     mutation myMutation{{
-                      renameLabbook(input:{{owner:"default", user:"default", 
+                      renameLabbook(input:{{owner:"default",
                       originalLabbookName: "test-new-name",
                       newLabbookName: "test-renamed-again"}}) {{
-                        success                        
+                        success
                       }}
                     }}
                     """

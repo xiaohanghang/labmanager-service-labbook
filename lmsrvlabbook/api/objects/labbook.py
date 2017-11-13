@@ -42,6 +42,7 @@ from lmsrvlabbook.api.objects.environment import Environment
 from lmsrvlabbook.api.objects.note import Note
 from lmsrvlabbook.api.objects.ref import LabbookRef
 from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
+from lmsrvlabbook.api.objects.labbooksection import LabbookSection
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection, LabbookFavoriteConnection
 
 logger = LMLogger.get_logger()
@@ -65,16 +66,13 @@ class Labbook(ObjectType):
     # Environment Information
     environment = graphene.Field(Environment)
 
-    # List of files and directories
+    # Interface to list all of files and directories
     files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String())
 
-    # List of files for each primary subdirectory
-    code_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("code/"))
-    input_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("input/"))
-    output_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("output/"))
-
-    # List of favorites for a given subdir (code, input, output)
-    favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection, subdir=graphene.String())
+    # List of sections
+    code = graphene.Field(LabbookSection)
+    input = graphene.Field(LabbookSection)
+    output = graphene.Field(LabbookSection)
 
     # Connection to Note Entries
     notes = graphene.relay.ConnectionField(NoteConnection)
@@ -131,6 +129,7 @@ class Labbook(ObjectType):
 
         lb = LabBook()
         lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        id_data["labbook_instance"] = lb
 
         return Labbook(id=Labbook.to_type_id(id_data),
                        name=lb.name, description=lb.description,
@@ -217,7 +216,7 @@ class Labbook(ObjectType):
         lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.listdir(base_path=args.get('base_dir'), show_hidden=False)
+        edges = lb.walkdir(base_path=args.get('base_dir'), show_hidden=False)
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
@@ -238,14 +237,26 @@ class Labbook(ObjectType):
             logger.exception(e)
             raise
 
-    def resolve_code_files(self, args, context, info):
-        return self.resolve_files(args, context, info)
+    def resolve_code(self, args, context, info):
+        """Method to resolve the code section"""
+        # Make a copy of id_data and set the section to code
+        local_id_data = self._id_data
+        local_id_data['section_name'] = 'code'
+        return LabbookSection.create(local_id_data)
 
-    def resolve_input_files(self, args, context, info):
-        return self.resolve_files(args, context, info)
+    def resolve_input(self, args, context, info):
+        """Method to resolve the output section"""
+        # Make a copy of id_data and set the section to code
+        local_id_data = self._id_data
+        local_id_data['section_name'] = 'input'
+        return LabbookSection.create(local_id_data)
 
-    def resolve_output_files(self, args, context, info):
-        return self.resolve_files(args, context, info)
+    def resolve_output(self, args, context, info):
+        """Method to resolve the output section"""
+        # Make a copy of id_data and set the section to code
+        local_id_data = self._id_data
+        local_id_data['section_name'] = 'output'
+        return LabbookSection.create(local_id_data)
 
     def resolve_notes(self, args, context, info):
         """Method to page through branch Refs
