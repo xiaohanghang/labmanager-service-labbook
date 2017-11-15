@@ -20,6 +20,7 @@
 import base64
 import json
 import graphene
+import copy
 
 import os
 
@@ -245,15 +246,11 @@ class Labbook(ObjectType):
             lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
             self._id_data["labbook_instance"] = lb
 
-        local_id_data = self._id_data
+        local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section_name'] = 'code'
 
-        return LabbookSection(id=LabbookSection.to_type_id(self._id_data),
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
-
-        #local_id_data = self._id_data
-        #local_id_data['section_name'] = 'code'
-        #return LabbookSection.create(local_id_data)
 
     def resolve_input(self, args, context, info):
         """Method to resolve the output section"""
@@ -263,10 +260,10 @@ class Labbook(ObjectType):
             lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
             self._id_data["labbook_instance"] = lb
 
-        local_id_data = self._id_data
+        local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section_name'] = 'input'
 
-        return LabbookSection(id=LabbookSection.to_type_id(self._id_data),
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
 
     def resolve_output(self, args, context, info):
@@ -277,10 +274,10 @@ class Labbook(ObjectType):
             lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
             self._id_data["labbook_instance"] = lb
 
-        local_id_data = self._id_data
+        local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section_name'] = 'output'
 
-        return LabbookSection(id=LabbookSection.to_type_id(self._id_data),
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
 
     def resolve_notes(self, args, context, info):
