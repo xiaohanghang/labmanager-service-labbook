@@ -346,7 +346,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite 3'] = {
                         {
                             'node': {
                                 'description': 'my test favorite',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
                                 'index': 0,
                                 'isDir': False,
                                 'key': 'code/test.txt'
@@ -399,7 +399,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_dir 3'] = {
                         {
                             'node': {
                                 'description': 'my data dir',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
                                 'index': 0,
                                 'isDir': True,
                                 'key': 'input/sample1/'
@@ -438,7 +438,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_dir 5'] = {
                         {
                             'node': {
                                 'description': 'my data dir',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
                                 'index': 0,
                                 'isDir': True,
                                 'key': 'input/sample1/'
@@ -447,7 +447,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_dir 5'] = {
                         {
                             'node': {
                                 'description': 'my data dir 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjE=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYx',
                                 'index': 1,
                                 'isDir': True,
                                 'key': 'input/sample2/'
@@ -526,7 +526,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_at_index 5'] = {
                         {
                             'node': {
                                 'description': 'my test favorite 1',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
                                 'index': 0,
                                 'isDir': False,
                                 'key': 'code/test1.txt'
@@ -535,7 +535,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_at_index 5'] = {
                         {
                             'node': {
                                 'description': 'my test favorite 3',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjE=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjE=',
                                 'index': 1,
                                 'isDir': False,
                                 'key': 'code/test3.txt'
@@ -544,7 +544,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_at_index 5'] = {
                         {
                             'node': {
                                 'description': 'my test favorite 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjI=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjI=',
                                 'index': 2,
                                 'isDir': False,
                                 'key': 'code/test2.txt'
@@ -583,7 +583,7 @@ snapshots['TestLabBookServiceMutations.test_delete_favorite 2'] = {
                         {
                             'node': {
                                 'description': 'my test favorite',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
                                 'index': 0,
                                 'isDir': False,
                                 'key': 'code/test.txt'

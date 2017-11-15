@@ -20,6 +20,7 @@
 import base64
 import json
 import graphene
+import copy
 
 import os
 
@@ -240,23 +241,44 @@ class Labbook(ObjectType):
     def resolve_code(self, args, context, info):
         """Method to resolve the code section"""
         # Make a copy of id_data and set the section to code
-        local_id_data = self._id_data
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section_name'] = 'code'
-        return LabbookSection.create(local_id_data)
+
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
+                              _id_data=local_id_data)
 
     def resolve_input(self, args, context, info):
         """Method to resolve the output section"""
         # Make a copy of id_data and set the section to code
-        local_id_data = self._id_data
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section_name'] = 'input'
-        return LabbookSection.create(local_id_data)
+
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
+                              _id_data=local_id_data)
 
     def resolve_output(self, args, context, info):
         """Method to resolve the output section"""
         # Make a copy of id_data and set the section to code
-        local_id_data = self._id_data
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section_name'] = 'output'
-        return LabbookSection.create(local_id_data)
+
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
+                              _id_data=local_id_data)
 
     def resolve_notes(self, args, context, info):
         """Method to page through branch Refs

@@ -159,7 +159,7 @@ class LabbookSection(ObjectType):
                 id_data = {"user": get_logged_in_username(),
                            "owner": self._id_data['owner'],
                            "name": self._id_data['name'],
-                           "subdir": args.get('subdir'),
+                           "subdir": self._id_data['section_name'],
                            "favorite_data": edge}
                 edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data), cursor=cursor))
 
