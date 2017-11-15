@@ -701,7 +701,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 1'] = {
                         {
                             'node': {
                                 'description': 'My file with stuff 1',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
                                 'index': 0,
                                 'isDir': False,
                                 'key': 'code/test1.txt'
@@ -710,7 +710,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 1'] = {
                         {
                             'node': {
                                 'description': 'My file with stuff 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjE=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjE=',
                                 'index': 1,
                                 'isDir': False,
                                 'key': 'code/test2.txt'
@@ -719,7 +719,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 1'] = {
                         {
                             'node': {
                                 'description': 'testing',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjI=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjI=',
                                 'index': 2,
                                 'isDir': True,
                                 'key': 'code/blah/'
@@ -742,7 +742,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 2'] = {
                         {
                             'node': {
                                 'description': 'Data dir 1',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
                                 'index': 0,
                                 'isDir': True,
                                 'key': 'input/data1/'
@@ -766,7 +766,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 3'] = {
                         {
                             'node': {
                                 'description': 'Data dir 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZvdXRwdXQmMA==',
                                 'index': 0,
                                 'isDir': True,
                                 'key': 'output/data2/'
@@ -788,7 +788,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 4'] = {
                         {
                             'node': {
                                 'description': 'My file with stuff 1',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
                                 'index': 0,
                                 'isDir': False,
                                 'key': 'code/test1.txt'
@@ -797,7 +797,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 4'] = {
                         {
                             'node': {
                                 'description': 'My file with stuff 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjE=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjE=',
                                 'index': 1,
                                 'isDir': False,
                                 'key': 'code/test2.txt'
@@ -806,7 +806,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 4'] = {
                         {
                             'node': {
                                 'description': 'testing',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjI=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjI=',
                                 'index': 2,
                                 'isDir': True,
                                 'key': 'code/blah/'
@@ -821,7 +821,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 4'] = {
                         {
                             'node': {
                                 'description': 'Data dir 1',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
                                 'index': 0,
                                 'isDir': True,
                                 'key': 'input/data1/'
@@ -837,7 +837,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorites 4'] = {
                         {
                             'node': {
                                 'description': 'Data dir 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZvdXRwdXQmMA==',
                                 'index': 0,
                                 'isDir': True,
                                 'key': 'output/data2/'
@@ -859,7 +859,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorite_and_files 1'] = {
                         {
                             'node': {
                                 'description': 'My file with stuff 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
                                 'index': 0,
                                 'isDir': False,
                                 'key': 'code/test2.txt'
@@ -868,7 +868,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorite_and_files 1'] = {
                         {
                             'node': {
                                 'description': 'testing',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZOb25lJjE=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjE=',
                                 'index': 1,
                                 'isDir': True,
                                 'key': 'code/blah/'
