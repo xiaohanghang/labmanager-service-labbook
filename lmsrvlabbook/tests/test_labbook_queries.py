@@ -865,3 +865,72 @@ class TestLabBookServiceQueries(object):
                         }
                         """
             snapshot.assert_match(client.execute(query))
+
+    def test_list_all_files_many(self, fixture_working_dir, snapshot):
+        # Add some extra files for listing
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        # Write data in code
+        with open(os.path.join(lb.root_dir, 'code', "test_file1.txt"), 'wt') as tf:
+            tf.write("file 1")
+        with open(os.path.join(lb.root_dir, 'code', "test_file2.txt"), 'wt') as tf:
+            tf.write("file 2!!!!!!!!!")
+        with open(os.path.join(lb.root_dir, 'code', ".hidden_file.txt"), 'wt') as tf:
+            tf.write("Should be hidden")
+
+        # Create subdirs and data
+        os.makedirs(os.path.join(lb.root_dir, 'input', 'subdir', 'data'))
+        os.makedirs(os.path.join(lb.root_dir, 'output', 'empty'))
+        with open(os.path.join(lb.root_dir, 'input', 'subdir', 'data.dat'), 'wt') as tf:
+            tf.write("adsfasdfasdf")
+        with open(os.path.join(lb.root_dir, 'output', 'result.dat'), 'wt') as tf:
+            tf.write("fgh")
+
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+            query = """
+                        {
+                          labbook(name: "labbook1", owner: "default") {
+                            name
+                            code{
+                                allFiles {
+                                    edges {
+                                        node {
+                                            id
+                                            key
+                                            size
+                                            isDir
+                                        }
+                                    }
+                                }
+                            }
+                            input{
+                                allFiles {
+                                    edges {
+                                        node {
+                                            id
+                                            key
+                                            size
+                                            isDir
+                                        }
+                                    }
+                                }
+                            }
+                            output{
+                                allFiles {
+                                    edges {
+                                        node {
+                                            id
+                                            key
+                                            size
+                                            isDir
+                                        }
+                                    }
+                                }
+                            }
+                          }
+                        }
+                        """
+            snapshot.assert_match(client.execute(query))

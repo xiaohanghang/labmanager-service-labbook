@@ -39,8 +39,11 @@ class LabbookSection(ObjectType):
     class Meta:
         interfaces = (graphene.relay.Node,)
 
-    # List of files and directories
+    # List of files and directories, given a relative root directory within the section
     files = graphene.relay.ConnectionField(LabbookFileConnection, root=graphene.String())
+
+    # List of all files and directories within the section
+    all_files = graphene.relay.ConnectionField(LabbookFileConnection)
 
     # List of favorites for a given subdir (code, input, output)
     favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection)
@@ -117,6 +120,36 @@ class LabbookSection(ObjectType):
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
         edges = lb.listdir(base_path=base_dir, show_hidden=False)
+        # Generate naive cursors
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
+
+        edge_objs = []
+        try:
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                id_data = {"user": get_logged_in_username(),
+                           "owner": self._id_data['owner'],
+                           "name": self._id_data['name'],
+                           "file_info": edge}
+                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
+
+            return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def resolve_all_files(self, args, context, info):
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(get_logged_in_username(), self._id_data['owner'], self._id_data['name'])
+        else:
+            lb = self._id_data["labbook_instance"]
+
+        # Get all files and directories, with the exception of anything in .git or .gigantum
+        edges = lb.walkdir(base_path=self._id_data['section_name'], show_hidden=False)
         # Generate naive cursors
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
