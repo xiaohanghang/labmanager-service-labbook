@@ -618,3 +618,56 @@ snapshots['TestLabBookServiceMutations.test_delete_favorite 4'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceMutations.test_update_favorite 1'] = {
+    'data': {
+        'labbook': {
+            'code': {
+                'favorites': {
+                    'edges': [
+                    ]
+                }
+            },
+            'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_update_favorite 2'] = {
+    'data': {
+        'addFavorite': {
+            'newFavoriteEdge': {
+                'node': {
+                    'description': 'my test favorite',
+                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                    'index': 0,
+                    'isDir': False,
+                    'key': 'code/test.txt'
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_update_favorite 3'] = {
+    'data': {
+        'labbook': {
+            'code': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'my test favorite',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                                'index': 0,
+                                'isDir': False,
+                                'key': 'code/test.txt'
+                            }
+                        }
+                    ]
+                }
+            },
+            'name': 'labbook1'
+        }
+    }
+}

@@ -119,7 +119,7 @@ class LabbookSection(ObjectType):
         base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.listdir(base_path=base_dir, show_hidden=False)
+        edges = lb.listdir(self._id_data['section_name'], base_path=base_dir, show_hidden=False)
         # Generate naive cursors
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
@@ -149,7 +149,7 @@ class LabbookSection(ObjectType):
             lb = self._id_data["labbook_instance"]
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.walkdir(base_path=self._id_data['section_name'], show_hidden=False)
+        edges = lb.walkdir(section=self._id_data['section_name'], show_hidden=False)
         # Generate naive cursors
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 

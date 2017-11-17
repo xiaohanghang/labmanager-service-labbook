@@ -217,7 +217,7 @@ class Labbook(ObjectType):
         lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.walkdir(base_path=args.get('base_dir'), show_hidden=False)
+        edges = lb.walkdir(section=args.get('base_dir'), show_hidden=False)
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args

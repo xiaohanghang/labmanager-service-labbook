@@ -418,6 +418,50 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
                                                                                    cursor=cursor))
 
 
+class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        subdir = graphene.String(required=True)
+        index = graphene.Int(required=True)
+        updated_index = graphene.Int(required=False)
+        updated_key = graphene.String(required=False)
+        updated_description = graphene.String(required=False)
+
+    updated_favorite_edge = graphene.Field(LabbookFavoriteConnection.Edge)
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        try:
+            username = get_logged_in_username()
+            lb = LabBook()
+            lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+
+            # Update Favorite
+            new_favorite = lb.update_favorite(input.get('subdir'), input.get('index'),
+                                              new_description=input.get('updated_description'),
+                                              new_index=input.get('updated_index'),
+                                              new_key=input.get('updated_key'))
+
+            # Create data to populate edge
+            id_data = {'username': username,
+                       'user': username,
+                       'owner': input.get('owner'),
+                       'name': input.get('labbook_name'),
+                       'subdir': input.get('subdir'),
+                       'favorite_data': new_favorite}
+
+            # Create dummy cursor
+            cursor = base64.b64encode(f"{str(new_favorite['index'])}".encode('utf-8'))
+
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+        return UpdateLabbookFavorite(updated_favorite_edge=LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data),
+                                                                                          cursor=cursor))
+
+
 class RemoveLabbookFavorite(graphene.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)

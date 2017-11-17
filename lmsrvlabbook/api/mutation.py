@@ -21,7 +21,7 @@ import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
     CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
-    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook
+    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -83,6 +83,9 @@ class LabbookMutations(graphene.AbstractType):
 
     # Add a favorite file or dir in a labbook subdirectory (code, input, output)
     add_favorite = AddLabbookFavorite.Field()
+
+    # Update a favorite file or dir in a labbook subdirectory (code, input, output)
+    update_favorite = UpdateLabbookFavorite.Field()
 
     # Remove a favorite file or dir in a labbook subdirectory (code, input, output)
     remove_favorite = RemoveLabbookFavorite.Field()
