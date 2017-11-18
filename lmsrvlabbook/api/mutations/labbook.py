@@ -215,10 +215,11 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
 
 class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     """Mutation to add a file to a labbook. File should be sent in the `uploadFile` key as a multi-part/form upload.
-    file_path is the relative path from the labbook root."""
+    file_path is the relative path from the labbook section specified."""
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
+        section = graphene.String(required=True)
         file_path = graphene.String(required=True)
         chunk_upload_params = ChunkUploadInput(required=True)
 
@@ -240,7 +241,9 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
             lb.from_directory(inferred_lb_directory)
 
             # Insert into labbook
-            file_info = lb.insert_file(src_file=cls.upload_file_path, dst_dir=os.path.dirname(input['file_path']),
+            file_info = lb.insert_file(section=input['section'],
+                                       src_file=cls.upload_file_path,
+                                       dst_dir=os.path.dirname(input['file_path']),
                                        base_filename=cls.filename)
 
             logger.debug(f"Removing copied temp file {cls.upload_file_path}")
@@ -250,6 +253,7 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
             id_data = {'username': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
+                       'section': input['section'],
                        'file_info': file_info}
 
             # TODO: Fix cursor implementation, this currently doesn't make sense when adding edges
@@ -267,6 +271,7 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
+        section = graphene.String(required=True)
         file_path = graphene.String(required=True)
         is_directory = graphene.Boolean(required=False)
 
@@ -281,7 +286,8 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
-            lb.delete_file(relative_path=input['file_path'], directory=input.get('is_directory') or False)
+            lb.delete_file(section=input['section'], relative_path=input['file_path'],
+                           directory=input.get('is_directory') or False)
         except Exception as e:
             logger.exception(e)
             raise
@@ -295,6 +301,7 @@ class MoveLabbookFile(graphene.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
+        section = graphene.String(required=True)
         src_path = graphene.String(required=True)
         dst_path = graphene.String(required=True)
 
@@ -310,7 +317,7 @@ class MoveLabbookFile(graphene.ClientIDMutation):
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
-            file_info = lb.move_file(input['src_path'], input['dst_path'])
+            file_info = lb.move_file(input['section'], input['src_path'], input['dst_path'])
             logger.info(f"Moved file to `{input['dst_path']}`")
 
             # Create data to populate edge
@@ -318,6 +325,7 @@ class MoveLabbookFile(graphene.ClientIDMutation):
                        'user': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
+                       'section': input.get('section'),
                        'file_info': file_info}
 
             # TODO: Fix cursor implementation, this currently doesn't make sense
@@ -335,7 +343,8 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        dir_name = graphene.String(required=True)
+        section = graphene.String(required=True)
+        directory = graphene.String(required=True)
 
     new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
@@ -349,15 +358,16 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
-            file_info = lb.makedir(input['dir_name'])
-            logger.info(f"Made new directory in `{input['dir_name']}`")
+            lb.makedir(os.path.join(input['section'], input['directory']))
+            logger.info(f"Made new directory in `{input['directory']}`")
 
             # Create data to populate edge
             id_data = {'username': username,
                        'user': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
-                       'file_info': file_info}
+                       'section': input.get('section'),
+                       'file_info': lb.get_file_info(input['section'], input['directory'])}
 
             # TODO: Fix cursor implementation, this currently doesn't make sense
             cursor = base64.b64encode(f"{0}".encode('utf-8'))
@@ -374,7 +384,7 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        subdir = graphene.String(required=True)
+        section = graphene.String(required=True)
         key = graphene.String(required=True)
         description = graphene.String(required=False)
         is_dir = graphene.Boolean(required=False)
@@ -394,17 +404,16 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
             if input.get('is_dir'):
                 is_dir = input.get('is_dir')
 
-            new_favorite = lb.create_favorite(input.get('subdir'), input.get('key'),
+            new_favorite = lb.create_favorite(input.get('section'), input.get('key'),
                                               description=input.get('description'),
                                               position=input.get('index'),
                                               is_dir=is_dir)
 
             # Create data to populate edge
             id_data = {'username': username,
-                       'user': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
-                       'subdir': input.get('subdir'),
+                       'section': input.get('section'),
                        'favorite_data': new_favorite}
 
             # Create cursor
@@ -422,7 +431,7 @@ class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        subdir = graphene.String(required=True)
+        section = graphene.String(required=True)
         index = graphene.Int(required=True)
         updated_index = graphene.Int(required=False)
         updated_key = graphene.String(required=False)
@@ -438,7 +447,7 @@ class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
             lb.from_name(username, input.get('owner'), input.get('labbook_name'))
 
             # Update Favorite
-            new_favorite = lb.update_favorite(input.get('subdir'), input.get('index'),
+            new_favorite = lb.update_favorite(input.get('section'), input.get('index'),
                                               new_description=input.get('updated_description'),
                                               new_index=input.get('updated_index'),
                                               new_key=input.get('updated_key'))
@@ -448,7 +457,7 @@ class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
                        'user': username,
                        'owner': input.get('owner'),
                        'name': input.get('labbook_name'),
-                       'subdir': input.get('subdir'),
+                       'section': input.get('section'),
                        'favorite_data': new_favorite}
 
             # Create dummy cursor
@@ -466,7 +475,7 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        subdir = graphene.String(required=True)
+        section = graphene.String(required=True)
         index = graphene.Int(required=True)
 
     success = graphene.Boolean()
@@ -479,7 +488,7 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
             lb.from_name(username, input.get('owner'), input.get('labbook_name'))
 
             # Remove Favorite
-            lb.remove_favorite(input.get('subdir'), input.get('index'))
+            lb.remove_favorite(input.get('section'), input.get('index'))
 
         except Exception as e:
             logger.exception(e)

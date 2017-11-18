@@ -131,27 +131,13 @@ snapshots['TestLabBookServiceMutations.test_checkout_branch 3'] = {
     }
 }
 
-snapshots['TestLabBookServiceMutations.test_move_file 1'] = {
-    'data': {
-        'moveLabbookFile': {
-            'newLabbookFileEdge': {
-                'node': {
-                    'isDir': True,
-                    'key': 'input/',
-                    'size': 4096
-                }
-            }
-        }
-    }
-}
-
 snapshots['TestLabBookServiceMutations.test_makedir 1'] = {
     'data': {
         'makeLabbookDirectory': {
             'newLabbookFileEdge': {
                 'node': {
                     'isDir': True,
-                    'key': 'output/new_folder/',
+                    'key': 'new_folder/',
                     'size': 4096
                 }
             }
@@ -165,7 +151,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 1'] = {
             'newLabbookFileEdge': {
                 'node': {
                     'isDir': False,
-                    'key': 'input/sillyfile',
+                    'key': 'subdir/sillyfile',
                     'size': 7
                 }
             }
@@ -179,7 +165,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 2'] = {
             'newLabbookFileEdge': {
                 'node': {
                     'isDir': False,
-                    'key': 'code/sillyfile',
+                    'key': 'sillyfile',
                     'size': 7
                 }
             }
@@ -193,7 +179,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 3'] = {
             'newLabbookFileEdge': {
                 'node': {
                     'isDir': False,
-                    'key': 'input/sillyfile',
+                    'key': 'subdir/sillyfile',
                     'size': 7
                 }
             }
@@ -207,7 +193,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 4'] = {
             'newLabbookFileEdge': {
                 'node': {
                     'isDir': False,
-                    'key': 'code/sillyfile',
+                    'key': 'sillyfile',
                     'size': 7
                 }
             }
@@ -221,7 +207,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 5'] = {
             'newLabbookFileEdge': {
                 'node': {
                     'isDir': False,
-                    'key': 'input/sillyfile',
+                    'key': 'subdir/sillyfile',
                     'size': 7
                 }
             }
@@ -235,7 +221,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 6'] = {
             'newLabbookFileEdge': {
                 'node': {
                     'isDir': False,
-                    'key': 'code/sillyfile',
+                    'key': 'sillyfile',
                     'size': 7
                 }
             }
@@ -264,9 +250,9 @@ snapshots['TestLabBookServiceMutations.test_add_file 3'] = {
         'addLabbookFile': {
             'newLabbookFileEdge': {
                 'node': {
-                    'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvbXlmaWxlLmJpbg==',
+                    'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJm15ZmlsZS5iaW4=',
                     'isDir': False,
-                    'key': 'code/myfile.bin',
+                    'key': 'myfile.bin',
                     'size': 9000000
                 }
             }
@@ -327,10 +313,10 @@ snapshots['TestLabBookServiceMutations.test_add_favorite 2'] = {
             'newFavoriteEdge': {
                 'node': {
                     'description': 'my test favorite',
-                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
                     'index': 0,
                     'isDir': False,
-                    'key': 'code/test.txt'
+                    'key': 'test.txt'
                 }
             }
         }
@@ -346,10 +332,10 @@ snapshots['TestLabBookServiceMutations.test_add_favorite 3'] = {
                         {
                             'node': {
                                 'description': 'my test favorite',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
                                 'index': 0,
                                 'isDir': False,
-                                'key': 'code/test.txt'
+                                'key': 'test.txt'
                             }
                         }
                     ]
@@ -380,10 +366,10 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_dir 2'] = {
             'newFavoriteEdge': {
                 'node': {
                     'description': 'my data dir',
-                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
+                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmaW5wdXQmMA==',
                     'index': 0,
                     'isDir': True,
-                    'key': 'input/sample1/'
+                    'key': 'sample1/'
                 }
             }
         }
@@ -399,10 +385,10 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_dir 3'] = {
                         {
                             'node': {
                                 'description': 'my data dir',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmaW5wdXQmMA==',
                                 'index': 0,
                                 'isDir': True,
-                                'key': 'input/sample1/'
+                                'key': 'sample1/'
                             }
                         }
                     ]
@@ -419,10 +405,10 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_dir 4'] = {
             'newFavoriteEdge': {
                 'node': {
                     'description': 'my data dir 2',
-                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYx',
+                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmaW5wdXQmMQ==',
                     'index': 1,
                     'isDir': True,
-                    'key': 'input/sample2/'
+                    'key': 'sample2/'
                 }
             }
         }
@@ -438,19 +424,19 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_dir 5'] = {
                         {
                             'node': {
                                 'description': 'my data dir',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYw',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmaW5wdXQmMA==',
                                 'index': 0,
                                 'isDir': True,
-                                'key': 'input/sample1/'
+                                'key': 'sample1/'
                             }
                         },
                         {
                             'node': {
                                 'description': 'my data dir 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZpbnB1dCYx',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmaW5wdXQmMQ==',
                                 'index': 1,
                                 'isDir': True,
-                                'key': 'input/sample2/'
+                                'key': 'sample2/'
                             }
                         }
                     ]
@@ -482,7 +468,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_at_index 2'] = {
                 'node': {
                     'description': 'my test favorite 1',
                     'index': 0,
-                    'key': 'code/test1.txt'
+                    'key': 'test1.txt'
                 }
             }
         }
@@ -496,7 +482,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_at_index 3'] = {
                 'node': {
                     'description': 'my test favorite 2',
                     'index': 1,
-                    'key': 'code/test2.txt'
+                    'key': 'test2.txt'
                 }
             }
         }
@@ -510,7 +496,7 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_at_index 4'] = {
                 'node': {
                     'description': 'my test favorite 3',
                     'index': 1,
-                    'key': 'code/test3.txt'
+                    'key': 'test3.txt'
                 }
             }
         }
@@ -526,28 +512,28 @@ snapshots['TestLabBookServiceMutations.test_add_favorite_at_index 5'] = {
                         {
                             'node': {
                                 'description': 'my test favorite 1',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
                                 'index': 0,
                                 'isDir': False,
-                                'key': 'code/test1.txt'
+                                'key': 'test1.txt'
                             }
                         },
                         {
                             'node': {
                                 'description': 'my test favorite 3',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjE=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYx',
                                 'index': 1,
                                 'isDir': False,
-                                'key': 'code/test3.txt'
+                                'key': 'test3.txt'
                             }
                         },
                         {
                             'node': {
                                 'description': 'my test favorite 2',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjI=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYy',
                                 'index': 2,
                                 'isDir': False,
-                                'key': 'code/test2.txt'
+                                'key': 'test2.txt'
                             }
                         }
                     ]
@@ -564,10 +550,10 @@ snapshots['TestLabBookServiceMutations.test_delete_favorite 1'] = {
             'newFavoriteEdge': {
                 'node': {
                     'description': 'my test favorite',
-                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
                     'index': 0,
                     'isDir': False,
-                    'key': 'code/test.txt'
+                    'key': 'test.txt'
                 }
             }
         }
@@ -583,10 +569,10 @@ snapshots['TestLabBookServiceMutations.test_delete_favorite 2'] = {
                         {
                             'node': {
                                 'description': 'my test favorite',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
                                 'index': 0,
                                 'isDir': False,
-                                'key': 'code/test.txt'
+                                'key': 'test.txt'
                             }
                         }
                     ]
@@ -639,10 +625,10 @@ snapshots['TestLabBookServiceMutations.test_update_favorite 2'] = {
             'newFavoriteEdge': {
                 'node': {
                     'description': 'my test favorite',
-                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
                     'index': 0,
                     'isDir': False,
-                    'key': 'code/test.txt'
+                    'key': 'test.txt'
                 }
             }
         }
@@ -658,10 +644,77 @@ snapshots['TestLabBookServiceMutations.test_update_favorite 3'] = {
                         {
                             'node': {
                                 'description': 'my test favorite',
-                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
                                 'index': 0,
                                 'isDir': False,
-                                'key': 'code/test.txt'
+                                'key': 'test.txt'
+                            }
+                        }
+                    ]
+                }
+            },
+            'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file 1'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': False,
+                    'key': 'subdir/sillyfile',
+                    'size': 7
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_move_file 2'] = {
+    'data': {
+        'moveLabbookFile': {
+            'newLabbookFileEdge': {
+                'node': {
+                    'isDir': True,
+                    'key': 'subdir2/',
+                    'size': 4096
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_update_favorite 4'] = {
+    'data': {
+        'updateFavorite': {
+            'updatedFavoriteEdge': {
+                'node': {
+                    'description': 'UPDATED',
+                    'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
+                    'index': 0,
+                    'isDir': False,
+                    'key': 'test2.txt'
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_update_favorite 5'] = {
+    'data': {
+        'labbook': {
+            'code': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'node': {
+                                'description': 'UPDATED',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
+                                'index': 0,
+                                'isDir': False,
+                                'key': 'test2.txt'
                             }
                         }
                     ]

@@ -411,56 +411,6 @@ class TestLabBookServiceQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_walkdir(self, fixture_working_dir_populated_scoped, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_populated_scoped[2])
-            query = """
-            {
-              labbook(name: "labbook1", owner: "default") {
-                name
-                files {
-                    edges {
-                        node {
-                            id
-                            key
-                            modifiedAt
-                            size
-                            isDir
-                        }
-                    }
-                }
-              }
-            }
-            """
-            result = client.execute(query)
-            for n in result['data']['labbook']['files']['edges']:
-                node = n['node']
-                assert node['isDir'] is True
-                assert node['modifiedAt'] is not None
-                assert type(node['modifiedAt']) == int
-                assert type(node['size']) == int
-                assert node['key']
-
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            files {
-                                edges {
-                                    node {
-                                        id
-                                        key
-                                        size
-                                        isDir
-                                    }
-                                }
-                            }
-                          }
-                        }
-                        """
-            snapshot.assert_match(client.execute(query))
-
     def test_list_files_code(self, fixture_working_dir, snapshot):
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")

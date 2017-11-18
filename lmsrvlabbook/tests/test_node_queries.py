@@ -61,7 +61,7 @@ def create_stock_labbook(client, name: str, desc: str = "Example labbook by muta
     return results
 
 
-class TestLabBookServiceQueries(object):
+class TestNodeQueries(object):
 
     def test_node_labbook_from_object(self, fixture_working_dir, snapshot):
         lb = LabBook(fixture_working_dir[0])
@@ -267,7 +267,7 @@ class TestLabBookServiceQueries(object):
             # Test bad node ids that index out of bounds
             query = """
                         {
-                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjEwMA==") {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYxMDA=") {
                                 ... on LabbookFavorite {
                                     id
                                     key
@@ -282,7 +282,7 @@ class TestLabBookServiceQueries(object):
 
             query = """
                         {
-                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJi0x") {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYtMQ==") {
                                 ... on LabbookFavorite {
                                     id
                                     key
@@ -298,7 +298,7 @@ class TestLabBookServiceQueries(object):
             # Get the actual item
             query = """
                         {
-                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=") {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw") {
                                 ... on LabbookFavorite {
                                     id
                                     key
@@ -331,7 +331,7 @@ class TestLabBookServiceQueries(object):
 
             query = """
                         {
-                            node(id: "TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvdGVzdDEudHh0") {
+                            node(id: "TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QxLnR4dA==") {
                                 ... on LabbookFile {
                                     id
                                     key
