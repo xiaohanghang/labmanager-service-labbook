@@ -22,6 +22,7 @@ import tempfile
 import os
 import uuid
 import shutil
+import pprint
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_populated_scoped
 
@@ -30,6 +31,7 @@ import graphene
 from mock import patch
 
 from lmcommon.labbook import LabBook
+from lmcommon.fixtures import remote_labbook_repo
 from lmcommon.configuration import Configuration
 
 from ..api import LabbookMutations, LabbookQuery
@@ -662,6 +664,22 @@ class TestLabBookServiceQueries(object):
                     }
                     """
             snapshot.assert_match(client.execute(query))
+
+    def test_check_updates_available_from_remote(self, remote_labbook_repo, fixture_working_dir, snapshot):
+        client = Client(fixture_working_dir[2])
+
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        query = f"""
+        {{
+            labbook(name: "labbook1", owner: "default") {{
+                updatesAvailableCount
+            }}
+        }}
+        """
+        r = client.execute(query)
+        assert r['data']['labbook']['updatesAvailableCount'] == 0
 
     def test_list_favorites(self, fixture_working_dir, snapshot):
         """Test listing labbook favorites"""

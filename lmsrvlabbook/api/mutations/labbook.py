@@ -213,6 +213,103 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
         return ImportLabbook(import_job_key=job_key.key_str, build_image_job_key=build_image_job_key.key_str)
 
 
+class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        remote_url = graphene.String(required=True)
+
+    active_branch = graphene.String()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        username = get_logged_in_username()
+        logger.info(f"Importing remote labbook from {input.get('remote_url')}")
+        try:
+            lb = LabBook()
+            lb.from_remote(input['remote_url'], username, input['owner'], input['labbook_name'])
+            return ImportRemoteLabbook(active_branch=lb.active_branch)
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+
+class AddLabbookRemote(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        remote_name = graphene.String(required=True)
+        remote_url = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        username = get_logged_in_username()
+        logger.info(f"Adding labbook remote {input.get('remote_name')} {input.get('remote_url')}")
+        try:
+            lb = LabBook()
+            lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+            remote = input.get('remote_name')
+            lb.add_remote(remote, input.get('remote_url'))
+            return AddLabbookRemote(success=True)
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+
+class PullActiveBranchFromRemote(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        remote_name = graphene.String(required=False)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        username = get_logged_in_username()
+        logger.info(f"Importing remote labbook from {input.get('remote_name')}")
+        try:
+            lb = LabBook()
+            lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+            remote = input.get('remote_name')
+            if remote:
+                lb.pull(remote=remote)
+            else:
+                lb.pull()
+            return PullActiveBranchFromRemote(success=True)
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+
+class PushActiveBranchToRemote(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        remote_name = graphene.String(required=False)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, input, context, info):
+        username = get_logged_in_username()
+        logger.info(f"Importing remote labbook from {input.get('remote_name')}")
+        try:
+            lb = LabBook()
+            lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+            remote = input.get('remote_name')
+            if remote:
+                lb.push(remote=remote)
+            else:
+                lb.push()
+            return PushActiveBranchToRemote(success=True)
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+
 class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     """Mutation to add a file to a labbook. File should be sent in the `uploadFile` key as a multi-part/form upload.
     file_path is the relative path from the labbook root."""

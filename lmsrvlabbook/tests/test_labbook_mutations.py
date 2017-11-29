@@ -22,6 +22,7 @@ import math
 import os
 import tempfile
 import datetime
+import pprint
 from zipfile import ZipFile
 from pkg_resources import resource_filename
 import getpass
@@ -36,6 +37,7 @@ from werkzeug.datastructures import FileStorage
 
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher.jobs import export_labbook_as_zip
+from lmcommon.fixtures import remote_labbook_repo
 from lmcommon.labbook import LabBook
 
 
@@ -123,158 +125,6 @@ class TestLabBookServiceMutations(object):
 
             # Second should fail with an error message
             snapshot.assert_match(client.execute(query, variable_values=variables))
-
-    def test_create_branch(self, fixture_working_dir, snapshot):
-        """Test creating a new branch in a labbook"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Create LabBook
-            query = """
-            mutation CreateLabBook($name: String!, $desc: String!){
-              createLabbook(input: {name: $name, description: $desc}){
-                labbook{
-                  id
-                  name
-                  description
-                }
-              }
-            }
-            """
-            variables = {"name": "test-lab-book2", "desc": "Yada yada blah blah blah 99"}
-
-            client.execute(query, variable_values=variables)
-
-            # Create a Branch
-            query = """
-            mutation BranchLabBook($labbook_name: String!, $branch_name: String!){
-              createBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
-                branch {
-                    name
-                }
-              }
-            }
-            """
-            variables = {"labbook_name": "test-lab-book2", "branch_name": "dev-branch-1"}
-
-            client.execute(query, variable_values=variables)
-
-            # Create Branch
-            query = """
-            {
-              labbook(name: "test-lab-book2", owner: "default") {
-                name
-                description
-                activeBranch {
-                    name
-                }
-                branches {
-                    edges {
-                        node {
-                            name
-                        }
-                    }
-                }
-              }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
-
-    def test_checkout_branch(self, fixture_working_dir, snapshot):
-        """Test checking out a new branch in a labbook"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Create LabBook
-            query = """
-            mutation CreateLabBook($name: String!, $desc: String!) {
-              createLabbook(input: {name: $name, description: $desc}) {
-                labbook {
-                  id
-                  name
-                  description
-                }
-              }
-            }
-            """
-            variables = {"name": "test-lab-book3", "desc": "a different description"}
-
-            client.execute(query, variable_values=variables)
-
-            # Create a Branch
-            query = """
-            mutation BranchLabBook($labbook_name: String!, $branch_name: String!) {
-              createBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
-                branch {
-                  name
-                }
-              }
-            }
-            """
-            variables = {"labbook_name": "test-lab-book3", "branch_name": "dev-branch-5"}
-
-            snapshot.assert_match(client.execute(query, variable_values=variables))
-
-            # Check branch status
-            query = """
-            {
-              labbook(name: "test-lab-book3", owner: "default") {
-                name
-                description
-                branches {
-                    edges {
-                        node {
-                            prefix
-                            name
-                        }
-                    }
-                }
-                activeBranch {
-                    name
-                }
-              }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
-
-            #  Checkout a Branch
-            query = """
-            mutation CheckoutLabBook($labbook_name: String!, $branch_name: String!){
-              checkoutBranch(input: {labbookName: $labbook_name, branchName: $branch_name}) {
-                labbook {
-                  name
-                  activeBranch {
-                    name
-                  }
-                }
-              }
-            }
-            """
-            variables = {
-                "labbook_name": "test-lab-book3",
-                "branch_name": "dev-branch-5"
-            }
-
-            client.execute(query, variable_values=variables)
-
-            # Check branch status
-            query = """
-            {
-              labbook(name: "test-lab-book3", owner: "default") {
-                name
-                description
-                activeBranch {
-                  name
-                  prefix
-                }
-              }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
 
     def test_move_file(self, mock_create_labbooks, snapshot):
         """Test moving a directory"""
@@ -831,25 +681,25 @@ class TestLabBookServiceMutations(object):
 
         # Verify the favorite is there
         fav_query = """
-                       {
-                         labbook(name: "labbook1", owner: "default") {
-                           name
-                           code{
-                               favorites{
-                                   edges {
-                                       node {
-                                           id
-                                           index
-                                           key
-                                           description
-                                           isDir
-                                       }
-                                   }
-                               }
-                           }
-                         }
+       {
+         labbook(name: "labbook1", owner: "default") {
+           name
+           code{
+               favorites{
+                   edges {
+                       node {
+                           id
+                           index
+                           key
+                           description
+                           isDir
                        }
-                       """
+                   }
+               }
+           }
+         }
+       }
+       """
         snapshot.assert_match(client.execute(fav_query))
 
         # Delete a favorite in code
@@ -951,6 +801,7 @@ class TestLabBookServiceMutations(object):
 
                 chunk.close()
 
+
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     def test_rename_labbook(self, fixture_working_dir, snapshot):
         """Test renaming a labbook"""
@@ -983,14 +834,14 @@ class TestLabBookServiceMutations(object):
 
         # Wait up to 15 seconds for the container to build successfully after renaming
         query = """
-                   {
-                     labbook(owner: "default", name: "test-new-name") {
-                         environment {
-                           imageStatus
-                         }
-                     }
-                   }
-                   """
+           {
+             labbook(owner: "default", name: "test-new-name") {
+                 environment {
+                   imageStatus
+                 }
+             }
+           }
+           """
         t_start = datetime.datetime.now()
         success = False
         while (datetime.datetime.now() - t_start).seconds < 15:
