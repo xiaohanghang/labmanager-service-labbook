@@ -51,7 +51,7 @@ def mock_create_labbooks(fixture_working_dir):
     with open(os.path.join(fixture_working_dir[1], 'sillyfile'), 'w') as sf:
         sf.write("1234567")
         sf.seek(0)
-    lb.insert_file(sf.name, 'code')
+    lb.insert_file('code', sf.name, '')
 
     assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
     # name of the config file, temporary working directory, the schema
@@ -127,7 +127,9 @@ class TestLabBookServiceMutations(object):
             snapshot.assert_match(client.execute(query, variable_values=variables))
 
     def test_move_file(self, mock_create_labbooks, snapshot):
-        """Test moving a directory"""
+        """Test moving a file"""
+        labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')
+        os.makedirs(os.path.join(labbook_dir, 'code', 'subdir'))
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
             client = Client(mock_create_labbooks[2])
             query = """
@@ -136,8 +138,9 @@ class TestLabBookServiceMutations(object):
                 input: {
                   owner: "default",
                   labbookName: "labbook1",
-                  srcPath: "code",
-                  dstPath: "input"
+                  section: "code",
+                  srcPath: "sillyfile",
+                  dstPath: "subdir/sillyfile"
                 }) {
                   newLabbookFileEdge {
                     node{
@@ -151,9 +154,33 @@ class TestLabBookServiceMutations(object):
             """
             snapshot.assert_match(client.execute(query))
 
+            query = """
+            mutation MoveLabbookFile {
+              moveLabbookFile(
+                input: {
+                  owner: "default",
+                  labbookName: "labbook1",
+                  section: "code",
+                  srcPath: "subdir/",
+                  dstPath: "subdir2/"
+                }) {
+                  newLabbookFileEdge {
+                    node{
+                      key
+                      isDir
+                      size
+                    }
+                  }
+                }
+            }
+            """
+            snapshot.assert_match(client.execute(query))
+            assert os.path.exists(os.path.join(labbook_dir, 'code', 'subdir2', 'sillyfile')) is True
+
     def test_move_file_many(self, mock_create_labbooks, snapshot):
         """Test moving a file around a bunch"""
-        labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')
+        labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1', 'code')
+        os.makedirs(os.path.join(labbook_dir, 'subdir'))
 
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
             client = Client(mock_create_labbooks[2])
@@ -163,8 +190,9 @@ class TestLabBookServiceMutations(object):
                 input: {
                   owner: "default",
                   labbookName: "labbook1",
-                  srcPath: "code/sillyfile",
-                  dstPath: "input/sillyfile"
+                  section: "code",
+                  srcPath: "sillyfile",
+                  dstPath: "subdir/sillyfile"
                 }) {
                   newLabbookFileEdge {
                     node{
@@ -182,8 +210,9 @@ class TestLabBookServiceMutations(object):
                 input: {
                   owner: "default",
                   labbookName: "labbook1",
-                  srcPath: "input/sillyfile",
-                  dstPath: "code/sillyfile"
+                  section: "code",
+                  srcPath: "subdir/sillyfile",
+                  dstPath: "sillyfile"
                 }) {
                   newLabbookFileEdge {
                     node{
@@ -196,28 +225,28 @@ class TestLabBookServiceMutations(object):
             }
             """
             snapshot.assert_match(client.execute(query1))
-            assert os.path.exists(os.path.join(labbook_dir, 'input', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'input', 'sillyfile'))
+            assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
 
             snapshot.assert_match(client.execute(query2))
-            assert os.path.exists(os.path.join(labbook_dir, 'code', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'code', 'sillyfile'))
+            assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
 
             snapshot.assert_match(client.execute(query1))
-            assert os.path.exists(os.path.join(labbook_dir, 'input', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'input', 'sillyfile'))
+            assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
 
             snapshot.assert_match(client.execute(query2))
-            assert os.path.exists(os.path.join(labbook_dir, 'code', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'code', 'sillyfile'))
+            assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
 
             snapshot.assert_match(client.execute(query1))
-            assert os.path.exists(os.path.join(labbook_dir, 'input', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'input', 'sillyfile'))
+            assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
 
             snapshot.assert_match(client.execute(query2))
-            assert os.path.exists(os.path.join(labbook_dir, 'code', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'code', 'sillyfile'))
+            assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
+            assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
 
     def test_delete_file(self, mock_create_labbooks):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
@@ -228,16 +257,33 @@ class TestLabBookServiceMutations(object):
                 input: {
                   owner: "default",
                   labbookName: "labbook1",
-                  filePath: "code/sillyfile",
+                  section: "code",
+                  filePath: "sillyfile"
                 }) {
                   success
                 }
             }
             """
+            filepath = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1',
+                                    'code', 'sillyfile')
+            assert os.path.exists(filepath) is True
+
             res = client.execute(query)
             assert res['data']['deleteLabbookFile']['success'] is True
 
-    def test_delete_file(self, mock_create_labbooks):
+            assert os.path.exists(filepath) is False
+
+    def test_delete_dir(self, mock_create_labbooks):
+
+        lb = LabBook(mock_create_labbooks[0])
+        lb.from_name('default', 'default', 'labbook1')
+        lb.makedir('code/subdir')
+        lb.git.add_all('code/')
+        lb.git.commit("blah")
+
+        dir_path = os.path.join(lb.root_dir, 'code', 'subdir')
+        assert os.path.exists(dir_path) is True
+
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
             client = Client(mock_create_labbooks[2])
             # Note, deleting a file should work with and without a trailing / at the end.
@@ -247,7 +293,8 @@ class TestLabBookServiceMutations(object):
                 input: {
                   owner: "default",
                   labbookName: "labbook1",
-                  filePath: "code/",
+                  section: "code",
+                  filePath: "subdir/",
                   isDirectory: true
                 }) {
                   success
@@ -256,6 +303,9 @@ class TestLabBookServiceMutations(object):
             """
             res = client.execute(query)
             assert res['data']['deleteLabbookFile']['success'] is True
+
+            assert os.path.exists(dir_path) is False
+            assert os.path.exists(os.path.join(lb.root_dir, 'code')) is True
 
     def test_makedir(self, mock_create_labbooks, snapshot):
         with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
@@ -266,7 +316,8 @@ class TestLabBookServiceMutations(object):
                 input: {
                   owner: "default",
                   labbookName: "labbook1",
-                  dirName: "output/new_folder",
+                  section: "output",
+                  directory: "new_folder",
                 }) {
                   newLabbookFileEdge {
                     node{
@@ -315,7 +366,8 @@ class TestLabBookServiceMutations(object):
                             mutation addLabbookFile{{
                               addLabbookFile(input:{{owner:"default",
                                                       labbookName: "labbook1",
-                                                      filePath: "code/myfile.bin",
+                                                      section: "code",
+                                                      filePath: "myfile.bin",
                                 chunkUploadParams:{{
                                   uploadId: "jfdjfdjdisdjwdoijwlkfjd",
                                   chunkSize: {chunk_size},
@@ -353,7 +405,8 @@ class TestLabBookServiceMutations(object):
                     mutation addLabbookFile{{
                       addLabbookFile(input:{{owner:"default",
                                               labbookName: "labbook1",
-                                              filePath: "code/myfile.bin",
+                                              section: "code",
+                                              filePath: "myfile.bin",
                         chunkUploadParams:{{
                           uploadId: "jfdjfdjdisdjwdoijwlkfjd",
                           chunkSize: 100,
@@ -427,7 +480,7 @@ class TestLabBookServiceMutations(object):
             input: {
               owner: "default",
               labbookName: "labbook1",
-              subdir: "code",
+              section: "code",
               key: "test.txt",
               description: "my test favorite"
             }) {
@@ -487,7 +540,7 @@ class TestLabBookServiceMutations(object):
             input: {
               owner: "default",
               labbookName: "labbook1",
-              subdir: "input",
+              section: "input",
               key: "sample1",
               description: "my data dir",
               isDir: true
@@ -516,7 +569,7 @@ class TestLabBookServiceMutations(object):
             input: {
               owner: "default",
               labbookName: "labbook1",
-              subdir: "input",
+              section: "input",
               key: "sample2/",
               description: "my data dir 2",
               isDir: true
@@ -581,7 +634,7 @@ class TestLabBookServiceMutations(object):
             input: {
               owner: "default",
               labbookName: "labbook1",
-              subdir: "code",
+              section: "code",
               key: "test1.txt",
               description: "my test favorite 1"
             }) {
@@ -603,7 +656,7 @@ class TestLabBookServiceMutations(object):
             input: {
               owner: "default",
               labbookName: "labbook1",
-              subdir: "code",
+              section: "code",
               key: "test2.txt",
               description: "my test favorite 2"
             }) {
@@ -625,7 +678,7 @@ class TestLabBookServiceMutations(object):
             input: {
               owner: "default",
               labbookName: "labbook1",
-              subdir: "code",
+              section: "code",
               key: "test3.txt",
               description: "my test favorite 3",
               index: 1
@@ -645,6 +698,98 @@ class TestLabBookServiceMutations(object):
         # Verify the favorites are there
         snapshot.assert_match(client.execute(fav_query))
 
+    def test_update_favorite(self, mock_create_labbooks, snapshot):
+        """Method to test updating a favorite"""
+        client = Client(mock_create_labbooks[2])
+
+        # Verify no favs
+        fav_query = """
+                   {
+                     labbook(name: "labbook1", owner: "default") {
+                       name
+                       code{
+                           favorites{
+                               edges {
+                                   node {
+                                       id
+                                       index
+                                       key
+                                       description
+                                       isDir
+                                   }
+                               }
+                           }
+                       }
+                     }
+                   }
+                   """
+        snapshot.assert_match(client.execute(fav_query))
+
+        test_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                 'labbook1', 'code', 'test.txt')
+        test_file2 = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                  'labbook1', 'code', 'test2.txt')
+        with open(test_file, 'wt') as tf:
+            tf.write("a test file...")
+
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              key: "test.txt",
+              description: "my test favorite"
+            }) {
+              newFavoriteEdge{
+                node {
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        # Verify the favorite is there
+        snapshot.assert_match(client.execute(fav_query))
+
+        # rename the favorite
+        os.rename(test_file, test_file2)
+
+        query = """
+        mutation updateFavorite {
+          updateFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              index: 0,
+              updatedKey: "test2.txt",
+              updatedDescription: "UPDATED"
+            }) {
+              updatedFavoriteEdge{
+                node {
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(client.execute(query))
+
+        snapshot.assert_match(client.execute(fav_query))
+
     def test_delete_favorite(self, mock_create_labbooks, snapshot):
         """Method to test adding a favorite"""
         client = Client(mock_create_labbooks[2])
@@ -661,7 +806,7 @@ class TestLabBookServiceMutations(object):
             input: {
               owner: "default",
               labbookName: "labbook1",
-              subdir: "code",
+              section: "code",
               key: "test.txt",
               description: "my test favorite"
             }) {
@@ -709,7 +854,7 @@ class TestLabBookServiceMutations(object):
             input: {
               owner: "default",
               labbookName: "labbook1",
-              subdir: "code",
+              section: "code",
               index: 0
             }) {
               success
@@ -736,7 +881,7 @@ class TestLabBookServiceMutations(object):
         # Create a largeish file in the dir
         with open(os.path.join(fixture_working_dir[1], 'testfile.bin'), 'wb') as testfile:
             testfile.write(os.urandom(9000000))
-        lb.insert_file(testfile.name, 'input')
+        lb.insert_file('input', testfile.name, '')
 
         # Export labbook
         zip_file = export_labbook_as_zip(lb.root_dir, tempfile.gettempdir())

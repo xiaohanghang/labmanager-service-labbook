@@ -7,7 +7,7 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['TestLabBookServiceQueries.test_node_labbook_from_object 1'] = {
+snapshots['TestNodeQueries.test_node_labbook_from_object 1'] = {
     'data': {
         'node': {
             'activeBranch': {
@@ -20,7 +20,7 @@ snapshots['TestLabBookServiceQueries.test_node_labbook_from_object 1'] = {
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_node_labbook_from_mutation 1'] = {
+snapshots['TestNodeQueries.test_node_labbook_from_mutation 1'] = {
     'data': {
         'node': {
             'activeBranch': {
@@ -33,7 +33,7 @@ snapshots['TestLabBookServiceQueries.test_node_labbook_from_mutation 1'] = {
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_node_environment 1'] = {
+snapshots['TestNodeQueries.test_node_environment 1'] = {
     'data': {
         'node': {
             'description': 'Example labbook by mutation.',
@@ -48,7 +48,7 @@ snapshots['TestLabBookServiceQueries.test_node_environment 1'] = {
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_node_environment 2'] = {
+snapshots['TestNodeQueries.test_node_environment 2'] = {
     'data': {
         'node': {
             'containerStatus': 'NOT_RUNNING',
@@ -58,7 +58,7 @@ snapshots['TestLabBookServiceQueries.test_node_environment 2'] = {
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_node_notes 1'] = {
+snapshots['TestNodeQueries.test_node_notes 1'] = {
     'data': {
         'node': {
             'author': 'noreply@gigantum.io',
@@ -72,7 +72,7 @@ snapshots['TestLabBookServiceQueries.test_node_notes 1'] = {
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_favorites_node 1'] = {
+snapshots['TestNodeQueries.test_favorites_node 1'] = {
     'data': {
         'node': None
     },
@@ -89,7 +89,7 @@ snapshots['TestLabBookServiceQueries.test_favorites_node 1'] = {
     ]
 }
 
-snapshots['TestLabBookServiceQueries.test_favorites_node 2'] = {
+snapshots['TestNodeQueries.test_favorites_node 2'] = {
     'data': {
         'node': None
     },
@@ -106,24 +106,24 @@ snapshots['TestLabBookServiceQueries.test_favorites_node 2'] = {
     ]
 }
 
-snapshots['TestLabBookServiceQueries.test_favorites_node 3'] = {
+snapshots['TestNodeQueries.test_favorites_node 3'] = {
     'data': {
         'node': {
             'description': 'My file with stuff 1',
-            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=',
+            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
             'index': 0,
             'isDir': False,
-            'key': 'code/test1.txt'
+            'key': 'test1.txt'
         }
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_file_node 1'] = {
+snapshots['TestNodeQueries.test_file_node 1'] = {
     'data': {
         'node': {
-            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvdGVzdDEudHh0',
+            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QxLnR4dA==',
             'isDir': False,
-            'key': 'code/test1.txt',
+            'key': 'test1.txt',
             'size': 5
         }
     }
