@@ -64,11 +64,14 @@ class Labbook(ObjectType):
     # List of branches
     branches = graphene.relay.ConnectionField(LabbookRefConnection)
 
+    # How many commits the current active_branch is behind remote (0 if up-to-date or local-only).
+    updates_available_count = graphene.Int()
+
+    # Whether repo state is clean
+    is_repo_clean = graphene.Boolean()
+
     # Environment Information
     environment = graphene.Field(Environment)
-
-    # Interface to list all of files and directories
-    files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String())
 
     # List of sections
     code = graphene.Field(LabbookSection)
@@ -137,6 +140,15 @@ class Labbook(ObjectType):
                        owner=Owner.create(id_data), environment=Environment.create(id_data),
                        _id_data=id_data)
 
+    def resolve_updates_available_count(self, args, context, info):
+        """Get number of commits the active_branch is behind its remote counterpart.
+        Returns 0 if up-to-date or if local only."""
+
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        # Note, by default using remote "origin"
+        return lb.get_commits_behind_remote("origin")[1]
+
     def resolve_active_branch(self, args, context, info):
         """Method to get the active branch
 
@@ -167,6 +179,25 @@ class Labbook(ObjectType):
 
         return LabbookRef.create(self._id_data)
 
+    def resolve_is_repo_clean(self, args, context, info):
+        """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        try:
+            lb = LabBook()
+            lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+            return lb.is_repo_clean
+        except Exception as e:
+            logger.exception(e)
+            raise
+
     def resolve_branches(self, args, context, info):
         """Method to page through branch Refs
 
@@ -178,62 +209,39 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        # Get the git information
-        git = get_git_interface(Configuration().config["git"])
-        # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
-        git.set_working_directory(os.path.join(git.working_directory, get_logged_in_username(),
-                                               self.owner.username, "labbooks", self.name))
 
-        # Get all edges and cursors. Here, cursors are just an index into the refs
-        edges = [x for x in git.repo.refs]
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        # Get LabbookRef instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            parts = edge.name.split("/")
-            if len(parts) > 1:
-                prefix = parts[0]
-                branch = parts[1]
-            else:
-                prefix = None
-                branch = parts[0]
-
-            id_data = {"name": self.name,
-                       "owner": self.owner.username,
-                       "prefix": prefix,
-                       "branch": branch}
-            edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
-
-        return LabbookRefConnection(edges=edge_objs,
-                                    page_info=lbc.page_info)
-
-    def resolve_files(self, args, context, info):
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
-
-        # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.walkdir(base_path=args.get('base_dir'), show_hidden=False)
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        edge_objs = []
         try:
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_username(),
-                           "owner": self.owner.username,
-                           "name": self.name,
-                           "file_info": edge}
-                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
+            # Get all edges and cursors. Here, cursors are just an index into the refs
+            git = get_git_interface(Configuration().config["git"])
+            # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
+            git.set_working_directory(os.path.join(git.working_directory, get_logged_in_username(),
+                                                   self.owner.username, "labbooks", self.name))
+            edges = [x for x in git.repo.refs]
+            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
-            return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
+            # Process slicing and cursor args
+            lbc = ListBasedConnection(edges, cursors, args)
+            lbc.apply()
+
+            # Get LabbookRef instances
+            edge_objs = []
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                parts = edge.name.split("/")
+                if len(parts) > 1:
+                    prefix = parts[0]
+                    branch = parts[1]
+                else:
+                    prefix = None
+                    branch = parts[0]
+
+                id_data = {"name": self.name,
+                           "owner": self.owner.username,
+                           "prefix": prefix,
+                           "branch": branch}
+                edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
+
+            return LabbookRefConnection(edges=edge_objs,
+                                        page_info=lbc.page_info)
         except Exception as e:
             logger.exception(e)
             raise
@@ -247,7 +255,7 @@ class Labbook(ObjectType):
             self._id_data["labbook_instance"] = lb
 
         local_id_data = copy.deepcopy(self._id_data)
-        local_id_data['section_name'] = 'code'
+        local_id_data['section'] = 'code'
 
         return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
@@ -261,7 +269,7 @@ class Labbook(ObjectType):
             self._id_data["labbook_instance"] = lb
 
         local_id_data = copy.deepcopy(self._id_data)
-        local_id_data['section_name'] = 'input'
+        local_id_data['section'] = 'input'
 
         return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
@@ -275,7 +283,7 @@ class Labbook(ObjectType):
             self._id_data["labbook_instance"] = lb
 
         local_id_data = copy.deepcopy(self._id_data)
-        local_id_data['section_name'] = 'output'
+        local_id_data['section'] = 'output'
 
         return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
@@ -318,30 +326,3 @@ class Labbook(ObjectType):
             edge_objs.append(NoteConnection.Edge(node=Note.create(id_data), cursor=cursor))
 
         return NoteConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_favorites(self, args, context, info):
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
-
-        # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.get_favorites(args.get('subdir'))
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        edge_objs = []
-        try:
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_username(),
-                           "owner": self.owner.username,
-                           "name": self.name,
-                           "subdir": args.get('subdir'),
-                           "favorite_data": edge}
-                edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data), cursor=cursor))
-
-            return LabbookFavoriteConnection(edges=edge_objs, page_info=lbc.page_info)
-        except Exception as e:
-            logger.exception(e)
-            raise

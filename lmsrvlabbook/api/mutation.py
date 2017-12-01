@@ -19,9 +19,10 @@
 # SOFTWARE.
 import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
-    CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook, \
+    CreateNote, AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook,\
+    ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
-    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook
+    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -29,6 +30,9 @@ class LabbookMutations(graphene.AbstractType):
 
     # Import a labbook from an uploaded file (Archive as zip).
     import_labbook = ImportLabbook.Field()
+
+    # Import a labbook from a remote Git repository.
+    import_remote_labbook = ImportRemoteLabbook.Field()
 
     # Export a labbook and return URL to its zipped archive.
     export_labbook = ExportLabbook.Field()
@@ -44,6 +48,15 @@ class LabbookMutations(graphene.AbstractType):
 
     # Update a given labbook to be at the tip of a particular git branch.
     checkout_branch = CheckoutBranch.Field()
+
+    #
+    pull_active_branch_from_remote = PullActiveBranchFromRemote.Field()
+
+    #
+    push_active_branch_to_remote = PushActiveBranchToRemote.Field()
+
+    # Add a remote to the labbook
+    add_labbook_remote = AddLabbookRemote.Field()
 
     # Build a docker image for a given Labbook.
     build_image = BuildImage.Field()
@@ -83,6 +96,9 @@ class LabbookMutations(graphene.AbstractType):
 
     # Add a favorite file or dir in a labbook subdirectory (code, input, output)
     add_favorite = AddLabbookFavorite.Field()
+
+    # Update a favorite file or dir in a labbook subdirectory (code, input, output)
+    update_favorite = UpdateLabbookFavorite.Field()
 
     # Remove a favorite file or dir in a labbook subdirectory (code, input, output)
     remove_favorite = RemoveLabbookFavorite.Field()

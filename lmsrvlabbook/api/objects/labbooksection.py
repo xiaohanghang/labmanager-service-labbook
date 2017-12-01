@@ -58,7 +58,7 @@ class LabbookSection(ObjectType):
         Returns:
             str
         """
-        return "{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["section_name"])
+        return "{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["section"])
 
     @staticmethod
     def parse_type_id(type_id):
@@ -71,7 +71,7 @@ class LabbookSection(ObjectType):
             dict
         """
         split = type_id.split("&")
-        return {"owner": split[0], "name": split[1], "section_id": split[2]}
+        return {"owner": split[0], "name": split[1], "section": split[2]}
 
     @staticmethod
     def create(id_data):
@@ -106,20 +106,20 @@ class LabbookSection(ObjectType):
                               _id_data=id_data)
 
     def resolve_files(self, args, context, info):
+        """Resolver for getting file listing in a single directory"""
         if "labbook_instance" not in self._id_data:
             lb = LabBook()
             lb.from_name(get_logged_in_username(), self._id_data['owner'], self._id_data['name'])
         else:
             lb = self._id_data["labbook_instance"]
 
+        base_dir = None
         if args.get("root"):
-            base_dir = os.path.join(self._id_data['section_name'], args.get("root")) + os.path.sep
-        else:
-            base_dir = self._id_data['section_name'] + os.path.sep
-        base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
+            base_dir = args.get("root") + os.path.sep
+            base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.listdir(base_path=base_dir, show_hidden=False)
+        edges = lb.listdir(self._id_data['section'], base_path=base_dir, show_hidden=False)
         # Generate naive cursors
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
@@ -132,6 +132,7 @@ class LabbookSection(ObjectType):
             for edge, cursor in zip(lbc.edges, lbc.cursors):
                 id_data = {"user": get_logged_in_username(),
                            "owner": self._id_data['owner'],
+                           "section": self._id_data['section'],
                            "name": self._id_data['name'],
                            "file_info": edge}
                 edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
@@ -142,6 +143,7 @@ class LabbookSection(ObjectType):
             raise
 
     def resolve_all_files(self, args, context, info):
+        """Resolver for getting all files in a LabBook section"""
         if "labbook_instance" not in self._id_data:
             lb = LabBook()
             lb.from_name(get_logged_in_username(), self._id_data['owner'], self._id_data['name'])
@@ -149,7 +151,7 @@ class LabbookSection(ObjectType):
             lb = self._id_data["labbook_instance"]
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.walkdir(base_path=self._id_data['section_name'], show_hidden=False)
+        edges = lb.walkdir(section=self._id_data['section'], show_hidden=False)
         # Generate naive cursors
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
@@ -162,6 +164,7 @@ class LabbookSection(ObjectType):
             for edge, cursor in zip(lbc.edges, lbc.cursors):
                 id_data = {"user": get_logged_in_username(),
                            "owner": self._id_data['owner'],
+                           "section": self._id_data['section'],
                            "name": self._id_data['name'],
                            "file_info": edge}
                 edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
@@ -179,7 +182,7 @@ class LabbookSection(ObjectType):
             lb = self._id_data["labbook_instance"]
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.get_favorites(self._id_data['section_name'])
+        edges = lb.get_favorites(self._id_data['section'])
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
@@ -192,7 +195,7 @@ class LabbookSection(ObjectType):
                 id_data = {"user": get_logged_in_username(),
                            "owner": self._id_data['owner'],
                            "name": self._id_data['name'],
-                           "subdir": self._id_data['section_name'],
+                           "section": self._id_data['section'],
                            "favorite_data": edge}
                 edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data), cursor=cursor))
 
