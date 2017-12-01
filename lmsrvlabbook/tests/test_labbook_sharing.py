@@ -48,12 +48,12 @@ def mock_create_labbooks(fixture_working_dir):
     lb.new(owner={"username": "default"}, name="sample-repo-lb", description="Cats labbook 1")
 
     # Create a file in the dir
-    with open(os.path.join(fixture_working_dir[1], 'sillyfile'), 'w') as sf:
+    with open(os.path.join(fixture_working_dir[1], 'codefile.c'), 'w') as sf:
         sf.write("1234567")
         sf.seek(0)
-    lb.insert_file(sf.name, 'code')
+    lb.insert_file('code', sf.name, '')
 
-    assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
+    assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'codefile.c'))
     # name of the config file, temporary working directory, the schema
     yield fixture_working_dir, lb
 
@@ -119,7 +119,7 @@ class TestLabbookSharing(object):
         r = client.execute(query)
         assert r['data']['labbook']['isRepoClean'] is True
 
-        os.remove(os.path.join(lb.root_dir, 'code', 'sillyfile'))
+        os.remove(os.path.join(lb.root_dir, 'code', 'codefile.c'))
 
         r = client.execute(query)
         # We back-door deleted a file in the LB. The repo should now be unclean - prove it.
