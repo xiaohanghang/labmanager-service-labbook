@@ -101,6 +101,18 @@ class TestLabbookSharing(object):
         else:
             assert False
 
+        # Now do a quick test for default_remote
+        get_default_remote_q = f"""
+        {{
+            labbook(name: "sample-repo-lb", owner: "default") {{
+                defaultRemote
+            }}
+        }}
+        """
+        r = client.execute(get_default_remote_q)
+        assert r['data']['labbook']['defaultRemote'] == remote_labbook_repo
+        assert 'errors' not in r
+
 
     def test_can_checkout_branch(self, mock_create_labbooks, remote_labbook_repo, fixture_working_dir):
         """Test whether there are uncommitted changes or anything that would prevent
