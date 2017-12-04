@@ -455,7 +455,7 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
-            lb.makedir(os.path.join(input['section'], input['directory']))
+            lb.makedir(os.path.join(input['section'], input['directory']), create_note=True)
             logger.info(f"Made new directory in `{input['directory']}`")
 
             # Create data to populate edge
