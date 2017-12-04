@@ -61,6 +61,9 @@ class Labbook(ObjectType):
     # The name of the current branch
     active_branch = graphene.Field(LabbookRef)
 
+    # Get the URL of the remote origin
+    default_remote = graphene.String()
+
     # List of branches
     branches = graphene.relay.ConnectionField(LabbookRefConnection)
 
@@ -194,6 +197,32 @@ class Labbook(ObjectType):
             lb = LabBook()
             lb.from_name(get_logged_in_username(), self.owner.username, self.name)
             return lb.is_repo_clean
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def resolve_default_remote(self, args, context, info):
+        """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        try:
+            lb = LabBook()
+            lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+            remotes = lb.git.list_remotes()
+            if remotes:
+                url = [x['url'] for x in remotes if x['name'] == 'origin']
+                if url:
+                    return url[0]
+                else:
+                    logger.warning(f"There exist remotes in {str(lb)}, but no origin found.")
+            return None
         except Exception as e:
             logger.exception(e)
             raise

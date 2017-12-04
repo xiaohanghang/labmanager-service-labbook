@@ -48,12 +48,12 @@ def mock_create_labbooks(fixture_working_dir):
     lb.new(owner={"username": "default"}, name="sample-repo-lb", description="Cats labbook 1")
 
     # Create a file in the dir
-    with open(os.path.join(fixture_working_dir[1], 'sillyfile'), 'w') as sf:
+    with open(os.path.join(fixture_working_dir[1], 'codefile.c'), 'w') as sf:
         sf.write("1234567")
         sf.seek(0)
-    lb.insert_file(sf.name, 'code')
+    lb.insert_file('code', sf.name, '')
 
-    assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
+    assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'codefile.c'))
     # name of the config file, temporary working directory, the schema
     yield fixture_working_dir, lb
 
@@ -101,6 +101,18 @@ class TestLabbookSharing(object):
         else:
             assert False
 
+        # Now do a quick test for default_remote
+        get_default_remote_q = f"""
+        {{
+            labbook(name: "sample-repo-lb", owner: "default") {{
+                defaultRemote
+            }}
+        }}
+        """
+        r = client.execute(get_default_remote_q)
+        assert r['data']['labbook']['defaultRemote'] == remote_labbook_repo
+        assert 'errors' not in r
+
 
     def test_can_checkout_branch(self, mock_create_labbooks, remote_labbook_repo, fixture_working_dir):
         """Test whether there are uncommitted changes or anything that would prevent
@@ -119,7 +131,7 @@ class TestLabbookSharing(object):
         r = client.execute(query)
         assert r['data']['labbook']['isRepoClean'] is True
 
-        os.remove(os.path.join(lb.root_dir, 'code', 'sillyfile'))
+        os.remove(os.path.join(lb.root_dir, 'code', 'codefile.c'))
 
         r = client.execute(query)
         # We back-door deleted a file in the LB. The repo should now be unclean - prove it.
