@@ -70,10 +70,14 @@ def ping():
 logger.info("Cloning/Updating environment repositories.")
 
 erm = RepositoryManager()
-erm.update_repositories()
-logger.info("Indexing environment repositories.")
-erm.index_repositories()
-logger.info("Environment repositories ready.")
+update_successful = erm.update_repositories()
+if update_successful:
+    logger.info("Indexing environment repositories.")
+    erm.index_repositories()
+    logger.info("Environment repositories updated and ready.")
+
+else:
+    logger.info("Unable to update environment repositories at startup, most likely due to lack of internet access.")
 
 # Empty container-container share dir as it is ephemeral
 share_dir = os.path.join(os.path.sep, 'mnt', 'share')
