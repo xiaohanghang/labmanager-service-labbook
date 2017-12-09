@@ -192,3 +192,18 @@ def fixture_working_dir_populated_scoped():
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
+
+
+@pytest.fixture
+def fixture_test_file():
+    """A pytest fixture that creates a temporary file
+    """
+    temp_file_name = os.path.join(tempfile.tempdir, "test_file.txt")
+    with open(temp_file_name, 'wt') as dummy_file:
+        dummy_file.write("blah")
+        dummy_file.flush()
+        dummy_file.seek(0)
+
+        yield dummy_file.name
+
+    os.remove(temp_file_name)

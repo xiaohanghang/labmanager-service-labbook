@@ -27,8 +27,8 @@ from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
-from lmcommon.notes import NoteStore, NoteLogLevel
 from lmcommon.imagebuilder import ImageBuilder
+from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
 from lmsrvcore.auth.user import get_logged_in_username
@@ -62,18 +62,23 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
                name=input.get('name'),
                description=input.get('description'))
 
-        # Create a new Note entry
-        ns = NoteStore(lb)
-        note_data = {
-            "linked_commit": lb.git.commit_hash,
-            "message": "Created new LabBook: {}/{}".format(username, input.get('name')),
-            "level": NoteLogLevel.USER_MAJOR,
-            "tags": [],
-            "free_text": "",
-            "objects": []
-        }
+        # Create a Activity Store instance
+        store = ActivityStore(lb)
 
-        ns.create_note(note_data)
+        # Create detail record
+        adr = ActivityDetailRecord(ActivityDetailType.LABBOOK, show=False, importance=0)
+        adr.add_value('text/plain', f"Created new LabBook: {username}/{input.get('name')}")
+
+        # Create activity record
+        ar = ActivityRecord(ActivityType.LABBOOK,
+                            message=f"Created new LabBook: {username}/{input.get('name')}",
+                            show=True,
+                            importance=255,
+                            linked_commit=lb.git.commit_hash)
+        ar.add_detail_object(adr)
+
+        # Store
+        store.create_activity_record(ar)
 
         # Get a graphene instance of the newly created LabBook
         id_data = {"owner": username,
@@ -455,7 +460,7 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
                                                  input['labbook_name'])
             lb = LabBook()
             lb.from_directory(inferred_lb_directory)
-            lb.makedir(os.path.join(input['section'], input['directory']), create_note=True)
+            lb.makedir(os.path.join(input['section'], input['directory']), create_activity_record=True)
             logger.info(f"Made new directory in `{input['directory']}`")
 
             # Create data to populate edge

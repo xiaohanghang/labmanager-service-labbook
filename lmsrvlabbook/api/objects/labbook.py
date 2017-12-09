@@ -28,7 +28,7 @@ from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
 from lmcommon.gitlib import get_git_interface
 from lmcommon.labbook import LabBook
-from lmcommon.notes import NoteStore
+from lmcommon.activity import ActivityStore
 
 from lmsrvcore.auth.user import get_logged_in_username
 
@@ -37,14 +37,12 @@ from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
 
-from lmsrvlabbook.api.connections.note import NoteConnection
 from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.objects.environment import Environment
-from lmsrvlabbook.api.objects.note import Note
 from lmsrvlabbook.api.objects.ref import LabbookRef
-from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
 from lmsrvlabbook.api.objects.labbooksection import LabbookSection
-from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection, LabbookFavoriteConnection
+from lmsrvlabbook.api.connections.activity import ActivityConnection
+from lmsrvlabbook.api.objects.activity import ActivityDetailObject, ActivityRecordObject
 
 logger = LMLogger.get_logger()
 
@@ -81,8 +79,12 @@ class Labbook(ObjectType):
     input = graphene.Field(LabbookSection)
     output = graphene.Field(LabbookSection)
 
-    # Connection to Note Entries
-    notes = graphene.relay.ConnectionField(NoteConnection)
+    # Connection to Activity Entries
+    activity_records = graphene.relay.ConnectionField(ActivityConnection)
+
+    # Access a detail record directly, which is useful when fetching detail items
+    detail_record = graphene.Field(ActivityDetailObject, key=graphene.String())
+    detail_records = graphene.List(ActivityDetailObject, keys=graphene.List(graphene.String))
 
     @staticmethod
     def to_type_id(id_data):
@@ -317,7 +319,7 @@ class Labbook(ObjectType):
         return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
 
-    def resolve_notes(self, args, context, info):
+    def resolve_activity_records(self, args, context, info):
         """Method to page through branch Refs
 
         Args:
@@ -328,30 +330,87 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
 
-        note_db = NoteStore(lb)
+        store = ActivityStore(self._id_data["labbook_instance"])
 
-        # TODO: Design a better cursor implementation that actually pages through repo history
-        all_note_summaries = note_db.get_all_note_summaries()
+        if args.get('before') or args.get('last'):
+            raise ValueError("Only `after` and `first` arguments are supported when paging activity records")
 
-        # Get all edges and cursors. Here, cursors are just an index into the refs
-        edges = [x for x in all_note_summaries]
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+        # Get edges and cursors
+        edges = store.get_activity_records(after=args.get('after'), first=args.get('first'))
+        if edges:
+            cursors = [x.commit for x in edges]
+        else:
+            cursors = []
 
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        # Get LabbookRef instances
+        # Get ActivityRecordObject instances
         edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {"summary": edge,
-                       "owner": self.owner.username,
-                       "name": self.name,
-                       "commit": edge["note_commit"]}
-            edge_objs.append(NoteConnection.Edge(node=Note.create(id_data), cursor=cursor))
+        for edge, cursor in zip(edges, cursors):
+            edge_objs.append(ActivityConnection.Edge(node=ActivityRecordObject.from_activity_record(edge, store),
+                                                     cursor=cursor))
 
-        return NoteConnection(edges=edge_objs, page_info=lbc.page_info)
+        # Create page info based on first commit. Since only paging backwards right now, just check for commit
+        if edges:
+            first_commit = self._id_data["labbook_instance"].git.repo.git.rev_list('HEAD', max_parents=0)
+            if edges[-1].linked_commit == first_commit:
+                has_next_page = False
+            else:
+                has_next_page = True
+
+            end_cursor = cursors[-1]
+        else:
+            has_next_page = False
+            end_cursor = None
+
+        page_info = graphene.relay.PageInfo(has_next_page=has_next_page, has_previous_page=False, end_cursor=end_cursor)
+
+        return ActivityConnection(edges=edge_objs, page_info=page_info)
+
+    def resolve_detail_record(self, args, context, info):
+        """Method to page through branch Refs
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        store = ActivityStore(self._id_data["labbook_instance"])
+        detail_record = store.get_detail_record(args.get('key'))
+
+        return ActivityDetailObject.from_detail_record(detail_record, store)
+
+    def resolve_detail_records(self, args, context, info):
+        """Method to page through branch Refs
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        store = ActivityStore(self._id_data["labbook_instance"])
+        detail_records = [store.get_detail_record(x) for x in args.get('keys')]
+
+        return [ActivityDetailObject.from_detail_record(x, store) for x in detail_records]

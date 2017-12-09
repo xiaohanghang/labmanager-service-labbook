@@ -7,25 +7,6 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['TestLabBookServiceMutations.test_create_labbook 1'] = {
-    'data': {
-        'labbook': {
-            'description': 'my test description',
-            'name': 'test-lab-book1',
-            'notes': {
-                'edges': [
-                    {
-                        'node': {
-                            'freeText': '',
-                            'message': 'Created new LabBook: default/test-lab-book1'
-                        }
-                    }
-                ]
-            }
-        }
-    }
-}
-
 snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 1'] = {
     'data': {
         'createLabbook': {
@@ -721,6 +702,41 @@ snapshots['TestLabBookServiceMutations.test_update_favorite 5'] = {
                 }
             },
             'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_create_labbook 1'] = {
+    'data': {
+        'labbook': {
+            'activityRecords': {
+                'edges': [
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Created new LabBook: default/test-lab-book1'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'LABBOOK'
+                                }
+                            ],
+                            'importance': 255,
+                            'message': 'Created new LabBook: default/test-lab-book1',
+                            'show': True,
+                            'tags': None,
+                            'type': 'LABBOOK'
+                        }
+                    }
+                ]
+            }
         }
     }
 }

@@ -17,141 +17,72 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import json
-import os
-from datetime import datetime
-
 import graphene
 
 from lmcommon.labbook import LabBook
-from lmcommon.notes import NoteStore
+from lmcommon.logging import LMLogger
+
+from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvlabbook.api.objects.note import Note, NoteLogLevelEnum
-from lmsrvlabbook.api.objects.noteobject import NoteObjectInput
+from lmsrvlabbook.api.objects.activity import ActivityRecordObject
+from lmsrvlabbook.api.connections.activity import ActivityConnection
 
-
-class CreateNote(graphene.relay.ClientIDMutation):
-    """Mutation to create a new note entry"""
-
-    class Input:
-        labbook_name = graphene.String(required=True)
-        owner = graphene.String()
-        level = graphene.Field(NoteLogLevelEnum, required=True)
-        message = graphene.String(required=True)
-        linked_commit = graphene.String(required=True)
-        tags = graphene.List(graphene.String)
-        free_text = graphene.String()
-        objects = graphene.List(NoteObjectInput)
-
-    # Return the Note
-    note = graphene.Field(lambda: Note)
-
-    @classmethod
-    def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_username()
-
-        if not input.get("owner"):
-            owner = username
-        else:
-            owner = input.get("owner")
-
-        # Load LabBook instance
-        lb = LabBook()
-        lb.from_name(username, owner, input.get('labbook_name'))
-
-        # Create NoteStore instance
-        note_db = NoteStore(lb)
-
-        note_data = {'linked_commit': input.get('linked_commit'),
-                     'message': input.get('message'),
-                     'level': input.get('level'),
-                     'tags': input.get('tags'),
-                     'free_text': input.get('free_text'),
-                     'objects': input.get('objects')}
-
-        # Create a note record
-        note_commit = note_db.create_note(note_data)
-
-        # Read data back to ensure it was written
-        note = note_db.get_note(note_commit.hexsha)
-
-        note_obj = Note(id=Note.to_type_id({'name': input.get('labbook_name'),
-                                            'owner': owner,
-                                            'commit': note_commit}),
-                        commit=note['note_commit'],
-                        linked_commit=note["linked_commit"],
-                        level=note['level'].value,
-                        tags=note['tags'],
-                        timestamp=note['timestamp'],
-                        message=note['message'],
-                        author=note['author']['email'],
-                        free_text=note['free_text'],
-                        objects=note['objects'])
-
-        return CreateNote(note=note_obj)
+logger = LMLogger.get_logger()
 
 
 class CreateUserNote(graphene.relay.ClientIDMutation):
     """Mutation to create a new user note entry in the activity feed of lab book
 
-    The log level is set to USER_NOTE automatically and the `linked_commit` is an empty string
+    The `linked_commit` is an empty string since there is no linked commit
 
     """
 
     class Input:
+        owner = graphene.String(required=False)
         labbook_name = graphene.String(required=True)
-        owner = graphene.String()
-        message = graphene.String(required=True)
-        free_text = graphene.String()
-        tags = graphene.List(graphene.String)
-        objects = graphene.List(NoteObjectInput)
+        title = graphene.String(required=True)
+        body = graphene.String(required=False)
+        tags = graphene.List(graphene.String, required=False)
 
-    # Return the Note
-    note = graphene.Field(lambda: Note)
+    # Return the new Activity Record
+    new_activity_record_edge = graphene.Field(lambda: ActivityConnection.Edge)
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
-        username = get_logged_in_username()
+        try:
+            username = get_logged_in_username()
 
-        if not input.get("owner"):
-            owner = username
-        else:
-            owner = input.get("owner")
+            if not input.get("owner"):
+                owner = username
+            else:
+                owner = input.get("owner")
 
-        # Load LabBook instance
-        lb = LabBook()
-        lb.from_name(username, owner, input.get('labbook_name'))
+            # Load LabBook instance
+            lb = LabBook()
+            lb.from_name(username, owner, input.get('labbook_name'))
 
-        # Create NoteStore instance
-        note_db = NoteStore(lb)
+            # Create a Activity Store instance
+            store = ActivityStore(lb)
 
-        note_data = {'linked_commit': None,
-                     'message': input.get('message'),
-                     'level': NoteLogLevelEnum.USER_NOTE,
-                     'tags': input.get('tags'),
-                     'free_text': input.get('free_text'),
-                     'objects': input.get('objects')}
+            # Create detail record
+            adr = ActivityDetailRecord(ActivityDetailType.NOTE,
+                                       show=True,
+                                       importance=255)
+            if input.get("body"):
+                adr.add_value('text/markdown', input.get("body"))
 
-        # Create a note record
-        note_commit = note_db.create_note(note_data)
+            # Create activity record
+            ar = ActivityRecord(ActivityType.NOTE,
+                                message=input.get("title"),
+                                linked_commit="xxx",
+                                importance=255,
+                                tags=input.get("tags"))
+            ar.add_detail_object(adr)
+            ar = store.create_activity_record(ar)
 
-        # Read data back to ensure it was written
-        note = note_db.get_note(note_commit.hexsha)
-
-        note_obj = Note(id=Note.to_type_id({'name': input.get('labbook_name'),
-                                            'owner': owner,
-                                            'commit': note_commit}),
-                        commit=note['note_commit'],
-                        linked_commit=note['linked_commit'],
-                        level=note['level'].value,
-                        tags=note['tags'],
-                        timestamp=note['timestamp'],
-                        message=note['message'],
-                        author=note['author']['email'],
-                        free_text=note['free_text'],
-                        objects=note['objects'])
-
-        return CreateUserNote(note=note_obj)
+            return CreateUserNote(new_activity_record_edge=ActivityConnection.Edge(node=ActivityRecordObject.from_activity_record(ar, store),
+                                                                                   cursor=ar.commit))
+        except Exception as e:
+            logger.error(e)
+            raise

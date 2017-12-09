@@ -85,16 +85,24 @@ class TestLabBookServiceMutations(object):
             # Get LabBook you just created
             query = """
             {
-              labbook(name: "test-lab-book1", owner: "default") {
-                name
-                description
-                notes{
-                  edges{
-                    node{
-                      message
-                      freeText
-                    }
-                  }
+              labbook(name: "test-lab-book1", owner: "default") {               
+                activityRecords {
+                    edges{
+                        node{
+                            message
+                            type
+                            show
+                            importance
+                            tags
+                            detailObjects{
+                                type
+                                data
+                                show
+                                importance
+                                tags
+                            }
+                            }                        
+                        }    
                 }
               }
             }
@@ -945,7 +953,6 @@ class TestLabBookServiceMutations(object):
                     # assert os.path.exists(abs_lb_path) is True
 
                 chunk.close()
-
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     def test_rename_labbook(self, fixture_working_dir, snapshot):
