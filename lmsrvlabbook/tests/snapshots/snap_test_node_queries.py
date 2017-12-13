@@ -58,20 +58,6 @@ snapshots['TestNodeQueries.test_node_environment 2'] = {
     }
 }
 
-snapshots['TestNodeQueries.test_node_notes 1'] = {
-    'data': {
-        'node': {
-            'author': 'noreply@gigantum.io',
-            'level': 'USER_MINOR',
-            'message': 'Added a new file in this test',
-            'tags': [
-                'minor',
-                'user'
-            ]
-        }
-    }
-}
-
 snapshots['TestNodeQueries.test_favorites_node 1'] = {
     'data': {
         'node': None

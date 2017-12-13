@@ -445,7 +445,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnNyYy8=',
                                 'isDir': True,
                                 'key': 'src/',
-                                'size': 4096
+                                'size': 0
                             }
                         },
                         {
@@ -483,7 +483,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 2'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnNyYy9qcy8=',
                                 'isDir': True,
                                 'key': 'src/js/',
-                                'size': 4096
+                                'size': 0
                             }
                         },
                         {
@@ -513,7 +513,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 3'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnNyYy9qcy8=',
                                 'isDir': True,
                                 'key': 'src/js/',
-                                'size': 4096
+                                'size': 0
                             }
                         },
                         {
@@ -565,7 +565,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIv',
                                 'isDir': True,
                                 'key': 'subdir/',
-                                'size': 4096
+                                'size': 0
                             }
                         }
                     ]
@@ -580,7 +580,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZvdXRwdXQmZW1wdHkv',
                                 'isDir': True,
                                 'key': 'empty/',
-                                'size': 4096
+                                'size': 0
                             }
                         },
                         {
@@ -639,7 +639,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 2'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIvZGF0YS8=',
                                 'isDir': True,
                                 'key': 'subdir/data/',
-                                'size': 4096
+                                'size': 0
                             }
                         }
                     ]
@@ -652,42 +652,6 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 2'] = {
                     ]
                 }
             }
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_walkdir 1'] = {
-    'data': {
-        'labbook': {
-            'files': {
-                'edges': [
-                    {
-                        'node': {
-                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUv',
-                            'isDir': True,
-                            'key': 'code/',
-                            'size': 4096
-                        }
-                    },
-                    {
-                        'node': {
-                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmlucHV0Lw==',
-                            'isDir': True,
-                            'key': 'input/',
-                            'size': 4096
-                        }
-                    },
-                    {
-                        'node': {
-                            'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJm91dHB1dC8=',
-                            'isDir': True,
-                            'key': 'output/',
-                            'size': 4096
-                        }
-                    }
-                ]
-            },
-            'name': 'labbook1'
         }
     }
 }
@@ -883,7 +847,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorite_and_files 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJmJsYWgv',
                                 'isDir': True,
                                 'key': 'blah/',
-                                'size': 4096
+                                'size': 0
                             }
                         },
                         {
@@ -943,7 +907,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIv',
                                 'isDir': True,
                                 'key': 'subdir/',
-                                'size': 4096
+                                'size': 0
                             }
                         },
                         {
@@ -951,7 +915,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIvZGF0YS8=',
                                 'isDir': True,
                                 'key': 'subdir/data/',
-                                'size': 4096
+                                'size': 0
                             }
                         },
                         {
@@ -974,7 +938,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZvdXRwdXQmZW1wdHkv',
                                 'isDir': True,
                                 'key': 'empty/',
-                                'size': 4096
+                                'size': 0
                             }
                         },
                         {

@@ -35,83 +35,6 @@ snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 2'] = 
     ]
 }
 
-snapshots['TestLabBookServiceMutations.test_create_branch 1'] = {
-    'data': {
-        'labbook': {
-            'activeBranch': {
-                'name': 'master'
-            },
-            'branches': {
-                'edges': [
-                    {
-                        'node': {
-                            'name': 'dev-branch-1'
-                        }
-                    },
-                    {
-                        'node': {
-                            'name': 'master'
-                        }
-                    }
-                ]
-            },
-            'description': 'Yada yada blah blah blah 99',
-            'name': 'test-lab-book2'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_checkout_branch 1'] = {
-    'data': {
-        'createBranch': {
-            'branch': {
-                'name': 'dev-branch-5'
-            }
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_checkout_branch 2'] = {
-    'data': {
-        'labbook': {
-            'activeBranch': {
-                'name': 'master'
-            },
-            'branches': {
-                'edges': [
-                    {
-                        'node': {
-                            'name': 'dev-branch-5',
-                            'prefix': None
-                        }
-                    },
-                    {
-                        'node': {
-                            'name': 'master',
-                            'prefix': None
-                        }
-                    }
-                ]
-            },
-            'description': 'a different description',
-            'name': 'test-lab-book3'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_checkout_branch 3'] = {
-    'data': {
-        'labbook': {
-            'activeBranch': {
-                'name': 'dev-branch-5',
-                'prefix': None
-            },
-            'description': 'a different description',
-            'name': 'test-lab-book3'
-        }
-    }
-}
-
 snapshots['TestLabBookServiceMutations.test_makedir 1'] = {
     'data': {
         'makeLabbookDirectory': {
@@ -119,7 +42,7 @@ snapshots['TestLabBookServiceMutations.test_makedir 1'] = {
                 'node': {
                     'isDir': True,
                     'key': 'new_folder/',
-                    'size': 4096
+                    'size': 0
                 }
             }
         }
@@ -259,14 +182,6 @@ snapshots['TestLabBookServiceMutations.test_add_file_errors 1'] = {
 }
 
 snapshots['TestLabBookServiceMutations.test_rename_labbook 1'] = {
-    'data': {
-        'renameLabbook': {
-            'success': True
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_rename_labbook 2'] = {
     'data': {
         'renameLabbook': {
             'success': True
@@ -660,7 +575,7 @@ snapshots['TestLabBookServiceMutations.test_move_file 2'] = {
                 'node': {
                     'isDir': True,
                     'key': 'subdir2/',
-                    'size': 4096
+                    'size': 0
                 }
             }
         }

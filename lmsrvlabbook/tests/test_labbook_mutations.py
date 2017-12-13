@@ -1020,7 +1020,8 @@ class TestLabBookServiceMutations(object):
                       }}
                     }}
                     """
-        snapshot.assert_match(client.execute(query))
+        r = client.execute(query)
+        assert r['data']['renameLabbook']['success'] is True
 
         # Wait up to 15 seconds for the container to build successfully after renaming
         query = """
