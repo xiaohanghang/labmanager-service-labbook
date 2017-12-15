@@ -27,7 +27,7 @@ from graphene.types import datetime
 
 from lmcommon.labbook import LabBook
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 
 
 class LabbookFile(ObjectType):
@@ -81,6 +81,7 @@ class LabbookFile(ObjectType):
                 'key': tokens[3]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
 
         if "type_id" in id_data:
@@ -160,6 +161,7 @@ class LabbookFavorite(ObjectType):
                 'index': tokens[3]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
 
         if 'favorite_data' in id_data:

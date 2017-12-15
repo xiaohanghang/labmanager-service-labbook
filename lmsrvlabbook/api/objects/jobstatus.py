@@ -23,7 +23,7 @@ import graphene
 from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher, JobKey
 
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 
 logger = LMLogger.get_logger()
 
@@ -74,6 +74,7 @@ class JobStatus(ObjectType):
         return {"job_id": type_id}
 
     @staticmethod
+    @logged_query
     def create(job_id: str):
         """Method to retrieve status info for given background job.
 
@@ -83,20 +84,12 @@ class JobStatus(ObjectType):
         Returns:
             JobStatus
         """
-        try:
-            logger.info(f'Retrieving query for JobStatus on task_id `{job_id}` ({type(job_id)})...')
-            d = Dispatcher()
-
-            task_ref = d.query_task(JobKey(job_id))
-            logger.info(f'Retrieved reference {str(task_ref)} for job_id `{job_id}`')
-
-            js = JobStatus(job_key=task_ref.job_key.key_str,
-                           status=task_ref.status,
-                           started_at=task_ref.started_at,
-                           finished_at=task_ref.finished_at,
-                           result=task_ref.result)
-        except Exception as e:
-            logger.exception(e)
-            raise
-
+        d = Dispatcher()
+        task_ref = d.query_task(JobKey(job_id))
+        logger.info(f'Retrieved reference {str(task_ref)} for job_id `{job_id}`')
+        js = JobStatus(job_key=task_ref.job_key.key_str,
+                       status=task_ref.status,
+                       started_at=task_ref.started_at,
+                       finished_at=task_ref.finished_at,
+                       result=task_ref.result)
         return js

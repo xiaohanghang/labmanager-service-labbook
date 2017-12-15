@@ -21,7 +21,7 @@
 import graphene
 
 from lmcommon.environment import ComponentRepository
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 
 
 class EnvironmentAuthor(ObjectType):
@@ -72,6 +72,7 @@ class EnvironmentAuthor(ObjectType):
                 "component": split[3], "version": split[4]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
         """Method to create a graphene EnvironmentAuthor object based on the type node ID or id data
 

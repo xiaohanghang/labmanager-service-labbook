@@ -23,12 +23,11 @@ from graphene.types import datetime
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityType
-from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvcore.api import ObjectType
+from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.api import ObjectType, logged_query
 
 logger = LMLogger.get_logger()
-
 
 # Bring ActivityType enumeration into Graphene
 ActivityRecordTypeEnum = graphene.Enum.from_enum(ActivityType)
@@ -87,6 +86,7 @@ class ActivityDetailObject(ObjectType):
         return {"owner": split[0], "name": split[1], "key": split[2]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
         """Method to create a graphene ActivityDetailObject object based on the node ID or owner+name+key
 
@@ -246,6 +246,7 @@ class ActivityRecordObject(ObjectType):
         return {"owner": split[0], "name": split[1], "commit": split[2]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
         """Method to create a graphene ActivityRecordObject object based on the node ID or owner+name+commit
 

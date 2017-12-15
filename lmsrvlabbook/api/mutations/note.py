@@ -25,6 +25,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 from lmsrvcore.auth.user import get_logged_in_username
 
+from lmsrvcore.api import logged_mutation
 from lmsrvlabbook.api.objects.activity import ActivityRecordObject
 from lmsrvlabbook.api.connections.activity import ActivityConnection
 
@@ -49,40 +50,37 @@ class CreateUserNote(graphene.relay.ClientIDMutation):
     new_activity_record_edge = graphene.Field(lambda: ActivityConnection.Edge)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
-        try:
-            username = get_logged_in_username()
+        username = get_logged_in_username()
 
-            if not input.get("owner"):
-                owner = username
-            else:
-                owner = input.get("owner")
+        if not input.get("owner"):
+            owner = username
+        else:
+            owner = input.get("owner")
 
-            # Load LabBook instance
-            lb = LabBook()
-            lb.from_name(username, owner, input.get('labbook_name'))
+        # Load LabBook instance
+        lb = LabBook()
+        lb.from_name(username, owner, input.get('labbook_name'))
 
-            # Create a Activity Store instance
-            store = ActivityStore(lb)
+        # Create a Activity Store instance
+        store = ActivityStore(lb)
 
-            # Create detail record
-            adr = ActivityDetailRecord(ActivityDetailType.NOTE,
-                                       show=True,
-                                       importance=255)
-            if input.get("body"):
-                adr.add_value('text/markdown', input.get("body"))
+        # Create detail record
+        adr = ActivityDetailRecord(ActivityDetailType.NOTE,
+                                   show=True,
+                                   importance=255)
+        if input.get("body"):
+            adr.add_value('text/markdown', input.get("body"))
 
-            # Create activity record
-            ar = ActivityRecord(ActivityType.NOTE,
-                                message=input.get("title"),
-                                linked_commit="xxx",
-                                importance=255,
-                                tags=input.get("tags"))
-            ar.add_detail_object(adr)
-            ar = store.create_activity_record(ar)
+        # Create activity record
+        ar = ActivityRecord(ActivityType.NOTE,
+                            message=input.get("title"),
+                            linked_commit="xxx",
+                            importance=255,
+                            tags=input.get("tags"))
+        ar.add_detail_object(adr)
+        ar = store.create_activity_record(ar)
 
-            return CreateUserNote(new_activity_record_edge=ActivityConnection.Edge(node=ActivityRecordObject.from_activity_record(ar, store),
-                                                                                   cursor=ar.commit))
-        except Exception as e:
-            logger.error(e)
-            raise
+        return CreateUserNote(new_activity_record_edge=ActivityConnection.Edge(node=ActivityRecordObject.from_activity_record(ar, store),
+                                                                               cursor=ar.commit))

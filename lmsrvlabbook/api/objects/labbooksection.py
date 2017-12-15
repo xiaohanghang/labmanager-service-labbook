@@ -24,7 +24,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.labbook import LabBook
 
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
@@ -74,6 +74,7 @@ class LabbookSection(ObjectType):
         return {"owner": split[0], "name": split[1], "section": split[2]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
         """Method to create a graphene LabBookSection object based on the node ID or owner+name+section
 

@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 
 # Note (BVB): id_data['component_class'] can probably be removed altogether. Kept for now to get unit tests working.
 
@@ -67,6 +67,7 @@ class PackageManager(ObjectType):
         return {"component_class": split[0], "package_manager": split[1], "package_name": split[2]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
         """Method to create a graphene PackageManager object based on the type node ID or id_data
 

@@ -25,9 +25,8 @@ from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
 
 from lmsrvcore.auth.user import get_logged_in_username
-
+from lmsrvcore.api import logged_query
 from lmsrvcore.api.interfaces import GitRef
-
 from lmsrvlabbook.api.objects.commit import LabbookCommit
 
 
@@ -76,6 +75,7 @@ class LabbookRef(graphene.ObjectType):
         return id_data
 
     @staticmethod
+    @logged_query
     def create(id_data):
         """Method to create a graphene LabbookRef object based on the type node ID or owner&name&prefix&branch
 

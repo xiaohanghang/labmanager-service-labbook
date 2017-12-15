@@ -18,13 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
-import graphene
-
-from lmcommon.configuration import Configuration
-from lmsrvcore.api.objects.user import UserIdentity
-from lmcommon.logging import LMLogger
 
 from flask import current_app
+import graphene
+
+from lmsrvcore.api import logged_mutation
+from lmsrvcore.api.objects.user import UserIdentity
+
+from lmcommon.configuration import Configuration
+from lmcommon.logging import LMLogger
 
 logger = LMLogger.get_logger()
 
@@ -36,6 +38,7 @@ class RemoveUserIdentity(graphene.relay.ClientIDMutation):
     user_identity_edge = graphene.Field(lambda: UserIdentity)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         # Check if there is a local user identity, remove if needed
         identity_file = os.path.join(Configuration().config['git']['working_directory'],
@@ -50,5 +53,3 @@ class RemoveUserIdentity(graphene.relay.ClientIDMutation):
         current_app.current_user = None
 
         return RemoveUserIdentity(user_identity_edge=UserIdentity.create({}))
-
-

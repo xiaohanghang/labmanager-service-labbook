@@ -26,6 +26,7 @@ from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 
+from lmsrvcore.api import logged_mutation
 from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvlabbook.api.objects.ref import LabbookRef
@@ -45,6 +46,7 @@ class CreateBranch(graphene.relay.ClientIDMutation):
     branch = graphene.Field(LabbookRef)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         """Method to perform mutation
         Args:
@@ -91,6 +93,7 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
     labbook = graphene.Field(lambda: Labbook)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         """Method to perform mutation
         Args:
@@ -99,31 +102,27 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
             info:
         Returns:
         """
-        try:
-            username = get_logged_in_username()
-            if not input.get("owner"):
-                owner = get_logged_in_username()
-            else:
-                owner = input.get("owner")
+        username = get_logged_in_username()
+        if not input.get("owner"):
+            owner = get_logged_in_username()
+        else:
+            owner = input.get("owner")
 
-            # Load an existing LabBook
-            labbook_obj = LabBook()
-            labbook_obj.from_name(username, owner, input.get('labbook_name'))
+        # Load an existing LabBook
+        labbook_obj = LabBook()
+        labbook_obj.from_name(username, owner, input.get('labbook_name'))
 
-            # Checkout
-            #labbook_obj.git.fetch()
-            #labbook_obj.git.checkout(input.get('branch_name'))
-            labbook_obj.checkout_branch(input.get('branch_name'))
+        # Checkout
+        #labbook_obj.git.fetch()
+        #labbook_obj.git.checkout(input.get('branch_name'))
+        labbook_obj.checkout_branch(input.get('branch_name'))
 
-            # Create a LabbookRef to the branch
-            id_data = {"username": username,
-                       "owner": owner,
-                       "name": input.get("labbook_name"),
-                       "prefix": None,
-                       "branch": labbook_obj.git.get_current_branch_name(),
-                       "git": labbook_obj.git
-                       }
-            return CheckoutBranch(labbook=Labbook.create(id_data))
-        except Exception as e:
-            logger.exception(e)
-            raise
+        # Create a LabbookRef to the branch
+        id_data = {"username": username,
+                   "owner": owner,
+                   "name": input.get("labbook_name"),
+                   "prefix": None,
+                   "branch": labbook_obj.git.get_current_branch_name(),
+                   "git": labbook_obj.git
+                   }
+        return CheckoutBranch(labbook=Labbook.create(id_data))

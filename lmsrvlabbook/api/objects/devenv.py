@@ -26,7 +26,7 @@ from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
 
 from lmcommon.environment import ComponentRepository
 
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 
 
 class DevEnv(ObjectType):
@@ -89,6 +89,7 @@ class DevEnv(ObjectType):
                 "component": split[3], "version": split[4]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
         """Method to create a graphene DevEnv object based on the type node ID or id_data
 
