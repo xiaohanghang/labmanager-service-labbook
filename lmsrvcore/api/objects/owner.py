@@ -61,7 +61,8 @@ class Owner(ObjectType):
         Returns:
 
         """
-        return Owner(username=id_data["owner"])
+        return Owner(id=Owner.to_type_id(id_data),
+                     username=id_data["owner"])
 
 
 class InputOwner(graphene.InputObjectType):

@@ -24,20 +24,13 @@ from docker.errors import ImageNotFound
 import graphene
 
 from lmcommon.configuration import Configuration, get_docker_client
-from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
-from lmcommon.imagebuilder import ImageBuilder
-from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
+from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 
 from lmsrvcore.api import logged_mutation
-from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
 from lmsrvcore.auth.identity import parse_token
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteConnection
-from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection
-from lmsrvlabbook.api.objects.labbook import Labbook
-from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
 
 logger = LMLogger.get_logger()
 
@@ -93,6 +86,28 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
                                              input['labbook_name'])
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        default_remote = lb.labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in lb.labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        if not admin_service:
+            raise ValueError('admin_service could not be found')
+
+        # Configure git creds
+        mgr = GitLabRepositoryManager(default_remote, admin_service, access_token=token,
+                                      username=username, owner=lb.owner['username'], labbook_name=lb.name)
+        mgr.configure_git_credentials(default_remote, username)
+
         cnt = lb.sync(username=username)
 
         return SyncLabbook(update_count=cnt)
