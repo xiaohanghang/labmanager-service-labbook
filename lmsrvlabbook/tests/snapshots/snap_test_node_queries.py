@@ -11,7 +11,7 @@ snapshots['TestNodeQueries.test_node_labbook_from_object 1'] = {
     'data': {
         'node': {
             'activeBranch': {
-                'name': 'master'
+                'name': 'gm.workspace-default'
             },
             'description': 'Test cat labbook from obj',
             'id': 'TGFiYm9vazpkZWZhdWx0JmNhdC1sYWItYm9vazE=',
@@ -24,7 +24,7 @@ snapshots['TestNodeQueries.test_node_labbook_from_mutation 1'] = {
     'data': {
         'node': {
             'activeBranch': {
-                'name': 'master'
+                'name': 'gm.workspace-default'
             },
             'description': 'my test description',
             'id': 'TGFiYm9vazpkZWZhdWx0JnRlc3QtbGFiLWJvb2sx',

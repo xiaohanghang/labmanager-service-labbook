@@ -164,7 +164,6 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
 
 class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     class Input:
-        owner = graphene.String(required=True)
         chunk_upload_params = ChunkUploadInput(required=True)
 
     import_job_key = graphene.String()
@@ -180,13 +179,13 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
         username = get_logged_in_username()
         logger.info(
             f"Handling ImportLabbook mutation: user={username},"
-            f"owner={input.get('owner')}. Uploaded file {cls.upload_file_path}")
+            f"owner={username}. Uploaded file {cls.upload_file_path}")
 
         job_metadata = {'method': 'import_labbook_from_zip'}
         job_kwargs = {
             'archive_path': cls.upload_file_path,
             'username': username,
-            'owner': input.get('owner'),
+            'owner': username,
             'base_filename': cls.filename
         }
         dispatcher = Dispatcher()
@@ -195,17 +194,17 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
 
         assumed_lb_name = cls.filename.replace('.lbk', '').split('_')[0]
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
+        inferred_lb_directory = os.path.join(working_directory, username, username, 'labbooks',
                                              assumed_lb_name)
         build_img_kwargs = {
             'path': os.path.join(inferred_lb_directory, '.gigantum', 'env'),
-            'tag': f"{username}-{input.get('owner')}-{assumed_lb_name}",
+            'tag': f"{username}-{username}-{assumed_lb_name}",
             'pull': True,
             'nocache': False
         }
         build_img_metadata = {
             'method': 'build_image',
-            'labbook': f"{username}-{input.get('owner')}-{assumed_lb_name}"
+            'labbook': f"{username}-{username}-{assumed_lb_name}"
         }
         logger.info(f"Queueing job to build imported labbook at assumed directory `{inferred_lb_directory}`")
         build_image_job_key = dispatcher.dispatch_task(jobs.build_docker_image, kwargs=build_img_kwargs,

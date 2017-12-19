@@ -75,7 +75,7 @@ class TestLabbookSharing(object):
         """
         r = client.execute(query)
         # We might not always want to use master as the default branch, but keep it here for now.
-        assert r['data']['importRemoteLabbook']['activeBranch'] == 'master'
+        assert r['data']['importRemoteLabbook']['activeBranch'] == 'gm.workspace-default'
 
         ## Now we want to validate that when we import a labbook from a remote url, we also track the default branch.
         list_all_branches_q = f"""
@@ -96,7 +96,8 @@ class TestLabbookSharing(object):
         nodes = r['data']['labbook']['branches']['edges']
         for n in [x['node'] for x in nodes]:
             # Make sure that origin/master is in list of branches. This means it tracks.
-            if n['prefix'] == 'origin' and n['name'] == 'master':
+            pprint.pprint(n)
+            if n['prefix'] is None and n['name'] == 'gm.workspace-default':
                 break
         else:
             assert False

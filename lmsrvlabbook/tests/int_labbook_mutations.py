@@ -62,6 +62,9 @@ def mocky(self):
 def invoker():
     return SampleMockObject().method_to_mock()
 
+@pytest.fixture(scope="session")
+def pause():
+    time.sleep(3)
 
 class TestLabbookMutation(object):
 
@@ -81,7 +84,7 @@ class TestLabbookMutation(object):
             assert not os.path.exists('/tmp/cats')
             assert os.path.exists('/tmp/dogs')
 
-    def test_launch_api_server(self, fixture_working_dir_env_repo_scoped):
+    def test_launch_api_server(self, pause, fixture_working_dir_env_repo_scoped):
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
             proc.daemon = True
@@ -154,7 +157,6 @@ class TestLabbookMutation(object):
             export_query = """
             mutation import {
               importLabbook(input: {
-                owner: "default",
               }) {
                 jobKey
               }
@@ -168,5 +170,6 @@ class TestLabbookMutation(object):
 
             time.sleep(0.5)
             pprint.pprint(r)
+            assert 'errors' not in r
             time.sleep(2)
 

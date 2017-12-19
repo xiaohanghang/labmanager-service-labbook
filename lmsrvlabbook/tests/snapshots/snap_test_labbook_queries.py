@@ -386,7 +386,7 @@ snapshots['TestLabBookServiceQueries.test_get_labbook 1'] = {
     'data': {
         'labbook': {
             'activeBranch': {
-                'name': 'master'
+                'name': 'gm.workspace-default'
             },
             'description': 'my first labbook1',
             'name': 'labbook1'

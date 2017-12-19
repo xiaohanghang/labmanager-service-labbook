@@ -10,3 +10,4 @@ from lmsrvlabbook.api.mutations.note import CreateUserNote
 from lmsrvlabbook.api.mutations.environmentcomponent import (AddEnvironmentComponent, EnvironmentComponentClass,
                                                              AddEnvironmentPackage)
 from lmsrvlabbook.api.mutations.user import RemoveUserIdentity
+from lmsrvlabbook.api.mutations.labbooksharing import SyncLabbook, PublishLabbook

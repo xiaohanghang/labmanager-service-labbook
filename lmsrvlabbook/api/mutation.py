@@ -22,7 +22,7 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook,\
     ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
-    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite
+    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, SyncLabbook, PublishLabbook
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -42,6 +42,12 @@ class LabbookMutations(graphene.AbstractType):
 
     # Rename new labbook
     rename_labbook = RenameLabbook.Field()
+
+    # Publish a labbook to a remote (for the first time
+    publish_labbook = PublishLabbook.Field()
+
+    # Sync a Labbook with remote (for collaboration)
+    sync_labbook = SyncLabbook.Field()
 
     # Create a new git branch for a given labbook.
     create_branch = CreateBranch.Field()

@@ -910,7 +910,7 @@ class TestLabBookServiceMutations(object):
 
                 query = f"""
                             mutation myMutation{{
-                              importLabbook(input:{{owner:"default",
+                              importLabbook(input:{{
                                 chunkUploadParams:{{
                                   uploadId: "jfdjfdjdisdjwdoijwlkfjd",
                                   chunkSize: {chunk_size},
