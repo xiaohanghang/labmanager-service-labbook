@@ -29,6 +29,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.gitlib import get_git_interface
 from lmcommon.labbook import LabBook
 from lmcommon.activity import ActivityStore
+from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 
 from lmsrvcore.auth.user import get_logged_in_username
 
@@ -36,6 +37,7 @@ from lmsrvcore.api import ObjectType, logged_query
 from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
+from lmsrvcore.auth.identity import parse_token
 
 from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.objects.environment import Environment
@@ -64,6 +66,12 @@ class Labbook(ObjectType):
 
     # List of branches
     branches = graphene.relay.ConnectionField(LabbookRefConnection)
+
+    # List of collaborators
+    collaborators = graphene.List(graphene.String)
+
+    # A boolean indicating if the current user can manage collaborators
+    can_manage_collaborators = graphene.Boolean()
 
     # How many commits the current active_branch is behind remote (0 if up-to-date or local-only).
     updates_available_count = graphene.Int()
@@ -111,8 +119,9 @@ class Labbook(ObjectType):
         split = type_id.split("&")
         return {"owner": split[0], "name": split[1]}
 
+    # @BVB - this decorator breaks things, with the error that the argument "self" is missing. Possibly because static?
+    # @logged_query
     @staticmethod
-    @logged_query
     def create(id_data):
         """Method to create a graphene LabBook object based on the node ID or owner+name
 
@@ -149,11 +158,13 @@ class Labbook(ObjectType):
     def resolve_updates_available_count(self, args, context, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
 
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
         # Note, by default using remote "origin"
-        return lb.get_commits_behind_remote("origin")[1]
+        return self._id_data["labbook_instance"].get_commits_behind_remote("origin")[1]
 
     def resolve_active_branch(self, args, context, info):
         """Method to get the active branch
@@ -166,22 +177,13 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        # Get the git information
-        if "git" not in self._id_data:
-            git = get_git_interface(Configuration().config["git"])
-            git.set_working_directory(os.path.join(git.working_directory,
-                                                   self._id_data["username"],
-                                                   self._id_data["owner"],
-                                                   "labbooks",
-                                                   self._id_data["name"]))
-        else:
-            git = self._id_data["git"]
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
 
         # Get the current checked out branch name
-        self._id_data["branch"] = git.get_current_branch_name()
-
-        # Share git instance to speed up IO
-        self._id_data["git"] = git
+        self._id_data["branch"] = self._id_data["labbook_instance"].git.get_current_branch_name()
 
         return LabbookRef.create(self._id_data)
 
@@ -196,10 +198,13 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        try:
+        if "labbook_instance" not in self._id_data:
             lb = LabBook()
-            lb.from_name(get_logged_in_username(), self.owner.username, self.name)
-            return lb.is_repo_clean
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        try:
+            return self._id_data["labbook_instance"].is_repo_clean
         except Exception as e:
             logger.exception(e)
             raise
@@ -215,10 +220,13 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        try:
+        if "labbook_instance" not in self._id_data:
             lb = LabBook()
-            lb.from_name(get_logged_in_username(), self.owner.username, self.name)
-            remotes = lb.git.list_remotes()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        try:
+            remotes = self._id_data["labbook_instance"].git.list_remotes()
             if remotes:
                 url = [x['url'] for x in remotes if x['name'] == 'origin']
                 if url:
@@ -241,15 +249,16 @@ class Labbook(ObjectType):
         Returns:
 
         """
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
 
         try:
             # Get all edges and cursors. Here, cursors are just an index into the refs
-            git = get_git_interface(Configuration().config["git"])
-            # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
-            git.set_working_directory(os.path.join(git.working_directory, get_logged_in_username(),
-                                                   self.owner.username, "labbooks", self.name))
-            edges = [x for x in git.repo.refs]
-            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+            edges = [x for x in self._id_data["labbook_instance"].git.repo.refs]
+            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
+                                                                                              x in enumerate(edges)]
 
             # Process slicing and cursor args
             lbc = ListBasedConnection(edges, cursors, args)
@@ -266,8 +275,8 @@ class Labbook(ObjectType):
                     prefix = None
                     branch = parts[0]
 
-                id_data = {"name": self.name,
-                           "owner": self.owner.username,
+                id_data = {"name": self._id_data["labbook_instance"].name,
+                           "owner": self._id_data["labbook_instance"].owner['username'],
                            "prefix": prefix,
                            "branch": branch}
                 edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
@@ -415,3 +424,83 @@ class Labbook(ObjectType):
         detail_records = [store.get_detail_record(x) for x in args.get('keys')]
 
         return [ActivityDetailObject.from_detail_record(x, store) for x in detail_records]
+
+    def resolve_collaborators(self, args, context, info):
+        """Method to get the list of collaborators for a labbook
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = self._id_data["labbook_instance"].labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in self._id_data["labbook_instance"].labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = self._id_data["labbook_instance"].labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        # Get collaborators from remote service
+        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
+                                      self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+        collaborators = mgr.get_collaborators()
+
+        return [x[1] for x in collaborators]
+
+    def resolve_can_manage_collaborators(self, args, context, info):
+        """Method to get the list of collaborators for a labbook
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = self._id_data["labbook_instance"].labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in self._id_data["labbook_instance"].labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = self._id_data["labbook_instance"].labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        # Get collaborators from remote service
+        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
+                                      self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+        collaborators = mgr.get_collaborators()
+
+        can_manage = False
+        for c in collaborators:
+            if c[1] == self._id_data["username"]:
+                if c[2] is True:
+                    can_manage = True
+
+        return can_manage

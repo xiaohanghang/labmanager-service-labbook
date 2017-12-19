@@ -4,7 +4,7 @@ from lmsrvlabbook.api.mutations.labbook import (CreateLabbook, ExportLabbook, Im
                                                 PushActiveBranchToRemote,
                                                 AddLabbookFile, MoveLabbookFile, DeleteLabbookFile,
                                                 AddLabbookFavorite, RemoveLabbookFavorite, UpdateLabbookFavorite,
-                                                RenameLabbook)
+                                                RenameLabbook, AddLabbookCollaborator, DeleteLabbookCollaborator)
 from lmsrvlabbook.api.mutations.environment import (BuildImage, StartContainer, StopContainer)
 from lmsrvlabbook.api.mutations.note import CreateUserNote
 from lmsrvlabbook.api.mutations.environmentcomponent import (AddEnvironmentComponent, EnvironmentComponentClass,

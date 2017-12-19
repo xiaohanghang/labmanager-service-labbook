@@ -22,7 +22,8 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook,\
     ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
-    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, SyncLabbook, PublishLabbook
+    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
+    DeleteLabbookCollaborator, SyncLabbook, PublishLabbook
 
 
 class LabbookMutations(graphene.AbstractType):
@@ -105,3 +106,9 @@ class LabbookMutations(graphene.AbstractType):
 
     # Remove a favorite file or dir in a labbook subdirectory (code, input, output)
     remove_favorite = RemoveLabbookFavorite.Field()
+
+    # Add a collaborator to a LabBook
+    add_collaborator = AddLabbookCollaborator.Field()
+
+    # Delete a collaborator from a LabBook
+    delete_collaborator = DeleteLabbookCollaborator.Field()

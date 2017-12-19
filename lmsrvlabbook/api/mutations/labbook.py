@@ -29,10 +29,13 @@ from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
+from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 
 from lmsrvcore.api import logged_mutation
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
 from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.identity import parse_token
+
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteConnection
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection
 from lmsrvlabbook.api.objects.labbook import Labbook
@@ -552,3 +555,83 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
         lb.remove_favorite(input.get('section'), input.get('index'))
 
         return RemoveLabbookFavorite(success=True)
+
+
+class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        username = graphene.String(required=True)
+
+    updated_labbook = graphene.Field(Labbook)
+
+    @classmethod
+    @logged_mutation
+    def mutate_and_get_payload(cls, input, context, info):
+        username = get_logged_in_username()
+        lb = LabBook()
+        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = lb.labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in lb.labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        # Add collaborator to remote service
+        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
+                                      username, input.get('owner'), input.get('labbook_name'))
+        mgr.add_collaborator(input.get('username'))
+
+        id_data = {"owner": input.get('owner'),
+                   "name": input.get('labbook_name'),
+                   "username": username}
+        return AddLabbookCollaborator(updated_labbook=Labbook.create(id_data=id_data))
+
+
+class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        username = graphene.String(required=True)
+
+    updated_labbook = graphene.Field(Labbook)
+
+    @classmethod
+    @logged_mutation
+    def mutate_and_get_payload(cls, input, context, info):
+        username = get_logged_in_username()
+        lb = LabBook()
+        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = lb.labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in lb.labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        # Add collaborator to remote service
+        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
+                                      username, input.get('owner'), input.get('labbook_name'))
+        mgr.delete_collaborator(input.get('username'))
+
+        id_data = {"owner": input.get('owner'),
+                   "name": input.get('labbook_name'),
+                   "username": username}
+        return DeleteLabbookCollaborator(updated_labbook=Labbook.create(id_data=id_data))
