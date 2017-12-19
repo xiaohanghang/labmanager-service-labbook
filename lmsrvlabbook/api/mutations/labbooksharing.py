@@ -32,6 +32,7 @@ from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetai
 
 from lmsrvcore.api import logged_mutation
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
+from lmsrvcore.auth.identity import parse_token
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteConnection
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection
@@ -60,9 +61,15 @@ class PublishLabbook(graphene.relay.ClientIDMutation):
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
 
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
         # BVB -- Should this defer to `sync` if Labbook's remote is already set?
         # Otherwise, it will throw an exception, which may still be ok.
-        lb.publish(username=username)
+        lb.publish(username=username, access_token=token)
 
         return PublishLabbook(success=True)
 

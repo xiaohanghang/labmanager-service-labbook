@@ -35,6 +35,8 @@ from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fix
 import pytest
 from graphene.test import Client
 from mock import patch
+from werkzeug.test import EnvironBuilder
+from werkzeug.wrappers import Request
 from werkzeug.datastructures import FileStorage
 
 from lmcommon.configuration import Configuration
@@ -64,6 +66,12 @@ def mock_create_labbooks(fixture_working_dir):
 class TestLabbookShareProtocol(object):
     @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
     def test_publish_basic(self, fixture_working_dir, remote_bare_repo, mock_create_labbooks):
+
+        # Mock the request context so a fake authorization header is present
+        builder = EnvironBuilder(path='/labbook', method='POST', headers={'Authorization': 'Bearer AJDFHASD'})
+        env = builder.get_environ()
+        req = Request(environ=env)
+
         test_user_lb = LabBook(mock_create_labbooks[0])
         test_user_lb.from_name('default', 'default', 'labbook1')
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
@@ -81,7 +89,7 @@ class TestLabbookShareProtocol(object):
             }}
             """
 
-            r = client.execute(publish_query)
+            r = client.execute(publish_query, context_value=req)
             assert 'errors' not in r
             assert r['data']['publishLabbook']['success'] is True
 
