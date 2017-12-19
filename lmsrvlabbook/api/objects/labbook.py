@@ -158,13 +158,11 @@ class Labbook(ObjectType):
     def resolve_updates_available_count(self, args, context, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # Note, by default using remote "origin"
-        return self._id_data["labbook_instance"].get_commits_behind_remote("origin")[1]
+        return lb.get_commits_behind_remote("origin")[1]
 
     def resolve_active_branch(self, args, context, info):
         """Method to get the active branch
@@ -177,13 +175,11 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # Get the current checked out branch name
-        self._id_data["branch"] = self._id_data["labbook_instance"].git.get_current_branch_name()
+        self._id_data["branch"] = lb.git.get_current_branch_name()
 
         return LabbookRef.create(self._id_data)
 
@@ -198,13 +194,11 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         try:
-            return self._id_data["labbook_instance"].is_repo_clean
+            return lb.is_repo_clean
         except Exception as e:
             logger.exception(e)
             raise
@@ -220,13 +214,11 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         try:
-            remotes = self._id_data["labbook_instance"].git.list_remotes()
+            remotes = lb.git.list_remotes()
             if remotes:
                 url = [x['url'] for x in remotes if x['name'] == 'origin']
                 if url:
@@ -249,14 +241,12 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         try:
             # Get all edges and cursors. Here, cursors are just an index into the refs
-            edges = [x for x in self._id_data["labbook_instance"].git.repo.refs]
+            edges = [x for x in lb.git.repo.refs]
             cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
                                                                                               x in enumerate(edges)]
 
@@ -275,8 +265,8 @@ class Labbook(ObjectType):
                     prefix = None
                     branch = parts[0]
 
-                id_data = {"name": self._id_data["labbook_instance"].name,
-                           "owner": self._id_data["labbook_instance"].owner['username'],
+                id_data = {"name": lb.name,
+                           "owner": lb.owner['username'],
                            "prefix": prefix,
                            "branch": branch}
                 edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
@@ -436,17 +426,15 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
-        default_remote = self._id_data["labbook_instance"].labmanager_config.config['git']['default_remote']
+        default_remote = lb.labmanager_config.config['git']['default_remote']
         admin_service = None
-        for remote in self._id_data["labbook_instance"].labmanager_config.config['git']['remotes']:
+        for remote in lb.labmanager_config.config['git']['remotes']:
             if default_remote == remote:
-                admin_service = self._id_data["labbook_instance"].labmanager_config.config['git']['remotes'][remote]['admin_service']
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
                 break
 
         # Extract valid Bearer token
@@ -477,17 +465,15 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
-        default_remote = self._id_data["labbook_instance"].labmanager_config.config['git']['default_remote']
+        default_remote = lb.labmanager_config.config['git']['default_remote']
         admin_service = None
-        for remote in self._id_data["labbook_instance"].labmanager_config.config['git']['remotes']:
+        for remote in lb.labmanager_config.config['git']['remotes']:
             if default_remote == remote:
-                admin_service = self._id_data["labbook_instance"].labmanager_config.config['git']['remotes'][remote]['admin_service']
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
                 break
 
         # Extract valid Bearer token
