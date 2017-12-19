@@ -232,6 +232,25 @@ class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
         logger.info(f"Importing remote labbook from {input.get('remote_url')}")
         lb = LabBook()
+
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = lb.labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in lb.labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
+                                      username, input.get('owner'), input.get('labbook_name'))
+        mgr.configure_git_credentials(default_remote, username)
+
         lb.from_remote(input['remote_url'], username, input['owner'], input['labbook_name'])
         return ImportRemoteLabbook(active_branch=lb.active_branch)
 
