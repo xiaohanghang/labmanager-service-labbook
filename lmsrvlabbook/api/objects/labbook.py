@@ -458,7 +458,11 @@ class Labbook(ObjectType):
         # Get collaborators from remote service
         mgr = GitLabRepositoryManager(default_remote, admin_service, token,
                                       self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-        collaborators = mgr.get_collaborators()
+        try:
+            collaborators = mgr.get_collaborators()
+        except ValueError:
+            # If ValueError Raised, assume repo doesn't exist yet
+            return []
 
         return [x[1] for x in collaborators]
 
@@ -495,7 +499,11 @@ class Labbook(ObjectType):
         # Get collaborators from remote service
         mgr = GitLabRepositoryManager(default_remote, admin_service, token,
                                       self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-        collaborators = mgr.get_collaborators()
+        try:
+            collaborators = mgr.get_collaborators()
+        except ValueError:
+            # If ValueError Raised, assume repo doesn't exist yet
+            return False
 
         can_manage = False
         for c in collaborators:
