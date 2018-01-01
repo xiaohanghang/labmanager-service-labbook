@@ -26,18 +26,23 @@ import pprint
 from zipfile import ZipFile
 from pkg_resources import resource_filename
 import getpass
+import responses
 
 from snapshottest import snapshot
-from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir, _create_temp_work_dir
+from lmsrvlabbook.tests.fixtures import (property_mocks_fixture, docker_socket_fixture,
+    fixture_working_dir_env_repo_scoped, fixture_working_dir, _create_temp_work_dir)
 
 import pytest
 from graphene.test import Client
 from mock import patch
 from werkzeug.datastructures import FileStorage
+from werkzeug.test import EnvironBuilder
+from werkzeug.wrappers import Request
+from werkzeug.datastructures import FileStorage
 
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher.jobs import export_labbook_as_zip
-from lmcommon.fixtures import remote_labbook_repo, mock_config_file
+from lmcommon.fixtures import remote_labbook_repo, mock_config_file, _MOCK_create_remote_repo
 from lmcommon.labbook import LabBook
 
 
@@ -59,70 +64,80 @@ def mock_create_labbooks(fixture_working_dir):
 
 
 class TestLabbookSharing(object):
-    def test_import_remote_labbook(self, remote_labbook_repo, fixture_working_dir):
-        client = Client(fixture_working_dir[2])
+    @responses.activate
+    def test_import_remote_labbook(self, remote_labbook_repo, fixture_working_dir, property_mocks_fixture,
+                                   docker_socket_fixture):
 
-        query = f"""
-        mutation importFromRemote {{
-          importRemoteLabbook(
-            input: {{
-              owner: "test",
-              labbookName: "sample-repo-lb",
-              remoteUrl: "{remote_labbook_repo}"
-            }}) {{
-              activeBranch
+        # Mock the request context so a fake authorization header is present
+        builder = EnvironBuilder(path='/labbook', method='POST', headers={'Authorization': 'Bearer AJDFHASD'})
+        env = builder.get_environ()
+        req = Request(environ=env)
+
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            client = Client(fixture_working_dir[2])
+
+            query = f"""
+            mutation importFromRemote {{
+              importRemoteLabbook(
+                input: {{
+                  owner: "test",
+                  labbookName: "sample-repo-lb",
+                  remoteUrl: "{remote_labbook_repo}"
+                }}) {{
+                  activeBranch
+                }}
             }}
-        }}
-        """
-        r = client.execute(query)
-        # We might not always want to use master as the default branch, but keep it here for now.
-        assert r['data']['importRemoteLabbook']['activeBranch'] == 'gm.workspace-default'
+            """
+            r = client.execute(query, context_value=req)
+            assert r['data']['importRemoteLabbook']['activeBranch'] == 'gm.workspace-default'
+            assert 'errors' not in r
 
-        ## Now we want to validate that when we import a labbook from a remote url, we also track the default branch.
-        list_all_branches_q = f"""
-        {{
-            labbook(name: "sample-repo-lb", owner: "test") {{
-                branches {{
-                    edges {{
-                        node {{
-                            prefix
-                            name
+            ## Now we want to validate that when we import a labbook from a remote url, we also track the default branch.
+            list_all_branches_q = f"""
+            {{
+                labbook(name: "sample-repo-lb", owner: "test") {{
+                    branches {{
+                        edges {{
+                            node {{
+                                prefix
+                                name
+                            }}
                         }}
                     }}
                 }}
             }}
-        }}
-        """
-        r = client.execute(list_all_branches_q)
-        nodes = r['data']['labbook']['branches']['edges']
-        for n in [x['node'] for x in nodes]:
-            # Make sure that the user's local branch was created
-            if n['prefix'] is None and n['name'] == 'gm.workspace-default':
-                break
-        else:
-            assert False
+            """
+            r = client.execute(list_all_branches_q, context_value=req)
+            pprint.pprint(r)
+            nodes = r['data']['labbook']['branches']['edges']
+            for n in [x['node'] for x in nodes]:
+                # Make sure that the user's local branch was created
+                if n['prefix'] is None and n['name'] == 'gm.workspace-default':
+                    break
+            else:
+                assert False
 
-        for n in [x['node'] for x in nodes]:
-            # Make sure that origin/gm.workspace is in list of branches. This means it tracks.
-            if n['prefix'] == 'origin' and n['name'] == 'gm.workspace':
-                break
-        else:
-            assert False
+            for n in [x['node'] for x in nodes]:
+                # Make sure that origin/gm.workspace is in list of branches. This means it tracks.
+                if n['prefix'] == 'origin' and n['name'] == 'gm.workspace':
+                    break
+            else:
+                assert False
 
-        # Make sure the labbook cloned into the correct directory
-        assert os.path.exists(os.path.join(fixture_working_dir[1], 'default', 'test', 'labbooks', 'sample-repo-lb'))
+            # Make sure the labbook cloned into the correct directory
+            assert os.path.exists(os.path.join(fixture_working_dir[1], 'default', 'test', 'labbooks', 'sample-repo-lb'))
 
-        # Now do a quick test for default_remote
-        get_default_remote_q = f"""
-        {{
-            labbook(name: "sample-repo-lb", owner: "test") {{
-                defaultRemote
+            # Now do a quick test for default_remote
+            get_default_remote_q = f"""
+            {{
+                labbook(name: "sample-repo-lb", owner: "test") {{
+                    defaultRemote
+                }}
             }}
-        }}
-        """
-        r = client.execute(get_default_remote_q)
-        assert r['data']['labbook']['defaultRemote'] == remote_labbook_repo
-        assert 'errors' not in r
+            """
+            r = client.execute(get_default_remote_q, context_value=req)
+            assert r['data']['labbook']['defaultRemote'] == remote_labbook_repo
+            assert 'errors' not in r
 
     def test_import_remote_labbook_from_same_user(self, remote_labbook_repo, fixture_working_dir):
         # Create a labbook by the "default" user
@@ -132,63 +147,69 @@ class TestLabbookSharing(object):
                              owner={"username": "default"})
         lb.checkout_branch("gm.workspace")
 
-        client = Client(fixture_working_dir[2])
+        # Mock the request context so a fake authorization header is present
+        builder = EnvironBuilder(path='/labbook', method='POST', headers={'Authorization': 'Bearer AJDFHASD'})
+        env = builder.get_environ()
+        req = Request(environ=env)
 
-        query = f"""
-        mutation importFromRemote {{
-          importRemoteLabbook(
-            input: {{
-              owner: "default",
-              labbookName: "default-owned-repo-lb",
-              remoteUrl: "{labbook_dir}"
-            }}) {{
-              activeBranch
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            client = Client(fixture_working_dir[2])
+
+            query = f"""
+            mutation importFromRemote {{
+              importRemoteLabbook(
+                input: {{
+                  owner: "default",
+                  labbookName: "default-owned-repo-lb",
+                  remoteUrl: "{labbook_dir}"
+                }}) {{
+                  activeBranch
+                }}
             }}
-        }}
-        """
-        r = client.execute(query)
-        # We might not always want to use master as the default branch, but keep it here for now.
-        assert r['data']['importRemoteLabbook']['activeBranch'] == 'gm.workspace-default'
+            """
+            r = client.execute(query, context_value=req)
+            # We might not always want to use master as the default branch, but keep it here for now.
+            assert r['data']['importRemoteLabbook']['activeBranch'] == 'gm.workspace-default'
 
-        ## Now we want to validate that when we import a labbook from a remote url, we also track the default branch.
-        list_all_branches_q = f"""
-        {{
-            labbook(name: "default-owned-repo-lb", owner: "default") {{
-                branches {{
-                    edges {{
-                        node {{
-                            prefix
-                            name
+            ## Now we want to validate that when we import a labbook from a remote url, we also track the default branch.
+            list_all_branches_q = f"""
+            {{
+                labbook(name: "default-owned-repo-lb", owner: "default") {{
+                    branches {{
+                        edges {{
+                            node {{
+                                prefix
+                                name
+                            }}
                         }}
                     }}
                 }}
             }}
-        }}
-        """
-        r = client.execute(list_all_branches_q)
-        nodes = r['data']['labbook']['branches']['edges']
-        for n in [x['node'] for x in nodes]:
-            # Make sure that origin/master is in list of branches. This means it tracks.
-            if n['prefix'] == 'origin' and n['name'] == 'gm.workspace':
-                break
-        else:
-            assert False
+            """
+            r = client.execute(list_all_branches_q, context_value=req)
+            nodes = r['data']['labbook']['branches']['edges']
+            for n in [x['node'] for x in nodes]:
+                # Make sure that origin/master is in list of branches. This means it tracks.
+                if n['prefix'] == 'origin' and n['name'] == 'gm.workspace':
+                    break
+            else:
+                assert False
 
-        # Make sure the labbook cloned into the correct directory
-        assert os.path.exists(os.path.join(fixture_working_dir[1], 'default', 'default', 'labbooks',
-                                           'default-owned-repo-lb'))
+            # Make sure the labbook cloned into the correct directory
+            assert os.path.exists(os.path.join(fixture_working_dir[1], 'default', 'default', 'labbooks',
+                                               'default-owned-repo-lb'))
 
-        # Now do a quick test for default_remote
-        get_default_remote_q = f"""
-        {{
-            labbook(name: "default-owned-repo-lb", owner: "default") {{
-                defaultRemote
+            # Now do a quick test for default_remote
+            get_default_remote_q = f"""
+            {{
+                labbook(name: "default-owned-repo-lb", owner: "default") {{
+                    defaultRemote
+                }}
             }}
-        }}
-        """
-        r = client.execute(get_default_remote_q)
-        assert r['data']['labbook']['defaultRemote'] == labbook_dir
-        assert 'errors' not in r
+            """
+            r = client.execute(get_default_remote_q, context_value=req)
+            assert r['data']['labbook']['defaultRemote'] == labbook_dir
+            assert 'errors' not in r
 
     def test_can_checkout_branch(self, mock_create_labbooks, remote_labbook_repo, fixture_working_dir):
         """Test whether there are uncommitted changes or anything that would prevent

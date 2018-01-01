@@ -242,7 +242,7 @@ class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
                 break
 
         # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in context.headers.environ:
+        if hasattr(context, 'headers') and "HTTP_AUTHORIZATION" in context.headers.environ:
             token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")

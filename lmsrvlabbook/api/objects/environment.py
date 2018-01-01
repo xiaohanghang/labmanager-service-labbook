@@ -26,6 +26,7 @@ import base64
 
 import docker
 from docker.errors import ImageNotFound, NotFound
+import requests
 
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment.componentmanager import ComponentManager
@@ -157,8 +158,6 @@ class Environment(ObjectType):
             id_data.update(Environment.parse_type_id(id_data["type_id"]))
             del id_data["type_id"]
 
-        client = get_docker_client()
-
         labbook_key = "{}-{}-{}".format(id_data["username"], id_data["owner"], id_data["name"])
 
         dispatcher = Dispatcher()
@@ -170,9 +169,10 @@ class Environment(ObjectType):
         # First, check if image exists or not -- The first step of building an image untags any existing ones.
         # Therefore, we know that if one exists, there most likely is not one being built.
         try:
+            client = get_docker_client()
             client.images.get(labbook_key)
             image_status = ImageStatus.EXISTS
-        except ImageNotFound:
+        except (ImageNotFound, requests.exceptions.ConnectionError):
             image_status = ImageStatus.DOES_NOT_EXIST
 
         if any([j.status == 'failed' and j.meta.get('method') == 'build_image' for j in lb_jobs]):
@@ -193,12 +193,13 @@ class Environment(ObjectType):
 
         # Check if the container is running by looking up the container
         try:
+            client = get_docker_client()
             container = client.containers.get(labbook_key)
             if container.status == "running":
                 container_status = ContainerStatus.RUNNING
             else:
                 container_status = ContainerStatus.NOT_RUNNING
-        except NotFound:
+        except (NotFound, requests.exceptions.ConnectionError):
             container_status = ContainerStatus.NOT_RUNNING
 
         return Environment(id=Environment.to_type_id(id_data),
