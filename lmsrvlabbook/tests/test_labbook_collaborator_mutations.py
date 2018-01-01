@@ -17,14 +17,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import responses
+
 import os
 import getpass
+import responses
 
 from werkzeug.test import EnvironBuilder
 from werkzeug.wrappers import Request
 from snapshottest import snapshot
-from lmsrvlabbook.tests.fixtures import fixture_working_dir
+
+from lmsrvlabbook.tests.fixtures import fixture_working_dir, property_mocks_fixture, docker_socket_fixture
 
 import pytest
 from graphene.test import Client
@@ -35,6 +37,7 @@ from lmcommon.configuration import get_docker_client
 from lmcommon.labbook import LabBook
 
 
+
 @pytest.fixture()
 def mock_create_labbooks(fixture_working_dir):
     # Create a labbook in the temporary directory
@@ -42,46 +45,6 @@ def mock_create_labbooks(fixture_working_dir):
     lb.new(owner={"username": "default"}, name="labbook1", description="Test labbook 1")
 
     yield fixture_working_dir
-
-
-@pytest.fixture()
-def property_mocks_fixture():
-    """A pytest fixture that returns a GitLabRepositoryManager instance"""
-    responses.add(responses.GET, 'https://usersrv.gigantum.io/key',
-                  json={'key': 'afaketoken'}, status=200)
-    responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects?search=labbook1',
-                  json=[{
-                          "id": 26,
-                          "description": "",
-                        }],
-                  status=200, match_querystring=True)
-    yield
-
-
-@pytest.fixture()
-def docker_socket_fixture():
-    """Helper method to get the docker client version"""
-    client = get_docker_client()
-    version = client.version()['ApiVersion']
-
-    if "CIRCLECI" in os.environ:
-        docker_host = os.environ['DOCKER_HOST']
-        docker_host = docker_host.replace("tcp", "https")
-        responses.add_passthru(
-            f"{docker_host}/v{version}/images/default-default-labbook1/json")
-        responses.add_passthru(
-            f"{docker_host}/v{version}/containers/default-default-labbook1/json")
-        responses.add_passthru(
-            f"{docker_host}/v1.30/images/default-default-labbook1/json")
-        responses.add_passthru(
-            f"{docker_host}/v1.30/containers/default-default-labbook1/json")
-    else:
-        responses.add_passthru(
-            f"http+docker://localunixsocket/v{version}/images/default-default-labbook1/json")
-        responses.add_passthru(
-            f"http+docker://localunixsocket/v{version}/containers/default-default-labbook1/json")
-
-    yield
 
 
 @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
