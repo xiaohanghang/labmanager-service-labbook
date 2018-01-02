@@ -20,6 +20,7 @@
 import io
 import math
 import os
+import responses
 import tempfile
 import datetime
 import pprint
@@ -93,11 +94,22 @@ class TestLabbookShareProtocol(object):
             assert 'errors' not in r
             assert r['data']['publishLabbook']['success'] is True
 
+    @responses.activate
     @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
     def test_sync_1(self, fixture_working_dir, remote_bare_repo, mock_create_labbooks, mock_labbook, mock_config_file):
+
+        # Setup responses mock for this test
+        responses.add(responses.GET, 'https://usersrv.gigantum.io/key',
+                      json={'key': 'afaketoken'}, status=200)
+
         test_user_lb = LabBook(mock_create_labbooks[0])
         test_user_lb.from_name('default', 'default', 'labbook1')
         test_user_lb.publish('default')
+
+        # Mock the request context so a fake authorization header is present
+        builder = EnvironBuilder(path='/labbook', method='POST', headers={'Authorization': 'Bearer AJDFHASD'})
+        env = builder.get_environ()
+        req = Request(environ=env)
 
         remote_url = test_user_lb.remote
         assert remote_url
@@ -120,7 +132,7 @@ class TestLabbookShareProtocol(object):
         """
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
             client = Client(fixture_working_dir[2])
-            r = client.execute(sync_query)
+            r = client.execute(sync_query, context_value=req)
 
         assert 'errors' not in r
         assert r['data']['syncLabbook']['updateCount'] == 6
