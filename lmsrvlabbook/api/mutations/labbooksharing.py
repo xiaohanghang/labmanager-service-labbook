@@ -88,9 +88,12 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
         lb.from_directory(inferred_lb_directory)
 
         # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in context.headers.environ:
-            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
-        else:
+        token = None
+        if hasattr(context.headers, 'environ'):
+            if "HTTP_AUTHORIZATION" in context.headers.environ:
+                token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+
+        if not token:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         default_remote = lb.labmanager_config.config['git']['default_remote']
