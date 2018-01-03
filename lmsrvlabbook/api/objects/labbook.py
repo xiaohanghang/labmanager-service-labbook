@@ -46,18 +46,17 @@ from lmsrvlabbook.api.objects.labbooksection import LabbookSection
 from lmsrvlabbook.api.connections.activity import ActivityConnection
 from lmsrvlabbook.api.objects.activity import ActivityDetailObject, ActivityRecordObject
 
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
+
 logger = LMLogger.get_logger()
 
 
-class Labbook(ObjectType):
+class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type representing a LabBook and all of its contents
 
-    LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
+    LabBooks are uniquely identified by both the "owner/namespace" and the "name" of the LabBook
 
     """
-    class Meta:
-        interfaces = (graphene.relay.Node, GitRepository)
-
     # The name of the current branch
     active_branch = graphene.Field(LabbookRef)
 
@@ -95,16 +94,17 @@ class Labbook(ObjectType):
     detail_records = graphene.List(ActivityDetailObject, keys=graphene.List(graphene.String))
 
     @staticmethod
-    def to_type_id(id_data):
+    def to_type_id(owner_name: str, labbook_name: str):
         """Method to generate a single string that uniquely identifies this object
 
         Args:
-            id_data(dict):
+            owner_name(str): username or org name that owns the labbook
+            labbook_name(str): name of the labbook
 
         Returns:
             str
         """
-        return "{}&{}".format(id_data["owner"], id_data["name"])
+        return "{}&{}".format(owner_name, labbook_name)
 
     @staticmethod
     def parse_type_id(type_id):
@@ -117,49 +117,41 @@ class Labbook(ObjectType):
             dict
         """
         split = type_id.split("&")
-        return {"owner": split[0], "name": split[1]}
+        return {"owner_name": split[0], "labbook_name": split[1]}
 
     # @BVB - this decorator breaks things, with the error that the argument "self" is missing. Possibly because static?
     # @logged_query
     @staticmethod
-    def create(id_data):
-        """Method to create a graphene LabBook object based on the node ID or owner+name
-
-        id_data should at a minimum contain either `type_id` or `owner` & `name`
-
-            {
-                "type_id": <unique id for this object Type),
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-            }
+    def create(owner_name: str, labbook_name: str):
+        """Method to create a graphene LabBook object based on the owner and labbook name
 
         Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance. Can be a node ID or other vars
+            owner_name(str): username or org name that owns the labbook
+            labbook_name(str): name of the labbook
 
         Returns:
             Labbook
         """
-        if "type_id" in id_data:
-            id_data.update(Labbook.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
+        loader = LabBookLoader()
 
-        if "username" not in id_data:
-            id_data["username"] = get_logged_in_username()
+        loader_key = f"{get_logged_in_username()}&{owner_name}&{labbook_name}"
 
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-        id_data["labbook_instance"] = lb
+        lb = loader.load(loader_key)
 
-        return Labbook(id=Labbook.to_type_id(id_data),
+        return Labbook(id=Labbook.to_type_id(owner_name, labbook_name),
                        name=lb.name, description=lb.description,
-                       owner=Owner.create(id_data), environment=Environment.create(id_data),
-                       _id_data=id_data)
+                       owner=Owner.create(namespace=owner_name), _loader=loader)
+
+    def resolve_environment(self, info, args):
+        """"""
+        raise NotImplemented
 
     def resolve_updates_available_count(self, args, context, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        loader_key = f"{get_logged_in_username()}&{self.owner.username}&{self.name}"
+
+        lb = self._loader.load(loader_key)
 
         # Note, by default using remote "origin"
         return lb.get_commits_behind_remote("origin")[1]
@@ -175,8 +167,8 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        loader_key = f"{get_logged_in_username()}&{self.owner.username}&{self.name}"
+        lb = self._loader.load(loader_key)
 
         # Get the current checked out branch name
         self._id_data["branch"] = lb.git.get_current_branch_name()

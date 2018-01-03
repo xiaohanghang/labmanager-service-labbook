@@ -24,22 +24,21 @@ from lmsrvcore.api import ObjectType
 from flask import current_app
 
 
-class UserIdentity(ObjectType):
+class UserIdentity(ObjectType, interfaces=(graphene.relay.Node, User)):
     """A type representing the identity of the logged in user"""
-    class Meta:
-        interfaces = (graphene.relay.Node, User)
 
     @staticmethod
-    def to_type_id(id_data):
+    def to_type_id(dummy):
         """Method to generate a single string that uniquely identifies this object
 
         Args:
-            id_data(dict):
+            dummy(str): A dummy far since this Object doesn't actually use type ids because users a loaded based on
+                        authentication
 
         Returns:
             str
         """
-        raise ValueError("UserIdentity type is set explicitly to the user. Do not call this method.")
+        raise ValueError("UserIdentity type is set explicitly to the logged-in user. Do not call this method.")
 
     @staticmethod
     def parse_type_id(type_id):
@@ -54,14 +53,15 @@ class UserIdentity(ObjectType):
         return type_id
 
     @staticmethod
-    def create(id_data):
+    def create(dummy):
         """Method to populate a complete ObjectType instance from a dictionary that uniquely identifies an instances
 
         Args:
-            id_data:
+            dummy(str): A dummy far since this Object doesn't actually use type ids because users a loaded based on
+                        authentication
 
         Returns:
-
+            UserIdentity
         """
         # Get the user from the current flask context
         try:

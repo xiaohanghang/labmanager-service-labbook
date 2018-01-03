@@ -54,7 +54,7 @@ class ChunkUploadInput(graphene.InputObjectType):
     upload_id = graphene.String(required=True)
 
 
-class ChunkUploadMutation(graphene.AbstractType):
+class ChunkUploadMutation(object):
     """Abstract class for performing chunked uploads
 
     To use, inherit from this class when writing your mutation and add the required ChunkUploadInput field:
@@ -72,7 +72,7 @@ class ChunkUploadMutation(graphene.AbstractType):
 
     """
     # NOTE: CURRENTLY INPUT DOES NOT GET INHERITED PROPERLY IN GRAPHENE, SO YOU MUST ADD THE PARAM TO YOUR CHILD CLASS
-    class Input:
+    class Arguments:
         chunk_upload_params = ChunkUploadInput(required=True)
 
     # The uploaded temporary absolute file path
@@ -104,14 +104,14 @@ class ChunkUploadMutation(graphene.AbstractType):
         return os.path.basename(secure_filename(filename))
 
     @classmethod
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, info, input):
         try:
             if "chunk_upload_params" in input:
                 chunk_params = input.get("chunk_upload_params")
                 logger.info(f"Processing chunk {chunk_params['chunk_index']} for {chunk_params['filename']}")
 
                 # Make sure the file is there
-                if 'uploadChunk' not in context.files:
+                if 'uploadChunk' not in info.context.files:
                     msg = 'No file "uploadChunk" associated with request'
                     logger.error(msg)
                     raise ValueError(msg)
@@ -122,7 +122,7 @@ class ChunkUploadMutation(graphene.AbstractType):
                 # Write chunk to file
                 with open(cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename']), 'ab') as f:
                     f.seek(chunk_params['chunk_index'] * chunk_params['chunk_size'])
-                    f.write(context.files.get('uploadChunk').stream.read())
+                    f.write(info.context.files.get('uploadChunk').stream.read())
 
                 # If last chunk, move on to mutation
                 logger.info(f"Write for chunk {chunk_params['chunk_index']} complete")
@@ -130,7 +130,7 @@ class ChunkUploadMutation(graphene.AbstractType):
                     # Assume last chunk. Let mutation process
                     cls.upload_file_path = cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename'])
                     cls.filename = cls.get_filename(chunk_params['filename'])
-                    return cls.mutate_and_process_upload(input, context, info)
+                    return cls.mutate_and_process_upload(input, info)
                 else:
                     # Assume more chunks to go. Short circuit request
                     return cls
@@ -138,18 +138,18 @@ class ChunkUploadMutation(graphene.AbstractType):
             logger.error(e)
             # Something bad happened, so make best effort to dump all the files in the body on the floor.
             # This is important because you must read all bytes out of a POST body when deployed with uwsgi/nginx
-            if context.files:
+            if info.context.files:
                 logger.error(f"Error occurred while processing a file chunk. Dumping all files in the body.")
-                for fs in context.files.keys():
-                    if context.files.get(fs):
+                for fs in info.context.files.keys():
+                    if info.context.files.get(fs):
                         try:
-                            _ = context.files.get(fs).stream.read()
+                            _ = info.context.files.get(fs).stream.read()
                             logger.error(f"Dumped file key {fs}")
                         except Exception:
                             pass
             raise
 
     @abc.abstractclassmethod
-    def mutate_and_process_upload(cls, input, context, info):
+    def mutate_and_process_upload(cls, info, **args):
         """Method to implement to process the upload. Must return a Mutation type"""
         raise NotImplemented

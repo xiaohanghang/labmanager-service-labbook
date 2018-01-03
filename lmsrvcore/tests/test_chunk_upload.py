@@ -21,16 +21,15 @@ import pytest
 import graphene
 
 from lmsrvcore.tests.fixtures import fixture_working_dir
-from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
+from lmsrvcore.api.mutations import ChunkUploadMutation
 
 
 class MyMutation(graphene.relay.ClientIDMutation, ChunkUploadMutation):
-    class Input:
+    class Arguments:
         var = graphene.String()
-        chunk_upload_params = ChunkUploadInput(required=True)
 
     @classmethod
-    def mutate_and_process_upload(cls, input, context, info):
+    def mutate_and_process_upload(cls, info, **input):
         return "success"
 
 
@@ -74,6 +73,10 @@ class TestChunkUpload(object):
             def __init__(self):
                 self.files = {'blah': None}
 
+        class DummyInfo(object):
+            def __init__(self):
+                self.context = DummyContext()
+
         mut = MyMutation()
 
         args = {
@@ -86,4 +89,4 @@ class TestChunkUpload(object):
                 }
 
         with pytest.raises(ValueError):
-            mut.mutate_and_get_payload({"chunk_upload_params": args}, DummyContext(), None)
+            mut.mutate_and_get_payload(DummyInfo(), {"chunk_upload_params": args})

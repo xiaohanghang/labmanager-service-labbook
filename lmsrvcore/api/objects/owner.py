@@ -22,49 +22,47 @@ from lmsrvcore.api.interfaces import User
 from lmsrvcore.api import ObjectType
 
 
-class Owner(ObjectType):
-    """A type representing the owner of a LabBook or Dataset"""
-    class Meta:
-        interfaces = (graphene.relay.Node, User)
+class Owner(ObjectType, interfaces=(graphene.relay.Node, User)):
+    """A type representing the owner (namespace) of a LabBook or Dataset"""
 
     @staticmethod
-    def to_type_id(id_data):
+    def to_type_id(namespace: str) -> str:
         """Method to generate a single string that uniquely identifies this object
 
         Args:
-            id_data(dict):
+            namespace(str): Gigantum username or organization name of the owner (a.k.a. namespace)
 
         Returns:
             str
         """
-        return id_data["owner"]
+        return namespace
 
     @staticmethod
-    def parse_type_id(type_id):
+    def parse_type_id(type_id: str) -> dict:
         """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
 
         Args:
-            type_id (str): type unique identifier
+            namespace(str): type unique identifier
 
         Returns:
             dict
         """
-        return type_id
+        return {'namespace': type_id}
 
     @staticmethod
-    def create(id_data):
-        """Method to populate a complete ObjectType instance from a dictionary that uniquely identifies an instances
+    def create(namespace: str) -> 'Owner':
+        """Method to populate a complete Owner instance
 
         Args:
-            id_data:
+            namespace(str): Gigantum username or organization name of the owner (a.k.a. namespace)
 
         Returns:
-
+            Owner
         """
-        return Owner(id=Owner.to_type_id(id_data),
-                     username=id_data["owner"])
+        return Owner(id=Owner.to_type_id(namespace),
+                     username=namespace)
 
 
-class InputOwner(graphene.InputObjectType):
+class OwnerInput(graphene.InputObjectType):
     """The input type to create a new Owner or LabBook fields that use Owner"""
-    username = graphene.String()
+    namespace = graphene.String()

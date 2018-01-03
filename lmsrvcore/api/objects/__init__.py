@@ -1,1 +1,1 @@
-from lmsrvcore.api.objects.owner import Owner, InputOwner
+from lmsrvcore.api.objects.owner import Owner, OwnerInput

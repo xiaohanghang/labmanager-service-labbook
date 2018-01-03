@@ -50,7 +50,7 @@ class GitRepository(graphene.Interface):
     # Only A-Za-z0-9- allowed with no leading or trailing '-'
     name = graphene.String()
 
-    # A short description of the LabBook limited to 140 UTF-8 characters with some sanitization
+    # A short description of the LabBook limited to 140 UTF-8 characters
     description = graphene.String()
 
     # Owner of the repository

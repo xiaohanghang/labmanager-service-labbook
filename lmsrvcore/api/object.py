@@ -25,30 +25,32 @@ class ObjectType(graphene.ObjectType):
     """New root object type that enforces standard interface to set and parse Type Ids and populate an instance
 
     """
-    _id_data = None
+    # A dataloader instance for the object type
+    _loader = None
 
     @classmethod
-    def get_node(cls, node_id, context, info):
+    def get_node(cls, info, type_id):
         """Method to get a node from the type ID
 
         Args:
-            node_id(str): The type id for the instance to get
-            context:
-            info:
+            type_id(str): The type id for the instance to get
+            info: Graphene info object
 
         Returns:
             ObjectType
         """
-        input_data = {"type_id": node_id}
-        return cls.create(input_data)
+        # Convert from type id to kwargs required to create
+        kwargs = cls.parse_type_id(type_id)
+
+        # Call create
+        return cls.create(**kwargs)
 
     @staticmethod
     @abc.abstractmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
+    def to_type_id(**kwargs):
+        """Method to generate a single string that uniquely identifies this object using the delimiter
 
         Args:
-            id_data(dict):
 
         Returns:
             str
@@ -57,8 +59,8 @@ class ObjectType(graphene.ObjectType):
 
     @staticmethod
     @abc.abstractmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
+    def parse_type_id(type_id: str):
+        """Method to parse a type ID for a given type into its identifiable variables returned as a dictionary of strings
 
         Args:
             type_id (str): type unique identifier
@@ -70,13 +72,13 @@ class ObjectType(graphene.ObjectType):
 
     @staticmethod
     @abc.abstractmethod
-    def create(id_data):
-        """Method to populate a complete ObjectType instance from a dictionary that uniquely identifies an instances
+    def create(**kwargs):
+        """Method to instantiate and prep an ObjectType instance from kwargs that uniquely identifies the instance
 
         Args:
-            id_data:
+            kwargs: Keyword args required to identify and create the object
 
         Returns:
-
+            ObjectType
         """
         raise NotImplemented
