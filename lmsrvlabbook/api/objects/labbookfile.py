@@ -27,7 +27,7 @@ from graphene.types import datetime
 
 from lmcommon.labbook import LabBook
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 
 
 class LabbookFile(ObjectType):
@@ -38,6 +38,9 @@ class LabbookFile(ObjectType):
 
     # True indicates that path points to a directory
     is_dir = graphene.Boolean()
+
+    # True indicates that path points to a favorite
+    is_favorite = graphene.Boolean()
 
     # Modified at contains timestamp of last modified - NOT creation in epoch time.
     modified_at = graphene.Int()
@@ -58,7 +61,7 @@ class LabbookFile(ObjectType):
         Returns:
             str
         """
-        return f"{id_data['username']}&{id_data['owner']}&{id_data['name']}&{id_data['key']}"
+        return f"{id_data['owner']}&{id_data['name']}&{id_data['section']}&{id_data['key']}"
 
     @staticmethod
     def parse_type_id(type_id):
@@ -72,27 +75,27 @@ class LabbookFile(ObjectType):
         """
         tokens = type_id.split('&')
         assert len(tokens) == 4, "type_id for LabbookFile should have 4 tokens"
-        return {'username': tokens[0],
-                'owner': tokens[1],
-                'name': tokens[2],
+        return {'owner': tokens[0],
+                'name': tokens[1],
+                'section': tokens[2],
                 'key': tokens[3]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
 
         if "type_id" in id_data:
             # Loading as node so need to populate file data
             id_data = LabbookFile.parse_type_id(id_data['type_id'])
 
-            # TODO: remove check once username is no longer in query
-            if id_data["username"] != get_logged_in_username():
-                raise ValueError("Provided username does not equal logged in user")
+            # Force to logged in user always
+            id_data["username"] = get_logged_in_username()
 
             lb = LabBook()
             lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
 
             # Create data to populate edge
-            id_data['file_info'] = lb._get_file_info(id_data['key'])
+            id_data['file_info'] = lb.get_file_info(id_data["section"], id_data['key'])
 
         else:
             # Loading from a query, so you have the file data already
@@ -106,7 +109,8 @@ class LabbookFile(ObjectType):
                            is_dir=id_data['file_info']['is_dir'],
                            modified_at=round(id_data['file_info']['modified_at']),
                            key=id_data['file_info']['key'],
-                           size=id_data['file_info']['size'])
+                           size=id_data['file_info']['size'],
+                           is_favorite=id_data['file_info']['is_favorite'])
 
 
 class LabbookFavorite(ObjectType):
@@ -137,7 +141,7 @@ class LabbookFavorite(ObjectType):
         Returns:
             str
         """
-        return f"{id_data['user']}&{id_data['owner']}&{id_data['name']}&{id_data['subdir']}&{id_data['index']}"
+        return f"{id_data['owner']}&{id_data['name']}&{id_data['section']}&{id_data['index']}"
 
     @staticmethod
     def parse_type_id(type_id):
@@ -150,14 +154,14 @@ class LabbookFavorite(ObjectType):
             dict
         """
         tokens = type_id.split('&')
-        assert len(tokens) == 5, "type_id for LabbookFile should have 5 tokens"
-        return {'user': tokens[0],
-                'owner': tokens[1],
-                'name': tokens[2],
-                'subdir': tokens[3],
-                'index': tokens[4]}
+        assert len(tokens) == 4, "type_id for LabbookFile should have 4 tokens"
+        return {'owner': tokens[0],
+                'name': tokens[1],
+                'section': tokens[2],
+                'index': tokens[3]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
 
         if 'favorite_data' in id_data:
@@ -174,7 +178,7 @@ class LabbookFavorite(ObjectType):
 
             lb = LabBook()
             lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-            data = lb.get_favorites(id_data['subdir'])
+            data = lb.get_favorites(id_data['section'])
 
             # Make sure index is valid
             if int(id_data["index"]) > len(data) - 1:

@@ -26,9 +26,10 @@ import graphene
 from flask import Flask, current_app
 import json
 from mock import patch
+import responses
 
 from lmcommon.environment import RepositoryManager
-from lmcommon.configuration import Configuration
+from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.auth.identity import get_identity_manager
 from lmcommon.labbook import LabBook
 
@@ -192,3 +193,68 @@ def fixture_working_dir_populated_scoped():
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
+
+
+@pytest.fixture
+def fixture_test_file():
+    """A pytest fixture that creates a temporary file
+    """
+    temp_file_name = os.path.join(tempfile.tempdir, "test_file.txt")
+    with open(temp_file_name, 'wt') as dummy_file:
+        dummy_file.write("blah")
+        dummy_file.flush()
+        dummy_file.seek(0)
+
+        yield dummy_file.name
+
+    os.remove(temp_file_name)
+
+@pytest.fixture()
+def property_mocks_fixture():
+    """A pytest fixture that returns a GitLabRepositoryManager instance"""
+    responses.add(responses.GET, 'https://usersrv.gigantum.io/key',
+                  json={'key': 'afaketoken'}, status=200)
+    responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects?search=labbook1',
+                  json=[{
+                          "id": 26,
+                          "description": "",
+                        }],
+                  status=200, match_querystring=True)
+    yield
+
+
+@pytest.fixture()
+def docker_socket_fixture():
+    """Helper method to get the docker client version"""
+    client = get_docker_client()
+    version = client.version()['ApiVersion']
+
+    if "CIRCLECI" in os.environ:
+        docker_host = os.environ['DOCKER_HOST']
+        docker_host = docker_host.replace("tcp", "https")
+        responses.add_passthru(
+            f"{docker_host}/v{version}/images/default-default-labbook1/json")
+        responses.add_passthru(
+            f"{docker_host}/v{version}/containers/default-default-labbook1/json")
+        responses.add_passthru(
+            f"{docker_host}/v{version}/images/default-default-labbook1/json")
+        responses.add_passthru(
+            f"{docker_host}/v{version}/containers/default-default-labbook1/json")
+        responses.add_passthru(
+            f"{docker_host}/v{version}/images/default-test-sample-repo-lb/json")
+        responses.add_passthru(
+            f"{docker_host}/v{version}/containers/default-test-sample-repo-lb/json")
+        responses.add_passthru(
+            #'http+docker://35.196.196.144:2376/v1.30/containers/default-test-sample-repo-lb/json')
+            '{docker_host}/v{version}/containers/default-test-sample-repo-lb/json')
+    else:
+        responses.add_passthru(
+            f"http+docker://localunixsocket/v{version}/images/default-default-labbook1/json")
+        responses.add_passthru(
+            f"http+docker://localunixsocket/v{version}/containers/default-default-labbook1/json")
+        responses.add_passthru(
+            f"http+docker://localunixsocket/v{version}/images/default-test-sample-repo-lb/json")
+        responses.add_passthru(
+            f"http+docker://localunixsocket/v{version}/containers/default-test-sample-repo-lb/json")
+
+    yield

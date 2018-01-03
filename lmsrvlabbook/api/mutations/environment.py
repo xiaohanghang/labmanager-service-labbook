@@ -23,14 +23,17 @@ import time
 import graphene
 import docker
 
-from lmsrvlabbook.api.objects.environment import Environment
-from lmsrvcore.auth.user import get_logged_in_username
 from lmcommon.configuration import (Configuration, get_docker_client)
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.activity.services import stop_labbook_monitor, start_labbook_monitor
+
+from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.api import logged_mutation
+from lmsrvlabbook.api.objects.environment import Environment
+
 
 logger = LMLogger.get_logger()
 
@@ -49,6 +52,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
         username = get_logged_in_username()
@@ -102,6 +106,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         username = get_logged_in_username()
 
@@ -154,6 +159,7 @@ class StopContainer(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         username = get_logged_in_username()
 

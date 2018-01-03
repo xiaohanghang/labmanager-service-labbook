@@ -26,7 +26,7 @@ from lmcommon.configuration import Configuration
 
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 from lmsrvcore.api.interfaces import GitCommit
 
 
@@ -61,6 +61,7 @@ class LabbookCommit(ObjectType):
         return {"owner": split[0], "name": split[1], "hash": split[2]}
 
     @staticmethod
+    @logged_query
     def create(id_data):
         """Method to create a graphene LabBookCommit object based on the type node ID or owner+name+hash
 

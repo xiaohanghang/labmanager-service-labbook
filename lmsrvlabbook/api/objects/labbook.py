@@ -20,6 +20,7 @@
 import base64
 import json
 import graphene
+import copy
 
 import os
 
@@ -27,22 +28,23 @@ from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
 from lmcommon.gitlib import get_git_interface
 from lmcommon.labbook import LabBook
-from lmcommon.notes import NoteStore
+from lmcommon.activity import ActivityStore
+from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvcore.api import ObjectType
+from lmsrvcore.api import ObjectType, logged_query
 from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.objects import Owner
+from lmsrvcore.auth.identity import parse_token
 
-from lmsrvlabbook.api.connections.note import NoteConnection
 from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.objects.environment import Environment
-from lmsrvlabbook.api.objects.note import Note
 from lmsrvlabbook.api.objects.ref import LabbookRef
-from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
-from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection, LabbookFavoriteConnection
+from lmsrvlabbook.api.objects.labbooksection import LabbookSection
+from lmsrvlabbook.api.connections.activity import ActivityConnection
+from lmsrvlabbook.api.objects.activity import ActivityDetailObject, ActivityRecordObject
 
 logger = LMLogger.get_logger()
 
@@ -59,25 +61,38 @@ class Labbook(ObjectType):
     # The name of the current branch
     active_branch = graphene.Field(LabbookRef)
 
+    # Get the URL of the remote origin
+    default_remote = graphene.String()
+
     # List of branches
     branches = graphene.relay.ConnectionField(LabbookRefConnection)
+
+    # List of collaborators
+    collaborators = graphene.List(graphene.String)
+
+    # A boolean indicating if the current user can manage collaborators
+    can_manage_collaborators = graphene.Boolean()
+
+    # How many commits the current active_branch is behind remote (0 if up-to-date or local-only).
+    updates_available_count = graphene.Int()
+
+    # Whether repo state is clean
+    is_repo_clean = graphene.Boolean()
 
     # Environment Information
     environment = graphene.Field(Environment)
 
-    # List of files and directories
-    files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String())
+    # List of sections
+    code = graphene.Field(LabbookSection)
+    input = graphene.Field(LabbookSection)
+    output = graphene.Field(LabbookSection)
 
-    # List of files for each primary subdirectory
-    code_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("code/"))
-    input_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("input/"))
-    output_files = graphene.relay.ConnectionField(LabbookFileConnection, base_dir=graphene.String("output/"))
+    # Connection to Activity Entries
+    activity_records = graphene.relay.ConnectionField(ActivityConnection)
 
-    # List of favorites for a given subdir (code, input, output)
-    favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection, subdir=graphene.String())
-
-    # Connection to Note Entries
-    notes = graphene.relay.ConnectionField(NoteConnection)
+    # Access a detail record directly, which is useful when fetching detail items
+    detail_record = graphene.Field(ActivityDetailObject, key=graphene.String())
+    detail_records = graphene.List(ActivityDetailObject, keys=graphene.List(graphene.String))
 
     @staticmethod
     def to_type_id(id_data):
@@ -104,6 +119,8 @@ class Labbook(ObjectType):
         split = type_id.split("&")
         return {"owner": split[0], "name": split[1]}
 
+    # @BVB - this decorator breaks things, with the error that the argument "self" is missing. Possibly because static?
+    # @logged_query
     @staticmethod
     def create(id_data):
         """Method to create a graphene LabBook object based on the node ID or owner+name
@@ -131,11 +148,21 @@ class Labbook(ObjectType):
 
         lb = LabBook()
         lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        id_data["labbook_instance"] = lb
 
         return Labbook(id=Labbook.to_type_id(id_data),
                        name=lb.name, description=lb.description,
                        owner=Owner.create(id_data), environment=Environment.create(id_data),
                        _id_data=id_data)
+
+    def resolve_updates_available_count(self, args, context, info):
+        """Get number of commits the active_branch is behind its remote counterpart.
+        Returns 0 if up-to-date or if local only."""
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+
+        # Note, by default using remote "origin"
+        return lb.get_commits_behind_remote("origin")[1]
 
     def resolve_active_branch(self, args, context, info):
         """Method to get the active branch
@@ -148,24 +175,60 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        # Get the git information
-        if "git" not in self._id_data:
-            git = get_git_interface(Configuration().config["git"])
-            git.set_working_directory(os.path.join(git.working_directory,
-                                                   self._id_data["username"],
-                                                   self._id_data["owner"],
-                                                   "labbooks",
-                                                   self._id_data["name"]))
-        else:
-            git = self._id_data["git"]
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
         # Get the current checked out branch name
-        self._id_data["branch"] = git.get_current_branch_name()
-
-        # Share git instance to speed up IO
-        self._id_data["git"] = git
+        self._id_data["branch"] = lb.git.get_current_branch_name()
 
         return LabbookRef.create(self._id_data)
+
+    def resolve_is_repo_clean(self, args, context, info):
+        """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+
+        try:
+            return lb.is_repo_clean
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def resolve_default_remote(self, args, context, info):
+        """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+
+        try:
+            remotes = lb.git.list_remotes()
+            if remotes:
+                url = [x['url'] for x in remotes if x['name'] == 'origin']
+                if url:
+                    return url[0]
+                else:
+                    logger.warning(f"There exist remotes in {str(lb)}, but no origin found.")
+            return None
+        except Exception as e:
+            logger.exception(e)
+            raise
 
     def resolve_branches(self, args, context, info):
         """Method to page through branch Refs
@@ -178,76 +241,85 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        # Get the git information
-        git = get_git_interface(Configuration().config["git"])
-        # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
-        git.set_working_directory(os.path.join(git.working_directory, get_logged_in_username(),
-                                               self.owner.username, "labbooks", self.name))
-
-        # Get all edges and cursors. Here, cursors are just an index into the refs
-        edges = [x for x in git.repo.refs]
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        # Get LabbookRef instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            parts = edge.name.split("/")
-            if len(parts) > 1:
-                prefix = parts[0]
-                branch = parts[1]
-            else:
-                prefix = None
-                branch = parts[0]
-
-            id_data = {"name": self.name,
-                       "owner": self.owner.username,
-                       "prefix": prefix,
-                       "branch": branch}
-            edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
-
-        return LabbookRefConnection(edges=edge_objs,
-                                    page_info=lbc.page_info)
-
-    def resolve_files(self, args, context, info):
         lb = LabBook()
         lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
-        # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.listdir(base_path=args.get('base_dir'), show_hidden=False)
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        edge_objs = []
         try:
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_username(),
-                           "owner": self.owner.username,
-                           "name": self.name,
-                           "file_info": edge}
-                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
+            # Get all edges and cursors. Here, cursors are just an index into the refs
+            edges = [x for x in lb.git.repo.refs]
+            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
+                                                                                              x in enumerate(edges)]
 
-            return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
+            # Process slicing and cursor args
+            lbc = ListBasedConnection(edges, cursors, args)
+            lbc.apply()
+
+            # Get LabbookRef instances
+            edge_objs = []
+            for edge, cursor in zip(lbc.edges, lbc.cursors):
+                parts = edge.name.split("/")
+                if len(parts) > 1:
+                    prefix = parts[0]
+                    branch = parts[1]
+                else:
+                    prefix = None
+                    branch = parts[0]
+
+                id_data = {"name": lb.name,
+                           "owner": lb.owner['username'],
+                           "prefix": prefix,
+                           "branch": branch}
+                edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
+
+            return LabbookRefConnection(edges=edge_objs,
+                                        page_info=lbc.page_info)
         except Exception as e:
             logger.exception(e)
             raise
 
-    def resolve_code_files(self, args, context, info):
-        return self.resolve_files(args, context, info)
+    def resolve_code(self, args, context, info):
+        """Method to resolve the code section"""
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
 
-    def resolve_input_files(self, args, context, info):
-        return self.resolve_files(args, context, info)
+        local_id_data = copy.deepcopy(self._id_data)
+        local_id_data['section'] = 'code'
 
-    def resolve_output_files(self, args, context, info):
-        return self.resolve_files(args, context, info)
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
+                              _id_data=local_id_data)
 
-    def resolve_notes(self, args, context, info):
+    def resolve_input(self, args, context, info):
+        """Method to resolve the output section"""
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        local_id_data = copy.deepcopy(self._id_data)
+        local_id_data['section'] = 'input'
+
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
+                              _id_data=local_id_data)
+
+    def resolve_output(self, args, context, info):
+        """Method to resolve the output section"""
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        local_id_data = copy.deepcopy(self._id_data)
+        local_id_data['section'] = 'output'
+
+        return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
+                              _id_data=local_id_data)
+
+    def resolve_activity_records(self, args, context, info):
         """Method to page through branch Refs
 
         Args:
@@ -258,57 +330,171 @@ class Labbook(ObjectType):
         Returns:
 
         """
-        # TODO: Fix assumption that loading logged in user. Need to parse data from original request if username
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        store = ActivityStore(self._id_data["labbook_instance"])
+
+        if args.get('before') or args.get('last'):
+            raise ValueError("Only `after` and `first` arguments are supported when paging activity records")
+
+        # Get edges and cursors
+        edges = store.get_activity_records(after=args.get('after'), first=args.get('first'))
+        if edges:
+            cursors = [x.commit for x in edges]
+        else:
+            cursors = []
+
+        # Get ActivityRecordObject instances
+        edge_objs = []
+        for edge, cursor in zip(edges, cursors):
+            edge_objs.append(ActivityConnection.Edge(node=ActivityRecordObject.from_activity_record(edge, store),
+                                                     cursor=cursor))
+
+        # Create page info based on first commit. Since only paging backwards right now, just check for commit
+        if edges:
+            first_commit = self._id_data["labbook_instance"].git.repo.git.rev_list('HEAD', max_parents=0)
+            if edges[-1].linked_commit == first_commit:
+                has_next_page = False
+            else:
+                has_next_page = True
+
+            end_cursor = cursors[-1]
+        else:
+            has_next_page = False
+            end_cursor = None
+
+        page_info = graphene.relay.PageInfo(has_next_page=has_next_page, has_previous_page=False, end_cursor=end_cursor)
+
+        return ActivityConnection(edges=edge_objs, page_info=page_info)
+
+    def resolve_detail_record(self, args, context, info):
+        """Method to page through branch Refs
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        store = ActivityStore(self._id_data["labbook_instance"])
+        detail_record = store.get_detail_record(args.get('key'))
+
+        return ActivityDetailObject.from_detail_record(detail_record, store)
+
+    def resolve_detail_records(self, args, context, info):
+        """Method to page through branch Refs
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        # Make a copy of id_data and set the section to code
+        if "labbook_instance" not in self._id_data:
+            lb = LabBook()
+            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+            self._id_data["labbook_instance"] = lb
+
+        store = ActivityStore(self._id_data["labbook_instance"])
+        detail_records = [store.get_detail_record(x) for x in args.get('keys')]
+
+        return [ActivityDetailObject.from_detail_record(x, store) for x in detail_records]
+
+    def resolve_collaborators(self, args, context, info):
+        """Method to get the list of collaborators for a labbook
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
         lb = LabBook()
         lb.from_name(get_logged_in_username(), self.owner.username, self.name)
 
-        note_db = NoteStore(lb)
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = lb.labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in lb.labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
 
-        # TODO: Design a better cursor implementation that actually pages through repo history
-        all_note_summaries = note_db.get_all_note_summaries()
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
-        # Get all edges and cursors. Here, cursors are just an index into the refs
-        edges = [x for x in all_note_summaries]
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        # Get LabbookRef instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {"summary": edge,
-                       "owner": self.owner.username,
-                       "name": self.name,
-                       "commit": edge["note_commit"]}
-            edge_objs.append(NoteConnection.Edge(node=Note.create(id_data), cursor=cursor))
-
-        return NoteConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_favorites(self, args, context, info):
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
-
-        # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.get_favorites(args.get('subdir'))
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        edge_objs = []
+        # Get collaborators from remote service
+        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
+                                      self._id_data["username"], self._id_data["owner"], self._id_data["name"])
         try:
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_username(),
-                           "owner": self.owner.username,
-                           "name": self.name,
-                           "subdir": args.get('subdir'),
-                           "favorite_data": edge}
-                edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data), cursor=cursor))
+            collaborators = mgr.get_collaborators()
+        except ValueError:
+            # If ValueError Raised, assume repo doesn't exist yet
+            return []
 
-            return LabbookFavoriteConnection(edges=edge_objs, page_info=lbc.page_info)
-        except Exception as e:
-            logger.exception(e)
-            raise
+        return [x[1] for x in collaborators]
+
+    def resolve_can_manage_collaborators(self, args, context, info):
+        """Method to get the list of collaborators for a labbook
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = lb.labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in lb.labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in context.headers.environ:
+            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        # Get collaborators from remote service
+        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
+                                      self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+        try:
+            collaborators = mgr.get_collaborators()
+        except ValueError:
+            # If ValueError Raised, assume repo doesn't exist yet
+            return False
+
+        can_manage = False
+        for c in collaborators:
+            if c[1] == self._id_data["username"]:
+                if c[2] is True:
+                    can_manage = True
+
+        return can_manage

@@ -62,6 +62,9 @@ def mocky(self):
 def invoker():
     return SampleMockObject().method_to_mock()
 
+@pytest.fixture(scope="session")
+def pause():
+    time.sleep(3)
 
 class TestLabbookMutation(object):
 
@@ -81,7 +84,7 @@ class TestLabbookMutation(object):
             assert not os.path.exists('/tmp/cats')
             assert os.path.exists('/tmp/dogs')
 
-    def test_launch_api_server(self, fixture_working_dir_env_repo_scoped):
+    def test_launch_api_server(self, pause, fixture_working_dir_env_repo_scoped):
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
             proc.daemon = True
@@ -112,7 +115,7 @@ class TestLabbookMutation(object):
             lb_name = "mutation-export-import-unittest"
             lb = LabBook(fixture_working_dir_env_repo_scoped[0])
             lb.new(name=lb_name, description="Import/Export Mutation Testing.",
-                   owner={"username": "test"})
+                   owner={"username": "default"})
             cm = ComponentManager(lb)
             cm.add_component("base_image", "gig-dev_environment-components", "gigantum", "ubuntu1604-python3", "0.4")
             cm.add_component("dev_env", "gig-dev_environment-components", "gigantum", "jupyter-ubuntu", "0.1")
@@ -122,8 +125,7 @@ class TestLabbookMutation(object):
             export_query = """
             mutation export {
               exportLabbook(input: {
-                user: "test",
-                owner: "test",
+                owner: "default",
                 labbookName: "%s"
               }) {
                 jobKey
@@ -155,8 +157,6 @@ class TestLabbookMutation(object):
             export_query = """
             mutation import {
               importLabbook(input: {
-                user: "test",
-                owner: "test",
               }) {
                 jobKey
               }
@@ -170,5 +170,6 @@ class TestLabbookMutation(object):
 
             time.sleep(0.5)
             pprint.pprint(r)
+            assert 'errors' not in r
             time.sleep(2)
 

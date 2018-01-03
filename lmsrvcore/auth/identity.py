@@ -29,6 +29,25 @@ def get_identity_manager_instance():
     return current_app.config["LABMGR_ID_MGR"]
 
 
+def parse_token(auth_header: str) -> str:
+    """Method to extract the bearer token from the authorization header
+
+    Args:
+        auth_header(str): The Authorization header
+
+    Returns:
+        str
+    """
+    if "Bearer" in auth_header:
+        _, token = auth_header.split("Bearer ")
+        if not token:
+            raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
+    else:
+        raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
+
+    return token
+
+
 class AuthorizationMiddleware(object):
     """Middlewere to enforce authentication requirements and parse JWT"""
     def resolve(self, next, root, args, context, info, **kwargs):
@@ -38,12 +57,7 @@ class AuthorizationMiddleware(object):
         # Pull the token out of the header if available
         token = None
         if "Authorization" in context.headers:
-            if "Bearer" in context.headers["Authorization"]:
-                _, token = context.headers["Authorization"].split("Bearer ")
-                if not token:
-                    raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
-            else:
-                raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
+            token = parse_token(context.headers["Authorization"])
 
         # Authenticate and set current user context on each request
         current_app.current_user = id_mgr.authenticate(token)

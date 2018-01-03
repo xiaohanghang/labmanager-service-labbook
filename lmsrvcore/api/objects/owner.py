@@ -37,7 +37,7 @@ class Owner(ObjectType):
         Returns:
             str
         """
-        return id_data["username"]
+        return id_data["owner"]
 
     @staticmethod
     def parse_type_id(type_id):
@@ -61,7 +61,8 @@ class Owner(ObjectType):
         Returns:
 
         """
-        return Owner(username=id_data["username"])
+        return Owner(id=Owner.to_type_id(id_data),
+                     username=id_data["owner"])
 
 
 class InputOwner(graphene.InputObjectType):

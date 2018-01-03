@@ -61,7 +61,7 @@ def create_stock_labbook(client, name: str, desc: str = "Example labbook by muta
     return results
 
 
-class TestLabBookServiceQueries(object):
+class TestNodeQueries(object):
 
     def test_node_labbook_from_object(self, fixture_working_dir, snapshot):
         lb = LabBook(fixture_working_dir[0])
@@ -166,86 +166,6 @@ class TestLabBookServiceQueries(object):
             """ % env_id
             snapshot.assert_match(client.execute(env_node_query))
 
-    def test_node_notes(self, fixture_working_dir, snapshot):
-        labbook_name="test-node-note-1"
-
-        lb = LabBook(fixture_working_dir[0])
-        lb.new(owner={"username": "default"}, name=labbook_name, description="Labby McLabbook 99")
-
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            client = Client(fixture_working_dir[2])
-
-            working_dir = lb.git.config["working_directory"]
-            labbook_dir = os.path.join(working_dir, "default", "default", "labbooks", labbook_name)
-            with open(os.path.join(labbook_dir, "code", "test1.txt"), 'wt') as dt:
-                dt.write("Some content")
-            lb.git.add(os.path.join(labbook_dir, "code", "test1.txt"))
-            commit = lb.git.commit("a test commit")
-
-            #results = create_stock_labbook(client=client, name=labbook_name)
-
-            make_note_query = """
-             mutation makenote {
-               createNote(input: {
-                 labbookName: \"""" + labbook_name + """\",
-                 owner: "default",
-                 level: USER_MINOR,
-                 message: "Added a new file in this test",
-                 linkedCommit: \"""" + str(commit) + """\",
-                 tags: ["user", "minor"],
-                 freeText: "Lots of stuff can go here <>><<>::SDF:",
-                 objects: [{key: "objectkey1",
-                            type: "PNG", 
-                            value: "2new0x7FABC374FX"
-                            }, 
-                            {key: "objectkey2", 
-                            type: "BLOB", 
-                            value: "YXNkZmFzZGZmZ2RoYXNkMTI0Mw=="}]
-               })
-               {
-                 note {
-                   id
-                   message              
-                 }
-               }
-             }
-             """
-            response = client.execute(make_note_query)
-
-            query = """
-            {
-                labbook(name: "%s", owner: "default") {
-                    notes(first: 1) {
-                        edges {
-                            node {                                                                                       
-                                id
-                                author
-                                level
-                            }
-                            cursor
-                        }                        
-                    }
-                }
-            }
-            """ % labbook_name
-            first_note_id = client.execute(query)['data']['labbook']['notes']['edges'][0]['node']['id']
-
-            #import pprint; pprint.pprint(first_note_id); assert False
-            node_note_query = """
-            {
-                node(id: "%s") {
-                    ... on Note {
-                        author
-                        level
-                        message
-                        tags
-                    }
-                }
-            }
-            """ % first_note_id
-
-            snapshot.assert_match(client.execute(node_note_query))
-
     def test_favorites_node(self, fixture_working_dir, snapshot):
         """Test listing labbook favorites"""
 
@@ -267,7 +187,7 @@ class TestLabBookServiceQueries(object):
             # Test bad node ids that index out of bounds
             query = """
                         {
-                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjEwMA==") {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYxMDA=") {
                                 ... on LabbookFavorite {
                                     id
                                     key
@@ -282,7 +202,7 @@ class TestLabBookServiceQueries(object):
 
             query = """
                         {
-                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJi0x") {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYtMQ==") {
                                 ... on LabbookFavorite {
                                     id
                                     key
@@ -298,7 +218,7 @@ class TestLabBookServiceQueries(object):
             # Get the actual item
             query = """
                         {
-                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmZGVmYXVsdCZsYWJib29rMSZjb2RlJjA=") {
+                            node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw") {
                                 ... on LabbookFavorite {
                                     id
                                     key
@@ -331,7 +251,7 @@ class TestLabBookServiceQueries(object):
 
             query = """
                         {
-                            node(id: "TGFiYm9va0ZpbGU6ZGVmYXVsdCZkZWZhdWx0JmxhYmJvb2sxJmNvZGUvdGVzdDEudHh0") {
+                            node(id: "TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QxLnR4dA==") {
                                 ... on LabbookFile {
                                     id
                                     key
@@ -342,3 +262,157 @@ class TestLabBookServiceQueries(object):
                         }
                         """
             snapshot.assert_match(client.execute(query))
+
+    def test_activity_record_node(self, fixture_working_dir, snapshot):
+        """Test getting an activity record by node ID"""
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+
+            query = """
+            mutation myCreateLabbook($name: String!, $desc: String!) {
+              createLabbook(input: {name: $name, description: $desc}) {
+                labbook {
+                  id
+                  name
+                  description
+                }
+              }
+            }
+            """
+            variables = {"name": "labbook1", "desc": "my test description"}
+            client.execute(query, variable_values=variables)
+
+            # Get activity record to
+            query = """
+            {
+              labbook(name: "labbook1", owner: "default") {               
+                activityRecords {
+                    edges{
+                        node{
+                            id
+                            commit
+                            linkedCommit
+                            message
+                            type
+                            show
+                            importance
+                            tags
+                            detailObjects{
+                                id
+                                key
+                                type
+                                data
+                                show
+                                importance
+                                tags
+                            }
+                            }                        
+                        }    
+                }
+              }
+            }
+            """
+            result1 = client.execute(query)
+
+            query = """
+                        {{
+                            node(id: "{}") {{
+                                ... on ActivityRecordObject {{
+                                    id
+                                    commit
+                                    linkedCommit
+                                    message
+                                    type
+                                    show
+                                    importance
+                                    tags
+                                    detailObjects{{
+                                        id
+                                        key
+                                        type
+                                        data
+                                        show
+                                        importance
+                                        tags
+                                    }}     
+                                }}
+                            }}
+                        }}
+                        """.format(result1['data']['labbook']['activityRecords']['edges'][0]['node']['id'])
+            result2 = client.execute(query)
+            assert result2['data']['node'] == result1['data']['labbook']['activityRecords']['edges'][0]['node']
+
+    def test_detail_record_node(self, fixture_working_dir, snapshot):
+        """Test getting an detail record by node ID"""
+
+        # Mock the configuration class it it returns the same mocked config file
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+
+            query = """
+            mutation myCreateLabbook($name: String!, $desc: String!) {
+              createLabbook(input: {name: $name, description: $desc}) {
+                labbook {
+                  id
+                  name
+                  description
+                }
+              }
+            }
+            """
+            variables = {"name": "labbook1", "desc": "my test description"}
+            client.execute(query, variable_values=variables)
+
+            # Get activity record to
+            query = """
+            {
+              labbook(name: "labbook1", owner: "default") {               
+                activityRecords {
+                    edges{
+                        node{
+                            id
+                            commit
+                            linkedCommit
+                            message
+                            type
+                            show
+                            importance
+                            tags
+                            detailObjects{
+                                id
+                                key
+                                type
+                                data
+                                show
+                                importance
+                                tags
+                            }
+                            }                        
+                        }    
+                }
+              }
+            }
+            """
+            result1 = client.execute(query)
+
+            query = """
+                {{
+                    node(id: "{}") {{
+                        ... on ActivityDetailObject {{
+                                id
+                                key
+                                type
+                                data
+                                show
+                                importance
+                                tags   
+                        }}
+                    }}
+                }}
+                """.format(result1['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['id'])
+            result2 = client.execute(query)
+            assert result2['data']['node'] == result1['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]

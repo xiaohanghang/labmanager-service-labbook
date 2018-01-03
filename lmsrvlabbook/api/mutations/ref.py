@@ -24,11 +24,15 @@ import os
 from lmcommon.gitlib import get_git_interface
 from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
+from lmcommon.logging import LMLogger
 
+from lmsrvcore.api import logged_mutation
 from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvlabbook.api.objects.ref import LabbookRef
 from lmsrvlabbook.api.objects.labbook import Labbook
+
+logger = LMLogger.get_logger()
 
 
 class CreateBranch(graphene.relay.ClientIDMutation):
@@ -42,6 +46,7 @@ class CreateBranch(graphene.relay.ClientIDMutation):
     branch = graphene.Field(LabbookRef)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         """Method to perform mutation
         Args:
@@ -61,7 +66,10 @@ class CreateBranch(graphene.relay.ClientIDMutation):
         labbook_obj.from_name(username, owner, input.get('labbook_name'))
 
         # Create Branch
-        labbook_obj.git.create_branch(input.get("branch_name"))
+        labbook_obj.checkout_branch(input.get("branch_name"), new=True)
+
+        if labbook_obj.active_branch != input.get("branch_name"):
+            raise ValueError(f"Create branch failed, could not switch to new branch {input.get('branch_name')}")
 
         # Create a LabbookRef to the branch
         id_data = {"username": username,
@@ -85,6 +93,7 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
     labbook = graphene.Field(lambda: Labbook)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         """Method to perform mutation
         Args:
@@ -104,8 +113,9 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
         labbook_obj.from_name(username, owner, input.get('labbook_name'))
 
         # Checkout
-        labbook_obj.git.fetch()
-        labbook_obj.git.checkout(input.get('branch_name'))
+        #labbook_obj.git.fetch()
+        #labbook_obj.git.checkout(input.get('branch_name'))
+        labbook_obj.checkout_branch(input.get('branch_name'))
 
         # Create a LabbookRef to the branch
         id_data = {"username": username,
@@ -116,4 +126,3 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
                    "git": labbook_obj.git
                    }
         return CheckoutBranch(labbook=Labbook.create(id_data))
-

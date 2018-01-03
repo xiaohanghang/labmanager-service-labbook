@@ -93,7 +93,7 @@ class TestAddComponentMutations(object):
         # Verify git/notes
         log = lb.git.log()
         assert len(log) == 4
-        assert "gtmNOTE" in log[0]["message"]
+        assert "_GTM_ACTIVITY_START_" in log[0]["message"]
         assert 'ubuntu1604-python3' in log[0]["message"]
 
     def test_add_dev_env(self, fixture_working_dir_env_repo_scoped, snapshot):
@@ -151,7 +151,7 @@ class TestAddComponentMutations(object):
         # Verify git/notes
         log = lb.git.log()
         assert len(log) == 4
-        assert "gtmNOTE" in log[0]["message"]
+        assert "_GTM_ACTIVITY_START_" in log[0]["message"]
         assert 'jupyter-ubuntu' in log[0]["message"]
 
     def test_add_package(self, fixture_working_dir_env_repo_scoped, snapshot):
@@ -267,5 +267,5 @@ class TestAddComponentMutations(object):
         # Verify git/notes
         log = lb.git.log()
         assert len(log) == 4
-        assert "gtmNOTE" in log[0]["message"]
+        assert "_GTM_ACTIVITY_START_" in log[0]["message"]
         assert 'ubuntu-python3-pillow' in log[0]["message"]

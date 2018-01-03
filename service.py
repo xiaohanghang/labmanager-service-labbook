@@ -28,6 +28,7 @@ from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
 from lmcommon.auth.identity import AuthenticationError, get_identity_manager
+from lmcommon.labbook.lock import reset_all_locks
 
 
 logger = LMLogger.get_logger()
@@ -65,13 +66,18 @@ def ping():
     """Unauthorized endpoint for validating the API is up"""
     return jsonify(config.config['build_info'])
 
+
 logger.info("Cloning/Updating environment repositories.")
 
 erm = RepositoryManager()
-erm.update_repositories()
-logger.info("Indexing environment repositories.")
-erm.index_repositories()
-logger.info("Environment repositories ready.")
+update_successful = erm.update_repositories()
+if update_successful:
+    logger.info("Indexing environment repositories.")
+    erm.index_repositories()
+    logger.info("Environment repositories updated and ready.")
+
+else:
+    logger.info("Unable to update environment repositories at startup, most likely due to lack of internet access.")
 
 # Empty container-container share dir as it is ephemeral
 share_dir = os.path.join(os.path.sep, 'mnt', 'share')
@@ -86,6 +92,11 @@ try:
 except Exception as e:
     logger.error(f"Failed to empty share folder: {e}.")
     raise
+
+# Reset distributed lock, if desired
+if config.config["lock"]["reset_on_start"]:
+    logger.info("Resetting ALL distributed locks")
+    reset_all_locks(config.config['lock'])
 
 
 def main(debug=False) -> None:

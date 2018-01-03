@@ -22,6 +22,8 @@ import graphene
 from lmcommon.logging import LMLogger
 from lmcommon.labbook import LabBook
 from lmcommon.environment import ComponentManager
+
+from lmsrvcore.api import logged_mutation
 from lmsrvcore.auth.user import get_logged_in_username
 
 from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponentClass, EnvironmentComponent
@@ -43,6 +45,7 @@ class AddEnvironmentPackage(graphene.relay.ClientIDMutation):
     environment_package = graphene.Field(lambda: PackageManager)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
         username = get_logged_in_username()
@@ -93,6 +96,7 @@ class AddEnvironmentComponent(graphene.relay.ClientIDMutation):
     environment_component = graphene.Field(lambda: EnvironmentComponent)
 
     @classmethod
+    @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
         # TODO: Lookup name based on logged in user when available
         username = get_logged_in_username()
