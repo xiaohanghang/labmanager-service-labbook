@@ -96,6 +96,7 @@ class TestBackgroundJobs(object):
                           node {
                             id
                             jobKey
+                            failureMessage
                             status
                             result
                           }
@@ -113,13 +114,16 @@ class TestBackgroundJobs(object):
                 tdiff = time2 - time1
                 assert tdiff < 0.25, "Query should not take more than a few millis (took {}s)".format(tdiff)
 
-                assert any([t1 == x['node']['jobKey'] and 'failed' == x['node']['status']
+                assert any([t1 == x['node']['jobKey']
+                            and 'failed' == x['node']['status']
+                            and 'Exception: ' in x['node']['failureMessage']
                             for x in result['data']['backgroundJobs']['edges']])
                 assert any([t2 == x['node']['jobKey'] and "finished" == x['node']['status']
+                            and x['node']['failureMessage'] is None
                             for x in result['data']['backgroundJobs']['edges']])
                 assert any([t3 == x['node']['jobKey'] and "started" == x['node']['status']
+                            and x['node']['failureMessage'] is None
                             for x in result['data']['backgroundJobs']['edges']])
-
                 time.sleep(2)
             except:
                 time.sleep(2)

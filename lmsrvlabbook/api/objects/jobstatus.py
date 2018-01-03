@@ -40,6 +40,9 @@ class JobStatus(ObjectType):
     # Status is either: queued, failed, started, finished.
     status = graphene.Field(graphene.String)
 
+    # Message if job has failed, if not in failed state this is None/null.
+    failure_message = graphene.String()
+
     # Timestamp the task was put into the queue
     started_at = graphene.Field(graphene.String)
 
@@ -91,5 +94,6 @@ class JobStatus(ObjectType):
                        status=task_ref.status,
                        started_at=task_ref.started_at,
                        finished_at=task_ref.finished_at,
-                       result=task_ref.result)
+                       result=task_ref.result,
+                       failure_message=task_ref.failure_message)
         return js
