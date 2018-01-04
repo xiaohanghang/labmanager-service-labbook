@@ -57,6 +57,11 @@ class LabbookQuery(graphene.AbstractType):
 
     labbook = graphene.Field(Labbook, owner=graphene.String(), name=graphene.String())
 
+    # This indicates the most-recent labbook schema version.
+    # Nominal usage of this field is to see if any given labbook is behind this version.
+    # Any new labbook will be created with this schema version.
+    current_labbook_schema_version = graphene.String()
+
     # Used to query for specific background jobs.
     # job_id is in the format of `rq:job:uuid`, though it should never need to be parsed.
     job_status = graphene.Field(JobStatus, job_id=graphene.String())
@@ -108,6 +113,11 @@ class LabbookQuery(graphene.AbstractType):
         """
         id_data = {"name": args.get('name'), "owner": args.get('owner')}
         return Labbook.create(id_data)
+
+    def resolve_current_labbook_schema_version(self, args, context, info):
+        """Return the LabBook schema version (defined as static field in LabBook class."""
+
+        return LabBook.LABBOOK_DATA_SCHEMA_VERSION
 
     @resolve_only_args
     def resolve_job_status(self, job_id: str):

@@ -58,6 +58,10 @@ class Labbook(ObjectType):
     class Meta:
         interfaces = (graphene.relay.Node, GitRepository)
 
+    # Data schema version of this labbook. It may be behind the most recent version and need
+    # to be upgraded.
+    schema_version = graphene.String()
+
     # The name of the current branch
     active_branch = graphene.Field(LabbookRef)
 
@@ -154,6 +158,13 @@ class Labbook(ObjectType):
                        name=lb.name, description=lb.description,
                        owner=Owner.create(id_data), environment=Environment.create(id_data),
                        _id_data=id_data)
+
+    def resolve_schema_version(self, args, context, info):
+        """Get number of commits the active_branch is behind its remote counterpart.
+        Returns 0 if up-to-date or if local only."""
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        return lb.data.get('schema')
 
     def resolve_updates_available_count(self, args, context, info):
         """Get number of commits the active_branch is behind its remote counterpart.
