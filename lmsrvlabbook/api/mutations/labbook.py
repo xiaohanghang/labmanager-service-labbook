@@ -356,7 +356,9 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
                                              input['labbook_name'])
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
+
         # Insert into labbook
+        # Note: insert_file() will strip out any '..' in dst_dir.
         file_info = lb.insert_file(section=input['section'],
                                    src_file=cls.upload_file_path,
                                    dst_dir=os.path.dirname(input['file_path']),

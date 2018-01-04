@@ -93,15 +93,25 @@ class ChunkUploadMutation(graphene.AbstractType):
             raise ValueError("Invalid args. Not enough chunks expected")
 
     @staticmethod
+    def py_secure_filename(filename: str) -> str:
+        # Take any non-alphanumeric (and some limited special chars) and replace with _
+        # Also note, max filename size is 4096 chars
+        s = lambda n: n if (n.isalnum() or n in '._-+=') else '_'
+        safe_fname = ''.join([s(c) for c in os.path.basename(filename)])[:255]
+        if safe_fname != filename:
+            logger.warning(f"Renaming unsafe filename `{filename}` to `{safe_fname}`")
+        return safe_fname
+
+    @staticmethod
     def get_temp_filename(upload_id, filename):
         """Method to generate the temporary filename"""
-        return os.path.join(tempfile.gettempdir(), "{}-{}".format(secure_filename(upload_id),
-                                                                  secure_filename(filename)))
+        return os.path.join(tempfile.gettempdir(), "{}-{}".format(ChunkUploadMutation.py_secure_filename(upload_id),
+                                                                  ChunkUploadMutation.py_secure_filename(filename)))
 
     @staticmethod
     def get_filename(filename):
         """Method to generate the desired target filename"""
-        return os.path.basename(secure_filename(filename))
+        return os.path.basename(ChunkUploadMutation.py_secure_filename(filename))
 
     @classmethod
     def mutate_and_get_payload(cls, input, context, info):
