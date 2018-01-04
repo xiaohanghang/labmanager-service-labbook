@@ -25,6 +25,7 @@ from graphene import resolve_only_args
 
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
+from lmcommon.configuration import Configuration
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository
 
@@ -51,6 +52,8 @@ class LabbookQuery(graphene.AbstractType):
     """Entry point for all LabBook queryable fields"""
     # Node Fields for Relay
     node = graphene.relay.Node.Field()
+
+    build_info = graphene.String()
 
     labbook = graphene.Field(Labbook, owner=graphene.String(), name=graphene.String())
 
@@ -83,6 +86,13 @@ class LabbookQuery(graphene.AbstractType):
 
     # Get the current logged in user identity, primarily used when running offline
     user_identity = graphene.Field(UserIdentity)
+
+    def resolve_build_info(self, args, context, info):
+        """Return this LabManager build info (hash, build timestamp, etc)"""
+        build_info = Configuration().config.get('build_info') or {}
+        return '-'.join([build_info.get('application', 'UnknownDate'),
+                         build_info.get('revision', 'UnknownHash'),
+                         build_info.get('built_on', 'UnknownApplication')])
 
     def resolve_labbook(self, args, context, info):
         """Method to return a graphene Labbok instance based on the name
