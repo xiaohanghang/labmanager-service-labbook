@@ -48,6 +48,11 @@ class GitRepository(graphene.Interface):
     # The name of the underlying git repository.
     # Must be unique to what exists locally and unique in a user's library when pushing
     # Only A-Za-z0-9- allowed with no leading or trailing '-'
+    namespace = graphene.String()
+
+    # The name of the underlying git repository.
+    # Must be unique to what exists locally and unique in a user's library when pushing
+    # Only A-Za-z0-9- allowed with no leading or trailing '-'
     name = graphene.String()
 
     # A short description of the LabBook limited to 140 UTF-8 characters

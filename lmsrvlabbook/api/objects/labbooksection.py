@@ -29,15 +29,16 @@ from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection, LabbookFavoriteConnection
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 logger = LMLogger.get_logger()
 
 
-class LabbookSection(ObjectType):
-    """A type representing a section within a LabBook (i.e., code, input, output
+class LabbookSection(ObjectType,  interfaces=(graphene.relay.Node,)):
+    """A type representing a section within a LabBook (i.e., code, input, output)
     """
-    class Meta:
-        interfaces = (graphene.relay.Node,)
+    # Section name (code, input, output)
+    section = graphene.String()
 
     # List of files and directories, given a relative root directory within the section
     files = graphene.relay.ConnectionField(LabbookFileConnection, root=graphene.String())
@@ -49,16 +50,18 @@ class LabbookSection(ObjectType):
     favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection)
 
     @staticmethod
-    def to_type_id(id_data):
+    def to_type_id(owner_name: str, labbook_name: str, section: str):
         """Method to generate a single string that uniquely identifies this object
 
         Args:
-            id_data(dict):
+            owner_name(str): username or org name that owns the labbook
+            labbook_name(str): name of the labbook
+            section(str): name of the section
 
         Returns:
             str
         """
-        return "{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["section"])
+        return "{}&{}&{}".format(owner_name, labbook_name, section)
 
     @staticmethod
     def parse_type_id(type_id):
@@ -71,61 +74,43 @@ class LabbookSection(ObjectType):
             dict
         """
         split = type_id.split("&")
-        return {"owner": split[0], "name": split[1], "section": split[2]}
+        return {"owner_name": split[0], "labbook_name": split[1], "section": split[2]}
 
     @staticmethod
     @logged_query
-    def create(id_data):
-        """Method to create a graphene LabBookSection object based on the node ID or owner+name+section
-
-        id_data should at a minimum contain either `type_id` or `owner` & `name`
-
-            {
-                "type_id": <unique id for this object Type),
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-            }
+    def create(owner_name: str, labbook_name: str, section: str, labbook_loader: LabBookLoader):
+        """Method to create a graphene LabBookSection object
 
         Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance. Can be a node ID or other vars
+            owner_name(str): username or org name that owns the labbook
+            labbook_name(str): name of the labbook
+            section(str): name of the section
+            labbook_loader(LabBookLoader): a LabBookLoader dataloader instance
 
         Returns:
             Labbook
         """
-        if "type_id" in id_data:
-            id_data.update(LabbookSection.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
+        return LabbookSection(id=LabbookSection.to_type_id(owner_name, labbook_name, section),
+                              _loader=labbook_loader)
 
-        if "username" not in id_data:
-            id_data["username"] = get_logged_in_username()
-
-        if "labbook_instance" not in id_data:
-            lb = LabBook()
-            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-
-        return LabbookSection(id=LabbookSection.to_type_id(id_data),
-                              _id_data=id_data)
-
-    def resolve_files(self, args, context, info):
+    def resolve_files(self, info):
         """Resolver for getting file listing in a single directory"""
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(get_logged_in_username(), self._id_data['owner'], self._id_data['name'])
-        else:
-            lb = self._id_data["labbook_instance"]
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
+        #TODO: REFACTOR what is this?
         base_dir = None
-        if args.get("root"):
-            base_dir = args.get("root") + os.path.sep
+        if info.context.get("root"):
+            base_dir = info.context.get("root") + os.path.sep
             base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.listdir(self._id_data['section'], base_path=base_dir, show_hidden=False)
+        edges = lb.listdir(self.section, base_path=base_dir, show_hidden=False)
+
         # Generate naive cursors
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
+        lbc = ListBasedConnection(edges, cursors, info.context)
         lbc.apply()
 
         edge_objs = []
@@ -136,14 +121,14 @@ class LabbookSection(ObjectType):
                            "section": self._id_data['section'],
                            "name": self._id_data['name'],
                            "file_info": edge}
-                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
+                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(**id_data), cursor=cursor))
 
             return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
         except Exception as e:
             logger.exception(e)
             raise
 
-    def resolve_all_files(self, args, context, info):
+    def resolve_all_files(self, info, args):
         """Resolver for getting all files in a LabBook section"""
         if "labbook_instance" not in self._id_data:
             lb = LabBook()

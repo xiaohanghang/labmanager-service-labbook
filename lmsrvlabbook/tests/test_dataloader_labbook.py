@@ -18,63 +18,49 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
-import tempfile
-import os
-from datetime import datetime
-from snapshottest import snapshot
-from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_populated_scoped, fixture_test_file
+from lmsrvlabbook.tests.fixtures import fixture_working_dir
 
-from graphene.test import Client
-import graphene
-from mock import patch
+from promise import Promise
 
 from lmsrvlabbook.dataloader.labbook import LabBookLoader
-
 from lmcommon.labbook import LabBook
-from lmcommon.fixtures import remote_labbook_repo
-from lmcommon.configuration import Configuration
 
 
-def reject_method(err_msg):
-    assert False, err_msg
-
-d
 class TestDataloaderLabBook(object):
 
     def test_load_one(self, fixture_working_dir):
         """Test loading 1 labbook"""
-
-        def accept_method(lb):
-            assert lb.name == "labbook1"
-            assert lb.description == "my first labbook1"
-
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
         lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
-        lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
-
         loader = LabBookLoader()
 
         key = f"default&default&labbook1"
-        loader.load(key).then(accept_method, reject_method)
+        promise1 = loader.load(key)
+        assert isinstance(promise1, Promise)
 
-        # load again
-        loader.load(key).then(accept_method, reject_method)
+        lb = promise1.get()
+        assert lb.name == "labbook1"
+        assert lb.description == "my first labbook1"
 
     def test_load_many(self, fixture_working_dir):
         """Test loading many labbooks"""
-
-        def accept_method(lb):
-            assert lb.name == "labbook1"
-            assert lb.description == "my first labbook1"
-
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
         lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
-        lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
+        lb.new(username="default", owner={"username": "test3"}, name="labbook2", description="my first labbook3")
 
         loader = LabBookLoader()
 
-        keys = ["default&default&labbook1", "default&default&labbook2", "default&test3&labbook2dfdf"]
-        loader.load_many(keys).then(accept_method, reject_method)
+        keys = ["default&default&labbook1", "default&default&labbook2", "default&test3&labbook2"]
+        promise1 = loader.load_many(keys)
+        assert isinstance(promise1, Promise)
+
+        lb_list = promise1.get()
+        assert lb_list[0].name == "labbook1"
+        assert lb_list[0].description == "my first labbook1"
+        assert lb_list[1].name == "labbook2"
+        assert lb_list[1].description == "my first labbook2"
+        assert lb_list[2].name == "labbook2"
+        assert lb_list[2].description == "my first labbook3"
 

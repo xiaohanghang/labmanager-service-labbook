@@ -116,11 +116,9 @@ class LabbookQuery(graphene.AbstractType):
 
     def resolve_current_labbook_schema_version(self, args, context, info):
         """Return the LabBook schema version (defined as static field in LabBook class."""
-
         return LabBook.LABBOOK_DATA_SCHEMA_VERSION
 
-    @resolve_only_args
-    def resolve_job_status(self, job_id: str):
+    def resolve_job_status(self, info, job_id: str):
         """Method to return a graphene Labbok instance based on the name
 
         Uses the "currently logged in" user

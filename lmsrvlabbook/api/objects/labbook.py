@@ -138,36 +138,43 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         """
         loader = LabBookLoader()
 
+        # Create key for caching LabBook instance
         loader_key = f"{get_logged_in_username()}&{owner_name}&{labbook_name}"
 
-        lb = loader.load(loader_key)
+        # Create LabBook instance
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), owner_name, labbook_name)
+
+        # Store LabBook instance in dataloader cache
+        loader.prime(loader_key, lb)
 
         return Labbook(id=Labbook.to_type_id(owner_name, labbook_name),
                        name=lb.name, description=lb.description,
                        owner=Owner.create(namespace=owner_name), _loader=loader)
 
+    @logged_query
     def resolve_environment(self, info, args):
         """"""
         raise NotImplemented
 
-    def resolve_schema_version(self, args, context, info):
+    @logged_query
+    def resolve_schema_version(self, info, args):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
         return lb.data.get('schema')
 
-    def resolve_updates_available_count(self, args, context, info):
+    @logged_query
+    def resolve_updates_available_count(self, info, args):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        loader_key = f"{get_logged_in_username()}&{self.owner.username}&{self.name}"
-
-        lb = self._loader.load(loader_key)
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
         # Note, by default using remote "origin"
         return lb.get_commits_behind_remote("origin")[1]
 
-    def resolve_active_branch(self, args, context, info):
+    @logged_query
+    def resolve_active_branch(self, info, args):
         """Method to get the active branch
 
         Args:
@@ -178,15 +185,12 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        loader_key = f"{get_logged_in_username()}&{self.owner.username}&{self.name}"
-        lb = self._loader.load(loader_key)
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
-        # Get the current checked out branch name
-        self._id_data["branch"] = lb.git.get_current_branch_name()
+        return LabbookRef.create(lb.git.get_current_branch_name())
 
-        return LabbookRef.create(self._id_data)
-
-    def resolve_is_repo_clean(self, args, context, info):
+    @logged_query
+    def resolve_is_repo_clean(self, info, args):
         """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
 
         Args:
@@ -197,16 +201,11 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
+        return lb.is_repo_clean
 
-        try:
-            return lb.is_repo_clean
-        except Exception as e:
-            logger.exception(e)
-            raise
-
-    def resolve_default_remote(self, args, context, info):
+    @logged_query
+    def resolve_default_remote(self, info, args):
         """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
 
         Args:
@@ -217,23 +216,18 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
+        remotes = lb.git.list_remotes()
+        if remotes:
+            url = [x['url'] for x in remotes if x['name'] == 'origin']
+            if url:
+                return url[0]
+            else:
+                logger.warning(f"There exist remotes in {str(lb)}, but no origin found.")
+        return None
 
-        try:
-            remotes = lb.git.list_remotes()
-            if remotes:
-                url = [x['url'] for x in remotes if x['name'] == 'origin']
-                if url:
-                    return url[0]
-                else:
-                    logger.warning(f"There exist remotes in {str(lb)}, but no origin found.")
-            return None
-        except Exception as e:
-            logger.exception(e)
-            raise
-
-    def resolve_branches(self, args, context, info):
+    @logged_query
+    def resolve_branches(self, info, args):
         """Method to page through branch Refs
 
         Args:
@@ -244,49 +238,42 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
-        try:
-            # Get all edges and cursors. Here, cursors are just an index into the refs
-            edges = [x for x in lb.git.repo.refs]
-            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
-                                                                                              x in enumerate(edges)]
+        # Get all edges and cursors. Here, cursors are just an index into the refs
+        edges = [x for x in lb.git.repo.refs]
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
+                                                                                          x in enumerate(edges)]
 
-            # Process slicing and cursor args
-            lbc = ListBasedConnection(edges, cursors, args)
-            lbc.apply()
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, args)
+        lbc.apply()
 
-            # Get LabbookRef instances
-            edge_objs = []
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                parts = edge.name.split("/")
-                if len(parts) > 1:
-                    prefix = parts[0]
-                    branch = parts[1]
-                else:
-                    prefix = None
-                    branch = parts[0]
+        # Get LabbookRef instances
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            parts = edge.name.split("/")
+            if len(parts) > 1:
+                prefix = parts[0]
+                branch = parts[1]
+            else:
+                prefix = None
+                branch = parts[0]
 
-                id_data = {"name": lb.name,
-                           "owner": lb.owner['username'],
-                           "prefix": prefix,
-                           "branch": branch}
-                edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
+            id_data = {"name": lb.name,
+                       "owner": lb.owner['username'],
+                       "prefix": prefix,
+                       "branch": branch}
+            edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
 
-            return LabbookRefConnection(edges=edge_objs,
-                                        page_info=lbc.page_info)
-        except Exception as e:
-            logger.exception(e)
-            raise
+        return LabbookRefConnection(edges=edge_objs,
+                                    page_info=lbc.page_info)
 
-    def resolve_code(self, args, context, info):
+    @logged_query
+    def resolve_code(self, info, args):
         """Method to resolve the code section"""
         # Make a copy of id_data and set the section to code
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
         local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section'] = 'code'
@@ -294,13 +281,11 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
 
-    def resolve_input(self, args, context, info):
+    @logged_query
+    def resolve_input(self, info, args):
         """Method to resolve the output section"""
         # Make a copy of id_data and set the section to code
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
         local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section'] = 'input'
@@ -308,13 +293,11 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
 
-    def resolve_output(self, args, context, info):
+    @logged_query
+    def resolve_output(self, info, args):
         """Method to resolve the output section"""
         # Make a copy of id_data and set the section to code
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
         local_id_data = copy.deepcopy(self._id_data)
         local_id_data['section'] = 'output'
@@ -322,7 +305,8 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         return LabbookSection(id=LabbookSection.to_type_id(local_id_data),
                               _id_data=local_id_data)
 
-    def resolve_activity_records(self, args, context, info):
+    @logged_query
+    def resolve_activity_records(self, info, args):
         """Method to page through branch Refs
 
         Args:
@@ -333,13 +317,10 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        # Make a copy of id_data and set the section to code
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
-        store = ActivityStore(self._id_data["labbook_instance"])
+        # Create instance of ActivityStore for this LabBook
+        store = ActivityStore(lb)
 
         if args.get('before') or args.get('last'):
             raise ValueError("Only `after` and `first` arguments are supported when paging activity records")
@@ -359,7 +340,7 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
 
         # Create page info based on first commit. Since only paging backwards right now, just check for commit
         if edges:
-            first_commit = self._id_data["labbook_instance"].git.repo.git.rev_list('HEAD', max_parents=0)
+            first_commit = lb.git.repo.git.rev_list('HEAD', max_parents=0)
             if edges[-1].linked_commit == first_commit:
                 has_next_page = False
             else:
@@ -374,7 +355,8 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
 
         return ActivityConnection(edges=edge_objs, page_info=page_info)
 
-    def resolve_detail_record(self, args, context, info):
+    @logged_query
+    def resolve_detail_record(self, info, args):
         """Method to page through branch Refs
 
         Args:
@@ -385,18 +367,15 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        # Make a copy of id_data and set the section to code
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
-        store = ActivityStore(self._id_data["labbook_instance"])
+        store = ActivityStore(lb)
         detail_record = store.get_detail_record(args.get('key'))
 
         return ActivityDetailObject.from_detail_record(detail_record, store)
 
-    def resolve_detail_records(self, args, context, info):
+    @logged_query
+    def resolve_detail_records(self, info, args):
         """Method to page through branch Refs
 
         Args:
@@ -407,18 +386,15 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        # Make a copy of id_data and set the section to code
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(self._id_data["username"], self._id_data["owner"], self._id_data["name"])
-            self._id_data["labbook_instance"] = lb
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
-        store = ActivityStore(self._id_data["labbook_instance"])
+        store = ActivityStore(lb)
         detail_records = [store.get_detail_record(x) for x in args.get('keys')]
 
         return [ActivityDetailObject.from_detail_record(x, store) for x in detail_records]
 
-    def resolve_collaborators(self, args, context, info):
+    @logged_query
+    def resolve_collaborators(self, info, args):
         """Method to get the list of collaborators for a labbook
 
         Args:
@@ -429,8 +405,7 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
         default_remote = lb.labmanager_config.config['git']['default_remote']
@@ -441,14 +416,14 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
                 break
 
         # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in context.headers.environ:
-            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         # Get collaborators from remote service
         mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+                                      get_logged_in_username(), self.owner.username, self.name)
         try:
             collaborators = mgr.get_collaborators()
         except ValueError:
@@ -457,7 +432,8 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
 
         return [x[1] for x in collaborators]
 
-    def resolve_can_manage_collaborators(self, args, context, info):
+    @logged_query
+    def resolve_can_manage_collaborators(self, info, args):
         """Method to get the list of collaborators for a labbook
 
         Args:
@@ -468,8 +444,8 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
         Returns:
 
         """
-        lb = LabBook()
-        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        username = get_logged_in_username()
+        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
         default_remote = lb.labmanager_config.config['git']['default_remote']
@@ -480,14 +456,14 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
                 break
 
         # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in context.headers.environ:
-            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         # Get collaborators from remote service
         mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      self._id_data["username"], self._id_data["owner"], self._id_data["name"])
+                                      get_logged_in_username(), self.owner.username, self.name)
         try:
             collaborators = mgr.get_collaborators()
         except ValueError:
@@ -496,7 +472,7 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
 
         can_manage = False
         for c in collaborators:
-            if c[1] == self._id_data["username"]:
+            if c[1] == username:
                 if c[2] is True:
                     can_manage = True
 
