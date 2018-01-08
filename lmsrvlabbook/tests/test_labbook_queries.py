@@ -21,6 +21,7 @@ import pytest
 import tempfile
 import os
 from datetime import datetime
+import pprint
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_populated_scoped, fixture_test_file
 
@@ -325,7 +326,22 @@ class TestLabBookServiceQueries(object):
                     """
             snapshot.assert_match(client.execute(before_query))
 
-    def test_get_labbook(self, fixture_working_dir, snapshot):
+    def test_labbook_schema_version(self, fixture_working_dir):
+        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+            # Make and validate request
+            client = Client(fixture_working_dir[2])
+
+            # Get LabBooks for the "logged in user" - Currently just "default"
+            query = """
+            {
+                currentLabbookSchemaVersion
+            }
+            """
+            r = client.execute(query)
+            assert 'errors' not in r
+            assert r['data']['currentLabbookSchemaVersion'] == '0.2'
+
+    def test_get_labbook(self, fixture_working_dir):
         """Test listing labbooks"""
         # Create labbooks
         lb = LabBook(fixture_working_dir[0])
@@ -340,6 +356,7 @@ class TestLabBookServiceQueries(object):
             query = """
             {
               labbook(name: "labbook1", owner: "default") {
+                schemaVersion
                 name
                 description
                 activeBranch {
@@ -348,7 +365,11 @@ class TestLabBookServiceQueries(object):
               }
             }
             """
-            snapshot.assert_match(client.execute(query))
+            r = client.execute(query)
+            assert 'errors' not in r
+            assert r['data']['labbook']['schemaVersion'] == '0.2'
+            assert r['data']['labbook']['activeBranch']['name'] == 'gm.workspace-default'
+            assert r['data']['labbook']['name'] == 'labbook1'
 
     def test_list_labbooks_container_status(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""

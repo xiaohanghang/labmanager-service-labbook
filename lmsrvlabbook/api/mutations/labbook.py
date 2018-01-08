@@ -105,6 +105,14 @@ class RenameLabbook(graphene.ClientIDMutation):
     @classmethod
     @logged_mutation
     def mutate_and_get_payload(cls, input, context, info):
+        # This bypasses the original implementation. Rename is temporarily disabled.
+        raise NotImplemented('Rename functionality is temporarily disabled.')
+
+    @classmethod
+    @logged_mutation
+    def prior_mutate_and_get_payload(cls, input, context, info):
+        # NOTE!!! This is the code that was originally to rename.
+        # Temporarily, rename functionality is disabled.
         # Load LabBook
         username = get_logged_in_username()
 
@@ -348,7 +356,9 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
                                              input['labbook_name'])
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
+
         # Insert into labbook
+        # Note: insert_file() will strip out any '..' in dst_dir.
         file_info = lb.insert_file(section=input['section'],
                                    src_file=cls.upload_file_path,
                                    dst_dir=os.path.dirname(input['file_path']),

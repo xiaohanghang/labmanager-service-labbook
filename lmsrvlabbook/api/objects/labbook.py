@@ -57,6 +57,10 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     LabBooks are uniquely identified by both the "owner/namespace" and the "name" of the LabBook
 
     """
+    # Data schema version of this labbook. It may be behind the most recent version and need
+    # to be upgraded.
+    schema_version = graphene.String()
+
     # The name of the current branch
     active_branch = graphene.Field(LabbookRef)
 
@@ -145,6 +149,13 @@ class Labbook(ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     def resolve_environment(self, info, args):
         """"""
         raise NotImplemented
+
+    def resolve_schema_version(self, args, context, info):
+        """Get number of commits the active_branch is behind its remote counterpart.
+        Returns 0 if up-to-date or if local only."""
+        lb = LabBook()
+        lb.from_name(get_logged_in_username(), self.owner.username, self.name)
+        return lb.data.get('schema')
 
     def resolve_updates_available_count(self, args, context, info):
         """Get number of commits the active_branch is behind its remote counterpart.

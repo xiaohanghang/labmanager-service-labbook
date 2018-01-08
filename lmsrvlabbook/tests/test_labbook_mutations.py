@@ -37,7 +37,7 @@ from werkzeug.datastructures import FileStorage
 
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher.jobs import export_labbook_as_zip
-from lmcommon.fixtures import remote_labbook_repo
+from lmcommon.fixtures import remote_labbook_repo, mock_config_file
 from lmcommon.labbook import LabBook
 
 
@@ -337,7 +337,7 @@ class TestLabBookServiceMutations(object):
                 }}"""
             snapshot.assert_match(client.execute(query))
 
-    def test_add_file(self, mock_create_labbooks, snapshot):
+    def test_add_file(self, mock_config_file, mock_create_labbooks):
         """Test adding a new file to a labbook"""
         class DummyContext(object):
             def __init__(self, file_handle):
@@ -345,10 +345,11 @@ class TestLabBookServiceMutations(object):
 
         client = Client(mock_create_labbooks[2])
 
+        new_file_size = 9000000
         # Create file to upload
-        test_file = os.path.join(tempfile.gettempdir(), "myfile.bin")
+        test_file = os.path.join(tempfile.gettempdir(), ".__init__.py")
         with open(test_file, 'wb') as tf:
-            tf.write(os.urandom(9000000))
+            tf.write(os.urandom(new_file_size))
 
         # Get upload params
         chunk_size = 4194000
@@ -357,7 +358,10 @@ class TestLabBookServiceMutations(object):
         total_chunks = int(math.ceil(file_info.st_size / chunk_size))
 
         target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
-                                   'labbook1', 'code', 'myfile.bin')
+                                   'labbook1', 'code', 'newdir', '.__init__.py')
+        lb = LabBook(mock_config_file[0])
+        lb.from_directory(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1'))
+        lb.makedir('code/newdir', create_activity_record=True)
 
         with open(test_file, 'rb') as tf:
             # Check for file to exist (shouldn't yet)
@@ -375,7 +379,7 @@ class TestLabBookServiceMutations(object):
                               addLabbookFile(input:{{owner:"default",
                                                       labbookName: "labbook1",
                                                       section: "code",
-                                                      filePath: "myfile.bin",
+                                                      filePath: "newdir/.__init__.py",
                                 chunkUploadParams:{{
                                   uploadId: "jfdjfdjdisdjwdoijwlkfjd",
                                   chunkSize: {chunk_size},
@@ -396,11 +400,18 @@ class TestLabBookServiceMutations(object):
                                     }}
                             }}
                             """
-                snapshot.assert_match(client.execute(query, context_value=DummyContext(file)))
+                r = client.execute(query, context_value=DummyContext(file))
+                assert 'errors' not in r
+
+            # So, these will only be populated once the last chunk is uploaded. Will be None otherwise.
+            assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['isDir'] is False
+            assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['key'] == 'newdir/.__init__.py'
+            assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['size'] == new_file_size
 
         # When done uploading, file should exist in the labbook
         assert os.path.exists(target_file) is True
         assert os.path.isfile(target_file) is True
+
 
     def test_add_file_errors(self, mock_create_labbooks, snapshot):
         """Test new file error handling"""
@@ -955,7 +966,7 @@ class TestLabBookServiceMutations(object):
                 chunk.close()
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
-    def test_rename_labbook(self, fixture_working_dir, snapshot):
+    def test_rename_labbook(self, fixture_working_dir):
         """Test renaming a labbook"""
         client = Client(fixture_working_dir[2])
 
@@ -982,66 +993,71 @@ class TestLabBookServiceMutations(object):
                       }}
                     }}
                     """
-        snapshot.assert_match(client.execute(query))
-
-        # Wait up to 15 seconds for the container to build successfully after renaming
-        query = """
-           {
-             labbook(owner: "default", name: "test-new-name") {
-                 environment {
-                   imageStatus
-                 }
-             }
-           }
-           """
-        t_start = datetime.datetime.now()
-        success = False
-        while (datetime.datetime.now() - t_start).seconds < 15:
-            response = client.execute(query)
-            if response['data']['labbook']['environment']['imageStatus'] == 'EXISTS':
-                success = True
-                break
-
-        # Verify everything worked
-        assert success is True
-        assert os.path.exists(original_dir) is False
-        assert os.path.exists(new_dir) is True
-
-        original_dir = new_dir
-        new_dir = os.path.join(labbooks_dir, 'test-renamed-again')
-
-        # rename again (this time the container will have been built)
-        query = f"""
-                    mutation myMutation{{
-                      renameLabbook(input:{{owner:"default",
-                      originalLabbookName: "test-new-name",
-                      newLabbookName: "test-renamed-again"}}) {{
-                        success
-                      }}
-                    }}
-                    """
         r = client.execute(query)
-        assert r['data']['renameLabbook']['success'] is True
+        assert r['data']['renameLabbook'] is None
+        assert 'errors' in r
+        assert 'NotImplemented' in r['errors'][0]['message']
 
-        # Wait up to 15 seconds for the container to build successfully after renaming
-        query = """
-                   {
-                     labbook(owner: "default", name: "test-renamed-again") {
-                         environment {
-                           imageStatus
-                         }
-                     }
-                   }
-                   """
-        t_start = datetime.datetime.now()
-        success = False
-        while (datetime.datetime.now() - t_start).seconds < 15:
-            response = client.execute(query)
-            if response['data']['labbook']['environment']['imageStatus'] == 'EXISTS':
-                success = True
-                break
-
-        # Verify everything worked
-        assert success is True
-        assert os.path.exists(original_dir) is False
-        assert os.path.exists(new_dir) is True
+        # TODO - Re-enable this when rename comes back.
+        #snapshot.assert_match(client.execute(query))
+        # # Wait up to 15 seconds for the container to build successfully after renaming
+        # query = """
+        #    {
+        #      labbook(owner: "default", name: "test-new-name") {
+        #          environment {
+        #            imageStatus
+        #          }
+        #      }
+        #    }
+        #    """
+        # t_start = datetime.datetime.now()
+        # success = False
+        # while (datetime.datetime.now() - t_start).seconds < 15:
+        #     response = client.execute(query)
+        #     if response['data']['labbook']['environment']['imageStatus'] == 'EXISTS':
+        #         success = True
+        #         break
+        #
+        # # Verify everything worked
+        # assert success is True
+        # assert os.path.exists(original_dir) is False
+        # assert os.path.exists(new_dir) is True
+        #
+        # original_dir = new_dir
+        # new_dir = os.path.join(labbooks_dir, 'test-renamed-again')
+        #
+        # # rename again (this time the container will have been built)
+        # query = f"""
+        #             mutation myMutation{{
+        #               renameLabbook(input:{{owner:"default",
+        #               originalLabbookName: "test-new-name",
+        #               newLabbookName: "test-renamed-again"}}) {{
+        #                 success
+        #               }}
+        #             }}
+        #             """
+        # r = client.execute(query)
+        # assert r['data']['renameLabbook']['success'] is True
+        #
+        # # Wait up to 15 seconds for the container to build successfully after renaming
+        # query = """
+        #            {
+        #              labbook(owner: "default", name: "test-renamed-again") {
+        #                  environment {
+        #                    imageStatus
+        #                  }
+        #              }
+        #            }
+        #            """
+        # t_start = datetime.datetime.now()
+        # success = False
+        # while (datetime.datetime.now() - t_start).seconds < 15:
+        #     response = client.execute(query)
+        #     if response['data']['labbook']['environment']['imageStatus'] == 'EXISTS':
+        #         success = True
+        #         break
+        #
+        # # Verify everything worked
+        # assert success is True
+        # assert os.path.exists(original_dir) is False
+        # assert os.path.exists(new_dir) is True

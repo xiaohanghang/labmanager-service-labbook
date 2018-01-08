@@ -25,6 +25,7 @@ from graphene import resolve_only_args
 
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
+from lmcommon.configuration import Configuration
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository
 
@@ -52,7 +53,14 @@ class LabbookQuery(graphene.AbstractType):
     # Node Fields for Relay
     node = graphene.relay.Node.Field()
 
+    build_info = graphene.String()
+
     labbook = graphene.Field(Labbook, owner=graphene.String(), name=graphene.String())
+
+    # This indicates the most-recent labbook schema version.
+    # Nominal usage of this field is to see if any given labbook is behind this version.
+    # Any new labbook will be created with this schema version.
+    current_labbook_schema_version = graphene.String()
 
     # Used to query for specific background jobs.
     # job_id is in the format of `rq:job:uuid`, though it should never need to be parsed.
@@ -84,6 +92,13 @@ class LabbookQuery(graphene.AbstractType):
     # Get the current logged in user identity, primarily used when running offline
     user_identity = graphene.Field(UserIdentity)
 
+    def resolve_build_info(self, args, context, info):
+        """Return this LabManager build info (hash, build timestamp, etc)"""
+        build_info = Configuration().config.get('build_info') or {}
+        return '-'.join([build_info.get('application', 'UnknownDate'),
+                         build_info.get('revision', 'UnknownHash'),
+                         build_info.get('built_on', 'UnknownApplication')])
+
     def resolve_labbook(self, args, context, info):
         """Method to return a graphene Labbok instance based on the name
 
@@ -98,6 +113,11 @@ class LabbookQuery(graphene.AbstractType):
         """
         id_data = {"name": args.get('name'), "owner": args.get('owner')}
         return Labbook.create(id_data)
+
+    def resolve_current_labbook_schema_version(self, args, context, info):
+        """Return the LabBook schema version (defined as static field in LabBook class."""
+
+        return LabBook.LABBOOK_DATA_SCHEMA_VERSION
 
     @resolve_only_args
     def resolve_job_status(self, job_id: str):
