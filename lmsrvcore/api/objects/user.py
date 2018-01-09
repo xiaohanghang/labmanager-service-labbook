@@ -19,62 +19,90 @@
 # SOFTWARE.
 import graphene
 from lmsrvcore.api.interfaces import User
-from lmsrvcore.api import ObjectType
 
 from flask import current_app
 
 
-class UserIdentity(ObjectType, interfaces=(graphene.relay.Node, User)):
+class UserIdentity(graphene.ObjectType, interfaces=(graphene.relay.Node, User)):
     """A type representing the identity of the logged in user"""
 
-    @staticmethod
-    def to_type_id(dummy):
-        """Method to generate a single string that uniquely identifies this object
+    @classmethod
+    def get_node(cls, info, id):
+        raise ValueError("Cannot load UserIdentity Objects from node ID due to authentication restrictions.")
 
-        Args:
-            dummy(str): A dummy far since this Object doesn't actually use type ids because users a loaded based on
-                        authentication
+    def _set_user_fields(self):
+        """Private method to set all the fields of this instance"""
+        try:
+            user = current_app.current_user
+            self.username = user.username
+            self.email = user.email
+            self.given_name = user.given_name
+            self.family_name = user.family_name
+        except AttributeError:
+            # Current user not loaded
+            pass
 
-        Returns:
-            str
-        """
-        raise ValueError("UserIdentity type is set explicitly to the logged-in user. Do not call this method.")
-
-    @staticmethod
-    def parse_type_id(type_id):
+    def resolve_id(self, info):
         """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
 
         Args:
-            type_id (str): type unique identifier
+            info: Graphene info object
 
         Returns:
             dict
         """
-        return type_id
+        if not self.username:
+            self._set_user_fields()
+        return self.username
 
-    @staticmethod
-    def create(dummy):
-        """Method to populate a complete ObjectType instance from a dictionary that uniquely identifies an instances
+    def resolve_username(self, info):
+        """Return the username field
 
         Args:
-            dummy(str): A dummy far since this Object doesn't actually use type ids because users a loaded based on
-                        authentication
+            info: Graphene info object
 
         Returns:
-            UserIdentity
+            dict
         """
-        # Get the user from the current flask context
-        try:
-            user = current_app.current_user
-        except AttributeError:
-            user = None
+        if not self.username:
+            self._set_user_fields()
+        return self.username
 
-        if user:
-            return UserIdentity(id=user.username,
-                                username=user.username,
-                                email=user.email,
-                                given_name=user.given_name,
-                                family_name=user.family_name)
-        else:
-            return None
+    def resolve_email(self, info):
+        """Return the email field
 
+        Args:
+            info: Graphene info object
+
+        Returns:
+            dict
+        """
+        if not self.email:
+            self._set_user_fields()
+        return self.email
+
+    def resolve_given_name(self, info):
+        """Return the given_name field
+
+        Args:
+            info: Graphene info object
+
+        Returns:
+            dict
+        """
+        if not self.given_name:
+            self._set_user_fields()
+        return self.given_name
+
+    def resolve_family_name(self, info):
+        """Return the family_name field
+
+        Args:
+            info: Graphene info object
+
+        Returns:
+            dict
+        """
+        if not self.family_name:
+            self._set_user_fields()
+        return self.family_name

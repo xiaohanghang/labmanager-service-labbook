@@ -20,7 +20,7 @@
 import pytest
 import graphene
 
-from lmsrvcore.tests.fixtures import fixture_working_dir
+from lmsrvcore.tests.fixtures import fixture_working_dir_with_cached_user
 from lmsrvcore.api.mutations import ChunkUploadMutation
 
 

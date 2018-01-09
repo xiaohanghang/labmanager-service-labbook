@@ -17,24 +17,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import base64
-import datetime
-import json
-import os
-
 import graphene
-from graphene.types import datetime
 
-from lmcommon.labbook import LabBook
+from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 
-class LabbookFile(ObjectType):
+class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type representing a file or directory inside the labbook file system."""
+    # An instance of the LabBook dataloader
+    _dataloader = None
+    _file_info = None
 
-    class Meta:
-        interfaces = (graphene.relay.Node,)
+    # Section in the LabBook (code, input, output)
+    section = graphene.String()
+
+    # Relative path from labbook section.
+    key = graphene.String()
 
     # True indicates that path points to a directory
     is_dir = graphene.Boolean()
@@ -42,82 +43,85 @@ class LabbookFile(ObjectType):
     # True indicates that path points to a favorite
     is_favorite = graphene.Boolean()
 
-    # Modified at contains timestamp of last modified - NOT creation in epoch time.
+    # Modified at contains timestamp of last modified - NOT creation - in epoch time.
     modified_at = graphene.Int()
-
-    # Relative path from labbook root directory.
-    key = graphene.String()
 
     # Size in bytes.
     size = graphene.Int()
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
-
-        Args:
-            id_data(dict):
-
-        Returns:
-            str
-        """
-        return f"{id_data['owner']}&{id_data['name']}&{id_data['section']}&{id_data['key']}"
-
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
-
-        Args:
-            type_id (str): type unique identifier
-
-        Returns:
-            dict
-        """
-        tokens = type_id.split('&')
-        assert len(tokens) == 4, "type_id for LabbookFile should have 4 tokens"
-        return {'owner': tokens[0],
-                'name': tokens[1],
-                'section': tokens[2],
-                'key': tokens[3]}
-
-    @staticmethod
-    @logged_query
-    def create(id_data):
-
-        if "type_id" in id_data:
-            # Loading as node so need to populate file data
-            id_data = LabbookFile.parse_type_id(id_data['type_id'])
-
-            # Force to logged in user always
-            id_data["username"] = get_logged_in_username()
-
-            lb = LabBook()
-            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-
-            # Create data to populate edge
-            id_data['file_info'] = lb.get_file_info(id_data["section"], id_data['key'])
-
+    def _load_file_info(self):
+        """Private method to retrieve file info for a given key"""
+        if self._file_info:
+            # File info is already available in this instance
+            file_info = self._file_info
         else:
-            # Loading from a query, so you have the file data already
-            if "username" not in id_data:
-                id_data["username"] = get_logged_in_username()
+            # Load file info from LabBook
+            if not self.section or not self.key:
+                raise ValueError("Must set `section` and `key` on object creation to resolve file info")
 
-        # Set key in id data if missing so to_type_id() works.
-        id_data['key'] = id_data['file_info']['key']
+            # Load labbook instance
+            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
-        return LabbookFile(id=LabbookFile.to_type_id(id_data),
-                           is_dir=id_data['file_info']['is_dir'],
-                           modified_at=round(id_data['file_info']['modified_at']),
-                           key=id_data['file_info']['key'],
-                           size=id_data['file_info']['size'],
-                           is_favorite=id_data['file_info']['is_favorite'])
+            # Retrieve file info
+            file_info = lb.get_file_info(self.section, self.key)
+
+        # Set class properties
+        self.is_dir = file_info['is_dir']
+        self.modified_at = round(file_info['modified_at'])
+        self.size = file_info['size']
+        self.is_favorite = file_info['is_favorite']
+
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name, section, key = id.split("&")
+
+        return LabbookFile(id=f"{owner}&{name}&{section}&{key}", name=name, owner=owner, section=section, key=key,
+                           _dataloader=LabBookLoader())
+
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.id:
+            if not self.owner or not self.name or not self.section or not self.key:
+                raise ValueError("Resolving a LabbookFile Node ID requires owner, name, section, and key to be set")
+            self.id = f"{self.owner}&{self.name}&{self.section}&{self.key}"
+
+        return self.id
+
+    def resolve_is_dir(self, info):
+        """Resolve the is_dir field"""
+        if self.is_dir is None:
+            self._load_file_info()
+        return self.is_dir
+
+    def resolve_modified_at(self, info):
+        """Resolve the modified_at field"""
+        if self.modified_at is None:
+            self._load_file_info()
+        return self.modified_at
+
+    def resolve_size(self, info):
+        """Resolve the size field"""
+        if self.size is None:
+            self._load_file_info()
+        return self.size
+
+    def resolve_is_favorite(self, info):
+        """Resolve the is_favorite field"""
+        if self.is_favorite is None:
+            self._load_file_info()
+        return self.is_favorite
 
 
-class LabbookFavorite(ObjectType):
+class LabbookFavorite(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type representing a file or directory that has been favorited in the labbook file system."""
+    # An instance of the LabBook dataloader
+    _dataloader = None
+    _favorite_data = None
 
-    class Meta:
-        interfaces = (graphene.relay.Node,)
+    # Section in the LabBook (code, input, output)
+    section = graphene.String()
 
     # Index value indicating the order of the favorite
     index = graphene.Int()
@@ -131,66 +135,69 @@ class LabbookFavorite(ObjectType):
     # True indicates that the favorite is a directory
     is_dir = graphene.Boolean()
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
-
-        Args:
-            id_data(dict):
-
-        Returns:
-            str
-        """
-        return f"{id_data['owner']}&{id_data['name']}&{id_data['section']}&{id_data['index']}"
-
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
-
-        Args:
-            type_id (str): type unique identifier
-
-        Returns:
-            dict
-        """
-        tokens = type_id.split('&')
-        assert len(tokens) == 4, "type_id for LabbookFile should have 4 tokens"
-        return {'owner': tokens[0],
-                'name': tokens[1],
-                'section': tokens[2],
-                'index': tokens[3]}
-
-    @staticmethod
-    @logged_query
-    def create(id_data):
-
-        if 'favorite_data' in id_data:
-            item = id_data['favorite_data']
-
-            # Set id data so ID will auto-generate. Need to clean this up in the future so not so complex for developer
-            id_data['index'] = item['index']
+    def _load_favorite_info(self):
+        """Private method to retrieve file info for a given key"""
+        if self._favorite_data:
+            # File info is already available in this instance
+            favorite_data = self._favorite_data
         else:
-            if "type_id" in id_data:
-                id_data = LabbookFavorite.parse_type_id(id_data['type_id'])
+            # Load file info from LabBook
+            if not self.section or not self.index:
+                raise ValueError("Must set `section` and `index` on object creation to resolve favorite info")
 
-            if "username" not in id_data:
-                id_data["username"] = get_logged_in_username()
+            # Load labbook instance
+            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
-            lb = LabBook()
-            lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-            data = lb.get_favorites(id_data['section'])
+            data = lb.get_favorites(self.section)
 
             # Make sure index is valid
-            if int(id_data["index"]) > len(data) - 1:
+            if self.index > len(data) - 1:
                 raise ValueError("Invalid favorite index value")
-            if int(id_data["index"]) < 0:
+            if self.index < 0:
                 raise ValueError("Invalid favorite index value")
 
             # Pull out single entry
-            item = data[int(id_data['index'])]
+            favorite_data = data[self.index]
 
-        return LabbookFavorite(id=LabbookFavorite.to_type_id(id_data),
-                               index=item["index"],
-                               key=item['key'],
-                               description=item['description'],
-                               is_dir=item['is_dir'])
+        # Set class properties
+        self.description = favorite_data['description']
+        self.key = favorite_data['key']
+        self.is_dir = favorite_data['is_dir']
+
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name, section, index = id.split("&")
+
+        return LabbookFavorite(id=f"{owner}&{name}&{section}&{index}", name=name, owner=owner, section=section,
+                               index=int(index),
+                               _dataloader=LabBookLoader())
+
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.id:
+            if not self.owner or not self.name or not self.section or self.index is None:
+                raise ValueError("Resolving a LabbookFavorite Node ID requires owner,name,section, and index to be set")
+
+            self.id = f"{self.owner}&{self.name}&{self.section}&{self.index}"
+
+        return self.id
+
+    def resolve_is_dir(self, info):
+        """Resolve the is_dir field"""
+        if self.is_dir is None:
+            self._load_favorite_info()
+        return self.is_dir
+
+    def resolve_key(self, info):
+        """Resolve the is_dir field"""
+        if self.key is None:
+            self._load_favorite_info()
+        return self.key
+
+    def resolve_description(self, info):
+        """Resolve the is_dir field"""
+        if self.description is None:
+            self._load_favorite_info()
+        return self.description

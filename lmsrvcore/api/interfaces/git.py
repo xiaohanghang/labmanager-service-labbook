@@ -19,9 +19,6 @@
 # SOFTWARE.
 import graphene
 
-from lmsrvcore.api.objects import Owner
-
-
 class GitCommit(graphene.Interface):
     """An interface for any object that is represented by a git commit"""
     # The git commit hash
@@ -45,18 +42,11 @@ class GitRef(graphene.Interface):
 
 class GitRepository(graphene.Interface):
     """An interface for Objects backended with git repositories (LabBook and Datasets)"""
-    # The name of the underlying git repository.
-    # Must be unique to what exists locally and unique in a user's library when pushing
+    # The owner of the underlying git repository. Also can be referred to as the "namespace"
     # Only A-Za-z0-9- allowed with no leading or trailing '-'
-    namespace = graphene.String()
+    owner = graphene.String()
 
     # The name of the underlying git repository.
     # Must be unique to what exists locally and unique in a user's library when pushing
     # Only A-Za-z0-9- allowed with no leading or trailing '-'
     name = graphene.String()
-
-    # A short description of the LabBook limited to 140 UTF-8 characters
-    description = graphene.String()
-
-    # Owner of the repository
-    owner = graphene.Field(Owner)

@@ -26,10 +26,10 @@ from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
 
 from lmcommon.environment import ComponentRepository
 
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
 
 
-class CustomDependency(ObjectType):
+class CustomDependency(graphene.ObjectType):
     """A type that represents a Custom Dependency Environment Component"""
     class Meta:
         interfaces = (graphene.relay.Node, )

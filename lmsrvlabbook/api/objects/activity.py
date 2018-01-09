@@ -25,7 +25,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityType
 
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
 
 logger = LMLogger.get_logger()
 
@@ -36,7 +36,7 @@ ActivityRecordTypeEnum = graphene.Enum.from_enum(ActivityType)
 ActivityDetailTypeEnum = graphene.Enum.from_enum(ActivityDetailType)
 
 
-class ActivityDetailObject(ObjectType):
+class ActivityDetailObject(graphene.ObjectType):
     """Container for Activity Detail Records"""
 
     class Meta:
@@ -187,7 +187,7 @@ class ActivityDetailObject(ObjectType):
             raise
 
 
-class ActivityRecordObject(ObjectType):
+class ActivityRecordObject(graphene.ObjectType):
     """Container for Activity Records"""
 
     class Meta:

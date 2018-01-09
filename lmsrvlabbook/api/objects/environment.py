@@ -35,7 +35,7 @@ from lmcommon.configuration import get_docker_client
 from lmcommon.logging import LMLogger
 
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
@@ -81,7 +81,7 @@ class ContainerStatus(graphene.Enum):
     RUNNING = 2
 
 
-class Environment(ObjectType):
+class Environment(graphene.ObjectType):
     """A type that represents the Environment for a LabBook"""
     class Meta:
         interfaces = (graphene.relay.Node, )

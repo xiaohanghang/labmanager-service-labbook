@@ -21,7 +21,7 @@
 import graphene
 
 from lmcommon.environment import ComponentRepository
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
 
 
 class EnvironmentComponentClass(graphene.Enum):
@@ -38,7 +38,7 @@ class EnvironmentComponentClass(graphene.Enum):
     custom = 3
 
 
-class EnvironmentComponent(ObjectType):
+class EnvironmentComponent(graphene.ObjectType):
     """A type that represents the identifiable information for an environment component"""
     class Meta:
         interfaces = (graphene.relay.Node, )

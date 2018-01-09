@@ -24,7 +24,8 @@ from lmcommon.logging import LMLogger
 from lmcommon.labbook import LabBook
 
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
+from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
@@ -34,9 +35,12 @@ from lmsrvlabbook.dataloader.labbook import LabBookLoader
 logger = LMLogger.get_logger()
 
 
-class LabbookSection(ObjectType,  interfaces=(graphene.relay.Node,)):
+class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type representing a section within a LabBook (i.e., code, input, output)
     """
+    # A copy of the LabBook dataloader
+    _dataloader = None
+
     # Section name (code, input, output)
     section = graphene.String()
 
@@ -49,59 +53,33 @@ class LabbookSection(ObjectType,  interfaces=(graphene.relay.Node,)):
     # List of favorites for a given subdir (code, input, output)
     favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection)
 
-    @staticmethod
-    def to_type_id(owner_name: str, labbook_name: str, section: str):
-        """Method to generate a single string that uniquely identifies this object
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name, section = id.split("&")
 
-        Args:
-            owner_name(str): username or org name that owns the labbook
-            labbook_name(str): name of the labbook
-            section(str): name of the section
+        return LabbookSection(owner=owner, name=name, section=section, _dataloader=LabBookLoader())
 
-        Returns:
-            str
-        """
-        return "{}&{}&{}".format(owner_name, labbook_name, section)
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.id:
+            if not self.owner or not self.name or not self.section:
+                raise ValueError("Resolving a LabbookFavorite Node ID requires owner, name, and section to be set")
 
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
+            self.id = f"{self.owner}&{self.name}&{self.section}"
 
-        Args:
-            type_id (str): type unique identifier
+        return self.id
 
-        Returns:
-            dict
-        """
-        split = type_id.split("&")
-        return {"owner_name": split[0], "labbook_name": split[1], "section": split[2]}
-
-    @staticmethod
-    @logged_query
-    def create(owner_name: str, labbook_name: str, section: str, labbook_loader: LabBookLoader):
-        """Method to create a graphene LabBookSection object
-
-        Args:
-            owner_name(str): username or org name that owns the labbook
-            labbook_name(str): name of the labbook
-            section(str): name of the section
-            labbook_loader(LabBookLoader): a LabBookLoader dataloader instance
-
-        Returns:
-            Labbook
-        """
-        return LabbookSection(id=LabbookSection.to_type_id(owner_name, labbook_name, section),
-                              _loader=labbook_loader)
-
-    def resolve_files(self, info):
+    def resolve_files(self, info, **kwargs):
         """Resolver for getting file listing in a single directory"""
-        lb = self._loader.load(f"{get_logged_in_username()}&{self.owner.username}&{self.name}").get()
+        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
-        #TODO: REFACTOR what is this?
         base_dir = None
-        if info.context.get("root"):
-            base_dir = info.context.get("root") + os.path.sep
-            base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
+        if 'root' in kwargs:
+            if kwargs['root']:
+                base_dir = kwargs['root'] + os.path.sep
+                base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
         edges = lb.listdir(self.section, base_path=base_dir, show_hidden=False)
@@ -110,82 +88,67 @@ class LabbookSection(ObjectType,  interfaces=(graphene.relay.Node,)):
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, info.context)
+        lbc = ListBasedConnection(edges, cursors, kwargs)
         lbc.apply()
 
         edge_objs = []
-        try:
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_username(),
-                           "owner": self._id_data['owner'],
-                           "section": self._id_data['section'],
-                           "name": self._id_data['name'],
-                           "file_info": edge}
-                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(**id_data), cursor=cursor))
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            create_data = {"owner": self.owner,
+                           "section": self.section,
+                           "name": self.name,
+                           "key": edge['key'],
+                           "_dataloader": self._dataloader,
+                           "_file_info": edge}
+            edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile(**create_data), cursor=cursor))
 
-            return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
-        except Exception as e:
-            logger.exception(e)
-            raise
+        return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_all_files(self, info, args):
+    def resolve_all_files(self, info, **kwargs):
         """Resolver for getting all files in a LabBook section"""
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(get_logged_in_username(), self._id_data['owner'], self._id_data['name'])
-        else:
-            lb = self._id_data["labbook_instance"]
+        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.walkdir(section=self._id_data['section'], show_hidden=False)
+        edges = lb.walkdir(section=self.section, show_hidden=False)
         # Generate naive cursors
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
+        lbc = ListBasedConnection(edges, cursors, kwargs)
         lbc.apply()
 
         edge_objs = []
-        try:
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_username(),
-                           "owner": self._id_data['owner'],
-                           "section": self._id_data['section'],
-                           "name": self._id_data['name'],
-                           "file_info": edge}
-                edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile.create(id_data), cursor=cursor))
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            create_data = {"owner": self.owner,
+                           "section": self.section,
+                           "name": self.name,
+                           "key": edge['key'],
+                           "_dataloader": self._dataloader,
+                           "_file_info": edge}
+            edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile(**create_data), cursor=cursor))
 
-            return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
-        except Exception as e:
-            logger.exception(e)
-            raise
+        return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_favorites(self, args, context, info):
-        if "labbook_instance" not in self._id_data:
-            lb = LabBook()
-            lb.from_name(get_logged_in_username(), self._id_data['owner'], self._id_data['name'])
-        else:
-            lb = self._id_data["labbook_instance"]
+    def resolve_favorites(self, info, **kwargs):
+        """Resolve all favorites for the given section"""
+        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.get_favorites(self._id_data['section'])
+        edges = lb.get_favorites(self.section)
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
+        lbc = ListBasedConnection(edges, cursors, kwargs)
         lbc.apply()
 
         edge_objs = []
-        try:
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {"user": get_logged_in_username(),
-                           "owner": self._id_data['owner'],
-                           "name": self._id_data['name'],
-                           "section": self._id_data['section'],
-                           "favorite_data": edge}
-                edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data), cursor=cursor))
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            create_data = {"id": f"{self.owner}&{self.name}&{self.section}&{edge['index']}",
+                           "owner": self.owner,
+                           "section": self.section,
+                           "name": self.name,
+                           "index": int(edge['index']),
+                           "_dataloader": self._dataloader,
+                           "_favorite_data": edge}
+            edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite(**create_data), cursor=cursor))
 
-            return LabbookFavoriteConnection(edges=edge_objs, page_info=lbc.page_info)
-        except Exception as e:
-            logger.exception(e)
-            raise
+        return LabbookFavoriteConnection(edges=edge_objs, page_info=lbc.page_info)

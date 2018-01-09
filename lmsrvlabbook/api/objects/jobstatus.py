@@ -23,12 +23,12 @@ import graphene
 from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher, JobKey
 
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
 
 logger = LMLogger.get_logger()
 
 
-class JobStatus(ObjectType):
+class JobStatus(graphene.ObjectType):
     """A query to get the status of a background task launched with the Dispatcher"""
 
     class Meta:

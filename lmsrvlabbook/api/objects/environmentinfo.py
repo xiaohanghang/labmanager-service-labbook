@@ -21,10 +21,10 @@
 import graphene
 
 from lmcommon.environment import ComponentRepository
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
 
 
-class EnvironmentInfo(ObjectType):
+class EnvironmentInfo(graphene.ObjectType):
     """A type that represents the Info section of an environment component"""
     class Meta:
         interfaces = (graphene.relay.Node, )

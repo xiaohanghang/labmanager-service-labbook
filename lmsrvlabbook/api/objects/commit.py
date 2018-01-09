@@ -26,11 +26,11 @@ from lmcommon.configuration import Configuration
 
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
 from lmsrvcore.api.interfaces import GitCommit
 
 
-class LabbookCommit(ObjectType):
+class LabbookCommit(graphene.ObjectType):
     """An object representing a commit to a LabBook"""
     class Meta:
         interfaces = (GitCommit, graphene.relay.Node)

@@ -19,12 +19,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvcore.api import ObjectType, logged_query
+from lmsrvcore.api import logged_query
 
 # Note (BVB): id_data['component_class'] can probably be removed altogether. Kept for now to get unit tests working.
 
 
-class PackageManager(ObjectType):
+class PackageManager(graphene.ObjectType):
     """A type that represents a Package Manager based Environment Component"""
     class Meta:
         interfaces = (graphene.relay.Node, )

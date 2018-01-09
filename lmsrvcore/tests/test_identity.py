@@ -22,7 +22,7 @@ from flask import current_app
 from mock import patch
 
 from lmsrvcore.auth.identity import get_identity_manager_instance, AuthorizationMiddleware, AuthenticationError
-from lmsrvcore.tests.fixtures import fixture_working_dir
+from lmsrvcore.tests.fixtures import fixture_working_dir_with_cached_user
 from lmcommon.configuration import Configuration
 
 from lmcommon.auth.local import LocalIdentityManager
@@ -40,8 +40,14 @@ class MockFlaskContext(object):
         self.headers = {"Authorization": "Bearer adkajshfgklujasdhfiuashfiusahf"}
 
 
+class MockGrapheneInfo(object):
+    """Mock class to test middleware"""
+    def __init__(self):
+        self.context = MockFlaskContext()
+
+
 class TestAuthIdentity(object):
-    def test_get_identity_manager_instance(self, fixture_working_dir):
+    def test_get_identity_manager_instance(self, fixture_working_dir_with_cached_user):
         """Test getting identity manager in a flask app"""
 
         # Test normal
@@ -58,38 +64,37 @@ class TestAuthIdentity(object):
         with pytest.raises(AuthenticationError):
             get_identity_manager_instance()
 
-    def test_authorization_middleware_user_local(self, fixture_working_dir):
+    def test_authorization_middleware_user_local(self, fixture_working_dir_with_cached_user):
         """Test authorization middlewhere when loading a user exists locally"""
 
-        def next(root, args, context, info, **kwargs):
+        def next_fnc(root, info, **args):
             """Dummy method to test next chain in middleware"""
             assert root == "something"
-            assert args == ["a", "b"]
-            assert info == "some info"
-            assert kwargs["test_kwarg"] is True
+            assert type(info) == MockGrapheneInfo
+            assert args['foo'] == "a"
+            assert args['bar'] == "b"
 
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
+        # Create a mocked info obj and remove the auth header since you are testing the logged in user pull from cache
+        fake_info = MockGrapheneInfo()
+        del fake_info.context.headers["Authorization"]
 
-            fake_context = MockFlaskContext()
-            del fake_context.headers["Authorization"]
+        mw = AuthorizationMiddleware()
 
-            mw = AuthorizationMiddleware()
+        mw.resolve(next_fnc, "something", fake_info, foo="a", bar="b")
 
-            mw.resolve(next, "something", ["a", "b"], fake_context, "some info", test_kwarg=True)
-
-    def test_authorization_middleware_bad_header(self, fixture_working_dir):
+    def test_authorization_middleware_bad_header(self, fixture_working_dir_with_cached_user):
         """Test authorization middlewhere when a token header is malformed"""
 
-        def next(root, args, context, info, **kwargs):
+        def next_fnc(root, info, **args):
             """Dummy method to test next chain in middleware"""
             assert "Should not get here"
 
-        fake_context = MockFlaskContext()
-        fake_context.headers["Authorization"] = "Token asdfasdfhasdf"
+        fake_info = MockGrapheneInfo()
+        fake_info.context.headers["Authorization"] = "Token asdfasdfhasdf"
 
         mw = AuthorizationMiddleware()
         with pytest.raises(AuthenticationError):
-            mw.resolve(next, "something", ["a", "b"], fake_context, "some info", test_kwarg=True)
+            mw.resolve(next_fnc, "something", fake_info, foo="a", bar="b")
 
     # TODO: Add test when easier to mock a token
     # def test_authorization_middleware_token(self):

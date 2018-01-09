@@ -71,6 +71,7 @@ class ChunkUploadMutation(object):
                 return MyMutation()
 
     """
+    # TODO: REFACTOR check if this comment is still true
     # NOTE: CURRENTLY INPUT DOES NOT GET INHERITED PROPERLY IN GRAPHENE, SO YOU MUST ADD THE PARAM TO YOUR CHILD CLASS
     class Arguments:
         chunk_upload_params = ChunkUploadInput(required=True)
