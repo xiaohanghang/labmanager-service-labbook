@@ -32,10 +32,10 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
     _file_info = None
 
     # Section in the LabBook (code, input, output)
-    section = graphene.String()
+    section = graphene.String(required=True)
 
     # Relative path from labbook section.
-    key = graphene.String()
+    key = graphene.String(required=True)
 
     # True indicates that path points to a directory
     is_dir = graphene.Boolean()
@@ -51,10 +51,7 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
     def _load_file_info(self):
         """Private method to retrieve file info for a given key"""
-        if self._file_info:
-            # File info is already available in this instance
-            file_info = self._file_info
-        else:
+        if not self._file_info:
             # Load file info from LabBook
             if not self.section or not self.key:
                 raise ValueError("Must set `section` and `key` on object creation to resolve file info")
@@ -63,13 +60,13 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
             # Retrieve file info
-            file_info = lb.get_file_info(self.section, self.key)
+            self._file_info = lb.get_file_info(self.section, self.key)
 
         # Set class properties
-        self.is_dir = file_info['is_dir']
-        self.modified_at = round(file_info['modified_at'])
-        self.size = file_info['size']
-        self.is_favorite = file_info['is_favorite']
+        self.is_dir = self._file_info['is_dir']
+        self.modified_at = round(self._file_info['modified_at'])
+        self.size = self._file_info['size']
+        self.is_favorite = self._file_info['is_favorite']
 
     @classmethod
     def get_node(cls, info, id):
@@ -121,10 +118,10 @@ class LabbookFavorite(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
     _favorite_data = None
 
     # Section in the LabBook (code, input, output)
-    section = graphene.String()
+    section = graphene.String(required=True)
 
     # Index value indicating the order of the favorite
-    index = graphene.Int()
+    index = graphene.Int(required=True)
 
     # Relative path from labbook root directory.
     key = graphene.String()

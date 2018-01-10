@@ -30,10 +30,10 @@ import requests
 
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment.componentmanager import ComponentManager
-from lmcommon.labbook import LabBook
 from lmcommon.configuration import get_docker_client
 from lmcommon.logging import LMLogger
 
+from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api import logged_query
 from lmsrvcore.api.connections import ListBasedConnection
@@ -41,10 +41,10 @@ from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
 from lmsrvlabbook.api.objects.environmentinfo import EnvironmentInfo
 from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
-from lmsrvlabbook.api.connections.devenv import DevEnvConnection, DevEnv
 from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection, CustomDependency
 from lmsrvlabbook.api.connections.packagemanager import PackageManagerConnection, PackageManager
 from lmsrvlabbook.api.objects.baseimage import BaseImage
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 logger = LMLogger.get_logger()
 
@@ -81,10 +81,10 @@ class ContainerStatus(graphene.Enum):
     RUNNING = 2
 
 
-class Environment(graphene.ObjectType):
+class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type that represents the Environment for a LabBook"""
-    class Meta:
-        interfaces = (graphene.relay.Node, )
+    # An instance of the LabBook dataloader
+    _dataloader = None
 
     # The name of the current branch
     image_status = graphene.Field(ImageStatus)
@@ -95,70 +95,31 @@ class Environment(graphene.ObjectType):
     # The LabBook's Base Image
     base_image = graphene.Field(BaseImage)
 
-    # The LabBook's Dev Envs
-    dev_envs = graphene.ConnectionField(DevEnvConnection)
-
     # The LabBook's Package manager installed dependencies
     package_manager_dependencies = graphene.ConnectionField(PackageManagerConnection)
 
     # The LabBook's Custom dependencies
     custom_dependencies = graphene.ConnectionField(CustomDependencyConnection)
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name = id.split("&")
 
-        Args:
-            id_data(dict):
+        return Environment(id=f"{owner}&{name}", name=name, owner=owner, _dataloader=LabBookLoader())
 
-        Returns:
-            str
-        """
-        return "{}&{}&{}".format(id_data["username"], id_data["owner"], id_data["name"])
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.owner or not self.name:
+            raise ValueError("Resolving a Environment Node ID requires owner and name to be set")
 
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
+        return f"{self.owner}&{self.name}"
 
-        Args:
-            type_id (str): type unique identifier
-
-        Returns:
-            dict
-        """
-        split = type_id.split("&")
-        return {"username": split[0], "owner": split[1], "name": split[2]}
-
-    @staticmethod
     @logged_query
-    def create(id_data):
-        """Method to create a graphene Environment object based on the type node ID or owner+name+hash
-
-        id_data should at a minimum contain either `type_id` or `owner` & `name` & `hash`
-
-            {
-                "type_id": <unique id for this object Type),
-                "username": <optional username for logged in user>,
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>,
-            }
-
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance
-
-        Returns:
-            Environment
-        """
-        if "username" not in id_data:
-            # TODO: Lookup name based on logged in user when available
-            id_data["username"] = get_logged_in_username()
-
-        if "type_id" in id_data:
-            # Parse ID components
-            id_data.update(Environment.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
-
-        labbook_key = "{}-{}-{}".format(id_data["username"], id_data["owner"], id_data["name"])
+    def resolve_image_status(self, info):
+        """Resolve the image_status field"""
+        labbook_key = "{}-{}-{}".format(get_logged_in_username(), self.owner, self.name)
 
         dispatcher = Dispatcher()
         lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
@@ -191,7 +152,14 @@ class Environment(graphene.ObjectType):
                 logger.warning(f'Got started/queued build_image for labbook {labbook_key}, but image exists.')
             image_status = ImageStatus.BUILD_IN_PROGRESS
 
+        return image_status.value
+
+    @logged_query
+    def resolve_container_status(self, info):
+        """Resolve the image_status field"""
         # Check if the container is running by looking up the container
+        labbook_key = "{}-{}-{}".format(get_logged_in_username(), self.owner, self.name)
+
         try:
             client = get_docker_client()
             container = client.containers.get(labbook_key)
@@ -202,29 +170,19 @@ class Environment(graphene.ObjectType):
         except (NotFound, requests.exceptions.ConnectionError):
             container_status = ContainerStatus.NOT_RUNNING
 
-        return Environment(id=Environment.to_type_id(id_data),
-                           image_status=image_status.value,
-                           container_status=container_status.value)
+        return container_status.value
 
-    def resolve_base_image(self, args, context, info):
+    def resolve_base_image(self, info):
         """Method to get the LabBook's base image
 
         Args:
-            args:
-            context:
             info:
 
         Returns:
 
         """
-        # TODO: Implement better method to share data between resolvers
-        # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_username()}
-        id_data.update(Environment.parse_type_id(self.id))
-
         # Get base image data
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
         component_data = cm.get_component_list("base_image")
@@ -255,74 +213,16 @@ class Environment(graphene.ObjectType):
         else:
             return None
 
-    def resolve_dev_envs(self, args, context, info):
-        """Method to get the LabBook's dev envs
+    def resolve_package_manager_dependencies(self, info, **kwargs):
+        """Method to get the LabBook's package manager dependencies
 
         Args:
-            args:
-            context:
             info:
 
         Returns:
 
         """
-        # TODO: Implement better method to share data between resolvers
-        # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_username()}
-        id_data.update(Environment.parse_type_id(self.id))
-
-        # Get base image data
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-        cm = ComponentManager(lb)
-
-        edges = cm.get_component_list("dev_env")
-
-        if edges:
-            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in
-                       enumerate(edges)]
-
-            # Process slicing and cursor args
-            lbc = ListBasedConnection(edges, cursors, args)
-            lbc.apply()
-
-            # Get DevEnv instances
-            edge_objs = []
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {'component_data': edge,
-                           'component_class': 'dev_env',
-                           'repo': edge['###repository###'],
-                           'namespace': edge['###namespace###'],
-                           'component': edge['info']['name'],
-                           'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                           }
-                edge_objs.append(DevEnvConnection.Edge(node=DevEnv.create(id_data), cursor=cursor))
-
-            return DevEnvConnection(edges=edge_objs, page_info=lbc.page_info)
-
-        else:
-            return DevEnvConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
-                                                                                has_previous_page=False))
-
-    def resolve_package_manager_dependencies(self, args, context, info):
-        """Method to get the LabBook's package manager deps
-
-        Args:
-            args:
-            context:
-            info:
-
-        Returns:
-
-        """
-        # TODO: Implement better method to share data between resolvers
-        # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_username()}
-        id_data.update(Environment.parse_type_id(self.id))
-
-        # Get base image data
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
         edges = cm.get_component_list("package_manager")
@@ -332,7 +232,7 @@ class Environment(graphene.ObjectType):
                        enumerate(edges)]
 
             # Process slicing and cursor args
-            lbc = ListBasedConnection(edges, cursors, args)
+            lbc = ListBasedConnection(edges, cursors, kwargs)
             lbc.apply()
 
             # Get DevEnv instances
@@ -352,25 +252,16 @@ class Environment(graphene.ObjectType):
             return PackageManagerConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
                                                                                         has_previous_page=False))
 
-    def resolve_custom_dependencies(self, args, context, info):
+    def resolve_custom_dependencies(self, info, **kwargs):
         """Method to get the LabBook's custom deps
 
         Args:
-            args:
-            context:
             info:
 
         Returns:
 
         """
-        # TODO: Implement better method to share data between resolvers
-        # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_username()}
-        id_data.update(Environment.parse_type_id(self.id))
-
-        # Get base image data
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
         edges = cm.get_component_list("custom")
@@ -380,7 +271,7 @@ class Environment(graphene.ObjectType):
                        enumerate(edges)]
 
             # Process slicing and cursor args
-            lbc = ListBasedConnection(edges, cursors, args)
+            lbc = ListBasedConnection(edges, cursors, kwargs)
             lbc.apply()
 
             # Get DevEnv instances

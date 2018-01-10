@@ -33,18 +33,8 @@ from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.auth.identity import get_identity_manager
 from lmcommon.labbook import LabBook
 
-from lmsrvlabbook.api.query import LabbookQuery
+from lmsrvlabbook.api.query import LabbookQuery, LABBOOK_LOADER
 from lmsrvlabbook.api.mutation import LabbookMutations
-
-
-# Create ObjectType clases, since the EnvironmentQueries and EnvironmentMutations
-# are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
 
 
 def _create_temp_work_dir():
@@ -71,6 +61,9 @@ def _create_temp_work_dir():
 def fixture_working_dir():
     """A pytest fixture that creates a temporary working directory, config file, schema, and local user identity
     """
+    # Nuke LABBOOK_LOADER cache
+    LABBOOK_LOADER.clear_all()
+
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
 
@@ -84,7 +77,7 @@ def fixture_working_dir():
                    "family_name": "Doe"}, user_file)
 
     # Create test client
-    schema = graphene.Schema(query=Query, mutation=Mutation)
+    schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
 
     with patch.object(Configuration, 'find_default_config', lambda self: config_file):
         # Load User identity into app context
@@ -108,6 +101,9 @@ def fixture_working_dir_env_repo_scoped():
     and populates the environment component repository.
     Class scope modifier attached
     """
+    # Nuke LABBOOK_LOADER cache
+    LABBOOK_LOADER.clear_all()
+
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
 
@@ -121,7 +117,7 @@ def fixture_working_dir_env_repo_scoped():
                    "family_name": "Doe"}, user_file)
 
     # Create test client
-    schema = graphene.Schema(query=Query, mutation=Mutation)
+    schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
 
     # get environment data and index
     erm = RepositoryManager(config_file)
@@ -150,6 +146,9 @@ def fixture_working_dir_populated_scoped():
     and populates the environment component repository.
     Class scope modifier attached
     """
+    # Nuke LABBOOK_LOADER cache
+    LABBOOK_LOADER.clear_all()
+
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
 
@@ -163,7 +162,7 @@ def fixture_working_dir_populated_scoped():
                    "family_name": "Doe"}, user_file)
 
     # Create test client
-    schema = graphene.Schema(query=Query, mutation=Mutation)
+    schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
 
     # Create a bunch of lab books
     lb = LabBook(config_file)

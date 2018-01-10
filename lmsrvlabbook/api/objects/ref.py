@@ -19,114 +19,46 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-import os
 
-from lmcommon.gitlib import get_git_interface
-from lmcommon.configuration import Configuration
+from lmsrvcore.api.interfaces import GitRepository
+from lmsrvcore.api.interfaces import GitRef
 
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api import logged_query
-from lmsrvcore.api.interfaces import GitRef
 from lmsrvlabbook.api.objects.commit import LabbookCommit
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 
-class LabbookRef(graphene.ObjectType):
+class LabbookRef(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository, GitRef)):
     """An object representing a git reference in a LabBook repository"""
-    class Meta:
-        interfaces = (graphene.relay.Node, GitRef)
+    # An instance of the LabBook dataloader
+    _dataloader = None
 
     # The target commit the reference points to
     commit = graphene.Field(LabbookCommit)
 
-    @staticmethod
-    def get_node(node_id, context, info):
-        input_data = {"type_id": node_id}
-        return LabbookRef.create(input_data)
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name, prefix, ref_name = id.split("&")
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
+        return LabbookRef(id=f"{owner}&{name}&{prefix}&{branch}", name=name, owner=owner,
+                          prefix=prefix, ref_name=ref_name,
+                          _dataloader=LabBookLoader())
 
-        Args:
-            id_data(dict):
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.id:
+            if not self.owner or not self.name or not self.ref_name:
+                raise ValueError("Resolving a LabbookRef Node ID requires owner, name, and branch to be set")
+            self.id = f"{self.owner}&{self.name}&{self.prefix}&{self.ref_name}"
 
-        Returns:
-            str
-        """
-        return "{}&{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["prefix"], id_data["branch"])
-
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
-
-        Args:
-            type_id (str): type unique identifier
-
-        Returns:
-            dict
-        """
-        split = type_id.split("&")
-        id_data = {"owner": split[0], "name": split[1], "branch": split[3]}
-        if split[2] == "None":
-            id_data["prefix"] = None
-        else:
-            id_data["prefix"] = split[2]
-
-        return id_data
-
-    @staticmethod
     @logged_query
-    def create(id_data):
-        """Method to create a graphene LabbookRef object based on the type node ID or owner&name&prefix&branch
-
-        id_data should at a minimum contain either `type_id` or `owner` & `name` & `hash`
-
-            {
-                "type_id": <unique id for this object Type),
-                "username": <optional username for logged in user>,
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-                "prefix": <branch prefix (e.g. 'origin', will be omitted null for local branches>
-                "branch": <branch name>
-                "git": <optional gitlib instance already instantiated>
-            }
-
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance
-
-        Returns:
-            LabbookCommit
-        """
-        if "username" not in id_data:
-            # TODO: Lookup name based on logged in user when available
-            id_data["username"] = get_logged_in_username()
-
-        if "type_id" in id_data:
-            # Parse ID components
-            id_data.update(LabbookRef.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
-
-        if "git" not in id_data:
-            git = get_git_interface(Configuration().config["git"])
-            git.set_working_directory(os.path.join(git.working_directory,
-                                                   id_data["username"],
-                                                   id_data["owner"],
-                                                   "labbooks",
-                                                   id_data["name"]))
-        else:
-            git = id_data["git"]
-
-        # Look up commit hash for a given ref
-        git_path = id_data["branch"]
-        if "prefix" in id_data:
-            if id_data["prefix"]:
-                git_path = "{}/{}".format(id_data["prefix"], id_data["branch"])
-        else:
-            id_data["prefix"] = None
-
-        git_ref = git.repo.refs[git_path]
-        id_data["hash"] = git_ref.commit.hexsha
-
-        return LabbookRef(id=LabbookRef.to_type_id(id_data),
-                          commit=LabbookCommit.create(id_data),
-                          name=id_data["branch"], prefix=id_data["prefix"])
+    def resolve_commit(self, info):
+        """Resolve the commit field"""
+        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        git_ref = lb.git.repo.refs[self.ref_name]
+        return LabbookCommit(id=f"{self.owner}&{self.name}&None&{self.branch}",
+                             owner=self.owner, name=self.name, hash=git_ref.commit.hexsha,
+                             _dataloader=self._dataloader)

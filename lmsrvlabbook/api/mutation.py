@@ -26,7 +26,7 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     DeleteLabbookCollaborator, SyncLabbook, PublishLabbook
 
 
-class LabbookMutations(graphene.AbstractType):
+class LabbookMutations(graphene.ObjectType):
     """Entry point for all graphql mutations"""
 
     # Import a labbook from an uploaded file (Archive as zip).

@@ -21,7 +21,6 @@ import base64
 from typing import List
 
 import graphene
-from graphene import resolve_only_args
 
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
@@ -34,12 +33,10 @@ from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbook import Labbook
 from lmsrvlabbook.api.objects.baseimage import BaseImage
-from lmsrvlabbook.api.objects.devenv import DevEnv
 from lmsrvlabbook.api.objects.customdependency import CustomDependency
 from lmsrvlabbook.api.objects.jobstatus import JobStatus
 from lmsrvlabbook.api.connections.labbook import LabbookConnection
 from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
-from lmsrvlabbook.api.connections.devenv import DevEnvConnection
 from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection
 from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
 
@@ -47,14 +44,15 @@ from lmsrvcore.api.objects.user import UserIdentity
 
 from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
+LABBOOK_LOADER = LabBookLoader()
+
 logger = LMLogger.get_logger()
 
-# Create instance of the LabBook dataloader for use across all objects
-labbook_loader = LabBookLoader()
 
-
-class LabbookQuery(graphene.AbstractType):
+class LabbookQuery(graphene.ObjectType):
     """Entry point for all LabBook queryable fields"""
+    # Create instance of the LabBook dataloader for use across all objects within this query instance
+
     # Node Fields for Relay
     node = graphene.relay.Node.Field()
 
@@ -82,11 +80,7 @@ class LabbookQuery(graphene.AbstractType):
     available_base_image_versions = graphene.relay.ConnectionField(BaseImageConnection, repository=graphene.String(),
                                                                    namespace=graphene.String(),
                                                                    component=graphene.String())
-    # Development Environment Repository Interface
-    available_dev_envs = graphene.relay.ConnectionField(DevEnvConnection)
-    available_dev_env_versions = graphene.relay.ConnectionField(DevEnvConnection, repository=graphene.String(),
-                                                                namespace=graphene.String(),
-                                                                component=graphene.String())
+
     # Custom Dependency Repository Interface
     available_custom_dependencies = graphene.relay.ConnectionField(CustomDependencyConnection)
     available_custom_dependencies_versions = graphene.relay.ConnectionField(CustomDependencyConnection,
@@ -119,10 +113,10 @@ class LabbookQuery(graphene.AbstractType):
         """
         # Load the labbook data via a dataloader
         loader_key = f"{get_logged_in_username()}&{owner}&{name}"
-        labbook_loader.load(loader_key)
+        LABBOOK_LOADER.load(loader_key)
 
         return Labbook(id="{}&{}".format(owner, name),
-                       name=name, owner=owner, _dataloader=labbook_loader)
+                       name=name, owner=owner, _dataloader=LABBOOK_LOADER)
 
     def resolve_current_labbook_schema_version(self, info):
         """Return the LabBook schema version (defined as static field in LabBook class."""
@@ -195,7 +189,7 @@ class LabbookQuery(graphene.AbstractType):
             create_data = {"id": "{}&{}".format(edge["owner"], edge["name"]),
                            "name": edge["name"],
                            "owner": edge["owner"],
-                           "_dataloader": labbook_loader}
+                           "_dataloader": LABBOOK_LOADER}
 
             edge_objs.append(LabbookConnection.Edge(node=Labbook(**create_data),
                                                     cursor=cursor))

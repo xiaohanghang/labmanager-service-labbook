@@ -40,6 +40,7 @@ from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteCo
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection
 from lmsrvlabbook.api.objects.labbook import Labbook
 from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 logger = LMLogger.get_logger()
 
@@ -56,7 +57,7 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, name, description, client_mutation_id=None):
         username = get_logged_in_username()
 
         # Create a new empty LabBook
@@ -64,19 +65,19 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         # TODO: Set owner/namespace properly once supported fully
         lb.new(owner={"username": username},
                username=username,
-               name=input.get('name'),
-               description=input.get('description'))
+               name=name,
+               description=description)
 
         # Create a Activity Store instance
         store = ActivityStore(lb)
 
         # Create detail record
         adr = ActivityDetailRecord(ActivityDetailType.LABBOOK, show=False, importance=0)
-        adr.add_value('text/plain', f"Created new LabBook: {username}/{input.get('name')}")
+        adr.add_value('text/plain', f"Created new LabBook: {username}/{name}")
 
         # Create activity record
         ar = ActivityRecord(ActivityType.LABBOOK,
-                            message=f"Created new LabBook: {username}/{input.get('name')}",
+                            message=f"Created new LabBook: {username}/{name}",
                             show=True,
                             importance=255,
                             linked_commit=lb.git.commit_hash)
@@ -85,12 +86,12 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         # Store
         store.create_activity_record(ar)
 
+        # Prime dataloader with labbook you just created
+        dataloader = LabBookLoader()
+        dataloader.prime(f"{username}&{username}&{lb.name}", lb)
+
         # Get a graphene instance of the newly created LabBook
-        id_data = {"owner": username,
-                   "name": lb.name,
-                   "username": username}
-        new_labbook = Labbook.create(id_data)
-        return CreateLabbook(labbook=new_labbook)
+        return CreateLabbook(labbook=Labbook(owner=username, name=lb.name, _dataloader=dataloader))
 
 
 class RenameLabbook(graphene.ClientIDMutation):

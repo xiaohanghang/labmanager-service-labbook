@@ -45,7 +45,7 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
     section = graphene.String()
 
     # List of files and directories, given a relative root directory within the section
-    files = graphene.relay.ConnectionField(LabbookFileConnection, root=graphene.String())
+    files = graphene.relay.ConnectionField(LabbookFileConnection, root_dir=graphene.String())
 
     # List of all files and directories within the section
     all_files = graphene.relay.ConnectionField(LabbookFileConnection)
@@ -76,9 +76,9 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
         lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         base_dir = None
-        if 'root' in kwargs:
-            if kwargs['root']:
-                base_dir = kwargs['root'] + os.path.sep
+        if 'root_dir' in kwargs:
+            if kwargs['root_dir']:
+                base_dir = kwargs['root_dir'] + os.path.sep
                 base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum

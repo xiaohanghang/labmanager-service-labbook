@@ -47,35 +47,6 @@ class Mutation(LabbookMutations, graphene.ObjectType):
 
 class TestLabBookServiceQueries(object):
 
-    def test_list_labbooks(self, fixture_working_dir, snapshot):
-        """Test listing labbooks"""
-
-        lb = LabBook(fixture_working_dir[0])
-        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
-        lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
-        lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Get LabBooks for the "logged in user" - Currently just "default"
-            query = """
-            {
-                localLabbooks {
-                    edges {
-                        node {
-                            name
-                            description
-                        }
-                        cursor
-                    }
-                }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
-
     def test_pagination_noargs(self, fixture_working_dir_populated_scoped, snapshot):
         # Mock the configuration class it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
@@ -360,7 +331,8 @@ class TestLabBookServiceQueries(object):
                 name
                 description
                 activeBranch {
-                    name
+                    refName
+                    prefix
                 }
               }
             }
@@ -368,7 +340,8 @@ class TestLabBookServiceQueries(object):
             r = client.execute(query)
             assert 'errors' not in r
             assert r['data']['labbook']['schemaVersion'] == '0.2'
-            assert r['data']['labbook']['activeBranch']['name'] == 'gm.workspace-default'
+            assert r['data']['labbook']['activeBranch']['refName'] == 'gm.workspace-default'
+            assert r['data']['labbook']['activeBranch']['prefix'] is None
             assert r['data']['labbook']['name'] == 'labbook1'
 
     def test_list_labbooks_container_status(self, fixture_working_dir, snapshot):
@@ -481,7 +454,7 @@ class TestLabBookServiceQueries(object):
                           labbook(name: "labbook1", owner: "default") {
                             name
                             code{
-                                files(root: "src") {
+                                files(rootDir: "src") {
                                     edges {
                                         node {
                                             id
@@ -503,7 +476,7 @@ class TestLabBookServiceQueries(object):
                           labbook(name: "labbook1", owner: "default") {
                             name
                             code{
-                                files(root: "src/") {
+                                files(rootDir: "src/") {
                                     edges {
                                         node {
                                             id
@@ -606,7 +579,7 @@ class TestLabBookServiceQueries(object):
                             }
                         }
                         input{
-                            files(root: "subdir") {
+                            files(rootDir: "subdir") {
                                 edges {
                                     node {
                                         id
@@ -618,7 +591,7 @@ class TestLabBookServiceQueries(object):
                             }
                         }
                         output{
-                            files(root: "empty") {
+                            files(rootDir: "empty") {
                                 edges {
                                     node {
                                         id

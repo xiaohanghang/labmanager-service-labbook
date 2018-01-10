@@ -24,8 +24,11 @@ from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityType
 
+from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api import logged_query
+
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 logger = LMLogger.get_logger()
 
@@ -36,14 +39,14 @@ ActivityRecordTypeEnum = graphene.Enum.from_enum(ActivityType)
 ActivityDetailTypeEnum = graphene.Enum.from_enum(ActivityDetailType)
 
 
-class ActivityDetailObject(graphene.ObjectType):
+class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """Container for Activity Detail Records"""
-
-    class Meta:
-        interfaces = (graphene.relay.Node,)
+    # An instance of the LabBook dataloader
+    _dataloader = None
+    _detail_record = None
 
     # Unique key for this activity detail record in the detail db
-    key = graphene.String()
+    key = graphene.String(required=True)
 
     # A list of data elements, encoded for the web, with the format [[MIME_TYPE, DATA],]
     data = graphene.List(graphene.List(graphene.String))
@@ -60,141 +63,87 @@ class ActivityDetailObject(graphene.ObjectType):
     # A list of tags for the entire record
     tags = graphene.List(graphene.String)
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
+    def _load_detail_record(self):
+        """Private method to load a detail record if it has not been previously loaded and set"""
+        if not self._detail_record:
+            # Load record from database
+            if not self.key:
+                raise ValueError("Must set `key` on object creation to resolve detail record")
 
-        Args:
-            id_data(dict):
+            # Load store instance
+            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            store = ActivityStore(lb)
 
-        Returns:
-            str
-        """
-        return "{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["key"])
+            # Retrieve record
+            self._detail_record: ActivityDetailRecord = store.get_detail_record(self.key)
 
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
+        # Set class properties
+        self.type = ActivityDetailTypeEnum.get(self._detail_record.type.value).value
+        self.show = self._detail_record.show
+        self.tags = self._detail_record.tags
+        self.importance = self._detail_record.importance
 
-        Args:
-            type_id (str): type unique identifier
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name, key = id.split("&")
 
-        Returns:
-            dict
-        """
-        split = type_id.split("&")
-        return {"owner": split[0], "name": split[1], "key": split[2]}
+        return ActivityDetailObject(id=f"{owner}&{name}&{key}", name=name, owner=owner, key=key,
+                                    _dataloader=LabBookLoader())
 
-    @staticmethod
-    @logged_query
-    def create(id_data):
-        """Method to create a graphene ActivityDetailObject object based on the node ID or owner+name+key
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.id:
+            if not self.owner or not self.name or not self.key:
+                raise ValueError("Resolving a ActivityDetailObject Node ID requires owner, name, and key to be set")
+            self.id = f"{self.owner}&{self.name}&{self.key}"
 
-            {
-                "type_id": <unique id for this object Type),
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-                "key": <hash for the record>
-            }
+        return self.id
 
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance. Can be a node ID or other vars
+    def resolve_type(self, info):
+        """Resolve the type field"""
+        if self.type is None:
+            self._load_detail_record()
+        return self.type
 
-        Returns:
-            NoteObject
-        """
-        try:
-            if "type_id" in id_data:
-                id_data.update(ActivityDetailObject.parse_type_id(id_data["type_id"]))
-                del id_data["type_id"]
+    def resolve_show(self, info):
+        """Resolve the show field"""
+        if self.show is None:
+            self._load_detail_record()
+        return self.show
 
-            if 'activity_store' not in id_data:
-                lb = LabBook()
-                lb.from_name(get_logged_in_username(), id_data["owner"], id_data["name"])
+    def resolve_importance(self, info):
+        """Resolve the importance field"""
+        if self.importance is None:
+            self._load_detail_record()
+        return self.importance
 
-                # Create NoteStore instance
-                id_data['activity_store'] = ActivityStore(lb)
+    def resolve_tags(self, info):
+        """Resolve the tags field"""
+        if self.tags is None:
+            self._load_detail_record()
+        return self.tags
 
-            # Get detail record
-            detail_record: ActivityDetailRecord = id_data['activity_store'].get_detail_record(id_data['key'])
-            data = detail_record.jsonify_data()
+    def resolve_data(self, info):
+        """Resolve the data field"""
+        if self.data is None:
+            self._load_detail_record()
 
-            return ActivityDetailObject(id=ActivityDetailObject.to_type_id(id_data),
-                                        key=detail_record.key,
-                                        type=ActivityDetailTypeEnum.get(detail_record.type.value).value,
-                                        show=detail_record.show,
-                                        tags=detail_record.tags,
-                                        importance=detail_record.importance,
-                                        data=[(x, data[x]) for x in data],
-                                        _id_data=id_data)
-        except Exception as e:
-            logger.error(e)
-            raise
+        # JSONify for transport via web
+        data_dict = self._detail_record.jsonify_data()
 
-    @staticmethod
-    def from_detail_record(detail_record, activity_store):
-        """Method to create a graphene ActivityDetailObject object from a detail record already pulled from the note
-         store
-
-        Args:
-            detail_record(ActivityDetailRecord): An ActivityDetailRecord instance
-            activity_store(ActivityStore): An ActivityStore instance, used to resolve data if needed
-
-        Returns:
-            NoteObject
-        """
-        id_data = {"owner": activity_store.labbook.owner['username'],
-                   "name": activity_store.labbook.name,
-                   "key": detail_record.key,
-                   'activity_store': activity_store
-                   }
-
-        return ActivityDetailObject(id=ActivityDetailObject.to_type_id(id_data),
-                                    key=detail_record.key,
-                                    type=ActivityDetailTypeEnum.get(detail_record.type.value).value,
-                                    show=detail_record.show,
-                                    tags=detail_record.tags,
-                                    importance=detail_record.importance,
-                                    _id_data=id_data)
-
-    def resolve_data(self, args, context, info):
-        """resolve the actual data for the detail object as a dict of MIME typed objects
-
-        Args:
-            args:
-            context:
-            info:
-
-        Returns:
-
-        """
-        try:
-            if 'activity_store' in self._id_data:
-                store = self._id_data['activity_store']
-            else:
-                # Load labbook
-                lb = LabBook()
-                lb.from_name(get_logged_in_username(), self._id_data["owner"], self._id_data["name"])
-
-                # Create ActivityStore instance
-                store = ActivityStore(lb)
-
-            detail_record: ActivityDetailRecord = store.get_detail_record(str(self.key))
-            data = detail_record.jsonify_data()
-            return [(x, data[x]) for x in data]
-        except Exception as e:
-            logger.error(e)
-            raise
+        return [(x, data_dict[x]) for x in data_dict]
 
 
-class ActivityRecordObject(graphene.ObjectType):
+class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """Container for Activity Records"""
-
-    class Meta:
-        interfaces = (graphene.relay.Node,)
+    # An instance of the LabBook dataloader
+    _dataloader = None
+    _activity_record = None
 
     # Commit hash for this activity record
-    commit = graphene.String()
+    commit = graphene.String(required=True)
 
     # Commit hash of the commit this references
     linked_commit = graphene.String()
@@ -220,107 +169,101 @@ class ActivityRecordObject(graphene.ObjectType):
     # Datetime of the record creation
     timestamp = datetime.DateTime()
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
+    def _load_activity_record(self):
+        """Private method to load an activity record if it has not been previously loaded and set"""
+        if not self._activity_record:
+            # Load record from database
+            if not self.commit:
+                raise ValueError("Must set `commit` on object creation to resolve detail record")
 
-        Args:
-            id_data(dict):
+            # Load store instance
+            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            store = ActivityStore(lb)
 
-        Returns:
-            str
-        """
-        return "{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["commit"])
+            # Retrieve record
+            self._activity_record = store.get_activity_record(self.commit)
 
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
+        # Set class properties
+        self.linked_commit = self._activity_record.linked_commit
+        self.message = self._activity_record.message
+        self.type = ActivityRecordTypeEnum.get(self._activity_record.type.value).value
+        self.show = self._activity_record.show
+        self.tags = self._activity_record.tags
+        self.timestamp = self._activity_record.timestamp
+        self.importance = self._activity_record.importance
 
-        Args:
-            type_id (str): type unique identifier
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name, commit = id.split("&")
 
-        Returns:
-            dict
-        """
-        split = type_id.split("&")
-        return {"owner": split[0], "name": split[1], "commit": split[2]}
+        return ActivityDetailObject(id=f"{owner}&{name}&{commit}", name=name, owner=owner, commit=commit,
+                                    _dataloader=LabBookLoader())
 
-    @staticmethod
-    @logged_query
-    def create(id_data):
-        """Method to create a graphene ActivityRecordObject object based on the node ID or owner+name+commit
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.id:
+            if not self.owner or not self.name or not self.commit:
+                raise ValueError("Resolving a ActivityRecordObject Node ID requires owner, name, and commit to be set")
+            self.id = f"{self.owner}&{self.name}&{self.commit}"
 
-            {
-                "type_id": <unique id for this object Type),
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>
-                "commit": <hash for the record>
-            }
+        return self.id
 
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance. Can be a node ID or other vars
+    def resolve_linked_commit(self, info):
+        """Resolve the linked_commit field"""
+        if self.linked_commit is None:
+            self._load_activity_record()
+        return self.linked_commit
 
-        Returns:
-            NoteObject
-        """
-        try:
-            if "type_id" in id_data:
-                id_data.update(ActivityRecordObject.parse_type_id(id_data["type_id"]))
-                del id_data["type_id"]
+    def resolve_message(self, info):
+        """Resolve the message field"""
+        if self.message is None:
+            self._load_activity_record()
+        return self.message
 
-            lb = LabBook()
-            lb.from_name(get_logged_in_username(), id_data["owner"], id_data["name"])
+    def resolve_type(self, info):
+        """Resolve the type field"""
+        if self.type is None:
+            self._load_activity_record()
+        return self.type
 
-            # Create NoteStore instance
-            activity_store = ActivityStore(lb)
-            activity_record = activity_store.get_activity_record(id_data['commit'])
-            detail_objects = [ActivityDetailObject.from_detail_record(r[3], activity_store) for r in activity_record.detail_objects]
+    def resolve_show(self, info):
+        """Resolve the show field"""
+        if self.show is None:
+            self._load_activity_record()
+        return self.show
 
-            return ActivityRecordObject(id=ActivityRecordObject.to_type_id(id_data),
-                                        commit=activity_record.commit,
-                                        linked_commit=activity_record.linked_commit,
-                                        message=activity_record.message,
-                                        type=ActivityRecordTypeEnum.get(activity_record.type.value).value,
-                                        show=activity_record.show,
-                                        tags=activity_record.tags,
-                                        timestamp=activity_record.timestamp,
-                                        importance=activity_record.importance,
-                                        detail_objects=detail_objects)
-        except Exception as e:
-            logger.error(e)
-            raise
+    def resolve_tags(self, info):
+        """Resolve the tags field"""
+        if self.tags is None:
+            self._load_activity_record()
+        return self.tags
 
-    @staticmethod
-    def from_activity_record(activity_record, activity_store):
-        """Method to create a graphene ActivityDetailObject object from an activity record already pulled from the note
-         store
+    def resolve_timestamp(self, info):
+        """Resolve the timestamp field"""
+        if self.timestamp is None:
+            self._load_activity_record()
+        return self.timestamp
 
-        Args:
-            activity_record(ActivityRecord): An ActivityRecord instance
-            activity_store(ActivityStore): An ActivityStore instance, used to resolve data if needed
+    def resolve_importance(self, info):
+        """Resolve the importance field"""
+        if self.importance is None:
+            self._load_activity_record()
+        return self.importance
 
-        Returns:
-            NoteObject
-        """
-        try:
-            id_data = {"owner": activity_store.labbook.owner['username'],
-                       "name": activity_store.labbook.name,
-                       "commit": activity_record.commit
-                       }
+    def resolve_detail_objects(self, info):
+        """Resolve the detail_objects field"""
+        if self.detail_objects is None:
+            if self._activity_record is None:
+                # Load the activity record first if it is missing
+                self._load_activity_record()
 
-            detail_objects = [ActivityDetailObject.from_detail_record(r[3], activity_store) for r in
-                              activity_record.detail_objects]
+            # Load detail objects from database
+            self.detail_objects = [ActivityDetailObject(id=f"{self.owner}&{self.name}&{r[3].key}",
+                                                        owner=self.owner,
+                                                        name=self.name,
+                                                        key=r[3].key,
+                                                        _dataloader=self._dataloader) for r in self._activity_record.detail_objects]
 
-            return ActivityRecordObject(id=ActivityRecordObject.to_type_id(id_data),
-                                        commit=activity_record.commit,
-                                        linked_commit=activity_record.linked_commit,
-                                        message=activity_record.message,
-                                        type=ActivityRecordTypeEnum.get(activity_record.type.value).value,
-                                        show=activity_record.show,
-                                        tags=activity_record.tags,
-                                        timestamp=activity_record.timestamp,
-                                        importance=activity_record.importance,
-                                        detail_objects=detail_objects)
-        except Exception as e:
-            logger.error(e)
-            raise
+        return self.detail_objects

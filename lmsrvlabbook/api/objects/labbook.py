@@ -120,21 +120,27 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     @logged_query
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
-        return f"{self.owner}&{self.name}"
+        if not self.id:
+            if not self.owner or not self.name:
+                raise ValueError("Resolving a Labbook Node ID requires owner and name to be set")
+            self.id = f"{self.owner}&{self.name}"
+
+        return self.id
 
     @logged_query
     def resolve_description(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        if not self.description:
+            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            self.description = lb.description
 
-        # Note, by default using remote "origin"
-        return lb.get_commits_behind_remote("origin")[1]
+        return self.description
 
     @logged_query
     def resolve_environment(self, info):
         """"""
-        raise NotImplemented
+        return Environment(id=f"{self.owner}&{self.name}", owner=self.owner, name=self.name)
 
     @logged_query
     def resolve_schema_version(self, info):
@@ -144,7 +150,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return lb.data.get('schema')
 
     @logged_query
-    def resolve_updates_available_count(self, info, args):
+    def resolve_updates_available_count(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
         lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
@@ -153,7 +159,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return lb.get_commits_behind_remote("origin")[1]
 
     @logged_query
-    def resolve_active_branch(self, info, args):
+    def resolve_active_branch(self, info):
         """Method to get the active branch
 
         Args:
@@ -165,11 +171,14 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         """
         lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        ref_name = lb.git.get_current_branch_name()
 
-        return LabbookRef.create(lb.git.get_current_branch_name())
+        return LabbookRef(id=f"{self.owner}&{self.name}&None&{ref_name}",
+                          owner=self.owner, name=self.name, prefix=None,
+                          ref_name=ref_name, _dataloader=self._dataloader)
 
     @logged_query
-    def resolve_is_repo_clean(self, info, args):
+    def resolve_is_repo_clean(self, info):
         """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
 
         Args:
@@ -184,7 +193,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return lb.is_repo_clean
 
     @logged_query
-    def resolve_default_remote(self, info, args):
+    def resolve_default_remote(self, info):
         """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
 
         Args:
@@ -206,7 +215,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return None
 
     @logged_query
-    def resolve_branches(self, info, args):
+    def resolve_branches(self, info, **kwargs):
         """Method to page through branch Refs
 
         Args:
@@ -225,7 +234,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
                                                                                           x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
+        lbc = ListBasedConnection(edges, cursors, kwargs)
         lbc.apply()
 
         # Get LabbookRef instances
@@ -267,12 +276,11 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
                               owner=self.owner, name=self.name, section='output', _dataloader=self._dataloader)
 
     @logged_query
-    def resolve_activity_records(self, info, args):
+    def resolve_activity_records(self, info, **kwargs):
         """Method to page through branch Refs
 
         Args:
-            args:
-            context:
+            kwargs:
             info:
 
         Returns:
@@ -283,11 +291,11 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         # Create instance of ActivityStore for this LabBook
         store = ActivityStore(lb)
 
-        if args.get('before') or args.get('last'):
+        if kwargs.get('before') or kwargs.get('last'):
             raise ValueError("Only `after` and `first` arguments are supported when paging activity records")
 
         # Get edges and cursors
-        edges = store.get_activity_records(after=args.get('after'), first=args.get('first'))
+        edges = store.get_activity_records(after=kwargs.get('after'), first=kwargs.get('first'))
         if edges:
             cursors = [x.commit for x in edges]
         else:
@@ -296,7 +304,12 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         # Get ActivityRecordObject instances
         edge_objs = []
         for edge, cursor in zip(edges, cursors):
-            edge_objs.append(ActivityConnection.Edge(node=ActivityRecordObject.from_activity_record(edge, store),
+            edge_objs.append(ActivityConnection.Edge(node=ActivityRecordObject(id=f"{self.owner}&{self.name}&{edge.commit}",
+                                                                               owner=self.owner,
+                                                                               name=self.name,
+                                                                               commit=edge.commit,
+                                                                               _dataloader=self._dataloader,
+                                                                               _activity_record=edge),
                                                      cursor=cursor))
 
         # Create page info based on first commit. Since only paging backwards right now, just check for commit
@@ -317,45 +330,41 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return ActivityConnection(edges=edge_objs, page_info=page_info)
 
     @logged_query
-    def resolve_detail_record(self, info, args):
-        """Method to page through branch Refs
+    def resolve_detail_record(self, info, key):
+        """Method to resolve the detail record object
 
         Args:
             args:
-            context:
             info:
 
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
-        store = ActivityStore(lb)
-        detail_record = store.get_detail_record(args.get('key'))
-
-        return ActivityDetailObject.from_detail_record(detail_record, store)
+        return ActivityDetailObject(id=f"{self.owner}&{self.name}&{key}",
+                                    owner=self.owner,
+                                    name=self.name,
+                                    key=key,
+                                    _dataloader=self._dataloader)
 
     @logged_query
-    def resolve_detail_records(self, info, args):
-        """Method to page through branch Refs
+    def resolve_detail_records(self, info, keys):
+        """Method to resolve multiple detail record objects
 
         Args:
             args:
-            context:
             info:
 
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
-        store = ActivityStore(lb)
-        detail_records = [store.get_detail_record(x) for x in args.get('keys')]
-
-        return [ActivityDetailObject.from_detail_record(x, store) for x in detail_records]
+        return [ActivityDetailObject(id=f"{self.owner}&{self.name}&{key}",
+                                     owner=self.owner,
+                                     name=self.name,
+                                     key=key,
+                                     _dataloader=self._dataloader) for key in keys]
 
     @logged_query
-    def resolve_collaborators(self, info, args):
+    def resolve_collaborators(self, info):
         """Method to get the list of collaborators for a labbook
 
         Args:
@@ -394,7 +403,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return [x[1] for x in collaborators]
 
     @logged_query
-    def resolve_can_manage_collaborators(self, info, args):
+    def resolve_can_manage_collaborators(self, info):
         """Method to get the list of collaborators for a labbook
 
         Args:
