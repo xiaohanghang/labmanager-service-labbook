@@ -105,31 +105,33 @@ class RenameLabbook(graphene.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, original_labbook_name, new_labbook_name,
+                               client_mutation_id=None):
         # This bypasses the original implementation. Rename is temporarily disabled.
         raise NotImplemented('Rename functionality is temporarily disabled.')
 
     @classmethod
     @logged_mutation
-    def prior_mutate_and_get_payload(cls, input, context, info):
+    def prior_mutate_and_get_payload(cls, root, info, owner, original_labbook_name, new_labbook_name,
+                                     client_mutation_id=None):
         # NOTE!!! This is the code that was originally to rename.
         # Temporarily, rename functionality is disabled.
         # Load LabBook
         username = get_logged_in_username()
 
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
-                                             input['original_labbook_name'])
+        inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
+                                             original_labbook_name)
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
 
         # Image names
-        old_tag = '{}-{}-{}'.format(username, input['owner'], input.get('original_labbook_name'))
-        new_tag = '{}-{}-{}'.format(username, input['owner'], input.get('new_labbook_name'))
+        old_tag = '{}-{}-{}'.format(username, owner, original_labbook_name)
+        new_tag = '{}-{}-{}'.format(username, owner, new_labbook_name)
 
         # Rename LabBook
-        lb.rename(input['new_labbook_name'])
-        logger.info(f"Renamed LabBook from `{input['original_labbook_name']}` to `{input['new_labbook_name']}`")
+        lb.rename(new_labbook_name)
+        logger.info(f"Renamed LabBook from `{original_labbook_name}` to `{new_labbook_name}`")
 
         # Build image with new name...should be fast and use the Docker cache
         client = get_docker_client()
@@ -155,13 +157,14 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
+
         username = get_logged_in_username()
-        logger.info(f'Exporting LabBook: {username}/{input["owner"]}/{input["labbook_name"]}')
+        logger.info(f'Exporting LabBook: {username}/{owner}/{labbook_name}')
 
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
-                                             input['labbook_name'])
+        inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
+                                             labbook_name)
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
 
@@ -183,7 +186,7 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_process_upload(cls, input, context, info):
+    def mutate_and_process_upload(cls, info, **kwargs):
         if not cls.upload_file_path:
             logger.error('No file uploaded')
             raise ValueError('No file uploaded')
@@ -237,9 +240,9 @@ class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_url, client_mutation_id=None):
         username = get_logged_in_username()
-        logger.info(f"Importing remote labbook from {input.get('remote_url')}")
+        logger.info(f"Importing remote labbook from {remote_url}")
         lb = LabBook()
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
@@ -251,16 +254,16 @@ class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
                 break
 
         # Extract valid Bearer token
-        if hasattr(context, 'headers') and "HTTP_AUTHORIZATION" in context.headers.environ:
-            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        if hasattr(info.context, 'headers') and "HTTP_AUTHORIZATION" in info.context.headers.environ:
+            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      username, input.get('owner'), input.get('labbook_name'))
+                                      username, owner, labbook_name)
         mgr.configure_git_credentials(default_remote, username)
 
-        lb.from_remote(input['remote_url'], username, input['owner'], input['labbook_name'])
+        lb.from_remote(remote_url, username, owner, labbook_name)
         return ImportRemoteLabbook(active_branch=lb.active_branch)
 
 
@@ -275,14 +278,14 @@ class AddLabbookRemote(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, remote_url, client_mutation_id=None):
         username = get_logged_in_username()
-        logger.info(f"Adding labbook remote {input.get('remote_name')} {input.get('remote_url')}")
+        logger.info(f"Adding labbook remote {remote_name} {remote_url}")
 
         lb = LabBook()
-        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
-        remote = input.get('remote_name')
-        lb.add_remote(remote, input.get('remote_url'))
+        lb.from_name(username, owner, labbook_name)
+        remote = remote_name
+        lb.add_remote(remote, remote_url)
         return AddLabbookRemote(success=True)
 
 
@@ -296,12 +299,12 @@ class PullActiveBranchFromRemote(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, client_mutation_id=None):
         username = get_logged_in_username()
-        logger.info(f"Importing remote labbook from {input.get('remote_name')}")
+        logger.info(f"Importing remote labbook from {remote_name}")
         lb = LabBook()
-        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
-        remote = input.get('remote_name')
+        lb.from_name(username, owner, labbook_name)
+        remote = remote_name
         if remote:
             lb.pull(remote=remote)
         else:
@@ -319,12 +322,12 @@ class PushActiveBranchToRemote(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, client_mutation_id=None):
         username = get_logged_in_username()
-        logger.info(f"Importing remote labbook from {input.get('remote_name')}")
+        logger.info(f"Importing remote labbook from {remote_name}")
         lb = LabBook()
-        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
-        remote = input.get('remote_name')
+        lb.from_name(username, owner, labbook_name)
+        remote = remote_name
         if remote:
             lb.push(remote=remote)
         else:
@@ -346,37 +349,43 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_process_upload(cls, input, context, info):
+    def mutate_and_process_upload(cls, info, **kwargs):
+
         if not cls.upload_file_path:
             logger.error('No file uploaded')
             raise ValueError('No file uploaded')
 
         username = get_logged_in_username()
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
-                                             input['labbook_name'])
+        inferred_lb_directory = os.path.join(working_directory, username, kwargs.get('owner'), 'labbooks',
+                                             kwargs.get('labbook_name'))
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
 
         # Insert into labbook
         # Note: insert_file() will strip out any '..' in dst_dir.
-        file_info = lb.insert_file(section=input['section'],
+        file_info = lb.insert_file(section=kwargs.get('section'),
                                    src_file=cls.upload_file_path,
-                                   dst_dir=os.path.dirname(input['file_path']),
+                                   dst_dir=os.path.dirname(kwargs.get('file_path')),
                                    base_filename=cls.filename)
+
+        # Prime dataloader with labbook you already loaded
+        dataloader = LabBookLoader()
+        dataloader.prime(f"{kwargs.get('owner')}&{kwargs.get('labbook_name')}&{lb.name}", lb)
 
         logger.debug(f"Removing copied temp file {cls.upload_file_path}")
         os.remove(cls.upload_file_path)
         # Create data to populate edge
-        id_data = {'username': username,
-                   'owner': input.get('owner'),
-                   'name': input.get('labbook_name'),
-                   'section': input['section'],
-                   'file_info': file_info}
+        create_data = {'owner': kwargs.get('owner'),
+                       'name': kwargs.get('labbook_name'),
+                       'section': kwargs.get('section'),
+                       'key': file_info['key'],
+                       "_dataloader": dataloader,
+                       '_file_info': file_info}
 
         # TODO: Fix cursor implementation, this currently doesn't make sense when adding edges
         cursor = base64.b64encode(f"{0}".encode('utf-8'))
-        return AddLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile.create(id_data),
+        return AddLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile(**create_data),
                                                                                cursor=cursor))
 
 
@@ -392,15 +401,16 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, file_path, is_directory=False,
+                               client_mutation_id=None):
         username = get_logged_in_username()
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
-                                             input['labbook_name'])
+        inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
+                                             labbook_name)
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
-        lb.delete_file(section=input['section'], relative_path=input['file_path'],
-                       directory=input.get('is_directory') or False)
+        lb.delete_file(section=section, relative_path=file_path,
+                       directory=is_directory)
 
         return DeleteLabbookFile(success=True)
 
@@ -419,29 +429,34 @@ class MoveLabbookFile(graphene.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, src_path, dst_path,
+                               client_mutation_id=None):
         username = get_logged_in_username()
 
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
-                                             input['labbook_name'])
+        inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
+                                             labbook_name)
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
-        file_info = lb.move_file(input['section'], input['src_path'], input['dst_path'])
-        logger.info(f"Moved file to `{input['dst_path']}`")
+        file_info = lb.move_file(section, src_path, dst_path)
+        logger.info(f"Moved file to `{dst_path}`")
+
+        # Prime dataloader with labbook you already loaded
+        dataloader = LabBookLoader()
+        dataloader.prime(f"{owner}&{labbook_name}&{lb.name}", lb)
 
         # Create data to populate edge
-        id_data = {'username': username,
-                   'user': username,
-                   'owner': input.get('owner'),
-                   'name': input.get('labbook_name'),
-                   'section': input.get('section'),
-                   'file_info': file_info}
+        create_data = {'owner': owner,
+                       'name': labbook_name,
+                       'section': section,
+                       'key': file_info['key'],
+                       "_dataloader": dataloader,
+                       '_file_info': file_info}
 
         # TODO: Fix cursor implementation, this currently doesn't make sense
         cursor = base64.b64encode(f"{0}".encode('utf-8'))
 
-        return MoveLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile.create(id_data),
+        return MoveLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile(**create_data),
                                                                                 cursor=cursor))
 
 
@@ -456,29 +471,35 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, directory,
+                               client_mutation_id=None):
         username = get_logged_in_username()
 
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
-                                             input['labbook_name'])
+        inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
+                                             labbook_name)
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
-        lb.makedir(os.path.join(input['section'], input['directory']), create_activity_record=True)
-        logger.info(f"Made new directory in `{input['directory']}`")
+        lb.makedir(os.path.join(section, directory), create_activity_record=True)
+        logger.info(f"Made new directory in `{directory}`")
+
+        # Prime dataloader with labbook you already loaded
+        dataloader = LabBookLoader()
+        dataloader.prime(f"{owner}&{labbook_name}&{lb.name}", lb)
 
         # Create data to populate edge
-        id_data = {'username': username,
-                   'user': username,
-                   'owner': input.get('owner'),
-                   'name': input.get('labbook_name'),
-                   'section': input.get('section'),
-                   'file_info': lb.get_file_info(input['section'], input['directory'])}
+        file_info = lb.get_file_info(section, directory)
+        create_data = {'owner': owner,
+                       'name': labbook_name,
+                       'section': section,
+                       'key': file_info['key'],
+                       "_dataloader": dataloader,
+                       '_file_info': file_info}
 
         # TODO: Fix cursor implementation, this currently doesn't make sense
         cursor = base64.b64encode(f"{0}".encode('utf-8'))
 
-        return MakeLabbookDirectory(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile.create(id_data),
+        return MakeLabbookDirectory(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile(**create_data),
                                                                                      cursor=cursor))
 
 
@@ -496,32 +517,38 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, key, description=None, is_dir=False,
+                               index=None, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook()
-        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+        lb.from_name(username, owner, labbook_name)
 
         # Add Favorite
-        is_dir = False
-        if input.get('is_dir'):
-            is_dir = input.get('is_dir')
+        if is_dir:
+            is_dir = is_dir
 
-        new_favorite = lb.create_favorite(input.get('section'), input.get('key'),
-                                          description=input.get('description'),
-                                          position=input.get('index'),
+        new_favorite = lb.create_favorite(section, key,
+                                          description=description,
+                                          position=index,
                                           is_dir=is_dir)
 
+        # Prime dataloader with labbook you already loaded
+        dataloader = LabBookLoader()
+        dataloader.prime(f"{owner}&{labbook_name}&{lb.name}", lb)
+
         # Create data to populate edge
-        id_data = {'username': username,
-                   'owner': input.get('owner'),
-                   'name': input.get('labbook_name'),
-                   'section': input.get('section'),
-                   'favorite_data': new_favorite}
+        create_data = {"id": f"{owner}&{labbook_name}&{section}&{new_favorite['index']}",
+                       "owner": owner,
+                       "section": section,
+                       "name": labbook_name,
+                       "index": int(new_favorite['index']),
+                       "_dataloader": dataloader,
+                       "_favorite_data": new_favorite}
 
         # Create cursor
         cursor = base64.b64encode(f"{str(new_favorite['index'])}".encode('utf-8'))
 
-        return AddLabbookFavorite(new_favorite_edge=LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data),
+        return AddLabbookFavorite(new_favorite_edge=LabbookFavoriteConnection.Edge(node=LabbookFavorite(**create_data),
                                                                                    cursor=cursor))
 
 
@@ -539,29 +566,35 @@ class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, index=None, updated_index=None,
+                               updated_key=None, updated_description=None, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook()
-        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+        lb.from_name(username, owner, labbook_name)
 
         # Update Favorite
-        new_favorite = lb.update_favorite(input.get('section'), input.get('index'),
-                                          new_description=input.get('updated_description'),
-                                          new_index=input.get('updated_index'),
-                                          new_key=input.get('updated_key'))
+        new_favorite = lb.update_favorite(section, index,
+                                          new_description=updated_description,
+                                          new_index=updated_index,
+                                          new_key=updated_key)
+
+        # Prime dataloader with labbook you already loaded
+        dataloader = LabBookLoader()
+        dataloader.prime(f"{owner}&{labbook_name}&{lb.name}", lb)
 
         # Create data to populate edge
-        id_data = {'username': username,
-                   'user': username,
-                   'owner': input.get('owner'),
-                   'name': input.get('labbook_name'),
-                   'section': input.get('section'),
-                   'favorite_data': new_favorite}
+        create_data = {"id": f"{owner}&{labbook_name}&{section}&{new_favorite['index']}",
+                       "owner": owner,
+                       "section": section,
+                       "name": labbook_name,
+                       "index": int(new_favorite['index']),
+                       "_dataloader": dataloader,
+                       "_favorite_data": new_favorite}
 
         # Create dummy cursor
         cursor = base64.b64encode(f"{str(new_favorite['index'])}".encode('utf-8'))
 
-        return UpdateLabbookFavorite(updated_favorite_edge=LabbookFavoriteConnection.Edge(node=LabbookFavorite.create(id_data),
+        return UpdateLabbookFavorite(updated_favorite_edge=LabbookFavoriteConnection.Edge(node=LabbookFavorite(**create_data),
                                                                                           cursor=cursor))
 
 
@@ -576,13 +609,13 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, index, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook()
-        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+        lb.from_name(username, owner, labbook_name)
 
         # Remove Favorite
-        lb.remove_favorite(input.get('section'), input.get('index'))
+        lb.remove_favorite(section, index)
 
         return RemoveLabbookFavorite(success=True)
 
@@ -597,10 +630,10 @@ class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
-        username = get_logged_in_username()
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, username, client_mutation_id=None):
+        logged_in_username = get_logged_in_username()
         lb = LabBook()
-        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+        lb.from_name(logged_in_username, owner, labbook_name)
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
         default_remote = lb.labmanager_config.config['git']['default_remote']
@@ -611,20 +644,25 @@ class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
                 break
 
         # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in context.headers.environ:
-            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         # Add collaborator to remote service
         mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      username, input.get('owner'), input.get('labbook_name'))
-        mgr.add_collaborator(input.get('username'))
+                                      logged_in_username, owner, labbook_name)
+        mgr.add_collaborator(username)
 
-        id_data = {"owner": input.get('owner'),
-                   "name": input.get('labbook_name'),
-                   "username": username}
-        return AddLabbookCollaborator(updated_labbook=Labbook.create(id_data=id_data))
+        # Prime dataloader with labbook you just created
+        dataloader = LabBookLoader()
+        dataloader.prime(f"{username}&{username}&{lb.name}", lb)
+
+        create_data = {"owner": owner,
+                       "name": labbook_name,
+                       "_dataloader": dataloader}
+
+        return AddLabbookCollaborator(updated_labbook=Labbook(**create_data))
 
 
 class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
@@ -637,10 +675,10 @@ class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
-        username = get_logged_in_username()
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, username, client_mutation_id=None):
+        logged_in_username = get_logged_in_username()
         lb = LabBook()
-        lb.from_name(username, input.get('owner'), input.get('labbook_name'))
+        lb.from_name(logged_in_username, owner, labbook_name)
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
         default_remote = lb.labmanager_config.config['git']['default_remote']
@@ -651,17 +689,22 @@ class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
                 break
 
         # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in context.headers.environ:
-            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         # Add collaborator to remote service
         mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      username, input.get('owner'), input.get('labbook_name'))
-        mgr.delete_collaborator(input.get('username'))
+                                      logged_in_username, owner, labbook_name)
+        mgr.delete_collaborator(username)
 
-        id_data = {"owner": input.get('owner'),
-                   "name": input.get('labbook_name'),
-                   "username": username}
-        return DeleteLabbookCollaborator(updated_labbook=Labbook.create(id_data=id_data))
+        # Prime dataloader with labbook you just created
+        dataloader = LabBookLoader()
+        dataloader.prime(f"{username}&{username}&{lb.name}", lb)
+
+        create_data = {"owner": owner,
+                       "name": labbook_name,
+                       "_dataloader": dataloader}
+
+        return DeleteLabbookCollaborator(updated_labbook=Labbook(**create_data))

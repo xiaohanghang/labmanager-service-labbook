@@ -939,8 +939,9 @@ class TestLabBookServiceMutations(object):
                 result = client.execute(query, context_value=DummyContext(file))
                 assert "errors" not in result
                 if chunk_index < total_chunks - 1:
-                    assert result['data']['importLabbook']['importJobKey'] is None
-                    assert result['data']['importLabbook']['buildImageJobKey'] is None
+                    pass
+                    assert type(result['data']['importLabbook']['importJobKey']) is not str
+                    assert type(result['data']['importLabbook']['buildImageJobKey']) is not str
                 else:
                     assert type(result['data']['importLabbook']['importJobKey']) == str
                     assert type(result['data']['importLabbook']['buildImageJobKey']) == str

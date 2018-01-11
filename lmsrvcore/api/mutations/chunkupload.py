@@ -115,36 +115,36 @@ class ChunkUploadMutation(object):
         return os.path.basename(ChunkUploadMutation.py_secure_filename(filename))
 
     @classmethod
-    def mutate_and_get_payload(cls, info, input):
+    def mutate_and_get_payload(cls, root, info, **kwargs):
         try:
-            if "chunk_upload_params" in input:
-                chunk_params = input.get("chunk_upload_params")
-                logger.info(f"Processing chunk {chunk_params['chunk_index']} for {chunk_params['filename']}")
+            chunk_params = kwargs.get("chunk_upload_params")
+            logger.info(f"Processing chunk {chunk_params['chunk_index']} for {chunk_params['filename']}")
 
-                # Make sure the file is there
-                if 'uploadChunk' not in info.context.files:
-                    msg = 'No file "uploadChunk" associated with request'
-                    logger.error(msg)
-                    raise ValueError(msg)
+            # Make sure the file is there
+            if 'uploadChunk' not in info.context.files:
+                msg = 'No file "uploadChunk" associated with request'
+                logger.error(msg)
+                raise ValueError(msg)
 
-                # Validate input arguments
-                cls.validate_args(chunk_params)
+            # Validate input arguments
+            cls.validate_args(chunk_params)
 
-                # Write chunk to file
-                with open(cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename']), 'ab') as f:
-                    f.seek(chunk_params['chunk_index'] * chunk_params['chunk_size'])
-                    f.write(info.context.files.get('uploadChunk').stream.read())
+            # Write chunk to file
+            with open(cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename']), 'ab') as f:
+                f.seek(chunk_params['chunk_index'] * chunk_params['chunk_size'])
+                f.write(info.context.files.get('uploadChunk').stream.read())
 
-                # If last chunk, move on to mutation
-                logger.info(f"Write for chunk {chunk_params['chunk_index']} complete")
-                if chunk_params['chunk_index'] == chunk_params['total_chunks'] - 1:
-                    # Assume last chunk. Let mutation process
-                    cls.upload_file_path = cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename'])
-                    cls.filename = cls.get_filename(chunk_params['filename'])
-                    return cls.mutate_and_process_upload(input, info)
-                else:
-                    # Assume more chunks to go. Short circuit request
-                    return cls
+            # If last chunk, move on to mutation
+            logger.info(f"Write for chunk {chunk_params['chunk_index']} complete")
+            if chunk_params['chunk_index'] == chunk_params['total_chunks'] - 1:
+                # Assume last chunk. Let mutation process
+                cls.upload_file_path = cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename'])
+                cls.filename = cls.get_filename(chunk_params['filename'])
+                return cls.mutate_and_process_upload(info, **kwargs)
+            else:
+                # Assume more chunks to go. Short circuit request
+                return cls
+
         except Exception as e:
             logger.error(e)
             # Something bad happened, so make best effort to dump all the files in the body on the floor.
@@ -161,6 +161,6 @@ class ChunkUploadMutation(object):
             raise
 
     @abc.abstractclassmethod
-    def mutate_and_process_upload(cls, info, **args):
+    def mutate_and_process_upload(cls, info, **kwargs):
         """Method to implement to process the upload. Must return a Mutation type"""
         raise NotImplemented

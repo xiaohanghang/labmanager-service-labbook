@@ -44,6 +44,8 @@ from lmsrvcore.api.objects.user import UserIdentity
 
 from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
+# TODO: Think about possibly removing from global scope and making class attribute of the query?
+# Would have to
 LABBOOK_LOADER = LabBookLoader()
 
 logger = LMLogger.get_logger()
