@@ -1,5 +1,5 @@
 
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@ import graphene
 
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvcore.api import logged_query
 from lmsrvcore.api.interfaces import GitCommit, GitRepository
 from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
@@ -50,7 +49,6 @@ class LabbookCommit(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRep
         """Resolve the short_hash field"""
         return self.hash[:8]
 
-    @logged_query
     def resolve_committed_on(self, info):
         """Resolve the committed_on field"""
         if self.committed_on is None:

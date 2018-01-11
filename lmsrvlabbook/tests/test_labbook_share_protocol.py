@@ -43,7 +43,7 @@ from werkzeug.datastructures import FileStorage
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher.jobs import export_labbook_as_zip
 from lmcommon.fixtures import (remote_labbook_repo, remote_bare_repo, mock_labbook,
-                               mock_config_file, _MOCK_create_remote_repo)
+                               mock_config_file, mock_create_remote_repo)
 from lmcommon.labbook import LabBook
 
 
@@ -65,7 +65,7 @@ def mock_create_labbooks(fixture_working_dir):
 
 
 class TestLabbookShareProtocol(object):
-    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
+    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=mock_create_remote_repo)
     def test_publish_basic(self, fixture_working_dir, remote_bare_repo, mock_create_labbooks):
 
         # Mock the request context so a fake authorization header is present
@@ -75,27 +75,24 @@ class TestLabbookShareProtocol(object):
 
         test_user_lb = LabBook(mock_create_labbooks[0])
         test_user_lb.from_name('default', 'default', 'labbook1')
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
 
-            publish_query = f"""
-            mutation c {{
-                publishLabbook(input: {{
-                    labbookName: "labbook1",
-                    owner: "default"
-                }}) {{
-                    success
-                }}
+        publish_query = f"""
+        mutation c {{
+            publishLabbook(input: {{
+                labbookName: "labbook1",
+                owner: "default"
+            }}) {{
+                success
             }}
-            """
+        }}
+        """
 
-            r = client.execute(publish_query, context_value=req)
-            assert 'errors' not in r
-            assert r['data']['publishLabbook']['success'] is True
+        r = fixture_working_dir[2].execute(publish_query, context_value=req)
+        assert 'errors' not in r
+        assert r['data']['publishLabbook']['success'] is True
 
     @responses.activate
-    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
+    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=mock_create_remote_repo)
     def test_sync_1(self, fixture_working_dir, remote_bare_repo, mock_create_labbooks, mock_labbook, mock_config_file):
 
         # Setup responses mock for this test
@@ -130,9 +127,7 @@ class TestLabbookShareProtocol(object):
             }
         }
         """
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            client = Client(fixture_working_dir[2])
-            r = client.execute(sync_query, context_value=req)
+        r = fixture_working_dir[2].execute(sync_query, context_value=req)
 
         assert 'errors' not in r
         assert r['data']['syncLabbook']['updateCount'] == 6

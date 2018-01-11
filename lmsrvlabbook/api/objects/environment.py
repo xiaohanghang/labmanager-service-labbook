@@ -1,5 +1,5 @@
 
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,10 +18,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import graphene
-
-import os
 import base64
 
 import docker
@@ -35,7 +32,6 @@ from lmcommon.logging import LMLogger
 
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import logged_query
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
@@ -44,7 +40,6 @@ from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
 from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection, CustomDependency
 from lmsrvlabbook.api.connections.packagemanager import PackageManagerConnection, PackageManager
 from lmsrvlabbook.api.objects.baseimage import BaseImage
-from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 logger = LMLogger.get_logger()
 
@@ -83,9 +78,6 @@ class ContainerStatus(graphene.Enum):
 
 class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type that represents the Environment for a LabBook"""
-    # An instance of the LabBook dataloader
-    _dataloader = None
-
     # The name of the current branch
     image_status = graphene.Field(ImageStatus)
 
@@ -107,7 +99,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         # Parse the key
         owner, name = id.split("&")
 
-        return Environment(id=f"{owner}&{name}", name=name, owner=owner, _dataloader=LabBookLoader())
+        return Environment(id=f"{owner}&{name}", name=name, owner=owner)
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
@@ -116,7 +108,6 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
         return f"{self.owner}&{self.name}"
 
-    @logged_query
     def resolve_image_status(self, info):
         """Resolve the image_status field"""
         labbook_key = "{}-{}-{}".format(get_logged_in_username(), self.owner, self.name)
@@ -154,7 +145,6 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
         return image_status.value
 
-    @logged_query
     def resolve_container_status(self, info):
         """Resolve the image_status field"""
         # Check if the container is running by looking up the container
@@ -182,7 +172,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
         """
         # Get base image data
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
         component_data = cm.get_component_list("base_image")
@@ -222,7 +212,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
         edges = cm.get_component_list("package_manager")
@@ -261,7 +251,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
         edges = cm.get_component_list("custom")

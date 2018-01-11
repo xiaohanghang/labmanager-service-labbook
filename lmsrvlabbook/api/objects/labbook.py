@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,22 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import base64
-import json
 import graphene
-import copy
 
-import os
-
-from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
-from lmcommon.gitlib import get_git_interface
-from lmcommon.labbook import LabBook
+
 from lmcommon.activity import ActivityStore
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvcore.api import logged_query
 from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.identity import parse_token
@@ -45,9 +38,6 @@ from lmsrvlabbook.api.objects.labbooksection import LabbookSection
 from lmsrvlabbook.api.connections.activity import ActivityConnection
 from lmsrvlabbook.api.objects.activity import ActivityDetailObject, ActivityRecordObject
 
-from lmsrvlabbook.dataloader.labbook import LabBookLoader
-
-
 logger = LMLogger.get_logger()
 
 
@@ -57,9 +47,6 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
 
     """
-    # A copy of the LabBook dataloader
-    _dataloader = None
-
     # A short description of the LabBook limited to 140 UTF-8 characters
     description = graphene.String()
 
@@ -109,15 +96,9 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         # Parse the key
         owner, name = id.split("&")
 
-        # Load the labbook via a dataloader
-        _dataloader = LabBookLoader()
-        loader_key = f"{get_logged_in_username()}&{owner}&{name}"
-        _dataloader.load(loader_key)
-
         return Labbook(id="{}&{}".format(owner, name),
-                       name=name, owner=owner, _dataloader=_dataloader)
+                       name=name, owner=owner)
 
-    @logged_query
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
         if not self.id:
@@ -127,38 +108,33 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         return self.id
 
-    @logged_query
     def resolve_description(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
         if not self.description:
-            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
             self.description = lb.description
 
         return self.description
 
-    @logged_query
     def resolve_environment(self, info):
         """"""
         return Environment(id=f"{self.owner}&{self.name}", owner=self.owner, name=self.name)
 
-    @logged_query
     def resolve_schema_version(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         return lb.data.get('schema')
 
-    @logged_query
     def resolve_updates_available_count(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # Note, by default using remote "origin"
         return lb.get_commits_behind_remote("origin")[1]
 
-    @logged_query
     def resolve_active_branch(self, info):
         """Method to get the active branch
 
@@ -170,14 +146,13 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         ref_name = lb.git.get_current_branch_name()
 
         return LabbookRef(id=f"{self.owner}&{self.name}&None&{ref_name}",
                           owner=self.owner, name=self.name, prefix=None,
-                          ref_name=ref_name, _dataloader=self._dataloader)
+                          ref_name=ref_name)
 
-    @logged_query
     def resolve_is_repo_clean(self, info):
         """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
 
@@ -189,10 +164,9 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         return lb.is_repo_clean
 
-    @logged_query
     def resolve_default_remote(self, info):
         """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
 
@@ -204,7 +178,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         remotes = lb.git.list_remotes()
         if remotes:
             url = [x['url'] for x in remotes if x['name'] == 'origin']
@@ -214,7 +188,6 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
                 logger.warning(f"There exist remotes in {str(lb)}, but no origin found.")
         return None
 
-    @logged_query
     def resolve_branches(self, info, **kwargs):
         """Method to page through branch Refs
 
@@ -226,7 +199,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # Get all edges and cursors. Here, cursors are just an index into the refs
         edges = [x for x in lb.git.repo.refs]
@@ -248,34 +221,30 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
                 prefix = None
                 branch = parts[0]
 
-            id_data = {"name": lb.name,
-                       "owner": lb.owner['username'],
-                       "prefix": prefix,
-                       "branch": branch}
-            edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef.create(id_data), cursor=cursor))
+            create_data = {"name": lb.name,
+                           "owner": self.owner,
+                           "prefix": prefix,
+                           "ref_name": branch}
+            edge_objs.append(LabbookRefConnection.Edge(node=LabbookRef(**create_data), cursor=cursor))
 
         return LabbookRefConnection(edges=edge_objs,
                                     page_info=lbc.page_info)
 
-    @logged_query
     def resolve_code(self, info):
         """Method to resolve the code section"""
         return LabbookSection(id="{}&{}&{}".format(self.owner, self.name, 'code'),
-                              owner=self.owner, name=self.name, section='code', _dataloader=self._dataloader)
+                              owner=self.owner, name=self.name, section='code')
 
-    @logged_query
     def resolve_input(self, info):
         """Method to resolve the input section"""
         return LabbookSection(id="{}&{}&{}".format(self.owner, self.name, 'input'),
-                              owner=self.owner, name=self.name, section='input', _dataloader=self._dataloader)
+                              owner=self.owner, name=self.name, section='input')
 
-    @logged_query
     def resolve_output(self, info):
         """Method to resolve the output section"""
         return LabbookSection(id="{}&{}&{}".format(self.owner, self.name, 'output'),
-                              owner=self.owner, name=self.name, section='output', _dataloader=self._dataloader)
+                              owner=self.owner, name=self.name, section='output')
 
-    @logged_query
     def resolve_activity_records(self, info, **kwargs):
         """Method to page through branch Refs
 
@@ -286,7 +255,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # Create instance of ActivityStore for this LabBook
         store = ActivityStore(lb)
@@ -308,7 +277,6 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
                                                                                owner=self.owner,
                                                                                name=self.name,
                                                                                commit=edge.commit,
-                                                                               _dataloader=self._dataloader,
                                                                                _activity_record=edge),
                                                      cursor=cursor))
 
@@ -329,7 +297,6 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         return ActivityConnection(edges=edge_objs, page_info=page_info)
 
-    @logged_query
     def resolve_detail_record(self, info, key):
         """Method to resolve the detail record object
 
@@ -343,10 +310,8 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return ActivityDetailObject(id=f"{self.owner}&{self.name}&{key}",
                                     owner=self.owner,
                                     name=self.name,
-                                    key=key,
-                                    _dataloader=self._dataloader)
+                                    key=key)
 
-    @logged_query
     def resolve_detail_records(self, info, keys):
         """Method to resolve multiple detail record objects
 
@@ -360,10 +325,8 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return [ActivityDetailObject(id=f"{self.owner}&{self.name}&{key}",
                                      owner=self.owner,
                                      name=self.name,
-                                     key=key,
-                                     _dataloader=self._dataloader) for key in keys]
+                                     key=key) for key in keys]
 
-    @logged_query
     def resolve_collaborators(self, info):
         """Method to get the list of collaborators for a labbook
 
@@ -375,7 +338,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns:
 
         """
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
         default_remote = lb.labmanager_config.config['git']['default_remote']
@@ -402,7 +365,6 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         return [x[1] for x in collaborators]
 
-    @logged_query
     def resolve_can_manage_collaborators(self, info):
         """Method to get the list of collaborators for a labbook
 
@@ -415,7 +377,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         """
         username = get_logged_in_username()
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
         default_remote = lb.labmanager_config.config['git']['default_remote']

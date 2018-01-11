@@ -1,5 +1,5 @@
 Flask==0.12.2
-graphene>=2.0
+graphene==2.0.1
 Flask-GraphQL==1.4.1
 Flask-Cors==3.0.3
 

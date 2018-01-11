@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,11 +42,6 @@ from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
 
 from lmsrvcore.api.objects.user import UserIdentity
 
-from lmsrvlabbook.dataloader.labbook import LabBookLoader
-
-# TODO: Think about possibly removing from global scope and making class attribute of the query?
-# Would have to
-LABBOOK_LOADER = LabBookLoader()
 
 logger = LMLogger.get_logger()
 
@@ -115,10 +110,10 @@ class LabbookQuery(graphene.ObjectType):
         """
         # Load the labbook data via a dataloader
         loader_key = f"{get_logged_in_username()}&{owner}&{name}"
-        LABBOOK_LOADER.load(loader_key)
+        info.context.labbook_loader.load(loader_key)
 
         return Labbook(id="{}&{}".format(owner, name),
-                       name=name, owner=owner, _dataloader=LABBOOK_LOADER)
+                       name=name, owner=owner)
 
     def resolve_current_labbook_schema_version(self, info):
         """Return the LabBook schema version (defined as static field in LabBook class."""
@@ -190,8 +185,7 @@ class LabbookQuery(graphene.ObjectType):
         for edge, cursor in zip(lbc.edges, lbc.cursors):
             create_data = {"id": "{}&{}".format(edge["owner"], edge["name"]),
                            "name": edge["name"],
-                           "owner": edge["owner"],
-                           "_dataloader": LABBOOK_LOADER}
+                           "owner": edge["owner"]}
 
             edge_objs.append(LabbookConnection.Edge(node=Labbook(**create_data),
                                                     cursor=cursor))

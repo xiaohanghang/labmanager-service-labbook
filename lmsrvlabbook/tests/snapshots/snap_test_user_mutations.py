@@ -22,7 +22,9 @@ snapshots['TestUserIdentityMutations.test_remove_user_identity 1'] = {
 snapshots['TestUserIdentityMutations.test_remove_user_identity 2'] = {
     'data': {
         'removeUserIdentity': {
-            'userIdentityEdge': None
+            'userIdentityEdge': {
+                'username': None
+            }
         }
     }
 }

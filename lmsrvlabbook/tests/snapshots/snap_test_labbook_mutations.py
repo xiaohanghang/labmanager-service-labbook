@@ -26,7 +26,7 @@ snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 2'] = 
         {
             'locations': [
                 {
-                    'column': 15,
+                    'column': 11,
                     'line': 3
                 }
             ],

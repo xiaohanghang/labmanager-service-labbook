@@ -18,31 +18,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from flask import current_app
-from lmcommon.auth.identity import AuthenticationError
+from lmsrvcore.auth.identity import get_identity_manager_instance, parse_token
 
 
-def get_identity_manager_instance():
-    """Method to retrieve the id manager from the flask application"""
-    if "LABMGR_ID_MGR" not in current_app.config:
-        raise AuthenticationError("Application mis-configured. Missing identity manager instance.", 401)
+class AuthorizationMiddleware(object):
+    """Middlewere to enforce authentication requirements and parse JWT"""
+    id_mgr = None
 
-    return current_app.config["LABMGR_ID_MGR"]
+    def resolve(self, next, root, info, **args):
+        if not self.id_mgr:
+            # Load ID manager instance on first run
+            self.id_mgr = get_identity_manager_instance()
 
+        # On first field processed in request, authenticate
+        if not hasattr(info.context, "auth_middleware_complete"):
+            # Pull the token out of the header if available
+            token = None
+            if "Authorization" in info.context.headers:
+                token = parse_token(info.context.headers["Authorization"])
 
-def parse_token(auth_header: str) -> str:
-    """Method to extract the bearer token from the authorization header
+            # Authenticate and set current user context on each request
+            current_app.current_user = self.id_mgr.authenticate(token)
+            info.context.auth_middleware_complete = True
 
-    Args:
-        auth_header(str): The Authorization header
-
-    Returns:
-        str
-    """
-    if "Bearer" in auth_header:
-        _, token = auth_header.split("Bearer ")
-        if not token:
-            raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
-    else:
-        raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
-
-    return token
+        return next(root, info, **args)

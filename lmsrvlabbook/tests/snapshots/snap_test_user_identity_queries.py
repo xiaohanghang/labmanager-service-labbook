@@ -21,6 +21,12 @@ snapshots['TestUserIdentityQueries.test_logged_in_user 1'] = {
 
 snapshots['TestUserIdentityQueries.test_no_logged_in_user 1'] = {
     'data': {
-        'userIdentity': None
+        'userIdentity': {
+            'email': None,
+            'familyName': None,
+            'givenName': None,
+            'id': 'VXNlcklkZW50aXR5Ok5vbmU=',
+            'username': None
+        }
     }
 }

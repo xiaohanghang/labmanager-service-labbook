@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@ from lmcommon.logging import LMLogger
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvcore.api import logged_mutation
 from lmsrvlabbook.api.objects.activity import ActivityRecordObject
 from lmsrvlabbook.api.connections.activity import ActivityConnection
 
@@ -40,7 +39,7 @@ class CreateUserNote(graphene.relay.ClientIDMutation):
     """
 
     class Input:
-        owner = graphene.String(required=False)
+        owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         title = graphene.String(required=True)
         body = graphene.String(required=False)
@@ -50,18 +49,13 @@ class CreateUserNote(graphene.relay.ClientIDMutation):
     new_activity_record_edge = graphene.Field(lambda: ActivityConnection.Edge)
 
     @classmethod
-    @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, title, body=None, tags=None,
+                               client_mutation_id=None):
         username = get_logged_in_username()
-
-        if not input.get("owner"):
-            owner = username
-        else:
-            owner = input.get("owner")
 
         # Load LabBook instance
         lb = LabBook()
-        lb.from_name(username, owner, input.get('labbook_name'))
+        lb.from_name(username, owner, labbook_name)
 
         # Create a Activity Store instance
         store = ActivityStore(lb)
@@ -70,17 +64,19 @@ class CreateUserNote(graphene.relay.ClientIDMutation):
         adr = ActivityDetailRecord(ActivityDetailType.NOTE,
                                    show=True,
                                    importance=255)
-        if input.get("body"):
-            adr.add_value('text/markdown', input.get("body"))
+        if body:
+            adr.add_value('text/markdown', body)
 
         # Create activity record
         ar = ActivityRecord(ActivityType.NOTE,
-                            message=input.get("title"),
+                            message=title,
                             linked_commit="xxx",
                             importance=255,
-                            tags=input.get("tags"))
+                            tags=tags)
         ar.add_detail_object(adr)
         ar = store.create_activity_record(ar)
 
-        return CreateUserNote(new_activity_record_edge=ActivityConnection.Edge(node=ActivityRecordObject.from_activity_record(ar, store),
+        return CreateUserNote(new_activity_record_edge=ActivityConnection.Edge(node=ActivityRecordObject(owner=owner,
+                                                                                                         name=labbook_name,
+                                                                                                         commit=ar.commit),
                                                                                cursor=ar.commit))

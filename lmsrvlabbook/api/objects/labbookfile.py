@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,14 +21,11 @@ import graphene
 
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import logged_query
-from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 
 class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type representing a file or directory inside the labbook file system."""
-    # An instance of the LabBook dataloader
-    _dataloader = None
+    # Loaded file info
     _file_info = None
 
     # Section in the LabBook (code, input, output)
@@ -49,7 +46,7 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
     # Size in bytes.
     size = graphene.Int()
 
-    def _load_file_info(self):
+    def _load_file_info(self, dataloader):
         """Private method to retrieve file info for a given key"""
         if not self._file_info:
             # Load file info from LabBook
@@ -57,7 +54,7 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
                 raise ValueError("Must set `section` and `key` on object creation to resolve file info")
 
             # Load labbook instance
-            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            lb = dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
             # Retrieve file info
             self._file_info = lb.get_file_info(self.section, self.key)
@@ -74,8 +71,7 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         # Parse the key
         owner, name, section, key = id.split("&")
 
-        return LabbookFile(id=f"{owner}&{name}&{section}&{key}", name=name, owner=owner, section=section, key=key,
-                           _dataloader=LabBookLoader())
+        return LabbookFile(id=f"{owner}&{name}&{section}&{key}", name=name, owner=owner, section=section, key=key)
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
@@ -89,32 +85,31 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
     def resolve_is_dir(self, info):
         """Resolve the is_dir field"""
         if self.is_dir is None:
-            self._load_file_info()
+            self._load_file_info(info.context.labbook_loader)
         return self.is_dir
 
     def resolve_modified_at(self, info):
         """Resolve the modified_at field"""
         if self.modified_at is None:
-            self._load_file_info()
+            self._load_file_info(info.context.labbook_loader)
         return self.modified_at
 
     def resolve_size(self, info):
         """Resolve the size field"""
         if self.size is None:
-            self._load_file_info()
+            self._load_file_info(info.context.labbook_loader)
         return self.size
 
     def resolve_is_favorite(self, info):
         """Resolve the is_favorite field"""
         if self.is_favorite is None:
-            self._load_file_info()
+            self._load_file_info(info.context.labbook_loader)
         return self.is_favorite
 
 
 class LabbookFavorite(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type representing a file or directory that has been favorited in the labbook file system."""
-    # An instance of the LabBook dataloader
-    _dataloader = None
+    # An instance of loaded favorite data
     _favorite_data = None
 
     # Section in the LabBook (code, input, output)
@@ -132,18 +127,18 @@ class LabbookFavorite(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
     # True indicates that the favorite is a directory
     is_dir = graphene.Boolean()
 
-    def _load_favorite_info(self):
+    def _load_favorite_info(self, dataloader):
         """Private method to retrieve file info for a given key"""
         if self._favorite_data:
             # File info is already available in this instance
             favorite_data = self._favorite_data
         else:
             # Load file info from LabBook
-            if not self.section or not self.index:
+            if not self.section or self.index is None:
                 raise ValueError("Must set `section` and `index` on object creation to resolve favorite info")
 
             # Load labbook instance
-            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            lb = dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
             data = lb.get_favorites(self.section)
 
@@ -168,8 +163,7 @@ class LabbookFavorite(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
         owner, name, section, index = id.split("&")
 
         return LabbookFavorite(id=f"{owner}&{name}&{section}&{index}", name=name, owner=owner, section=section,
-                               index=int(index),
-                               _dataloader=LabBookLoader())
+                               index=int(index))
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
@@ -184,17 +178,17 @@ class LabbookFavorite(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
     def resolve_is_dir(self, info):
         """Resolve the is_dir field"""
         if self.is_dir is None:
-            self._load_favorite_info()
+            self._load_favorite_info(info.context.labbook_loader)
         return self.is_dir
 
     def resolve_key(self, info):
         """Resolve the is_dir field"""
         if self.key is None:
-            self._load_favorite_info()
+            self._load_favorite_info(info.context.labbook_loader)
         return self.key
 
     def resolve_description(self, info):
         """Resolve the is_dir field"""
         if self.description is None:
-            self._load_favorite_info()
+            self._load_favorite_info(info.context.labbook_loader)
         return self.description

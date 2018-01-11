@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,15 +20,12 @@
 import graphene
 from graphene.types import datetime
 
-from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityType
 
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import logged_query
 
-from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 logger = LMLogger.get_logger()
 
@@ -41,8 +38,7 @@ ActivityDetailTypeEnum = graphene.Enum.from_enum(ActivityDetailType)
 
 class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """Container for Activity Detail Records"""
-    # An instance of the LabBook dataloader
-    _dataloader = None
+    # The loaded detail record data
     _detail_record = None
 
     # Unique key for this activity detail record in the detail db
@@ -63,7 +59,7 @@ class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
     # A list of tags for the entire record
     tags = graphene.List(graphene.String)
 
-    def _load_detail_record(self):
+    def _load_detail_record(self, dataloader):
         """Private method to load a detail record if it has not been previously loaded and set"""
         if not self._detail_record:
             # Load record from database
@@ -71,7 +67,7 @@ class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
                 raise ValueError("Must set `key` on object creation to resolve detail record")
 
             # Load store instance
-            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            lb = dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
             store = ActivityStore(lb)
 
             # Retrieve record
@@ -89,8 +85,7 @@ class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
         # Parse the key
         owner, name, key = id.split("&")
 
-        return ActivityDetailObject(id=f"{owner}&{name}&{key}", name=name, owner=owner, key=key,
-                                    _dataloader=LabBookLoader())
+        return ActivityDetailObject(id=f"{owner}&{name}&{key}", name=name, owner=owner, key=key)
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
@@ -104,31 +99,31 @@ class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
     def resolve_type(self, info):
         """Resolve the type field"""
         if self.type is None:
-            self._load_detail_record()
+            self._load_detail_record(info.context.labbook_loader)
         return self.type
 
     def resolve_show(self, info):
         """Resolve the show field"""
         if self.show is None:
-            self._load_detail_record()
+            self._load_detail_record(info.context.labbook_loader)
         return self.show
 
     def resolve_importance(self, info):
         """Resolve the importance field"""
         if self.importance is None:
-            self._load_detail_record()
+            self._load_detail_record(info.context.labbook_loader)
         return self.importance
 
     def resolve_tags(self, info):
         """Resolve the tags field"""
         if self.tags is None:
-            self._load_detail_record()
+            self._load_detail_record(info.context.labbook_loader)
         return self.tags
 
     def resolve_data(self, info):
         """Resolve the data field"""
         if self.data is None:
-            self._load_detail_record()
+            self._load_detail_record(info.context.labbook_loader)
 
         # JSONify for transport via web
         data_dict = self._detail_record.jsonify_data()
@@ -138,8 +133,7 @@ class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
 
 class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """Container for Activity Records"""
-    # An instance of the LabBook dataloader
-    _dataloader = None
+    # An instance of the loaded activity record data
     _activity_record = None
 
     # Commit hash for this activity record
@@ -169,7 +163,7 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
     # Datetime of the record creation
     timestamp = datetime.DateTime()
 
-    def _load_activity_record(self):
+    def _load_activity_record(self, dataloader):
         """Private method to load an activity record if it has not been previously loaded and set"""
         if not self._activity_record:
             # Load record from database
@@ -177,7 +171,7 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
                 raise ValueError("Must set `commit` on object creation to resolve detail record")
 
             # Load store instance
-            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            lb = dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
             store = ActivityStore(lb)
 
             # Retrieve record
@@ -198,8 +192,7 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
         # Parse the key
         owner, name, commit = id.split("&")
 
-        return ActivityDetailObject(id=f"{owner}&{name}&{commit}", name=name, owner=owner, commit=commit,
-                                    _dataloader=LabBookLoader())
+        return ActivityRecordObject(id=f"{owner}&{name}&{commit}", name=name, owner=owner, commit=commit)
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
@@ -213,43 +206,43 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
     def resolve_linked_commit(self, info):
         """Resolve the linked_commit field"""
         if self.linked_commit is None:
-            self._load_activity_record()
+            self._load_activity_record(info.context.labbook_loader)
         return self.linked_commit
 
     def resolve_message(self, info):
         """Resolve the message field"""
         if self.message is None:
-            self._load_activity_record()
+            self._load_activity_record(info.context.labbook_loader)
         return self.message
 
     def resolve_type(self, info):
         """Resolve the type field"""
         if self.type is None:
-            self._load_activity_record()
+            self._load_activity_record(info.context.labbook_loader)
         return self.type
 
     def resolve_show(self, info):
         """Resolve the show field"""
         if self.show is None:
-            self._load_activity_record()
+            self._load_activity_record(info.context.labbook_loader)
         return self.show
 
     def resolve_tags(self, info):
         """Resolve the tags field"""
         if self.tags is None:
-            self._load_activity_record()
+            self._load_activity_record(info.context.labbook_loader)
         return self.tags
 
     def resolve_timestamp(self, info):
         """Resolve the timestamp field"""
         if self.timestamp is None:
-            self._load_activity_record()
+            self._load_activity_record(info.context.labbook_loader)
         return self.timestamp
 
     def resolve_importance(self, info):
         """Resolve the importance field"""
         if self.importance is None:
-            self._load_activity_record()
+            self._load_activity_record(info.context.labbook_loader)
         return self.importance
 
     def resolve_detail_objects(self, info):
@@ -257,13 +250,16 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
         if self.detail_objects is None:
             if self._activity_record is None:
                 # Load the activity record first if it is missing
-                self._load_activity_record()
+                self._load_activity_record(info.context.labbook_loader)
 
             # Load detail objects from database
             self.detail_objects = [ActivityDetailObject(id=f"{self.owner}&{self.name}&{r[3].key}",
                                                         owner=self.owner,
                                                         name=self.name,
                                                         key=r[3].key,
-                                                        _dataloader=self._dataloader) for r in self._activity_record.detail_objects]
+                                                        show=r[3].show,
+                                                        tags=r[3].tags,
+                                                        importance=r[3].importance,
+                                                        type=ActivityDetailTypeEnum.get(r[3].type.value).value) for r in self._activity_record.detail_objects]
 
         return self.detail_objects

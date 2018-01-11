@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@ from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 
-from lmsrvcore.api import logged_mutation
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.auth.identity import parse_token
@@ -41,6 +40,7 @@ from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnec
 from lmsrvlabbook.api.objects.labbook import Labbook
 from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
 from lmsrvlabbook.dataloader.labbook import LabBookLoader
+
 
 logger = LMLogger.get_logger()
 
@@ -56,7 +56,6 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
     labbook = graphene.Field(lambda: Labbook)
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, name, description, client_mutation_id=None):
         username = get_logged_in_username()
 
@@ -91,7 +90,7 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         dataloader.prime(f"{username}&{username}&{lb.name}", lb)
 
         # Get a graphene instance of the newly created LabBook
-        return CreateLabbook(labbook=Labbook(owner=username, name=lb.name, _dataloader=dataloader))
+        return CreateLabbook(labbook=Labbook(owner=username, name=lb.name))
 
 
 class RenameLabbook(graphene.ClientIDMutation):
@@ -104,14 +103,12 @@ class RenameLabbook(graphene.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, original_labbook_name, new_labbook_name,
                                client_mutation_id=None):
         # This bypasses the original implementation. Rename is temporarily disabled.
         raise NotImplemented('Rename functionality is temporarily disabled.')
 
     @classmethod
-    @logged_mutation
     def prior_mutate_and_get_payload(cls, root, info, owner, original_labbook_name, new_labbook_name,
                                      client_mutation_id=None):
         # NOTE!!! This is the code that was originally to rename.
@@ -156,7 +153,6 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
     job_key = graphene.String()
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
 
         username = get_logged_in_username()
@@ -185,7 +181,6 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     build_image_job_key = graphene.String()
 
     @classmethod
-    @logged_mutation
     def mutate_and_process_upload(cls, info, **kwargs):
         if not cls.upload_file_path:
             logger.error('No file uploaded')
@@ -239,7 +234,6 @@ class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
     active_branch = graphene.String()
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_url, client_mutation_id=None):
         username = get_logged_in_username()
         logger.info(f"Importing remote labbook from {remote_url}")
@@ -277,7 +271,6 @@ class AddLabbookRemote(graphene.relay.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, remote_url, client_mutation_id=None):
         username = get_logged_in_username()
         logger.info(f"Adding labbook remote {remote_name} {remote_url}")
@@ -298,7 +291,6 @@ class PullActiveBranchFromRemote(graphene.relay.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, client_mutation_id=None):
         username = get_logged_in_username()
         logger.info(f"Importing remote labbook from {remote_name}")
@@ -321,7 +313,6 @@ class PushActiveBranchToRemote(graphene.relay.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, client_mutation_id=None):
         username = get_logged_in_username()
         logger.info(f"Importing remote labbook from {remote_name}")
@@ -348,7 +339,6 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
     @classmethod
-    @logged_mutation
     def mutate_and_process_upload(cls, info, **kwargs):
 
         if not cls.upload_file_path:
@@ -380,7 +370,6 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
                        'name': kwargs.get('labbook_name'),
                        'section': kwargs.get('section'),
                        'key': file_info['key'],
-                       "_dataloader": dataloader,
                        '_file_info': file_info}
 
         # TODO: Fix cursor implementation, this currently doesn't make sense when adding edges
@@ -400,7 +389,6 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, file_path, is_directory=False,
                                client_mutation_id=None):
         username = get_logged_in_username()
@@ -428,7 +416,6 @@ class MoveLabbookFile(graphene.ClientIDMutation):
     new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, src_path, dst_path,
                                client_mutation_id=None):
         username = get_logged_in_username()
@@ -450,7 +437,6 @@ class MoveLabbookFile(graphene.ClientIDMutation):
                        'name': labbook_name,
                        'section': section,
                        'key': file_info['key'],
-                       "_dataloader": dataloader,
                        '_file_info': file_info}
 
         # TODO: Fix cursor implementation, this currently doesn't make sense
@@ -470,7 +456,6 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
     new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, directory,
                                client_mutation_id=None):
         username = get_logged_in_username()
@@ -493,7 +478,6 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
                        'name': labbook_name,
                        'section': section,
                        'key': file_info['key'],
-                       "_dataloader": dataloader,
                        '_file_info': file_info}
 
         # TODO: Fix cursor implementation, this currently doesn't make sense
@@ -516,7 +500,6 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
     new_favorite_edge = graphene.Field(LabbookFavoriteConnection.Edge)
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, key, description=None, is_dir=False,
                                index=None, client_mutation_id=None):
         username = get_logged_in_username()
@@ -542,7 +525,6 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
                        "section": section,
                        "name": labbook_name,
                        "index": int(new_favorite['index']),
-                       "_dataloader": dataloader,
                        "_favorite_data": new_favorite}
 
         # Create cursor
@@ -565,7 +547,6 @@ class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
     updated_favorite_edge = graphene.Field(LabbookFavoriteConnection.Edge)
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, index=None, updated_index=None,
                                updated_key=None, updated_description=None, client_mutation_id=None):
         username = get_logged_in_username()
@@ -588,7 +569,6 @@ class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
                        "section": section,
                        "name": labbook_name,
                        "index": int(new_favorite['index']),
-                       "_dataloader": dataloader,
                        "_favorite_data": new_favorite}
 
         # Create dummy cursor
@@ -608,7 +588,6 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, index, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook()
@@ -629,7 +608,6 @@ class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
     updated_labbook = graphene.Field(Labbook)
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, username, client_mutation_id=None):
         logged_in_username = get_logged_in_username()
         lb = LabBook()
@@ -659,8 +637,7 @@ class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
         dataloader.prime(f"{username}&{username}&{lb.name}", lb)
 
         create_data = {"owner": owner,
-                       "name": labbook_name,
-                       "_dataloader": dataloader}
+                       "name": labbook_name}
 
         return AddLabbookCollaborator(updated_labbook=Labbook(**create_data))
 
@@ -674,7 +651,6 @@ class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
     updated_labbook = graphene.Field(Labbook)
 
     @classmethod
-    @logged_mutation
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, username, client_mutation_id=None):
         logged_in_username = get_logged_in_username()
         lb = LabBook()
@@ -704,7 +680,6 @@ class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
         dataloader.prime(f"{username}&{username}&{lb.name}", lb)
 
         create_data = {"owner": owner,
-                       "name": labbook_name,
-                       "_dataloader": dataloader}
+                       "name": labbook_name}
 
         return DeleteLabbookCollaborator(updated_labbook=Labbook(**create_data))

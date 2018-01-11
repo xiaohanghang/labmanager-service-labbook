@@ -11,7 +11,7 @@ snapshots['TestNodeQueries.test_node_labbook_from_object 1'] = {
     'data': {
         'node': {
             'activeBranch': {
-                'name': 'gm.workspace-default'
+                'refName': 'gm.workspace-default'
             },
             'description': 'Test cat labbook from obj',
             'id': 'TGFiYm9vazpkZWZhdWx0JmNhdC1sYWItYm9vazE=',
@@ -24,7 +24,7 @@ snapshots['TestNodeQueries.test_node_labbook_from_mutation 1'] = {
     'data': {
         'node': {
             'activeBranch': {
-                'name': 'gm.workspace-default'
+                'refName': 'gm.workspace-default'
             },
             'description': 'my test description',
             'id': 'TGFiYm9vazpkZWZhdWx0JnRlc3QtbGFiLWJvb2sx',
@@ -39,7 +39,7 @@ snapshots['TestNodeQueries.test_node_environment 1'] = {
             'description': 'Example labbook by mutation.',
             'environment': {
                 'containerStatus': 'NOT_RUNNING',
-                'id': 'RW52aXJvbm1lbnQ6ZGVmYXVsdCZkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=',
+                'id': 'RW52aXJvbm1lbnQ6ZGVmYXVsdCZub2RlLWVudi10ZXN0LWxi',
                 'imageStatus': 'DOES_NOT_EXIST'
             },
             'id': 'TGFiYm9vazpkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=',
@@ -52,44 +52,10 @@ snapshots['TestNodeQueries.test_node_environment 2'] = {
     'data': {
         'node': {
             'containerStatus': 'NOT_RUNNING',
-            'id': 'RW52aXJvbm1lbnQ6ZGVmYXVsdCZkZWZhdWx0Jm5vZGUtZW52LXRlc3QtbGI=',
+            'id': 'RW52aXJvbm1lbnQ6ZGVmYXVsdCZub2RlLWVudi10ZXN0LWxi',
             'imageStatus': 'DOES_NOT_EXIST'
         }
     }
-}
-
-snapshots['TestNodeQueries.test_favorites_node 1'] = {
-    'data': {
-        'node': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 3
-                }
-            ],
-            'message': 'Invalid favorite index value'
-        }
-    ]
-}
-
-snapshots['TestNodeQueries.test_favorites_node 2'] = {
-    'data': {
-        'node': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 29,
-                    'line': 3
-                }
-            ],
-            'message': 'Invalid favorite index value'
-        }
-    ]
 }
 
 snapshots['TestNodeQueries.test_favorites_node 3'] = {
@@ -113,4 +79,86 @@ snapshots['TestNodeQueries.test_file_node 1'] = {
             'size': 5
         }
     }
+}
+
+snapshots['TestNodeQueries.test_favorites_node 1'] = {
+    'data': {
+        'node': {
+            'description': None,
+            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYxMDA=',
+            'index': 100,
+            'isDir': None,
+            'key': None
+        }
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 6
+                }
+            ],
+            'message': 'Invalid favorite index value'
+        },
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 7
+                }
+            ],
+            'message': 'Invalid favorite index value'
+        },
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 8
+                }
+            ],
+            'message': 'Invalid favorite index value'
+        }
+    ]
+}
+
+snapshots['TestNodeQueries.test_favorites_node 2'] = {
+    'data': {
+        'node': {
+            'description': None,
+            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYtMQ==',
+            'index': -1,
+            'isDir': None,
+            'key': None
+        }
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 6
+                }
+            ],
+            'message': 'Invalid favorite index value'
+        },
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 7
+                }
+            ],
+            'message': 'Invalid favorite index value'
+        },
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 8
+                }
+            ],
+            'message': 'Invalid favorite index value'
+        }
+    ]
 }

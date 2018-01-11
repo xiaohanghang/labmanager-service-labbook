@@ -1,4 +1,4 @@
-# Copyright (c) 2018 FlashX, LLC
+# Copyright (c) 2017 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -12,18 +12,21 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THEt
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import graphene
-from lmsrvlabbook.api.objects.labbook import Labbook
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 
-class LabbookConnection(graphene.relay.Connection):
-    """A Connection for paging through labbooks that exist locally. """
-    class Meta:
-        node = Labbook
+class LabBookLoaderMiddleware(object):
+    """Middleware to insert an instance of the LabBookLoader dataloader into the request context"""
+    def resolve(self, next, root, info, **args):
+        if hasattr(info.context, "labbook_loader"):
+            if not info.context.labbook_loader:
+                info.context.labbook_loader = LabBookLoader()
+        else:
+            info.context.labbook_loader = LabBookLoader()
 
-
+        return next(root, info, **args)

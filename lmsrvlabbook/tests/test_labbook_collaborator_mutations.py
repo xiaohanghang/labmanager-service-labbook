@@ -37,7 +37,6 @@ from lmcommon.configuration import get_docker_client
 from lmcommon.labbook import LabBook
 
 
-
 @pytest.fixture()
 def mock_create_labbooks(fixture_working_dir):
     # Create a labbook in the temporary directory
@@ -47,7 +46,7 @@ def mock_create_labbooks(fixture_working_dir):
     yield fixture_working_dir
 
 
-@pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
+@pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot use responses on CircleCI")
 class TestLabBookCollaboratorMutations(object):
 
     @responses.activate
@@ -96,24 +95,22 @@ class TestLabBookCollaboratorMutations(object):
         env = builder.get_environ()
         req = Request(environ=env)
 
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            query = """
-            mutation AddCollaborator {
-              addCollaborator(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  username: "person100"
-                }) {
-                  updatedLabbook {
-                    collaborators
-                    canManageCollaborators
-                  }
-                }
+        query = """
+        mutation AddCollaborator {
+          addCollaborator(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              username: "person100"
+            }) {
+              updatedLabbook {
+                collaborators
+                canManageCollaborators
+              }
             }
-            """
-            snapshot.assert_match(client.execute(query, context_value=req))
+        }
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query, context_value=req))
 
     @responses.activate
     def test_add_collaborator_as_owner(self, mock_create_labbooks, property_mocks_fixture, snapshot,
@@ -162,24 +159,22 @@ class TestLabBookCollaboratorMutations(object):
         env = builder.get_environ()
         req = Request(environ=env)
 
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            query = """
-            mutation AddCollaborator {
-              addCollaborator(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  username: "person100"
-                }) {
-                  updatedLabbook {
-                    collaborators
-                    canManageCollaborators
-                  }
-                }
+        query = """
+        mutation AddCollaborator {
+          addCollaborator(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              username: "person100"
+            }) {
+              updatedLabbook {
+                collaborators
+                canManageCollaborators
+              }
             }
-            """
-            snapshot.assert_match(client.execute(query, context_value=req))
+        }
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query, context_value=req))
 
     @responses.activate
     def test_delete_collaborator(self, mock_create_labbooks, property_mocks_fixture, snapshot,
@@ -215,21 +210,19 @@ class TestLabBookCollaboratorMutations(object):
         env = builder.get_environ()
         req = Request(environ=env)
 
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            query = """
-            mutation DeleteCollaborator {
-              deleteCollaborator(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  username: "person100"
-                }) {
-                  updatedLabbook {
-                    collaborators
-                  }
-                }
+        query = """
+        mutation DeleteCollaborator {
+          deleteCollaborator(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              username: "person100"
+            }) {
+              updatedLabbook {
+                collaborators
+              }
             }
-            """
-            snapshot.assert_match(client.execute(query, context_value=req))
+        }
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query, context_value=req))
 

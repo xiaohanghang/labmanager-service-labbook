@@ -1,5 +1,5 @@
 
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,6 @@ from lmsrvlabbook.api.objects.environmentinfo import EnvironmentInfo
 from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
 
 from lmcommon.environment import ComponentRepository
-
-from lmsrvcore.api import logged_query
 
 
 class BaseImage(graphene.ObjectType):
@@ -95,7 +93,6 @@ class BaseImage(graphene.ObjectType):
                 "component": split[3], "version": split[4]}
 
     @staticmethod
-    @logged_query
     def create(id_data):
         """Method to create a graphene BaseImage object based on the type node ID or id_data
 

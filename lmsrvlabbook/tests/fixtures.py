@@ -27,15 +27,16 @@ from flask import Flask, current_app
 import json
 from mock import patch
 import responses
+from graphene.test import Client
 
 from lmcommon.environment import RepositoryManager
 from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.auth.identity import get_identity_manager
 from lmcommon.labbook import LabBook
+from lmsrvcore.middleware import LabBookLoaderMiddleware
 
-from lmsrvlabbook.api.query import LabbookQuery, LABBOOK_LOADER
+from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
-
 
 def _create_temp_work_dir():
     """Helper method to create a temporary working directory and associated config file"""
@@ -57,13 +58,16 @@ def _create_temp_work_dir():
     return config_file, temp_dir
 
 
+class ContextMock(object):
+    """A simple class to mock the Flask request context so you have a labbook_loader attribute"""
+    def __init__(self):
+        self.labbook_loader = None
+
+
 @pytest.fixture
 def fixture_working_dir():
     """A pytest fixture that creates a temporary working directory, config file, schema, and local user identity
     """
-    # Nuke LABBOOK_LOADER cache
-    LABBOOK_LOADER.clear_all()
-
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
 
@@ -89,7 +93,10 @@ def fixture_working_dir():
             # within this block, current_app points to app. Set current usert explicitly(this is done in the middleware)
             current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
 
-            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+            # Create a test client
+            client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
+
+            yield config_file, temp_dir, client, schema  # name of the config file, temporary working directory, the schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
@@ -101,9 +108,6 @@ def fixture_working_dir_env_repo_scoped():
     and populates the environment component repository.
     Class scope modifier attached
     """
-    # Nuke LABBOOK_LOADER cache
-    LABBOOK_LOADER.clear_all()
-
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
 
@@ -134,7 +138,10 @@ def fixture_working_dir_env_repo_scoped():
             # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
             current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
 
-            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+            # Create a test client
+            client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
+
+            yield config_file, temp_dir, client, schema  # name of the config file, temporary working directory, the schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
@@ -146,9 +153,6 @@ def fixture_working_dir_populated_scoped():
     and populates the environment component repository.
     Class scope modifier attached
     """
-    # Nuke LABBOOK_LOADER cache
-    LABBOOK_LOADER.clear_all()
-
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
 
@@ -188,7 +192,10 @@ def fixture_working_dir_populated_scoped():
             # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
             current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
 
-            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+            # Create a test client
+            client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
+
+            yield config_file, temp_dir, client, schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)

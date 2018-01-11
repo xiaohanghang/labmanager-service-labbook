@@ -1,5 +1,5 @@
 
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,16 +24,12 @@ from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.interfaces import GitRef
 
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import logged_query
 from lmsrvlabbook.api.objects.commit import LabbookCommit
 from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 
 class LabbookRef(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository, GitRef)):
     """An object representing a git reference in a LabBook repository"""
-    # An instance of the LabBook dataloader
-    _dataloader = None
-
     # The target commit the reference points to
     commit = graphene.Field(LabbookCommit)
 
@@ -54,11 +50,9 @@ class LabbookRef(graphene.ObjectType, interfaces=(graphene.relay.Node, GitReposi
                 raise ValueError("Resolving a LabbookRef Node ID requires owner, name, and branch to be set")
             self.id = f"{self.owner}&{self.name}&{self.prefix}&{self.ref_name}"
 
-    @logged_query
     def resolve_commit(self, info):
         """Resolve the commit field"""
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         git_ref = lb.git.repo.refs[self.ref_name]
         return LabbookCommit(id=f"{self.owner}&{self.name}&None&{self.branch}",
-                             owner=self.owner, name=self.name, hash=git_ref.commit.hexsha,
-                             _dataloader=self._dataloader)
+                             owner=self.owner, name=self.name, hash=git_ref.commit.hexsha)

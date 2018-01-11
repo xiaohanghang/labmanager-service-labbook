@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,16 +21,13 @@ import base64
 import graphene
 import os
 from lmcommon.logging import LMLogger
-from lmcommon.labbook import LabBook
 
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import logged_query
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbookfile import LabbookFavorite, LabbookFile
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFileConnection, LabbookFavoriteConnection
-from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 logger = LMLogger.get_logger()
 
@@ -38,9 +35,6 @@ logger = LMLogger.get_logger()
 class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type representing a section within a LabBook (i.e., code, input, output)
     """
-    # A copy of the LabBook dataloader
-    _dataloader = None
-
     # Section name (code, input, output)
     section = graphene.String()
 
@@ -59,7 +53,7 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
         # Parse the key
         owner, name, section = id.split("&")
 
-        return LabbookSection(owner=owner, name=name, section=section, _dataloader=LabBookLoader())
+        return LabbookSection(owner=owner, name=name, section=section)
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
@@ -73,7 +67,7 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
 
     def resolve_files(self, info, **kwargs):
         """Resolver for getting file listing in a single directory"""
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         base_dir = None
         if 'root_dir' in kwargs:
@@ -97,7 +91,6 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
                            "section": self.section,
                            "name": self.name,
                            "key": edge['key'],
-                           "_dataloader": self._dataloader,
                            "_file_info": edge}
             edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile(**create_data), cursor=cursor))
 
@@ -105,7 +98,7 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
 
     def resolve_all_files(self, info, **kwargs):
         """Resolver for getting all files in a LabBook section"""
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
         edges = lb.walkdir(section=self.section, show_hidden=False)
@@ -122,7 +115,6 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
                            "section": self.section,
                            "name": self.name,
                            "key": edge['key'],
-                           "_dataloader": self._dataloader,
                            "_file_info": edge}
             edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile(**create_data), cursor=cursor))
 
@@ -130,7 +122,7 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
 
     def resolve_favorites(self, info, **kwargs):
         """Resolve all favorites for the given section"""
-        lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
         edges = lb.get_favorites(self.section)
@@ -147,7 +139,6 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
                            "section": self.section,
                            "name": self.name,
                            "index": int(edge['index']),
-                           "_dataloader": self._dataloader,
                            "_favorite_data": edge}
             edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite(**create_data), cursor=cursor))
 

@@ -18,46 +18,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
-import tempfile
-import os
-from datetime import datetime
-from snapshottest import snapshot
-from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_populated_scoped, fixture_test_file
-
-from graphene.test import Client
-import graphene
-from mock import patch
-import pprint
-
-from lmcommon.labbook import LabBook
-from lmcommon.fixtures import remote_labbook_repo
-from lmcommon.configuration import Configuration
-
-from ..api import LabbookMutations, LabbookQuery
-
-
-# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
+from lmsrvlabbook.tests.fixtures import fixture_working_dir
 
 
 class TestLabManagerQueries(object):
-
     def test_get_build_info(self, fixture_working_dir):
-        """Test listing labbooks"""
+        """Test getting the build info field"""
+        query = """
+        {
+            buildInfo
+        }
+        """
+        r = fixture_working_dir[2].execute(query)
+        assert 'errors' not in r
+        assert '-' in r['data']['buildInfo']
 
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            query = """
-            {
-                buildInfo
-            }
-            """
-            client = Client(fixture_working_dir[2])
-            r = client.execute(query)
-            pprint.pprint(r)
-            assert 'errors' not in r
-            assert '-' in r['data']['buildInfo']

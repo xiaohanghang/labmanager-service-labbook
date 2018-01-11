@@ -40,6 +40,8 @@ from lmcommon.dispatcher.jobs import export_labbook_as_zip
 from lmcommon.fixtures import remote_labbook_repo, mock_config_file
 from lmcommon.labbook import LabBook
 
+from lmsrvcore.middleware import error_middleware, LabBookLoaderMiddleware
+
 
 @pytest.fixture()
 def mock_create_labbooks(fixture_working_dir):
@@ -62,224 +64,210 @@ class TestLabBookServiceMutations(object):
     def test_create_labbook(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""
         # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Create LabBook
-            query = """
-            mutation myCreateLabbook($name: String!, $desc: String!) {
-              createLabbook(input: {name: $name, description: $desc}) {
-                labbook {
-                  id
-                  name
-                  description
-                }
-              }
+        # Create LabBook
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!) {
+          createLabbook(input: {name: $name, description: $desc}) {
+            labbook {
+              id
+              name
+              description
             }
-            """
+          }
+        }
+        """
+        variables = {"name": "test-lab-book1", "desc": "my test description"}
+        fixture_working_dir[2].execute(query, variable_values=variables)
 
-            variables = {"name": "test-lab-book1", "desc": "my test description"}
-            client.execute(query, variable_values=variables)
-
-            # Get LabBook you just created
-            query = """
-            {
-              labbook(name: "test-lab-book1", owner: "default") {               
-                activityRecords {
-                    edges{
-                        node{
-                            message
+        # Get LabBook you just created
+        query = """
+        {
+          labbook(name: "test-lab-book1", owner: "default") {               
+            activityRecords {
+                edges{
+                    node{
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        detailObjects{
                             type
+                            data
                             show
                             importance
                             tags
-                            detailObjects{
-                                type
-                                data
-                                show
-                                importance
-                                tags
-                            }
-                            }                        
-                        }    
-                }
-              }
+                        }
+                        }                        
+                    }    
             }
-            """
-            snapshot.assert_match(client.execute(query))
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_create_labbook_already_exists(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Create LabBook
-            query = """
-            mutation myCreateLabbook($name: String!, $desc: String!){
-              createLabbook(input: {name: $name, description: $desc}){
-                labbook{
-                  name
-                  description
-                }
-              }
+        # Create LabBook
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!){
+          createLabbook(input: {name: $name, description: $desc}){
+            labbook{
+              name
+              description
             }
-            """
-            variables = {"name": "test-lab-book", "desc": "my test description"}
+          }
+        }
+        """
+        variables = {"name": "test-lab-book", "desc": "my test description"}
 
-            snapshot.assert_match(client.execute(query, variable_values=variables))
+        snapshot.assert_match(fixture_working_dir[2].execute(query, variable_values=variables))
 
-            # Second should fail with an error message
-            snapshot.assert_match(client.execute(query, variable_values=variables))
+        # Second should fail with an error message
+        snapshot.assert_match(fixture_working_dir[2].execute(query, variable_values=variables))
 
     def test_move_file(self, mock_create_labbooks, snapshot):
         """Test moving a file"""
         labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')
         os.makedirs(os.path.join(labbook_dir, 'code', 'subdir'))
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            query = """
-            mutation MoveLabbookFile {
-              moveLabbookFile(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  section: "code",
-                  srcPath: "sillyfile",
-                  dstPath: "subdir/sillyfile"
-                }) {
-                  newLabbookFileEdge {
-                    node{
-                      key
-                      isDir
-                      size
-                    }
-                  }
-                }
-            }
-            """
-            snapshot.assert_match(client.execute(query))
 
-            query = """
-            mutation MoveLabbookFile {
-              moveLabbookFile(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  section: "code",
-                  srcPath: "subdir/",
-                  dstPath: "subdir2/"
-                }) {
-                  newLabbookFileEdge {
-                    node{
-                      key
-                      isDir
-                      size
-                    }
-                  }
+        query = """
+        mutation MoveLabbookFile {
+          moveLabbookFile(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              srcPath: "sillyfile",
+              dstPath: "subdir/sillyfile"
+            }) {
+              newLabbookFileEdge {
+                node{
+                  key
+                  isDir
+                  size
                 }
+              }
             }
-            """
-            snapshot.assert_match(client.execute(query))
-            assert os.path.exists(os.path.join(labbook_dir, 'code', 'subdir2', 'sillyfile')) is True
+        }
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
+
+        query = """
+        mutation MoveLabbookFile {
+          moveLabbookFile(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              srcPath: "subdir/",
+              dstPath: "subdir2/"
+            }) {
+              newLabbookFileEdge {
+                node{
+                  key
+                  isDir
+                  size
+                }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
+
+        assert os.path.exists(os.path.join(labbook_dir, 'code', 'subdir2', 'sillyfile')) is True
 
     def test_move_file_many(self, mock_create_labbooks, snapshot):
         """Test moving a file around a bunch"""
         labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1', 'code')
         os.makedirs(os.path.join(labbook_dir, 'subdir'))
 
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            query1 = """
-            mutation MoveLabbookFile {
-              moveLabbookFile(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  section: "code",
-                  srcPath: "sillyfile",
-                  dstPath: "subdir/sillyfile"
-                }) {
-                  newLabbookFileEdge {
-                    node{
-                      key
-                      isDir
-                      size
-                    }
-                  }
+        query1 = """
+        mutation MoveLabbookFile {
+          moveLabbookFile(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              srcPath: "sillyfile",
+              dstPath: "subdir/sillyfile"
+            }) {
+              newLabbookFileEdge {
+                node{
+                  key
+                  isDir
+                  size
                 }
+              }
             }
-            """
-            query2 = """
-            mutation MoveLabbookFile {
-              moveLabbookFile(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  section: "code",
-                  srcPath: "subdir/sillyfile",
-                  dstPath: "sillyfile"
-                }) {
-                  newLabbookFileEdge {
-                    node{
-                      key
-                      isDir
-                      size
-                    }
-                  }
+        }
+        """
+        query2 = """
+        mutation MoveLabbookFile {
+          moveLabbookFile(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              srcPath: "subdir/sillyfile",
+              dstPath: "sillyfile"
+            }) {
+              newLabbookFileEdge {
+                node{
+                  key
+                  isDir
+                  size
                 }
+              }
             }
-            """
-            snapshot.assert_match(client.execute(query1))
-            assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+        }
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query1))
+        assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+        assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
 
-            snapshot.assert_match(client.execute(query2))
-            assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query2))
+        assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
+        assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
 
-            snapshot.assert_match(client.execute(query1))
-            assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query1))
+        assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+        assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
 
-            snapshot.assert_match(client.execute(query2))
-            assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query2))
+        assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
+        assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
 
-            snapshot.assert_match(client.execute(query1))
-            assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query1))
+        assert os.path.exists(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
+        assert os.path.isfile(os.path.join(labbook_dir, 'subdir', 'sillyfile'))
 
-            snapshot.assert_match(client.execute(query2))
-            assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
-            assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query2))
+        assert os.path.exists(os.path.join(labbook_dir, 'sillyfile'))
+        assert os.path.isfile(os.path.join(labbook_dir, 'sillyfile'))
 
     def test_delete_file(self, mock_create_labbooks):
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            query = """
-            mutation deleteLabbookFile {
-              deleteLabbookFile(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  section: "code",
-                  filePath: "sillyfile"
-                }) {
-                  success
-                }
+        query = """
+        mutation deleteLabbookFile {
+          deleteLabbookFile(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              filePath: "sillyfile"
+            }) {
+              success
             }
-            """
-            filepath = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1',
-                                    'code', 'sillyfile')
-            assert os.path.exists(filepath) is True
+        }
+        """
+        filepath = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1',
+                                'code', 'sillyfile')
+        assert os.path.exists(filepath) is True
 
-            res = client.execute(query)
-            assert res['data']['deleteLabbookFile']['success'] is True
+        res = mock_create_labbooks[2].execute(query)
+        assert res['data']['deleteLabbookFile']['success'] is True
 
-            assert os.path.exists(filepath) is False
+        assert os.path.exists(filepath) is False
 
     def test_delete_dir(self, mock_create_labbooks):
 
@@ -292,58 +280,55 @@ class TestLabBookServiceMutations(object):
         dir_path = os.path.join(lb.root_dir, 'code', 'subdir')
         assert os.path.exists(dir_path) is True
 
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            # Note, deleting a file should work with and without a trailing / at the end.
-            query = """
-            mutation deleteLabbookFile {
-              deleteLabbookFile(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  section: "code",
-                  filePath: "subdir/",
-                  isDirectory: true
-                }) {
-                  success
-                }
+        # Note, deleting a file should work with and without a trailing / at the end.
+        query = """
+        mutation deleteLabbookFile {
+          deleteLabbookFile(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              filePath: "subdir/",
+              isDirectory: true
+            }) {
+              success
             }
-            """
-            res = client.execute(query)
-            assert res['data']['deleteLabbookFile']['success'] is True
+        }
+        """
+        res = mock_create_labbooks[2].execute(query)
+        assert res['data']['deleteLabbookFile']['success'] is True
 
-            assert os.path.exists(dir_path) is False
-            assert os.path.exists(os.path.join(lb.root_dir, 'code')) is True
+        assert os.path.exists(dir_path) is False
+        assert os.path.exists(os.path.join(lb.root_dir, 'code')) is True
 
     def test_makedir(self, mock_create_labbooks, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: mock_create_labbooks[0]):
-            client = Client(mock_create_labbooks[2])
-            query = """
-            mutation makeLabbookDirectory {
-              makeLabbookDirectory(
-                input: {
-                  owner: "default",
-                  labbookName: "labbook1",
-                  section: "output",
-                  directory: "new_folder",
-                }) {
-                  newLabbookFileEdge {
-                    node{
-                      key
-                      isDir
-                      size
-                    }
-                  }
-                }}"""
-            snapshot.assert_match(client.execute(query))
+        query = """
+        mutation makeLabbookDirectory {
+          makeLabbookDirectory(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "output",
+              directory: "new_folder",
+            }) {
+              newLabbookFileEdge {
+                node{
+                  key
+                  isDir
+                  size
+                }
+              }
+            }}"""
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
-    def test_add_file(self, mock_config_file, mock_create_labbooks):
+    def test_add_file(self, mock_create_labbooks):
         """Test adding a new file to a labbook"""
         class DummyContext(object):
             def __init__(self, file_handle):
+                self.labbook_loader = None
                 self.files = {'uploadChunk': file_handle}
 
-        client = Client(mock_create_labbooks[2])
+        client = Client(mock_create_labbooks[3], middleware=[LabBookLoaderMiddleware()])
 
         new_file_size = 9000000
         # Create file to upload
@@ -359,7 +344,7 @@ class TestLabBookServiceMutations(object):
 
         target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
                                    'labbook1', 'code', 'newdir', '.__init__.py')
-        lb = LabBook(mock_config_file[0])
+        lb = LabBook(mock_create_labbooks[0])
         lb.from_directory(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1'))
         lb.makedir('code/newdir', create_activity_record=True)
 
@@ -412,14 +397,14 @@ class TestLabBookServiceMutations(object):
         assert os.path.exists(target_file) is True
         assert os.path.isfile(target_file) is True
 
-
     def test_add_file_errors(self, mock_create_labbooks, snapshot):
         """Test new file error handling"""
         class DummyContext(object):
             def __init__(self, file_handle):
+                self.labbook_loader = None
                 self.files = {'blah': file_handle}
 
-        client = Client(mock_create_labbooks[2])
+        client = Client(mock_create_labbooks[3])
         query = f"""
                     mutation addLabbookFile{{
                       addLabbookFile(input:{{owner:"default",
@@ -462,7 +447,6 @@ class TestLabBookServiceMutations(object):
 
     def test_add_favorite(self, mock_create_labbooks, snapshot):
         """Method to test adding a favorite"""
-        client = Client(mock_create_labbooks[2])
 
         # Verify no favs
         fav_query = """
@@ -485,7 +469,7 @@ class TestLabBookServiceMutations(object):
                      }
                    }
                    """
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
         test_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
                                  'labbook1', 'code', 'test.txt')
@@ -515,15 +499,13 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         # Verify the favorite is there
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
     def test_add_favorite_dir(self, mock_create_labbooks, snapshot):
         """Method to test adding a favorite"""
-        client = Client(mock_create_labbooks[2])
-
         # Verify no favs
         fav_query = """
                    {
@@ -545,7 +527,7 @@ class TestLabBookServiceMutations(object):
                      }
                    }
                    """
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
         os.makedirs(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
                                  'labbook1', 'input', 'sample1'))
@@ -576,10 +558,10 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         # Verify the favorite is there
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
         # Add a favorite in code
         query = """
@@ -605,15 +587,13 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         # Verify the favorite is there
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
     def test_add_favorite_at_index(self, mock_create_labbooks, snapshot):
         """Method to test adding a favorite"""
-        client = Client(mock_create_labbooks[2])
-
         # Verify no favs
         fav_query = """
                    {
@@ -635,7 +615,7 @@ class TestLabBookServiceMutations(object):
                      }
                    }
                    """
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
         test_file_root = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
                                  'labbook1', 'code')
@@ -667,7 +647,7 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         query = """
         mutation addFavorite {
@@ -689,7 +669,7 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         query = """
         mutation addFavorite {
@@ -712,15 +692,13 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         # Verify the favorites are there
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
     def test_update_favorite(self, mock_create_labbooks, snapshot):
         """Method to test updating a favorite"""
-        client = Client(mock_create_labbooks[2])
-
         # Verify no favs
         fav_query = """
                    {
@@ -742,7 +720,7 @@ class TestLabBookServiceMutations(object):
                      }
                    }
                    """
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
         test_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
                                  'labbook1', 'code', 'test.txt')
@@ -774,10 +752,10 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         # Verify the favorite is there
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
         # rename the favorite
         os.rename(test_file, test_file2)
@@ -805,14 +783,12 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
     def test_delete_favorite(self, mock_create_labbooks, snapshot):
         """Method to test adding a favorite"""
-        client = Client(mock_create_labbooks[2])
-
         test_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
                                  'labbook1', 'code', 'test.txt')
         with open(test_file, 'wt') as tf:
@@ -841,11 +817,12 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
+
 
         # Verify the favorite is there
         fav_query = """
-       {
+        {
          labbook(name: "labbook1", owner: "default") {
            name
            code{
@@ -862,9 +839,9 @@ class TestLabBookServiceMutations(object):
                }
            }
          }
-       }
-       """
-        snapshot.assert_match(client.execute(fav_query))
+        }
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
         # Delete a favorite in code
         query = """
@@ -880,18 +857,19 @@ class TestLabBookServiceMutations(object):
             }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         # Make sure favorite is gone now
-        snapshot.assert_match(client.execute(fav_query))
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
     def test_import_labbook(self, fixture_working_dir, snapshot):
         """Test batch uploading, but not full import"""
         class DummyContext(object):
             def __init__(self, file_handle):
+                self.labbook_loader = None
                 self.files = {'uploadChunk': file_handle}
 
-        client = Client(fixture_working_dir[2])
+        client = Client(fixture_working_dir[3], middleware=[LabBookLoaderMiddleware()])
 
         # Create a temporary labbook
         lb = LabBook(fixture_working_dir[0])
@@ -938,11 +916,7 @@ class TestLabBookServiceMutations(object):
                             """
                 result = client.execute(query, context_value=DummyContext(file))
                 assert "errors" not in result
-                if chunk_index < total_chunks - 1:
-                    pass
-                    assert type(result['data']['importLabbook']['importJobKey']) is not str
-                    assert type(result['data']['importLabbook']['buildImageJobKey']) is not str
-                else:
+                if chunk_index == total_chunks - 1:
                     assert type(result['data']['importLabbook']['importJobKey']) == str
                     assert type(result['data']['importLabbook']['buildImageJobKey']) == str
                     assert "rq:job:" in result['data']['importLabbook']['importJobKey']
@@ -969,8 +943,6 @@ class TestLabBookServiceMutations(object):
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     def test_rename_labbook(self, fixture_working_dir):
         """Test renaming a labbook"""
-        client = Client(fixture_working_dir[2])
-
         # Create a dummy labbook to make sure directory structure is set up
         lb_dummy = LabBook(fixture_working_dir[0])
         lb_dummy.new(owner={"username": "default"}, name="dummy-lb", description="Tester dummy lb")
@@ -994,7 +966,7 @@ class TestLabBookServiceMutations(object):
                       }}
                     }}
                     """
-        r = client.execute(query)
+        r = fixture_working_dir[2].execute(query)
         assert r['data']['renameLabbook'] is None
         assert 'errors' in r
         assert 'NotImplemented' in r['errors'][0]['message']

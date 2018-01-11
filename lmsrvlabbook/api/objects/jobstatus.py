@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@ import graphene
 from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher, JobKey
 
-from lmsrvcore.api import logged_query
 
 logger = LMLogger.get_logger()
 
@@ -77,7 +76,6 @@ class JobStatus(graphene.ObjectType):
         return {"job_id": type_id}
 
     @staticmethod
-    @logged_query
     def create(job_id: str):
         """Method to retrieve status info for given background job.
 

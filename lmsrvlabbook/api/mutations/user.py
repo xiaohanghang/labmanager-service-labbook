@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@ import os
 from flask import current_app
 import graphene
 
-from lmsrvcore.api import logged_mutation
 from lmsrvcore.api.objects.user import UserIdentity
 
 from lmcommon.configuration import Configuration
@@ -38,8 +37,7 @@ class RemoveUserIdentity(graphene.relay.ClientIDMutation):
     user_identity_edge = graphene.Field(lambda: UserIdentity)
 
     @classmethod
-    @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, input, client_mutation_id=None):
         # Check if there is a local user identity, remove if needed
         identity_file = os.path.join(Configuration().config['git']['working_directory'],
                                      '.labmanager', 'identity', 'user.json')
@@ -52,4 +50,4 @@ class RemoveUserIdentity(graphene.relay.ClientIDMutation):
         # Wipe current user from session
         current_app.current_user = None
 
-        return RemoveUserIdentity(user_identity_edge=UserIdentity.create({}))
+        return RemoveUserIdentity(user_identity_edge=UserIdentity())

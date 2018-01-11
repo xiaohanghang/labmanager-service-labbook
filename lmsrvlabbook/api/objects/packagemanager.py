@@ -1,5 +1,5 @@
 
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,7 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvcore.api import logged_query
 
 # Note (BVB): id_data['component_class'] can probably be removed altogether. Kept for now to get unit tests working.
 
@@ -67,7 +66,6 @@ class PackageManager(graphene.ObjectType):
         return {"component_class": split[0], "package_manager": split[1], "package_name": split[2]}
 
     @staticmethod
-    @logged_query
     def create(id_data):
         """Method to create a graphene PackageManager object based on the type node ID or id_data
 

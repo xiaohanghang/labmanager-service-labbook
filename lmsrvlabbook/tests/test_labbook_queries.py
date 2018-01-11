@@ -33,252 +33,218 @@ from lmcommon.labbook import LabBook
 from lmcommon.fixtures import remote_labbook_repo
 from lmcommon.configuration import Configuration
 
-from ..api import LabbookMutations, LabbookQuery
-
-
-# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
 
 class TestLabBookServiceQueries(object):
-
     def test_pagination_noargs(self, fixture_working_dir_populated_scoped, snapshot):
-        # Mock the configuration class it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
-            client = Client(fixture_working_dir_populated_scoped[2])
-            query = """
-                    {
-                        localLabbooks {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        query = """
+                {
+                    localLabbooks {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_first_only(self, fixture_working_dir_populated_scoped, snapshot):
-        # Mock the configuration class it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
-            client = Client(fixture_working_dir_populated_scoped[2])
-            query = """
-                    {
-                        localLabbooks(first: 3) {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        query = """
+                {
+                    localLabbooks(first: 3) {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_first_and_after(self, fixture_working_dir_populated_scoped, snapshot):
         # Nominal case
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
-            client = Client(fixture_working_dir_populated_scoped[2])
-            query = """
-                    {
-                        localLabbooks(first: 4, after: "Mg==") {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        query = """
+                {
+                    localLabbooks(first: 4, after: "Mg==") {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                                startCursor
-                                endCursor
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
+                            startCursor
+                            endCursor
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
-            # Overrunning end of list of labbooks
-            query = """
-                    {
-                        localLabbooks(first: 6, after: "Ng==") {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        # Overrunning end of list of labbooks
+        query = """
+                {
+                    localLabbooks(first: 6, after: "Ng==") {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
-            # Overrunning end of list of labbooks, returns empty set.
-            query = """
-                    {
-                        localLabbooks(first: 6, after: "OA==") {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        # Overrunning end of list of labbooks, returns empty set.
+        query = """
+                {
+                    localLabbooks(first: 6, after: "OA==") {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_last_only(self, fixture_working_dir_populated_scoped, snapshot):
-
-        # Mock the configuration class it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
-            client = Client(fixture_working_dir_populated_scoped[2])
-            query = """
-                    {
-                        localLabbooks(last: 3) {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        query = """
+                {
+                    localLabbooks(last: 3) {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_last_and_before(self, fixture_working_dir_populated_scoped, snapshot):
-
-        # Mock the configuration class it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
-            client = Client(fixture_working_dir_populated_scoped[2])
-            query = """
-                    {
-                        localLabbooks(last: 3, before: "Nw==") {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        query = """
+                {
+                    localLabbooks(last: 3, before: "Nw==") {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
-            # Overrun start of list
-            query = """
-                    {
-                        localLabbooks(last: 3, before: "MQ==") {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        # Overrun start of list
+        query = """
+                {
+                    localLabbooks(last: 3, before: "MQ==") {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                                startCursor
-                                endCursor
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
+                            startCursor
+                            endCursor
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
-            # Overrun with no intersection (should return empty list)
-            query = """
-                    {
-                        localLabbooks(last: 3, before: "MA==") {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        # Overrun with no intersection (should return empty list)
+        query = """
+                {
+                    localLabbooks(last: 3, before: "MA==") {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                                startCursor
-                                endCursor
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
+                            startCursor
+                            endCursor
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination(self, fixture_working_dir_populated_scoped, snapshot):
         """Test pagination and cursors"""
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_populated_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_populated_scoped[2])
-
-            # Get LabBooks for the "logged in user" - Currently just "default"
-            query = """
-                    {
-                        localLabbooks(first: 2, after: "MQ==") {
-                            edges {
-                                node {
-                                    name
-                                    description
-                                }
-                                cursor
+        # Get LabBooks for the "logged in user" - Currently just "default"
+        query = """
+                {
+                    localLabbooks(first: 2, after: "MQ==") {
+                        edges {
+                            node {
+                                name
+                                description
                             }
-                            pageInfo {
-                                hasNextPage
-                                hasPreviousPage
-                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
                         }
                     }
-                    """
-            snapshot.assert_match(client.execute(query))
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
-            before_query = """
+        before_query = """
                     {
                         localLabbooks(last: 2, before: "Ng==") {
                             edges {
@@ -295,22 +261,18 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                     """
-            snapshot.assert_match(client.execute(before_query))
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(before_query))
 
     def test_labbook_schema_version(self, fixture_working_dir):
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Get LabBooks for the "logged in user" - Currently just "default"
-            query = """
-            {
-                currentLabbookSchemaVersion
-            }
-            """
-            r = client.execute(query)
-            assert 'errors' not in r
-            assert r['data']['currentLabbookSchemaVersion'] == '0.2'
+        # Get LabBooks for the "logged in user" - Currently just "default"
+        query = """
+        {
+            currentLabbookSchemaVersion
+        }
+        """
+        r = fixture_working_dir[2].execute(query)
+        assert 'errors' not in r
+        assert r['data']['currentLabbookSchemaVersion'] == '0.2'
 
     def test_get_labbook(self, fixture_working_dir):
         """Test listing labbooks"""
@@ -318,92 +280,75 @@ class TestLabBookServiceQueries(object):
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Get LabBooks for a single user - Don't get the ID field since it is a UUID
-            query = """
-            {
-              labbook(name: "labbook1", owner: "default") {
-                schemaVersion
-                name
-                description
-                activeBranch {
-                    refName
-                    prefix
-                }
-              }
+        # Get LabBooks for a single user - Don't get the ID field since it is a UUID
+        query = """
+        {
+          labbook(name: "labbook1", owner: "default") {
+            schemaVersion
+            name
+            description
+            activeBranch {
+                refName
+                prefix
             }
-            """
-            r = client.execute(query)
-            assert 'errors' not in r
-            assert r['data']['labbook']['schemaVersion'] == '0.2'
-            assert r['data']['labbook']['activeBranch']['refName'] == 'gm.workspace-default'
-            assert r['data']['labbook']['activeBranch']['prefix'] is None
-            assert r['data']['labbook']['name'] == 'labbook1'
+          }
+        }
+        """
+        r = fixture_working_dir[2].execute(query)
+        assert 'errors' not in r
+        assert r['data']['labbook']['schemaVersion'] == '0.2'
+        assert r['data']['labbook']['activeBranch']['refName'] == 'gm.workspace-default'
+        assert r['data']['labbook']['activeBranch']['prefix'] is None
+        assert r['data']['labbook']['name'] == 'labbook1'
 
     def test_list_labbooks_container_status(self, fixture_working_dir, snapshot):
         """Test listing labbooks"""
-
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
         lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook2")
         lb.new(owner={"username": "test3"}, name="labbook2", description="my first labbook3")
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Get LabBooks for the "logged in user" - Currently just "default"
-            query = """
-            {
-                localLabbooks {
-                    edges {
-                        node {
-                            name
-                            description
-                            environment{
-                                imageStatus
-                                containerStatus
-                            }
+        # Get LabBooks for the "logged in user" - Currently just "default"
+        query = """
+        {
+            localLabbooks {
+                edges {
+                    node {
+                        name
+                        description
+                        environment{
+                            imageStatus
+                            containerStatus
                         }
-                        cursor
                     }
+                    cursor
                 }
             }
-            """
-            snapshot.assert_match(client.execute(query))
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_list_labbooks_container_status_no_labbooks(self, fixture_working_dir, snapshot):
         """Test listing labbooks when none exist"""
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Get LabBooks for the "logged in user" - Currently just "default"
-            query = """
-            {
-                localLabbooks {
-                    edges {
-                        node {
-                            name
-                            description
-                            environment{
-                                imageStatus
-                                containerStatus
-                            }
+        # Get LabBooks for the "logged in user" - Currently just "default"
+        query = """
+        {
+            localLabbooks {
+                edges {
+                    node {
+                        name
+                        description
+                        environment{
+                            imageStatus
+                            containerStatus
                         }
-                        cursor
                     }
+                    cursor
                 }
             }
-            """
-            snapshot.assert_match(client.execute(query))
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_list_files_code(self, fixture_working_dir, snapshot):
         lb = LabBook(fixture_working_dir[0])
@@ -424,73 +369,70 @@ class TestLabBookServiceQueries(object):
         with open(os.path.join(lb.root_dir, 'code', 'src', 'js', 'test.js'), 'wt') as tf:
             tf.write("asdfasdf")
 
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            code{
-                                files {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            files {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
                                     }
                                 }
                             }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Just get the files in the sub-directory "js"
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            code{
-                                files(rootDir: "src") {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
+        # Just get the files in the sub-directory "js"
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            files(rootDir: "src") {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
                                     }
                                 }
                             }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Just get the files in the sub-directory "js"
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            code{
-                                files(rootDir: "src/") {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
+        # Just get the files in the sub-directory "js"
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            files(rootDir: "src/") {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
                                     }
                                 }
                             }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_list_files_many(self, fixture_working_dir, snapshot):
         # Add some extra files for listing
@@ -513,56 +455,7 @@ class TestLabBookServiceQueries(object):
         with open(os.path.join(lb.root_dir, 'output', 'result.dat'), 'wt') as tf:
             tf.write("fgh")
 
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            code{
-                                files {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
-                                    }
-                                }
-                            }
-                            input{
-                                files {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
-                                    }
-                                }
-                            }
-                            output{
-                                files {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
-                                    }
-                                }
-                            }
-                          }
-                        }
-                        """
-            snapshot.assert_match(client.execute(query))
-
-            # Just get the files in the sub-directory "js"
-            query = """
+        query = """
                     {
                       labbook(name: "labbook1", owner: "default") {
                         name
@@ -579,7 +472,7 @@ class TestLabBookServiceQueries(object):
                             }
                         }
                         input{
-                            files(rootDir: "subdir") {
+                            files {
                                 edges {
                                     node {
                                         id
@@ -591,7 +484,7 @@ class TestLabBookServiceQueries(object):
                             }
                         }
                         output{
-                            files(rootDir: "empty") {
+                            files {
                                 edges {
                                     node {
                                         id
@@ -605,11 +498,55 @@ class TestLabBookServiceQueries(object):
                       }
                     }
                     """
-            snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
+
+        # Just get the files in the sub-directory "js"
+        query = """
+                {
+                  labbook(name: "labbook1", owner: "default") {
+                    name
+                    code{
+                        files {
+                            edges {
+                                node {
+                                    id
+                                    key
+                                    size
+                                    isDir
+                                }
+                            }
+                        }
+                    }
+                    input{
+                        files(rootDir: "subdir") {
+                            edges {
+                                node {
+                                    id
+                                    key
+                                    size
+                                    isDir
+                                }
+                            }
+                        }
+                    }
+                    output{
+                        files(rootDir: "empty") {
+                            edges {
+                                node {
+                                    id
+                                    key
+                                    size
+                                    isDir
+                                }
+                            }
+                        }
+                    }
+                  }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_check_updates_available_from_remote(self, remote_labbook_repo, fixture_working_dir, snapshot):
-        client = Client(fixture_working_dir[2])
-
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
 
@@ -620,7 +557,7 @@ class TestLabBookServiceQueries(object):
             }}
         }}
         """
-        r = client.execute(query)
+        r = fixture_working_dir[2].execute(query)
         assert r['data']['labbook']['updatesAvailableCount'] == 0
 
     def test_list_favorites(self, fixture_working_dir, snapshot):
@@ -647,128 +584,123 @@ class TestLabBookServiceQueries(object):
         lb.create_favorite("input", "data1/", description="Data dir 1", is_dir=True)
         lb.create_favorite("output", "data2/", description="Data dir 2", is_dir=True)
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Get LabBooks for the "logged in user" - Currently just "default"
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            code{
-                                favorites{
-                                    edges {
-                                        node {
-                                            id
-                                            index
-                                            key
-                                            description
-                                            isDir
-                                        }
+        # Get LabBooks for the "logged in user" - Currently just "default"
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            favorites{
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
                                     }
                                 }
                             }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Get input favorites
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            input{
-                                favorites{
-                                    edges {
-                                        node {
-                                            id
-                                            index
-                                            key
-                                            description
-                                            isDir
-                                        }
+        # Get input favorites
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        input{
+                            favorites{
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
                                     }
                                 }
                             }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Get output favorites
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            output{
-                                favorites{
-                                    edges {
-                                        node {
-                                            id
-                                            index
-                                            key
-                                            description
-                                            isDir
-                                        }
+        # Get output favorites
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        output{
+                            favorites{
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
                                     }
                                 }
                             }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Get all favorites
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            code{
-                                favorites{
-                                    edges {
-                                        node {
-                                            id
-                                            index
-                                            key
-                                            description
-                                            isDir
-                                        }
+        # Get all favorites
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            favorites{
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
                                     }
                                 }
                             }
-                            input{
-                                favorites{
-                                    edges {
-                                        node {
-                                            id
-                                            index
-                                            key
-                                            description
-                                            isDir
-                                        }
-                                    }
-                                }
-                            }
-                            output{
-                                favorites{
-                                    edges {
-                                        node {
-                                            id
-                                            index
-                                            key
-                                            description
-                                            isDir
-                                        }
-                                    }
-                                }
-                            }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                        input{
+                            favorites{
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
+                                    }
+                                }
+                            }
+                        }
+                        output{
+                            favorites{
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
+                                    }
+                                }
+                            }
+                        }
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_list_favorite_and_files(self, fixture_working_dir, snapshot):
         """Test listing labbook favorites"""
@@ -788,43 +720,38 @@ class TestLabBookServiceQueries(object):
         lb.create_favorite("code", "test2.txt", description="My file with stuff 2")
         lb.create_favorite("code", "blah/", description="testing", is_dir=True)
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Get LabBooks for the "logged in user" - Currently just "default"
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            code{
-                                favorites{
-                                    edges {
-                                        node {
-                                            id
-                                            index
-                                            key
-                                            description
-                                            isDir
-                                        }
+        # Get LabBooks for the "logged in user" - Currently just "default"
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            favorites{
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
                                     }
-                                }                                
-                                files {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
+                                }
+                            }                                
+                            files {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
                                     }
                                 }
                             }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_list_all_files_many(self, fixture_working_dir, snapshot):
         # Add some extra files for listing
@@ -847,600 +774,569 @@ class TestLabBookServiceQueries(object):
         with open(os.path.join(lb.root_dir, 'output', 'result.dat'), 'wt') as tf:
             tf.write("fgh")
 
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-            query = """
-                        {
-                          labbook(name: "labbook1", owner: "default") {
-                            name
-                            code{
-                                allFiles {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            allFiles {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
                                     }
                                 }
                             }
-                            input{
-                                allFiles {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
-                                    }
-                                }
-                            }
-                            output{
-                                allFiles {
-                                    edges {
-                                        node {
-                                            id
-                                            key
-                                            size
-                                            isDir
-                                        }
-                                    }
-                                }
-                            }
-                          }
                         }
-                        """
-            snapshot.assert_match(client.execute(query))
+                        input{
+                            allFiles {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
+                                    }
+                                }
+                            }
+                        }
+                        output{
+                            allFiles {
+                                edges {
+                                    node {
+                                        id
+                                        key
+                                        size
+                                        isDir
+                                    }
+                                }
+                            }
+                        }
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_get_activity_records(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test paging through activity records"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            query = """
-            mutation myCreateLabbook($name: String!, $desc: String!) {
-              createLabbook(input: {name: $name, description: $desc}) {
-                labbook {
-                  id
-                  name
-                  description
-                }
-              }
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!) {
+          createLabbook(input: {name: $name, description: $desc}) {
+            labbook {
+              id
+              name
+              description
             }
-            """
-            variables = {"name": "labbook11", "desc": "my test description"}
-            client.execute(query, variable_values=variables)
+          }
+        }
+        """
+        variables = {"name": "labbook11", "desc": "my test description"}
+        fixture_working_dir[2].execute(query, variable_values=variables)
 
-            lb = LabBook(fixture_working_dir[0])
-            lb.from_name("default", "default", "labbook11")
-            lb.insert_file("code", fixture_test_file, "")
-            lb.insert_file("input", fixture_test_file, "")
-            lb.insert_file("output", fixture_test_file, "")
+        lb = LabBook(fixture_working_dir[0])
+        lb.from_name("default", "default", "labbook11")
+        lb.insert_file("code", fixture_test_file, "")
+        lb.insert_file("input", fixture_test_file, "")
+        lb.insert_file("output", fixture_test_file, "")
 
-            # Get all records at once with no pagination args and verify cursors look OK directly
-            query = """
-            {
-              labbook(name: "labbook11", owner: "default") {
-                name
-                description
-                activityRecords {
-                    edges{
-                        node{
-                            id
-                            commit
-                            linkedCommit
-                            message
-                            type
-                            show
-                            importance
-                            tags
-                            timestamp
-                            }
-                        cursor
-                        }                    
-                    pageInfo{
-                        startCursor
-                        hasNextPage
-                        hasPreviousPage
-                        endCursor
-                    }
+        # Get all records at once with no pagination args and verify cursors look OK directly
+        query = """
+        {
+          labbook(name: "labbook11", owner: "default") {
+            name
+            description
+            activityRecords {
+                edges{
+                    node{
+                        id
+                        commit
+                        linkedCommit
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        timestamp
+                        }
+                    cursor
+                    }                    
+                pageInfo{
+                    startCursor
+                    hasNextPage
+                    hasPreviousPage
+                    endCursor
                 }
-              }
             }
-            """
-            result = client.execute(query)
+          }
+        }
+        """
+        result = fixture_working_dir[2].execute(query)
 
-            # Check cursors
-            assert result['data']['labbook']['activityRecords']['pageInfo']['hasNextPage'] is False
-            assert result['data']['labbook']['activityRecords']['pageInfo']['hasPreviousPage'] is False
-            git_log = lb.git.log()
-            assert result['data']['labbook']['activityRecords']['edges'][0]['cursor'] == git_log[0]['commit']
-            assert result['data']['labbook']['activityRecords']['edges'][1]['cursor'] == git_log[2]['commit']
-            assert result['data']['labbook']['activityRecords']['edges'][2]['cursor'] == git_log[4]['commit']
-            assert result['data']['labbook']['activityRecords']['edges'][3]['cursor'] == git_log[6]['commit']
+        # Check cursors
+        assert result['data']['labbook']['activityRecords']['pageInfo']['hasNextPage'] is False
+        assert result['data']['labbook']['activityRecords']['pageInfo']['hasPreviousPage'] is False
+        git_log = lb.git.log()
+        assert result['data']['labbook']['activityRecords']['edges'][0]['cursor'] == git_log[0]['commit']
+        assert result['data']['labbook']['activityRecords']['edges'][1]['cursor'] == git_log[2]['commit']
+        assert result['data']['labbook']['activityRecords']['edges'][2]['cursor'] == git_log[4]['commit']
+        assert result['data']['labbook']['activityRecords']['edges'][3]['cursor'] == git_log[6]['commit']
 
-            assert result['data']['labbook']['activityRecords']['edges'][0]['node']['commit'] == git_log[0]['commit']
-            assert result['data']['labbook']['activityRecords']['edges'][0]['node']['linkedCommit'] == git_log[1]['commit']
+        assert result['data']['labbook']['activityRecords']['edges'][0]['node']['commit'] == git_log[0]['commit']
+        assert result['data']['labbook']['activityRecords']['edges'][0]['node']['linkedCommit'] == git_log[1]['commit']
 
-            # test timestamp field
-            assert type(result['data']['labbook']['activityRecords']['edges'][0]['node']['timestamp']) == str
-            assert result['data']['labbook']['activityRecords']['edges'][0]['node']['timestamp'][:2] == "20"
+        # test timestamp field
+        assert type(result['data']['labbook']['activityRecords']['edges'][0]['node']['timestamp']) == str
+        assert result['data']['labbook']['activityRecords']['edges'][0]['node']['timestamp'][:2] == "20"
 
-            assert type(result['data']['labbook']['activityRecords']['edges'][0]['node']['id']) == str
-            assert len(result['data']['labbook']['activityRecords']['edges'][0]['node']['id']) > 0
+        assert type(result['data']['labbook']['activityRecords']['edges'][0]['node']['id']) == str
+        assert len(result['data']['labbook']['activityRecords']['edges'][0]['node']['id']) > 0
 
-            assert type(result['data']['labbook']['activityRecords']['pageInfo']['endCursor']) == str
-            assert len(result['data']['labbook']['activityRecords']['pageInfo']['endCursor']) == 40
+        assert type(result['data']['labbook']['activityRecords']['pageInfo']['endCursor']) == str
+        assert len(result['data']['labbook']['activityRecords']['pageInfo']['endCursor']) == 40
 
-            # Get only the first record, verifying pageInfo and result via snapshot
-            query = """
-            {
-              labbook(name: "labbook11", owner: "default") {
-                name
-                description
-                activityRecords(first: 1) {
-                    edges{
-                        node{                            
-                            message
-                            type
-                            show
-                            importance
-                            tags
-                            }                        
-                        }                    
-                    pageInfo{
-                        hasNextPage
-                        hasPreviousPage
-                    }
+        # Get only the first record, verifying pageInfo and result via snapshot
+        query = """
+        {
+          labbook(name: "labbook11", owner: "default") {
+            name
+            description
+            activityRecords(first: 1) {
+                edges{
+                    node{                            
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        }                        
+                    }                    
+                pageInfo{
+                    hasNextPage
+                    hasPreviousPage
                 }
-              }
             }
-            """
-            snapshot.assert_match(client.execute(query))
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Page 1 time
-            query = """
-            {{
-              labbook(name: "labbook11", owner: "default") {{
-                name
-                description
-                activityRecords(first: 2, after: "{}") {{
-                    edges{{
-                        node{{                            
-                            message
-                            type
-                            show
-                            importance
-                            tags
-                            }}                        
-                        }}                    
-                    pageInfo{{
-                        hasNextPage
-                        hasPreviousPage
-                    }}
+        # Page 1 time
+        query = """
+        {{
+          labbook(name: "labbook11", owner: "default") {{
+            name
+            description
+            activityRecords(first: 2, after: "{}") {{
+                edges{{
+                    node{{                            
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        }}                        
+                    }}                    
+                pageInfo{{
+                    hasNextPage
+                    hasPreviousPage
                 }}
-              }}
             }}
-            """.format(result['data']['labbook']['activityRecords']['edges'][0]['cursor'])
-            snapshot.assert_match(client.execute(query))
+          }}
+        }}
+        """.format(result['data']['labbook']['activityRecords']['edges'][0]['cursor'])
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Page past end, expecting only the last result to come back
-            query = """
-            {{
-              labbook(name: "labbook11", owner: "default") {{
-                name
-                description
-                activityRecords(first: 5, after: "{}") {{
-                    edges{{
-                        node{{                            
-                            message
-                            type
-                            show
-                            importance
-                            tags
-                            }}                        
-                        }}                    
-                    pageInfo{{
-                        hasNextPage
-                        hasPreviousPage
-                    }}
+        # Page past end, expecting only the last result to come back
+        query = """
+        {{
+          labbook(name: "labbook11", owner: "default") {{
+            name
+            description
+            activityRecords(first: 5, after: "{}") {{
+                edges{{
+                    node{{                            
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        }}                        
+                    }}                    
+                pageInfo{{
+                    hasNextPage
+                    hasPreviousPage
                 }}
-              }}
             }}
-            """.format(result['data']['labbook']['activityRecords']['edges'][2]['cursor'])
-            snapshot.assert_match(client.execute(query))
+          }}
+        }}
+        """.format(result['data']['labbook']['activityRecords']['edges'][2]['cursor'])
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Page after end, expecting nothing to come back
-            query = """
-            {{
-              labbook(name: "labbook11", owner: "default") {{
-                name
-                description
-                activityRecords(first: 5, after: "{}") {{
-                    edges{{
-                        node{{                            
-                            message
-                            type
-                            show
-                            importance
-                            tags
-                            }}                        
-                        }}                    
-                    pageInfo{{
-                        hasNextPage
-                        hasPreviousPage
-                    }}
+        # Page after end, expecting nothing to come back
+        query = """
+        {{
+          labbook(name: "labbook11", owner: "default") {{
+            name
+            description
+            activityRecords(first: 5, after: "{}") {{
+                edges{{
+                    node{{                            
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        }}                        
+                    }}                    
+                pageInfo{{
+                    hasNextPage
+                    hasPreviousPage
                 }}
-              }}
             }}
-            """.format(result['data']['labbook']['activityRecords']['edges'][3]['cursor'])
-            snapshot.assert_match(client.execute(query))
+          }}
+        }}
+        """.format(result['data']['labbook']['activityRecords']['edges'][3]['cursor'])
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_get_activity_records_reverse_error(self, fixture_working_dir, snapshot):
         # Create labbooks
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook12", description="my first labbook1")
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Get all records
-            query = """
-            {
-              labbook(name: "labbook12", owner: "default") {
-                name
-                description
-                activityRecords(before: "asdfasdf") {
-                    edges{
-                        node{                            
-                            message
-                            type
-                            show
-                            importance
-                            tags
-                            }                        
-                        }                    
-                    pageInfo{
-                        hasNextPage
-                        hasPreviousPage
-                    }
+        # Get all records
+        query = """
+        {
+          labbook(name: "labbook12", owner: "default") {
+            name
+            description
+            activityRecords(before: "asdfasdf") {
+                edges{
+                    node{                            
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        }                        
+                    }                    
+                pageInfo{
+                    hasNextPage
+                    hasPreviousPage
                 }
-              }
             }
-            """
-            snapshot.assert_match(client.execute(query))
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            query = """
-            {
-              labbook(name: "labbook12", owner: "default") {
-                name
-                description
-                activityRecords(before: "asdfasdf", last: 3){
-                    edges{
-                        node{                            
-                            message
-                            type
-                            show
-                            importance
-                            tags
-                            }                        
-                        }                    
-                    pageInfo{
-                        hasNextPage
-                        hasPreviousPage
-                    }
+        query = """
+        {
+          labbook(name: "labbook12", owner: "default") {
+            name
+            description
+            activityRecords(before: "asdfasdf", last: 3){
+                edges{
+                    node{                            
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        }                        
+                    }                    
+                pageInfo{
+                    hasNextPage
+                    hasPreviousPage
                 }
-              }
             }
-            """
-            snapshot.assert_match(client.execute(query))
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            query = """
-            {
-              labbook(name: "labbook12", owner: "default") {
-                name
-                description
-                activityRecords(last: 3) {
-                    edges{
-                        node{                            
-                            message
-                            type
-                            show
-                            importance
-                            tags
-                            }                        
-                        }                    
-                    pageInfo{
-                        hasNextPage
-                        hasPreviousPage
-                    }
+        query = """
+        {
+          labbook(name: "labbook12", owner: "default") {
+            name
+            description
+            activityRecords(last: 3) {
+                edges{
+                    node{                            
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        }                        
+                    }                    
+                pageInfo{
+                    hasNextPage
+                    hasPreviousPage
                 }
-              }
             }
-            """
-            snapshot.assert_match(client.execute(query))
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_get_activity_records_with_details(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test getting activity records with detail records"""
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            query = """
-            mutation myCreateLabbook($name: String!, $desc: String!) {
-              createLabbook(input: {name: $name, description: $desc}) {
-                labbook {
-                  id
-                  name
-                  description
-                }
-              }
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!) {
+          createLabbook(input: {name: $name, description: $desc}) {
+            labbook {
+              id
+              name
+              description
             }
-            """
-            variables = {"name": "labbook11", "desc": "my test description"}
-            client.execute(query, variable_values=variables)
+          }
+        }
+        """
+        variables = {"name": "labbook11", "desc": "my test description"}
+        fixture_working_dir[2].execute(query, variable_values=variables)
 
-            lb = LabBook(fixture_working_dir[0])
-            lb.from_name("default", "default", "labbook11")
-            lb.insert_file("code", fixture_test_file, "")
-            lb.insert_file("input", fixture_test_file, "")
-            lb.insert_file("output", fixture_test_file, "")
+        lb = LabBook(fixture_working_dir[0])
+        lb.from_name("default", "default", "labbook11")
+        lb.insert_file("code", fixture_test_file, "")
+        lb.insert_file("input", fixture_test_file, "")
+        lb.insert_file("output", fixture_test_file, "")
 
-            # Get all records at once and verify varying fields exist properly
-            query = """
-            {
-              labbook(name: "labbook11", owner: "default") {
-                name
-                description
-                activityRecords {
-                    edges{
-                        node{
+        # Get all records at once and verify varying fields exist properly
+        query = """
+        {
+          labbook(name: "labbook11", owner: "default") {
+            name
+            description
+            activityRecords {
+                edges{
+                    node{
+                        id
+                        commit
+                        linkedCommit
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        detailObjects{
                             id
-                            commit
-                            linkedCommit
-                            message
+                            key
                             type
+                            data
                             show
                             importance
                             tags
-                            detailObjects{
-                                id
-                                key
-                                type
-                                data
-                                show
-                                importance
-                                tags
-                            }
-                            }                        
-                        }    
-                }
-              }
+                        }
+                        }                        
+                    }    
             }
-            """
-            result = client.execute(query)
+          }
+        }
+        """
+        result = fixture_working_dir[2].execute(query)
 
-            # Check ids and keys
-            assert len(result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['id']) > 0
-            assert type(result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['id']) == str
-            assert len(result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['id']) > 0
-            assert type(result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['id']) == str
+        # Check ids and keys
+        assert len(result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['id']) > 0
+        assert type(result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['id']) == str
+        assert len(result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['id']) > 0
+        assert type(result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['id']) == str
 
-            # Verify again using snapshot and only fields that will snapshot well
-            query = """
-            {
-              labbook(name: "labbook11", owner: "default") {
-                name
-                description
-                activityRecords {
-                    edges{
-                        node{
-                            message
+        # Verify again using snapshot and only fields that will snapshot well
+        query = """
+        {
+          labbook(name: "labbook11", owner: "default") {
+            name
+            description
+            activityRecords {
+                edges{
+                    node{
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        detailObjects{
                             type
+                            data
                             show
                             importance
                             tags
-                            detailObjects{
-                                type
-                                data
-                                show
-                                importance
-                                tags
-                            }
-                            }                        
-                        }    
-                }
-              }
+                        }
+                        }                        
+                    }    
             }
-            """
-            snapshot.assert_match(client.execute(query))
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_get_detail_record(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test getting detail record directly after an initial activity record query"""
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            query = """
-            mutation myCreateLabbook($name: String!, $desc: String!) {
-              createLabbook(input: {name: $name, description: $desc}) {
-                labbook {
-                  id
-                  name
-                  description
-                }
-              }
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!) {
+          createLabbook(input: {name: $name, description: $desc}) {
+            labbook {
+              id
+              name
+              description
             }
-            """
-            variables = {"name": "labbook11", "desc": "my test description"}
-            client.execute(query, variable_values=variables)
+          }
+        }
+        """
+        variables = {"name": "labbook11", "desc": "my test description"}
+        fixture_working_dir[2].execute(query, variable_values=variables)
 
-            lb = LabBook(fixture_working_dir[0])
-            lb.from_name("default", "default", "labbook11")
-            lb.insert_file("code", fixture_test_file, "")
+        lb = LabBook(fixture_working_dir[0])
+        lb.from_name("default", "default", "labbook11")
+        lb.insert_file("code", fixture_test_file, "")
 
-            # Get all records at once and verify varying fields exist properly
-            query = """
-            {
-              labbook(name: "labbook11", owner: "default") {
-                name
-                description
-                activityRecords(first: 2) {
-                    edges{
-                        node{
-                            detailObjects{
-                                id
-                                key
-                                type                                
-                                show
-                                importance
-                                tags
-                            }
-                            }                        
-                        }    
-                }
-              }
+        # Get all records at once and verify varying fields exist properly
+        query = """
+        {
+          labbook(name: "labbook11", owner: "default") {
+            name
+            description
+            activityRecords(first: 2) {
+                edges{
+                    node{
+                        detailObjects{
+                            id
+                            key
+                            type                                
+                            show
+                            importance
+                            tags
+                        }
+                        }                        
+                    }    
             }
-            """
-            activity_result = client.execute(query)
+          }
+        }
+        """
+        activity_result = fixture_working_dir[2].execute(query)
 
-            # Load detail record based on the key you got back and verify key/id
-            query = """
-            {{
-              labbook(name: "labbook11", owner: "default") {{
-                name
-                description
-                detailRecord(key: "{}") {{
-                    id
-                    key
-                    type                                
-                    show
-                    importance
-                    tags 
-                }}
-              }}
+        # Load detail record based on the key you got back and verify key/id
+        query = """
+        {{
+          labbook(name: "labbook11", owner: "default") {{
+            name
+            description
+            detailRecord(key: "{}") {{
+                id
+                key
+                type                                
+                show
+                importance
+                tags 
             }}
-            """.format(activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key'])
-            detail_result = client.execute(query)
-            assert detail_result['data']['labbook']['detailRecord']['key'] == \
-                   activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key']
-            assert detail_result['data']['labbook']['detailRecord']['id'] == \
-                   activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['id']
+          }}
+        }}
+        """.format(activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key'])
+        detail_result = fixture_working_dir[2].execute(query)
+        assert detail_result['data']['labbook']['detailRecord']['key'] == \
+               activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key']
+        assert detail_result['data']['labbook']['detailRecord']['id'] == \
+               activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['id']
 
-            # Try again in a snapshot compatible way, loading data as well
-            query = """
-            {{
-              labbook(name: "labbook11", owner: "default") {{
-                name
-                description
-                detailRecord(key: "{}") {{
-                    type                                
-                    show
-                    data
-                    importance
-                    tags 
-                }}
-              }}
+        # Try again in a snapshot compatible way, loading data as well
+        query = """
+        {{
+          labbook(name: "labbook11", owner: "default") {{
+            name
+            description
+            detailRecord(key: "{}") {{
+                type                                
+                show
+                data
+                importance
+                tags 
             }}
-            """.format(activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key'])
-            snapshot.assert_match(client.execute(query))
-            query = """
-            {{
-              labbook(name: "labbook11", owner: "default") {{
-                name
-                description
-                detailRecord(key: "{}") {{
-                    type                                
-                    show
-                    data
-                    importance
-                    tags 
-                }}
-              }}
+          }}
+        }}
+        """.format(activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key'])
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
+        query = """
+        {{
+          labbook(name: "labbook11", owner: "default") {{
+            name
+            description
+            detailRecord(key: "{}") {{
+                type                                
+                show
+                data
+                importance
+                tags 
             }}
-            """.format(activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['key'])
-            snapshot.assert_match(client.execute(query))
+          }}
+        }}
+        """.format(activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['key'])
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_get_detail_records(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test getting multiple detail records directly after an initial activity record query"""
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            query = """
-            mutation myCreateLabbook($name: String!, $desc: String!) {
-              createLabbook(input: {name: $name, description: $desc}) {
-                labbook {
-                  id
-                  name
-                  description
-                }
-              }
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!) {
+          createLabbook(input: {name: $name, description: $desc}) {
+            labbook {
+              id
+              name
+              description
             }
-            """
-            variables = {"name": "labbook11", "desc": "my test description"}
-            client.execute(query, variable_values=variables)
+          }
+        }
+        """
+        variables = {"name": "labbook11", "desc": "my test description"}
+        fixture_working_dir[2].execute(query, variable_values=variables)
 
-            lb = LabBook(fixture_working_dir[0])
-            lb.from_name("default", "default", "labbook11")
-            lb.insert_file("code", fixture_test_file, "")
+        lb = LabBook(fixture_working_dir[0])
+        lb.from_name("default", "default", "labbook11")
+        lb.insert_file("code", fixture_test_file, "")
 
-            # Get all records at once and verify varying fields exist properly
-            query = """
-            {
-              labbook(name: "labbook11", owner: "default") {
-                name
-                description
-                activityRecords(first: 2) {
-                    edges{
-                        node{
-                            detailObjects{
-                                id
-                                key
-                                type                                
-                                show
-                                importance
-                                tags
-                            }
-                            }                        
-                        }    
-                }
-              }
+        # Get all records at once and verify varying fields exist properly
+        query = """
+        {
+          labbook(name: "labbook11", owner: "default") {
+            name
+            description
+            activityRecords(first: 2) {
+                edges{
+                    node{
+                        detailObjects{
+                            id
+                            key
+                            type                                
+                            show
+                            importance
+                            tags
+                        }
+                        }                        
+                    }    
             }
-            """
-            activity_result = client.execute(query)
+          }
+        }
+        """
+        activity_result = fixture_working_dir[2].execute(query)
 
-            # create key list
-            keys = [activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key'],
-                    activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['key']]
+        # create key list
+        keys = [activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key'],
+                activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['key']]
 
-            # Try again in a snapshot compatible way, loading data as well
-            query = """
-            {{
-              labbook(name: "labbook11", owner: "default") {{
-                name
-                description
-                detailRecords(keys: [{}]) {{
-                    type                                
-                    show
-                    data
-                    importance
-                    tags 
-                }}
-              }}
+        # Try again in a snapshot compatible way, loading data as well
+        query = """
+        {{
+          labbook(name: "labbook11", owner: "default") {{
+            name
+            description
+            detailRecords(keys: [{}]) {{
+                type                                
+                show
+                data
+                importance
+                tags 
             }}
-            """.format(",".join(f'"{k}"' for k in keys))
-            snapshot.assert_match(client.execute(query))
+          }}
+        }}
+        """.format(",".join(f'"{k}"' for k in keys))
+        snapshot.assert_match(fixture_working_dir[2].execute(query))

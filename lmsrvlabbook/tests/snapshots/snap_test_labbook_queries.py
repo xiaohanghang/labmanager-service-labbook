@@ -1078,7 +1078,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_reverse_error 1']
         {
             'locations': [
                 {
-                    'column': 17,
+                    'column': 13,
                     'line': 6
                 }
             ],
@@ -1099,7 +1099,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_reverse_error 2']
         {
             'locations': [
                 {
-                    'column': 17,
+                    'column': 13,
                     'line': 6
                 }
             ],
@@ -1120,7 +1120,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_reverse_error 3']
         {
             'locations': [
                 {
-                    'column': 17,
+                    'column': 13,
                     'line': 6
                 }
             ],

@@ -1,5 +1,5 @@
 
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ logger = LMLogger.get_logger()
 class CreateBranch(graphene.relay.ClientIDMutation):
     """Mutation create a NEW branch for a LabBook LOCALLY"""
     class Input:
-        owner = graphene.String()
+        owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         branch_name = graphene.String(required=True)
 
@@ -47,7 +47,7 @@ class CreateBranch(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, branch_name, client_mutation_id=None):
         """Method to perform mutation
         Args:
             input:
@@ -56,36 +56,30 @@ class CreateBranch(graphene.relay.ClientIDMutation):
         Returns:
         """
         username = get_logged_in_username()
-        if not input.get("owner"):
-            owner = get_logged_in_username()
-        else:
-            owner = input.get("owner")
 
         # Load an existing LabBook
         labbook_obj = LabBook()
-        labbook_obj.from_name(username, owner, input.get('labbook_name'))
+        labbook_obj.from_name(username, owner, labbook_name)
 
         # Create Branch
-        labbook_obj.checkout_branch(input.get("branch_name"), new=True)
+        labbook_obj.checkout_branch(branch_name, new=True)
 
-        if labbook_obj.active_branch != input.get("branch_name"):
-            raise ValueError(f"Create branch failed, could not switch to new branch {input.get('branch_name')}")
+        if labbook_obj.active_branch != branch_name:
+            raise ValueError(f"Create branch failed, could not switch to new branch {branch_name}")
 
         # Create a LabbookRef to the branch
-        id_data = {"username": username,
-                   "owner": owner,
-                   "name": input.get("labbook_name"),
-                   "prefix": None,
-                   "branch": input.get("branch_name"),
-                   "git": labbook_obj.git
-                   }
-        return CreateBranch(branch=LabbookRef.create(id_data))
+        create_data = {"owner": owner,
+                       "name": labbook_name,
+                       "prefix": None,
+                       "branch": branch_name,
+                       }
+        return CreateBranch(branch=LabbookRef(**create_data))
 
 
 class CheckoutBranch(graphene.relay.ClientIDMutation):
     """Mutation checkout an existing branch branch"""
     class Input:
-        owner = graphene.String()
+        owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         branch_name = graphene.String(required=True)
 
@@ -94,7 +88,7 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, branch_name, client_mutation_id=None):
         """Method to perform mutation
         Args:
             input:
@@ -103,26 +97,11 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
         Returns:
         """
         username = get_logged_in_username()
-        if not input.get("owner"):
-            owner = get_logged_in_username()
-        else:
-            owner = input.get("owner")
 
         # Load an existing LabBook
         labbook_obj = LabBook()
-        labbook_obj.from_name(username, owner, input.get('labbook_name'))
+        labbook_obj.from_name(username, owner, labbook_name)
 
         # Checkout
-        #labbook_obj.git.fetch()
-        #labbook_obj.git.checkout(input.get('branch_name'))
-        labbook_obj.checkout_branch(input.get('branch_name'))
-
-        # Create a LabbookRef to the branch
-        id_data = {"username": username,
-                   "owner": owner,
-                   "name": input.get("labbook_name"),
-                   "prefix": None,
-                   "branch": labbook_obj.git.get_current_branch_name(),
-                   "git": labbook_obj.git
-                   }
-        return CheckoutBranch(labbook=Labbook.create(id_data))
+        labbook_obj.checkout_branch(branch_name)
+        return CheckoutBranch(labbook=Labbook(owner=owner, name=labbook_name))
