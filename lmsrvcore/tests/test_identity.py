@@ -21,7 +21,9 @@ import pytest
 from flask import current_app
 from mock import patch
 
-from lmsrvcore.auth.identity import get_identity_manager_instance, AuthorizationMiddleware, AuthenticationError
+from lmsrvcore.auth.identity import get_identity_manager_instance, AuthenticationError
+from lmsrvcore.middleware import AuthorizationMiddleware, error_middleware, time_all_resolvers_middleware, \
+    LabBookLoaderMiddleware
 from lmsrvcore.tests.fixtures import fixture_working_dir_with_cached_user
 from lmcommon.configuration import Configuration
 
@@ -38,6 +40,7 @@ class MockFlaskContext(object):
     """Mock class to test middleware"""
     def __init__(self):
         self.headers = {"Authorization": "Bearer adkajshfgklujasdhfiuashfiusahf"}
+        self.labbook_loader = None
 
 
 class MockGrapheneInfo(object):
@@ -95,6 +98,7 @@ class TestAuthIdentity(object):
         mw = AuthorizationMiddleware()
         with pytest.raises(AuthenticationError):
             mw.resolve(next_fnc, "something", fake_info, foo="a", bar="b")
+
 
     # TODO: Add test when easier to mock a token
     # def test_authorization_middleware_token(self):

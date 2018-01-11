@@ -29,7 +29,7 @@ class MyMutation(graphene.relay.ClientIDMutation, ChunkUploadMutation):
         var = graphene.String()
 
     @classmethod
-    def mutate_and_process_upload(cls, info, **input):
+    def mutate_and_process_upload(cls, info, **kwargs):
         return "success"
 
 
@@ -89,4 +89,4 @@ class TestChunkUpload(object):
                 }
 
         with pytest.raises(ValueError):
-            mut.mutate_and_get_payload(DummyInfo(), {"chunk_upload_params": args})
+            mut.mutate_and_get_payload(None, DummyInfo(), **{"chunk_upload_params": args})
