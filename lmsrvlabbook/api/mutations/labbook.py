@@ -30,6 +30,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
+from lmcommon.environment import ComponentManager
 
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
 from lmsrvcore.auth.user import get_logged_in_username
@@ -46,17 +47,21 @@ logger = LMLogger.get_logger()
 
 
 class CreateLabbook(graphene.relay.ClientIDMutation):
-    """Mutator for creation of a new Labbook on disk"""
+    """Mutation for creation of a new Labbook on disk"""
 
     class Input:
         name = graphene.String(required=True)
         description = graphene.String(required=True)
+        repository = graphene.String(required=True)
+        component_id = graphene.String(required=True)
+        revision = graphene.String(required=True)
 
     # Return the LabBook instance
     labbook = graphene.Field(lambda: Labbook)
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, name, description, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, name, description, repository, component_id, revision,
+                               client_mutation_id=None):
         username = get_logged_in_username()
 
         # Create a new empty LabBook
@@ -77,6 +82,25 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         # Create activity record
         ar = ActivityRecord(ActivityType.LABBOOK,
                             message=f"Created new LabBook: {username}/{name}",
+                            show=True,
+                            importance=255,
+                            linked_commit=lb.git.commit_hash)
+        ar.add_detail_object(adr)
+
+        # Store
+        store.create_activity_record(ar)
+
+        # Add Base component
+        cm = ComponentManager(lb)
+        cm.add_component("base", repository, component_id, revision)
+
+        # Create detail record for base addition
+        adr = ActivityDetailRecord(ActivityDetailType.LABBOOK, show=False, importance=0)
+        adr.add_value('text/plain', f"Added Base: {component_id} revision {revision}")
+
+        # Create activity record
+        ar = ActivityRecord(ActivityType.ENVIRONMENT,
+                            message="Added Base: {component_id} revision {revision}",
                             show=True,
                             importance=255,
                             linked_commit=lb.git.commit_hash)

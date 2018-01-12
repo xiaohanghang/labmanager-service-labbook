@@ -34,12 +34,10 @@ from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
-from lmsrvlabbook.api.objects.environmentinfo import EnvironmentInfo
-from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
-from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection, CustomDependency
-from lmsrvlabbook.api.connections.packagemanager import PackageManagerConnection, PackageManager
-from lmsrvlabbook.api.objects.baseimage import BaseImage
+from lmsrvlabbook.api.connections.environment import CustomComponentConnection, PackageComponentConnection
+from lmsrvlabbook.api.objects.basecomponent import BaseComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
+from lmsrvlabbook.api.objects.customcomponent import CustomComponent
 
 logger = LMLogger.get_logger()
 
@@ -84,14 +82,14 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
     # The name of the current branch
     container_status = graphene.Field(ContainerStatus)
 
-    # The LabBook's Base Image
-    base_image = graphene.Field(BaseImage)
+    # The LabBook's Base Component
+    base = graphene.Field(BaseComponent)
 
     # The LabBook's Package manager installed dependencies
-    package_manager_dependencies = graphene.ConnectionField(PackageManagerConnection)
+    package_dependencies = graphene.ConnectionField(PackageComponentConnection)
 
     # The LabBook's Custom dependencies
-    custom_dependencies = graphene.ConnectionField(CustomDependencyConnection)
+    custom_dependencies = graphene.ConnectionField(CustomComponentConnection)
 
     @classmethod
     def get_node(cls, info, id):
@@ -163,7 +161,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         return container_status.value
 
     def resolve_base_image(self, info):
-        """Method to get the LabBook's base image
+        """Method to get the LabBook's base component
 
         Args:
             info:
@@ -179,31 +177,14 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
         if component_data:
             component_data = component_data[0]
-            # Switch ID data to a BaseImage
-            id_data["component_class"] = "base_image"
-            id_data["repo"] = component_data["###repository###"]
-            id_data["namespace"] = component_data["###namespace###"]
-            id_data["component"] = component_data['info']['name']
-            id_data["version"] = "{}.{}".format(component_data['info']['version_major'],
-                                                component_data['info']['version_minor'])
-
-            package_managers = [pm['name'] for pm in component_data['available_package_managers']]
-
-            return BaseImage(id=BaseImage.to_type_id(id_data),
-                             author=EnvironmentAuthor.create(id_data),
-                             info=EnvironmentInfo.create(id_data),
-                             component=EnvironmentComponent.create(id_data),
-                             os_class=component_data['os_class'],
-                             os_release=component_data['os_release'],
-                             server=component_data['image']['server'],
-                             namespace=component_data['image']['namespace'],
-                             repository=component_data['image']['repo'],
-                             tag=component_data['image']['tag'],
-                             available_package_managers=package_managers)
+            return BaseComponent(id=f"{component_data['###repository###']}&{component_data['id']}&{component_data['revision']}",
+                                 repository=component_data['###repository###'],
+                                 component_id=component_data['id'],
+                                 revision=int(component_data['revision']))
         else:
             return None
 
-    def resolve_package_manager_dependencies(self, info, **kwargs):
+    def resolve_package_dependencies(self, info, **kwargs):
         """Method to get the LabBook's package manager dependencies
 
         Args:
@@ -228,22 +209,21 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             # Get DevEnv instances
             edge_objs = []
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {'component_data': edge,
-                           'component_class': 'package_manager',
-                           'package_manager': edge['package_manager'],
-                           'package_name': edge['name'],
-                           'package_version': edge['version']
-                           }
-                edge_objs.append(PackageManagerConnection.Edge(node=PackageManager.create(id_data), cursor=cursor))
+                edge_objs.append(PackageComponentConnection.Edge(node=PackageComponent(owner=self.owner,
+                                                                                       name=self.name,
+                                                                                       manager=edge['package_manager'],
+                                                                                       package=edge['name'],
+                                                                                       version=edge['version']),
+                                                   cursor=cursor))
 
-            return PackageManagerConnection(edges=edge_objs, page_info=lbc.page_info)
+            return PackageComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
         else:
-            return PackageManagerConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
-                                                                                        has_previous_page=False))
+            return PackageComponentConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
+                                                                                          has_previous_page=False))
 
     def resolve_custom_dependencies(self, info, **kwargs):
-        """Method to get the LabBook's custom deps
+        """Method to get the LabBook's custom dependencies
 
         Args:
             info:
@@ -267,17 +247,16 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             # Get DevEnv instances
             edge_objs = []
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {'component_data': edge,
-                           'component_class': 'custom',
-                           'repo': edge['###repository###'],
-                           'namespace': edge['###namespace###'],
-                           'component': edge['info']['name'],
-                           'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                           }
-                edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
+                edge_objs.append(CustomComponentConnection.Edge(node=CustomComponent(owner=self.owner,
+                                                                                     name=self.name,
+                                                                                     repository=edge['###repository###'],
+                                                                                     component_id=edge['id'],
+                                                                                     revision=edge['revision']),
+                                                                cursor=cursor))
 
-            return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
+            return CustomComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
         else:
-            return CustomDependencyConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
-                                                                                          has_previous_page=False))
+            return CustomComponentConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
+                                                                                         has_previous_page=False))
+

@@ -19,7 +19,7 @@
 # SOFTWARE.
 import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
-    AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook,\
+    AddCustomComponent, AddPackageComponent, CreateUserNote, StopContainer, ImportLabbook,\
     ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
@@ -77,11 +77,11 @@ class LabbookMutations(graphene.ObjectType):
     # Create a user note in the labbook's current working branch
     create_user_note = CreateUserNote.Field()
 
-    # Add a development environment or complex dependency to Labbook environment.
-    add_environment_component = AddEnvironmentComponent.Field()
+    # Add a custom dependency to Labbook environment.
+    add_custom_component = AddCustomComponent.Field()
 
     # Add a package to a Labbook environment (e.g., pip package, apt)
-    add_environment_package = AddEnvironmentPackage.Field()
+    add_package_component = AddPackageComponent.Field()
 
     # Add a file to a labbook
     add_labbook_file = AddLabbookFile.Field()

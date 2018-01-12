@@ -23,112 +23,86 @@ from lmcommon.logging import LMLogger
 from lmcommon.labbook import LabBook
 from lmcommon.environment import ComponentManager
 
-from lmsrvcore.api import logged_mutation
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponentClass, EnvironmentComponent
-from lmsrvlabbook.api.objects.packagemanager import PackageManager
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
+from lmsrvlabbook.api.objects.customcomponent import CustomComponent
+from lmsrvlabbook.api.connections.environment import CustomComponentConnection, PackageComponentConnection
 
 logger = LMLogger.get_logger()
 
 
-class AddEnvironmentPackage(graphene.relay.ClientIDMutation):
-    """Mutation to add a new package to labbook. """
+class AddPackageComponent(graphene.relay.ClientIDMutation):
+    """Mutation to add a new package to labbook"""
 
     class Input:
+        owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        owner = graphene.String()
-        package_manager = graphene.String(required=True)
-        package_name = graphene.String(required=True)
-        package_version = graphene.String()
+        manager = graphene.String(required=True)
+        package = graphene.String(required=True)
+        version = graphene.String()
 
-    environment_package = graphene.Field(lambda: PackageManager)
+    new_package_component_edge = graphene.Field(lambda: PackageComponentConnection.Edge)
 
     @classmethod
-    @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, manager, package, version=None,
+                               client_mutation_id=None):
         username = get_logged_in_username()
-
-        if not input.get("owner"):
-            owner = username
-        else:
-            owner = input.get("owner")
 
         # Load LabBook instance
         lb = LabBook()
-        lb.from_name(username, owner, input.get('labbook_name'))
+        lb.from_name(username, owner, labbook_name)
+
+        if version is None:
+            # TODO: Use package manager instance to get the latest version if not specified
+            pass
 
         # Create Component Manager
         cm = ComponentManager(lb)
-        cm.add_package(package_manager=input.get('package_manager'),
-                       package_name=input.get('package_name'),
-                       package_version=input.get('package_version'))
+        cm.add_package(package_manager=manager,
+                       package_name=package,
+                       package_version=version)
 
-        id_data = {
-            'component_class': 'package_manager',
-            'package_manager': input.get('package_manager'),
-            'package_name': input.get('package_name'),
-            'package_version': input.get('package_version')
-        }
-        try:
-            pkg_mgr = PackageManager.create(id_data)
-        except Exception as e:
-            logger.exception(e)
-            raise
+        # TODO: get cursor by checking how many packages are already installed
 
-        return AddEnvironmentPackage(environment_package=pkg_mgr)
+        new_edge = PackageComponentConnection.Edge(node=PackageComponent(owner=owner, name=labbook_name,
+                                                                         manager=manager, package=package,
+                                                                         version=version),
+                                                   cursor=0)
+
+        return AddPackageComponent(new_package_component_edge=new_edge)
 
 
-class AddEnvironmentComponent(graphene.relay.ClientIDMutation):
+class AddCustomComponent(graphene.relay.ClientIDMutation):
     """Mutation to add a new environment component to a LabBook"""
 
     class Input:
+        owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        owner = graphene.String()
-        component_class = graphene.Field(EnvironmentComponentClass, required=True)
         repository = graphene.String(required=True)
-        namespace = graphene.String(required=True)
-        component = graphene.String(required=True)
-        version = graphene.String(required=True)
+        component_id = graphene.String(required=True)
+        revision = graphene.String(required=True)
 
-    # TODO: Return updated LabBook Environment Component Collection
-    environment_component = graphene.Field(lambda: EnvironmentComponent)
+    new_custom_component_edge = graphene.Field(lambda: CustomComponentConnection.Edge)
 
     @classmethod
-    @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, repository, component_id, revision,
+                               client_mutation_id=None):
         username = get_logged_in_username()
-
-        if not input.get("owner"):
-            owner = username
-        else:
-            owner = input.get("owner")
 
         # Load LabBook instance
         lb = LabBook()
-        lb.from_name(username, owner, input.get('labbook_name'))
+        lb.from_name(username, owner, labbook_name)
 
         # Create Component Manager
         cm = ComponentManager(lb)
-        cm.add_component(EnvironmentComponentClass.get(input.get('component_class')).name,
-                         input.get('repository'),
-                         input.get('namespace'),
-                         input.get('component'),
-                         input.get('version'))
+        cm.add_component("custom", repository, component_id, revision)
 
-        id_data = {
-            'component_class': EnvironmentComponentClass.get(input.get('component_class')).name,
-            'repo': input.get('repository'),
-            'namespace': input.get('namespace'),
-            'component': input.get('component'),
-            'version': input.get('version')
-        }
-        try:
-            env_component = EnvironmentComponent.create(id_data)
-        except Exception as e:
-            logger.exception(e)
-            raise
+        # TODO: get cursor by checking how many packages are already installed
 
-        return AddEnvironmentComponent(environment_component=env_component)
+        new_edge = CustomComponentConnection.Edge(node=CustomComponent(owner=owner, name=labbook_name,
+                                                                       repository=repository, component_id=component_id,
+                                                                       revision=revision),
+                                                  cursor=0)
+
+        return AddCustomComponent(new_custom_component_edge=new_edge)
