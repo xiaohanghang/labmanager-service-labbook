@@ -73,13 +73,14 @@ class CustomComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
         self.name = self._component_data['name']
         self.description = self._component_data['description']
-        self.version = self._component_data['version']
+        # No version in spec??
+        # self.version = self._component_data['version']
         self.tags = self._component_data['tags']
-        self.license = self._component_data['license']
-        self.url = self._component_data['url']
-        self.maintainers = self._component_data['maintainers']
-        self.required_package_managers = self._component_data['required_package_managers']
-        self.docker_snippet = "\n".join(line for line in self._component_data['docker_snippet'])
+        # self.license = self._component_data['license']
+        # self.url = self._component_data['url']
+        # self.maintainers = self._component_data['maintainers']
+        # self.required_package_managers = self._component_data['required_package_managers']
+        self.docker_snippet = self._component_data['docker']
 
     @classmethod
     def get_node(cls, info, id):

@@ -42,7 +42,7 @@ from werkzeug.datastructures import FileStorage
 
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher.jobs import export_labbook_as_zip
-from lmcommon.fixtures import remote_labbook_repo, mock_config_file, mock_create_remote_repo
+from lmcommon.fixtures import remote_labbook_repo, mock_config_file, _MOCK_create_remote_repo
 from lmcommon.labbook import LabBook
 
 

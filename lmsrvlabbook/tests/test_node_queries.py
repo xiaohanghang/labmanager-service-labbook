@@ -182,19 +182,8 @@ class TestNodeQueries(object):
 
     def test_activity_record_node(self, fixture_working_dir, snapshot):
         """Test getting an activity record by node ID"""
-        query = """
-        mutation myCreateLabbook($name: String!, $desc: String!) {
-          createLabbook(input: {name: $name, description: $desc}) {
-            labbook {
-              id
-              name
-              description
-            }
-          }
-        }
-        """
-        variables = {"name": "labbook1", "desc": "my test description"}
-        fixture_working_dir[2].execute(query, variable_values=variables)
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my test description")
 
         # Get activity record to
         query = """
@@ -258,19 +247,8 @@ class TestNodeQueries(object):
 
     def test_detail_record_node(self, fixture_working_dir, snapshot):
         """Test getting an detail record by node ID"""
-        query = """
-        mutation myCreateLabbook($name: String!, $desc: String!) {
-          createLabbook(input: {name: $name, description: $desc}) {
-            labbook {
-              id
-              name
-              description
-            }
-          }
-        }
-        """
-        variables = {"name": "labbook1", "desc": "my test description"}
-        fixture_working_dir[2].execute(query, variable_values=variables)
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my test description")
 
         # Get activity record to
         query = """

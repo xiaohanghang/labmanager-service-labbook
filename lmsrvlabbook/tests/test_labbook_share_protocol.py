@@ -43,7 +43,7 @@ from werkzeug.datastructures import FileStorage
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher.jobs import export_labbook_as_zip
 from lmcommon.fixtures import (remote_labbook_repo, remote_bare_repo, mock_labbook,
-                               mock_config_file, mock_create_remote_repo)
+                               mock_config_file, _MOCK_create_remote_repo)
 from lmcommon.labbook import LabBook
 
 
@@ -65,7 +65,7 @@ def mock_create_labbooks(fixture_working_dir):
 
 
 class TestLabbookShareProtocol(object):
-    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=mock_create_remote_repo)
+    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
     def test_publish_basic(self, fixture_working_dir, remote_bare_repo, mock_create_labbooks):
 
         # Mock the request context so a fake authorization header is present
@@ -92,7 +92,7 @@ class TestLabbookShareProtocol(object):
         assert r['data']['publishLabbook']['success'] is True
 
     @responses.activate
-    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=mock_create_remote_repo)
+    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
     def test_sync_1(self, fixture_working_dir, remote_bare_repo, mock_create_labbooks, mock_labbook, mock_config_file):
 
         # Setup responses mock for this test

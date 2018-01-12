@@ -100,22 +100,25 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         self.name = self._component_data['name']
         self.description = self._component_data['description']
         self.readme = self._component_data['readme']
-        self.version = self._component_data['version']
+        # Currently no version in spec??
+        #self.version = self._component_data['version']
         self.tags = self._component_data['tags']
         self.icon = self._component_data['icon']
         self.os_class = self._component_data['os_class']
         self.os_release = self._component_data['os_release']
         self.license = self._component_data['license']
         self.url = self._component_data['url']
-        self.maintainers = self._component_data['maintainers']
+        # Currently no maintainers in spec??
+        # self.maintainers = self._component_data['maintainers']
         self.languages = self._component_data['languages']
-        self.development_tools = self._component_data['development_tools']
+        # Currently no developer tools in spec?
+        # self.development_tools = self._component_data['development_tools']
         self.docker_image_server = self._component_data['image']['server']
         self.docker_image_namespace = self._component_data['image']['namespace']
         self.docker_image_repository = self._component_data['image']['repository']
         self.docker_image_tag = self._component_data['image']['tag']
 
-        self.package_managers = self._component_data['package_managers'].keys
+        self.package_managers = [list(x.keys())[0] for x in self._component_data['package_managers']]
 
     @classmethod
     def get_node(cls, info, id):

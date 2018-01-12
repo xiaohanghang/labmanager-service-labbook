@@ -28,41 +28,28 @@ from lmcommon.configuration import Configuration
 class TestEnvironmentCustomDependencyQueries(object):
     def test_get_available_custom_deps(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available custom dependencies"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                   {
-                      availableCustomDependencies(first: 3) {
-                        edges {
-                          node {
-                            id
-                            component {
-                              repository
-                              namespace
-                              name
-                              componentClass
-                              version
-                            }
-                            info {
-                              name
-                              humanName
-                              versionMajor
-                              versionMinor
-                            }
-                            author {
-                              organization
-                            }
-                            osBaseClass
-                            docker
-                          }
-                        }
+        query = """
+               {
+                  availableCustomDependencies(first: 3) {
+                    edges {
+                      node {
+                        id
+                        componentId
+                        name
+                        description                        
+                        version
+                        tags
+                        license
+                        url
+                        maintainers
+                        requiredPackageManagers
+                        dockerSnippet
                       }
                     }
-            """
-            snapshot.assert_match(client.execute(query))
+                  }
+                }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
     def test_get_available_custom_deps_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available custom dependencies"""
@@ -255,185 +242,185 @@ class TestEnvironmentCustomDependencyQueries(object):
             """
             snapshot.assert_match(client.execute(query))
 
-    def test_get_available_custom_deps_versions(self, fixture_working_dir_env_repo_scoped, snapshot):
-        """Test getting the available versions for a given component"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                        {
-                          availableCustomDependenciesVersions(repository: "gig-dev_environment-components",
-                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
-                            edges {
-                              node {
-                                id
-                                component {
-                                  repository
-                                  namespace
-                                  name
-                                  componentClass
-                                  version
-                                }
-                                info {
-                                  name
-                                  humanName
-                                  versionMajor
-                                  versionMinor
-                                }
-                              }
-                              cursor
-                            }
-                            pageInfo {
-                              hasNextPage
-                              hasPreviousPage
-                            }
-                          }
-                        }
-            """
-            snapshot.assert_match(client.execute(query))
-
-    def test_get_available_custom_deps_versions_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
-        """Test getting the available versions for a given component with pagination"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                        {
-                          availableCustomDependenciesVersions(first: 2, repository: "gig-dev_environment-components",
-                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
-                            edges {
-                              node {
-                                id
-                                component {
-                                  repository
-                                  namespace
-                                  name
-                                  componentClass
-                                  version
-                                }
-                                info {
-                                  name
-                                  humanName
-                                  versionMajor
-                                  versionMinor
-                                }
-                              }
-                              cursor
-                            }
-                            pageInfo {
-                              hasNextPage
-                              hasPreviousPage
-                            }
-                          }
-                        }
-            """
-            snapshot.assert_match(client.execute(query))
-
-            query = """                    
-                        {
-                          availableCustomDependenciesVersions(first: 2, after: "MQ==", 
-                                                    repository: "gig-dev_environment-components",
-                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
-                            edges {
-                              node {
-                                id
-                                component {
-                                  repository
-                                  namespace
-                                  name
-                                  componentClass
-                                  version
-                                }
-                                info {
-                                  name
-                                  humanName
-                                  versionMajor
-                                  versionMinor
-                                }
-                              }
-                              cursor
-                            }
-                            pageInfo {
-                              hasNextPage
-                              hasPreviousPage
-                            }
-                          }
-                        }
-            """
-            snapshot.assert_match(client.execute(query))
-
-    def test_get_available_custom_deps_versions_pagination_reverse(self, fixture_working_dir_env_repo_scoped, snapshot):
-        """Test getting the available versions for a given component with pagination in reverse"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                        {
-                          availableCustomDependenciesVersions(last: 2, repository: "gig-dev_environment-components",
-                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
-                            edges {
-                              node {
-                                id
-                                component {
-                                  repository
-                                  namespace
-                                  name
-                                  componentClass
-                                  version
-                                }
-                                info {
-                                  name
-                                  humanName
-                                  versionMajor
-                                  versionMinor
-                                }
-                              }
-                              cursor
-                            }
-                            pageInfo {
-                              hasNextPage
-                              hasPreviousPage
-                            }
-                          }
-                        }
-            """
-            snapshot.assert_match(client.execute(query))
-
-            query = """                    
-                        {
-                          availableCustomDependenciesVersions(last: 2, before: "MQ==",
-                                                    repository: "gig-dev_environment-components",
-                                                    namespace: "gigantum",component: "ubuntu-python3-pillow") {
-                            edges {
-                              node {
-                                id
-                                component {
-                                  repository
-                                  namespace
-                                  name
-                                  componentClass
-                                  version
-                                }
-                                info {
-                                  name
-                                  humanName
-                                  versionMajor
-                                  versionMinor
-                                }
-                              }
-                              cursor
-                            }
-                            pageInfo {
-                              hasNextPage
-                              hasPreviousPage
-                            }
-                          }
-                        }
-            """
-            snapshot.assert_match(client.execute(query))
+    # def test_get_available_custom_deps_versions(self, fixture_working_dir_env_repo_scoped, snapshot):
+    #     """Test getting the available versions for a given component"""
+    #     # Mock the configuration class it it returns the same mocked config file
+    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
+    #         # Make and validate request
+    #         client = Client(fixture_working_dir_env_repo_scoped[2])
+    #
+    #         query = """
+    #                     {
+    #                       availableCustomDependenciesVersions(repository: "gig-dev_environment-components",
+    #                                                 namespace: "gigantum",component: "ubuntu-python3-pillow") {
+    #                         edges {
+    #                           node {
+    #                             id
+    #                             component {
+    #                               repository
+    #                               namespace
+    #                               name
+    #                               componentClass
+    #                               version
+    #                             }
+    #                             info {
+    #                               name
+    #                               humanName
+    #                               versionMajor
+    #                               versionMinor
+    #                             }
+    #                           }
+    #                           cursor
+    #                         }
+    #                         pageInfo {
+    #                           hasNextPage
+    #                           hasPreviousPage
+    #                         }
+    #                       }
+    #                     }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+    #
+    # def test_get_available_custom_deps_versions_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
+    #     """Test getting the available versions for a given component with pagination"""
+    #     # Mock the configuration class it it returns the same mocked config file
+    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
+    #         # Make and validate request
+    #         client = Client(fixture_working_dir_env_repo_scoped[2])
+    #
+    #         query = """
+    #                     {
+    #                       availableCustomDependenciesVersions(first: 2, repository: "gig-dev_environment-components",
+    #                                                 namespace: "gigantum",component: "ubuntu-python3-pillow") {
+    #                         edges {
+    #                           node {
+    #                             id
+    #                             component {
+    #                               repository
+    #                               namespace
+    #                               name
+    #                               componentClass
+    #                               version
+    #                             }
+    #                             info {
+    #                               name
+    #                               humanName
+    #                               versionMajor
+    #                               versionMinor
+    #                             }
+    #                           }
+    #                           cursor
+    #                         }
+    #                         pageInfo {
+    #                           hasNextPage
+    #                           hasPreviousPage
+    #                         }
+    #                       }
+    #                     }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+    #
+    #         query = """
+    #                     {
+    #                       availableCustomDependenciesVersions(first: 2, after: "MQ==",
+    #                                                 repository: "gig-dev_environment-components",
+    #                                                 namespace: "gigantum",component: "ubuntu-python3-pillow") {
+    #                         edges {
+    #                           node {
+    #                             id
+    #                             component {
+    #                               repository
+    #                               namespace
+    #                               name
+    #                               componentClass
+    #                               version
+    #                             }
+    #                             info {
+    #                               name
+    #                               humanName
+    #                               versionMajor
+    #                               versionMinor
+    #                             }
+    #                           }
+    #                           cursor
+    #                         }
+    #                         pageInfo {
+    #                           hasNextPage
+    #                           hasPreviousPage
+    #                         }
+    #                       }
+    #                     }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+    #
+    # def test_get_available_custom_deps_versions_pagination_reverse(self, fixture_working_dir_env_repo_scoped, snapshot):
+    #     """Test getting the available versions for a given component with pagination in reverse"""
+    #     # Mock the configuration class it it returns the same mocked config file
+    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
+    #         # Make and validate request
+    #         client = Client(fixture_working_dir_env_repo_scoped[2])
+    #
+    #         query = """
+    #                     {
+    #                       availableCustomDependenciesVersions(last: 2, repository: "gig-dev_environment-components",
+    #                                                 namespace: "gigantum",component: "ubuntu-python3-pillow") {
+    #                         edges {
+    #                           node {
+    #                             id
+    #                             component {
+    #                               repository
+    #                               namespace
+    #                               name
+    #                               componentClass
+    #                               version
+    #                             }
+    #                             info {
+    #                               name
+    #                               humanName
+    #                               versionMajor
+    #                               versionMinor
+    #                             }
+    #                           }
+    #                           cursor
+    #                         }
+    #                         pageInfo {
+    #                           hasNextPage
+    #                           hasPreviousPage
+    #                         }
+    #                       }
+    #                     }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+    #
+    #         query = """
+    #                     {
+    #                       availableCustomDependenciesVersions(last: 2, before: "MQ==",
+    #                                                 repository: "gig-dev_environment-components",
+    #                                                 namespace: "gigantum",component: "ubuntu-python3-pillow") {
+    #                         edges {
+    #                           node {
+    #                             id
+    #                             component {
+    #                               repository
+    #                               namespace
+    #                               name
+    #                               componentClass
+    #                               version
+    #                             }
+    #                             info {
+    #                               name
+    #                               humanName
+    #                               versionMajor
+    #                               versionMinor
+    #                             }
+    #                           }
+    #                           cursor
+    #                         }
+    #                         pageInfo {
+    #                           hasNextPage
+    #                           hasPreviousPage
+    #                         }
+    #                       }
+    #                     }
+    #         """
+    #         snapshot.assert_match(client.execute(query))

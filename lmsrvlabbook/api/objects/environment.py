@@ -213,7 +213,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
                                                                                        name=self.name,
                                                                                        manager=edge['package_manager'],
                                                                                        package=edge['name'],
-                                                                                       version=edge['version']),
+                                                                                       revision=edge['revision']),
                                                    cursor=cursor))
 
             return PackageComponentConnection(edges=edge_objs, page_info=lbc.page_info)

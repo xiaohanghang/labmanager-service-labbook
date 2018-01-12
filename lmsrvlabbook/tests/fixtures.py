@@ -46,7 +46,7 @@ def _create_temp_work_dir():
 
     config = Configuration()
     # Make sure the "test" environment components are always used
-    config.config["environment"]["repo_url"] = ["https://github.com/gig-dev/environment-components.git"]
+    config.config["environment"]["repo_url"] = ["https://github.com/gig-dev/components2.git"]
     config.config["flask"]["DEBUG"] = False
     # Set the working dir to the new temp dir
     config.config["git"]["working_directory"] = temp_dir

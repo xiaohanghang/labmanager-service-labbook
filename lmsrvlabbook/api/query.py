@@ -72,7 +72,7 @@ class LabbookQuery(graphene.ObjectType):
     local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
 
     # Base Image Repository Interface
-    available_base_images = graphene.relay.ConnectionField(BaseComponentConnection)
+    available_bases = graphene.relay.ConnectionField(BaseComponentConnection)
     # available_base_image_versions = graphene.relay.ConnectionField(BaseImageConnection, repository=graphene.String(),
     #                                                                namespace=graphene.String(),
     #                                                                component=graphene.String())
@@ -191,14 +191,14 @@ class LabbookQuery(graphene.ObjectType):
 
         return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_available_base_images(self, info, **kwargs):
+    def resolve_available_bases(self, info, **kwargs):
         """Method to return a all graphene BaseImages that are available
 
         Returns:
             list(Labbook)
         """
         repo = ComponentRepository()
-        edges = repo.get_component_list("base_image")
+        edges = repo.get_component_list("base")
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
@@ -208,16 +208,12 @@ class LabbookQuery(graphene.ObjectType):
         # Get BaseImage instances
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'component_data': edge,
-                       'component_class': 'base_image',
-                       'repo': edge['###repository###'],
-                       'namespace': edge['###namespace###'],
-                       'component': edge['info']['name'],
-                       'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                       }
-            edge_objs.append(BaseImageConnection.Edge(node=BaseImage.create(id_data), cursor=cursor))
+            edge_objs.append(BaseComponentConnection.Edge(node=BaseComponent(repository=edge['###repository###'],
+                                                                             component_id=edge['id'],
+                                                                             revision=int(edge['revision'])),
+                                                          cursor=cursor))
 
-        return BaseImageConnection(edges=edge_objs, page_info=lbc.page_info)
+        return BaseComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
     # def resolve_available_base_image_versions(self, info, repository, namespace, component, **kwargs):
     #     """Method to return a all graphene BaseImages that are available
@@ -267,16 +263,12 @@ class LabbookQuery(graphene.ObjectType):
         # Get BaseImage instances
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'component_data': edge,
-                       'component_class': 'custom',
-                       'repo': edge['###repository###'],
-                       'namespace': edge['###namespace###'],
-                       'component': edge['info']['name'],
-                       'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                       }
-            edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
+            edge_objs.append(CustomComponentConnection.Edge(node=CustomComponent(repository=edge['###repository###'],
+                                                                                 component_id=edge['id'],
+                                                                                 revision=edge['revision']),
+                                                            cursor=cursor))
 
-        return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
+        return CustomComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
     # def resolve_available_custom_dependencies_versions(self, info, repository, namespace, component, **kwargs):
     #     """Method to return all versions of a Custom Dependency component

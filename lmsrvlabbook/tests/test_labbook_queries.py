@@ -821,22 +821,8 @@ class TestLabBookServiceQueries(object):
 
     def test_get_activity_records(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test paging through activity records"""
-        query = """
-        mutation myCreateLabbook($name: String!, $desc: String!) {
-          createLabbook(input: {name: $name, description: $desc}) {
-            labbook {
-              id
-              name
-              description
-            }
-          }
-        }
-        """
-        variables = {"name": "labbook11", "desc": "my test description"}
-        fixture_working_dir[2].execute(query, variable_values=variables)
-
         lb = LabBook(fixture_working_dir[0])
-        lb.from_name("default", "default", "labbook11")
+        lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
         lb.insert_file("code", fixture_test_file, "")
         lb.insert_file("input", fixture_test_file, "")
         lb.insert_file("output", fixture_test_file, "")
@@ -1083,22 +1069,8 @@ class TestLabBookServiceQueries(object):
 
     def test_get_activity_records_with_details(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test getting activity records with detail records"""
-        query = """
-        mutation myCreateLabbook($name: String!, $desc: String!) {
-          createLabbook(input: {name: $name, description: $desc}) {
-            labbook {
-              id
-              name
-              description
-            }
-          }
-        }
-        """
-        variables = {"name": "labbook11", "desc": "my test description"}
-        fixture_working_dir[2].execute(query, variable_values=variables)
-
         lb = LabBook(fixture_working_dir[0])
-        lb.from_name("default", "default", "labbook11")
+        lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
         lb.insert_file("code", fixture_test_file, "")
         lb.insert_file("input", fixture_test_file, "")
         lb.insert_file("output", fixture_test_file, "")
@@ -1174,22 +1146,8 @@ class TestLabBookServiceQueries(object):
 
     def test_get_detail_record(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test getting detail record directly after an initial activity record query"""
-        query = """
-        mutation myCreateLabbook($name: String!, $desc: String!) {
-          createLabbook(input: {name: $name, description: $desc}) {
-            labbook {
-              id
-              name
-              description
-            }
-          }
-        }
-        """
-        variables = {"name": "labbook11", "desc": "my test description"}
-        fixture_working_dir[2].execute(query, variable_values=variables)
-
         lb = LabBook(fixture_working_dir[0])
-        lb.from_name("default", "default", "labbook11")
+        lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
         lb.insert_file("code", fixture_test_file, "")
 
         # Get all records at once and verify varying fields exist properly
@@ -1276,22 +1234,8 @@ class TestLabBookServiceQueries(object):
 
     def test_get_detail_records(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test getting multiple detail records directly after an initial activity record query"""
-        query = """
-        mutation myCreateLabbook($name: String!, $desc: String!) {
-          createLabbook(input: {name: $name, description: $desc}) {
-            labbook {
-              id
-              name
-              description
-            }
-          }
-        }
-        """
-        variables = {"name": "labbook11", "desc": "my test description"}
-        fixture_working_dir[2].execute(query, variable_values=variables)
-
         lb = LabBook(fixture_working_dir[0])
-        lb.from_name("default", "default", "labbook11")
+        lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
         lb.insert_file("code", fixture_test_file, "")
 
         # Get all records at once and verify varying fields exist properly
