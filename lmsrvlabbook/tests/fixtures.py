@@ -33,7 +33,7 @@ from lmcommon.environment import RepositoryManager
 from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.auth.identity import get_identity_manager
 from lmcommon.labbook import LabBook
-from lmsrvcore.middleware import LabBookLoaderMiddleware
+from lmsrvcore.middleware import LabBookLoaderMiddleware, error_middleware
 
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
@@ -139,7 +139,7 @@ def fixture_working_dir_env_repo_scoped():
             current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
 
             # Create a test client
-            client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
+            client = Client(schema, middleware=[LabBookLoaderMiddleware(), error_middleware], context_value=ContextMock())
 
             yield config_file, temp_dir, client, schema  # name of the config file, temporary working directory, the schema
 
