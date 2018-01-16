@@ -61,6 +61,7 @@ class TestEnvironmentBaseImageQueries(object):
 
         result = fixture_working_dir_env_repo_scoped[2].execute(query)
         assert 'errors' not in result
+        snapshot.assert_match(result)
 
     def test_get_available_base_images_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available base images"""
@@ -89,7 +90,7 @@ class TestEnvironmentBaseImageQueries(object):
             result_1 = client.execute(query)
             pprint.pprint(result_1)
             assert 'errors' not in result_1
-            #snapshot.assert_match(result_1)
+            snapshot.assert_match(result_1)
 
             query = """
                     {
@@ -110,14 +111,14 @@ class TestEnvironmentBaseImageQueries(object):
             result_2 = client.execute(query)
             pprint.pprint(result_2)
             assert 'errors' not in result_2
-            #snapshot.assert_match(client.execute(query))
+            snapshot.assert_match(client.execute(query))
 
     def test_get_available_base_images_pagination_reverse(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available base images using pagination from the end"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
+            client = fixture_working_dir_env_repo_scoped[2]
 
             query = """
                     {
@@ -138,6 +139,7 @@ class TestEnvironmentBaseImageQueries(object):
             """
             result_1 = client.execute(query)
             pprint.pprint(result_1)
+            assert 'errors' not in result_1
             snapshot.assert_match(result_1)
 
             query = """
@@ -158,6 +160,7 @@ class TestEnvironmentBaseImageQueries(object):
                     }
             """
             result_2 = client.execute(query)
+            assert 'errors' not in result_2
             pprint.pprint(result_2)
             snapshot.assert_match(result_2)
 
@@ -165,177 +168,37 @@ class TestEnvironmentBaseImageQueries(object):
         """Test getting the available base images"""
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
+            # Make and validate reques
+            client = fixture_working_dir_env_repo_scoped[2]
 
             query = """
                         {
-                          node(id: "QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjQ=") {
-                            ... on BaseImage {
-                              info {
-                                name
-                                humanName
-                                versionMajor
-                                versionMinor
-                              }
-                              component{
+                          node(id: "QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx") {
+                            ... on BaseComponent {
+                                id
                                 repository
-                                namespace
+                                componentId
+                                revision
                                 name
-                                componentClass
-                                version
-                              }
+                                description
+                                readme
+                                tags
+                                icon
+                                osClass
+                                osRelease
+                                license
+                                url
+                                languages
+                                developmentTools
+                                dockerImageServer
+                                dockerImageNamespace
+                                dockerImageRepository
+                                dockerImageTag
+                                packageManagers
                             }
                           }
                         }
             """
-            snapshot.assert_match(client.execute(query))
-
-
-    # def test_get_available_base_image_versions(self, fixture_working_dir_env_repo_scoped, snapshot):
-    #     """Test getting the available base image versions for a given component"""
-    #     # Mock the configuration class it it returns the same mocked config file
-    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-    #         # Make and validate request
-    #         client = Client(fixture_working_dir_env_repo_scoped[2])
-    #
-    #         query = """
-    #                 {
-    #                   availableBaseImageVersions(first: 3, repository: "gig-dev_environment-components",
-    #                    namespace: "gigantum",
-    #                    component: "ubuntu1604-python3"){
-    #                     edges{
-    #                       node{
-    #                         id
-    #                         info{
-    #                           name
-    #                           humanName
-    #                           versionMajor
-    #                           versionMinor
-    #                         }
-    #                       }
-    #                     }
-    #                   }
-    #                 }
-    #         """
-    #         snapshot.assert_match(client.execute(query))
-    #
-    # def test_get_available_base_image_versions_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
-    #     """Test getting the available base image versions for a given component with pagination"""
-    #     # Mock the configuration class it it returns the same mocked config file
-    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-    #         # Make and validate request
-    #         client = Client(fixture_working_dir_env_repo_scoped[2])
-    #
-    #         query = """
-    #                 {
-    #                   availableBaseImageVersions(first: 3,
-    #                      repository: "gig-dev_environment-components",
-    #                      namespace: "gigantum", component: "ubuntu1604-python3"){
-    #                     edges{
-    #                       node{
-    #                         id
-    #                         info{
-    #                           name
-    #                           humanName
-    #                           versionMajor
-    #                           versionMinor
-    #                         }
-    #                       }
-    #                       cursor
-    #                     }
-    #                     pageInfo{
-    #                       hasNextPage
-    #                       hasPreviousPage
-    #                     }
-    #                   }
-    #                 }
-    #         """
-    #         snapshot.assert_match(client.execute(query))
-    #
-    #         query = """
-    #                 {
-    #                   availableBaseImageVersions(first: 3, after: "Mg==",
-    #                      repository: "gig-dev_environment-components",
-    #                      namespace: "gigantum", component: "ubuntu1604-python3"){
-    #                     edges{
-    #                       node{
-    #                         id
-    #                         info{
-    #                           name
-    #                           humanName
-    #                           versionMajor
-    #                           versionMinor
-    #                         }
-    #                       }
-    #                       cursor
-    #                     }
-    #                     pageInfo{
-    #                       hasNextPage
-    #                       hasPreviousPage
-    #                     }
-    #                   }
-    #                 }
-    #         """
-    #         snapshot.assert_match(client.execute(query))
-    #
-    # def test_get_available_base_image_versions_pagination_reverse(self, fixture_working_dir_env_repo_scoped, snapshot):
-    #     """Test getting the available base image versions for a given component with pagination"""
-    #     # Mock the configuration class it it returns the same mocked config file
-    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-    #         # Make and validate request
-    #         client = Client(fixture_working_dir_env_repo_scoped[2])
-    #
-    #         query = """
-    #                 {
-    #                   availableBaseImageVersions(last: 3,
-    #                      repository: "gig-dev_environment-components",
-    #                      namespace: "gigantum", component: "ubuntu1604-python3"){
-    #                     edges{
-    #                       node{
-    #                         id
-    #                         info{
-    #                           name
-    #                           humanName
-    #                           versionMajor
-    #                           versionMinor
-    #                         }
-    #                       }
-    #                       cursor
-    #                     }
-    #                     pageInfo{
-    #                       hasNextPage
-    #                       hasPreviousPage
-    #                     }
-    #                   }
-    #                 }
-    #         """
-    #         snapshot.assert_match(client.execute(query))
-    #
-    #         query = """
-    #                 {
-    #                   availableBaseImageVersions(last: 3, before: "MQ==",
-    #                      repository: "gig-dev_environment-components",
-    #                      namespace: "gigantum", component: "ubuntu1604-python3"){
-    #                     edges{
-    #                       node{
-    #                         id
-    #                         info{
-    #                           name
-    #                           humanName
-    #                           versionMajor
-    #                           versionMinor
-    #                         }
-    #                       }
-    #                       cursor
-    #                     }
-    #                     pageInfo{
-    #                       hasNextPage
-    #                       hasPreviousPage
-    #                     }
-    #                   }
-    #                 }
-    #         """
-    #         snapshot.assert_match(client.execute(query))
-
-
+            result = client.execute(query)
+            assert 'errors' not in result
+            snapshot.assert_match(result)
