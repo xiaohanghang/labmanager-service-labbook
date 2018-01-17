@@ -23,29 +23,29 @@ from graphene.test import Client
 from mock import patch
 
 from lmcommon.configuration import Configuration
-import pprint
+
 
 class TestEnvironmentBaseImageQueries(object):
     def test_get_available_base_images(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available base images"""
         query = """
                 {
-                  availableBases(first: 3) {
+                  availableBases{
                     edges {
                       node {
                         id
-                        repository
                         componentId
-                        revision
                         name
                         description
                         readme
+                        version
                         tags
                         icon
                         osClass
                         osRelease
                         license
                         url
+                        maintainers
                         languages
                         developmentTools
                         dockerImageServer
@@ -58,136 +58,213 @@ class TestEnvironmentBaseImageQueries(object):
                   }
                 }
         """
-
-        result = fixture_working_dir_env_repo_scoped[2].execute(query)
-        assert 'errors' not in result
-        snapshot.assert_match(result)
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
     def test_get_available_base_images_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available base images"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = fixture_working_dir_env_repo_scoped[2]
-
-            query = """
-                    {
-                      availableBases(first: 1){
-                        edges{
-                          node{
-                            id
-                            name
-                          }
-                          cursor
-                        }
-                        pageInfo{
-                          hasNextPage
-                        }
+        query = """
+                {
+                  availableBases(first: 1){
+                    edges{
+                      node{
+                        id
+                        componentId
+                        name
+                        description
+                        readme
+                        version
+                        tags
+                        icon
+                        osClass
+                        osRelease
+                        license
+                        url
+                        maintainers
+                        languages
+                        developmentTools
+                        dockerImageServer
+                        dockerImageNamespace
+                        dockerImageRepository
+                        dockerImageTag
+                        packageManagers
                       }
+                      cursor
                     }
-            """
+                    pageInfo{
+                      hasNextPage
+                    }
+                  }
+                }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
-            result_1 = client.execute(query)
-            pprint.pprint(result_1)
-            assert 'errors' not in result_1
-            snapshot.assert_match(result_1)
-
-            query = """
-                    {
-                      availableBases(first: 2, after: "MA=="){
-                        edges{
-                          node{
-                            id
-                            name
-                          }
-                          cursor
-                        }
-                        pageInfo{
-                          hasNextPage
-                        }
+        query = """
+                {
+                  availableBases(first: 2, after: "MQ=="){
+                    edges{
+                      node{
+                        id
+                        componentId
+                        name
+                        description
+                        readme
+                        version
+                        tags
+                        icon
+                        osClass
+                        osRelease
+                        license
+                        url
+                        maintainers
+                        languages
+                        developmentTools
+                        dockerImageServer
+                        dockerImageNamespace
+                        dockerImageRepository
+                        dockerImageTag
+                        packageManagers
                       }
+                      cursor
                     }
-            """
-            result_2 = client.execute(query)
-            pprint.pprint(result_2)
-            assert 'errors' not in result_2
-            snapshot.assert_match(client.execute(query))
+                    pageInfo{
+                      hasNextPage
+                    }
+                  }
+                }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+        query = """
+                {
+                  availableBases(first: 1, after: "MQ=="){
+                    edges{
+                      node{
+                        id
+                        componentId
+                        name
+                        description
+                        readme
+                        version
+                        tags
+                        icon
+                        osClass
+                        osRelease
+                        license
+                        url
+                        maintainers
+                        languages
+                        developmentTools
+                        dockerImageServer
+                        dockerImageNamespace
+                        dockerImageRepository
+                        dockerImageTag
+                        packageManagers
+                      }
+                      cursor
+                    }
+                    pageInfo{
+                      hasNextPage
+                    }
+                  }
+                }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
     def test_get_available_base_images_pagination_reverse(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available base images using pagination from the end"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = fixture_working_dir_env_repo_scoped[2]
-
-            query = """
-                    {
-                      availableBases(last: 1){
-                        edges{
-                          node{
-                            id
-                            name
-                          }
-                          cursor
-                        }
-                        pageInfo{
-                          hasNextPage
-                          hasPreviousPage
-                        }
+        query = """
+                {
+                  availableBases(last: 1){
+                    edges{
+                      node{
+                        id
+                        componentId
+                        name
+                        description
+                        readme
+                        version
+                        tags
+                        icon
+                        osClass
+                        osRelease
+                        license
+                        url
+                        maintainers
+                        languages
+                        developmentTools
+                        dockerImageServer
+                        dockerImageNamespace
+                        dockerImageRepository
+                        dockerImageTag
+                        packageManagers
                       }
+                      cursor
                     }
-            """
-            result_1 = client.execute(query)
-            pprint.pprint(result_1)
-            assert 'errors' not in result_1
-            snapshot.assert_match(result_1)
+                    pageInfo{
+                      hasNextPage
+                      hasPreviousPage
+                    }
+                  }
+                }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
-            query = """
-                    {
-                      availableBases(last: 2, before: "MQ=="){
-                        edges{
-                          node{
-                            id
-                            name
-                          }
-                          cursor
-                        }
-                        pageInfo{
-                          hasNextPage
-                          hasPreviousPage
-                        }
+        query = """
+                {
+                  availableBases(last: 2, before: "MQ=="){
+                    edges{
+                      node{
+                        id
+                        componentId
+                        name
+                        description
+                        readme
+                        version
+                        tags
+                        icon
+                        osClass
+                        osRelease
+                        license
+                        url
+                        maintainers
+                        languages
+                        developmentTools
+                        dockerImageServer
+                        dockerImageNamespace
+                        dockerImageRepository
+                        dockerImageTag
+                        packageManagers
                       }
+                      cursor
                     }
-            """
-            result_2 = client.execute(query)
-            assert 'errors' not in result_2
-            pprint.pprint(result_2)
-            snapshot.assert_match(result_2)
+                    pageInfo{
+                      hasNextPage
+                      hasPreviousPage
+                    }
+                  }
+                }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
     def test_get_base_image_by_node(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the available base images"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate reques
-            client = fixture_working_dir_env_repo_scoped[2]
-
-            query = """
-                        {
-                          node(id: "QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx") {
-                            ... on BaseComponent {
+        query = """
+                    {
+                      node(id: "QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx") {
+                        ... on BaseComponent {
                                 id
-                                repository
                                 componentId
-                                revision
                                 name
                                 description
                                 readme
+                                version
                                 tags
                                 icon
                                 osClass
                                 osRelease
                                 license
                                 url
+                                maintainers
                                 languages
                                 developmentTools
                                 dockerImageServer
@@ -195,10 +272,158 @@ class TestEnvironmentBaseImageQueries(object):
                                 dockerImageRepository
                                 dockerImageTag
                                 packageManagers
-                            }
-                          }
+                        
                         }
-            """
-            result = client.execute(query)
-            assert 'errors' not in result
-            snapshot.assert_match(result)
+                      }
+                    }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+
+    # def test_get_available_base_image_versions(self, fixture_working_dir_env_repo_scoped, snapshot):
+    #     """Test getting the available base image versions for a given component"""
+    #     # Mock the configuration class it it returns the same mocked config file
+    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
+    #         # Make and validate request
+    #         client = Client(fixture_working_dir_env_repo_scoped[2])
+    #
+    #         query = """
+    #                 {
+    #                   availableBaseImageVersions(first: 3, repository: "gig-dev_environment-components",
+    #                    namespace: "gigantum",
+    #                    component: "ubuntu1604-python3"){
+    #                     edges{
+    #                       node{
+    #                         id
+    #                         info{
+    #                           name
+    #                           humanName
+    #                           versionMajor
+    #                           versionMinor
+    #                         }
+    #                       }
+    #                     }
+    #                   }
+    #                 }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+    #
+    # def test_get_available_base_image_versions_pagination(self, fixture_working_dir_env_repo_scoped, snapshot):
+    #     """Test getting the available base image versions for a given component with pagination"""
+    #     # Mock the configuration class it it returns the same mocked config file
+    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
+    #         # Make and validate request
+    #         client = Client(fixture_working_dir_env_repo_scoped[2])
+    #
+    #         query = """
+    #                 {
+    #                   availableBaseImageVersions(first: 3,
+    #                      repository: "gig-dev_environment-components",
+    #                      namespace: "gigantum", component: "ubuntu1604-python3"){
+    #                     edges{
+    #                       node{
+    #                         id
+    #                         info{
+    #                           name
+    #                           humanName
+    #                           versionMajor
+    #                           versionMinor
+    #                         }
+    #                       }
+    #                       cursor
+    #                     }
+    #                     pageInfo{
+    #                       hasNextPage
+    #                       hasPreviousPage
+    #                     }
+    #                   }
+    #                 }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+    #
+    #         query = """
+    #                 {
+    #                   availableBaseImageVersions(first: 3, after: "Mg==",
+    #                      repository: "gig-dev_environment-components",
+    #                      namespace: "gigantum", component: "ubuntu1604-python3"){
+    #                     edges{
+    #                       node{
+    #                         id
+    #                         info{
+    #                           name
+    #                           humanName
+    #                           versionMajor
+    #                           versionMinor
+    #                         }
+    #                       }
+    #                       cursor
+    #                     }
+    #                     pageInfo{
+    #                       hasNextPage
+    #                       hasPreviousPage
+    #                     }
+    #                   }
+    #                 }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+    #
+    # def test_get_available_base_image_versions_pagination_reverse(self, fixture_working_dir_env_repo_scoped, snapshot):
+    #     """Test getting the available base image versions for a given component with pagination"""
+    #     # Mock the configuration class it it returns the same mocked config file
+    #     with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
+    #         # Make and validate request
+    #         client = Client(fixture_working_dir_env_repo_scoped[2])
+    #
+    #         query = """
+    #                 {
+    #                   availableBaseImageVersions(last: 3,
+    #                      repository: "gig-dev_environment-components",
+    #                      namespace: "gigantum", component: "ubuntu1604-python3"){
+    #                     edges{
+    #                       node{
+    #                         id
+    #                         info{
+    #                           name
+    #                           humanName
+    #                           versionMajor
+    #                           versionMinor
+    #                         }
+    #                       }
+    #                       cursor
+    #                     }
+    #                     pageInfo{
+    #                       hasNextPage
+    #                       hasPreviousPage
+    #                     }
+    #                   }
+    #                 }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+    #
+    #         query = """
+    #                 {
+    #                   availableBaseImageVersions(last: 3, before: "MQ==",
+    #                      repository: "gig-dev_environment-components",
+    #                      namespace: "gigantum", component: "ubuntu1604-python3"){
+    #                     edges{
+    #                       node{
+    #                         id
+    #                         info{
+    #                           name
+    #                           humanName
+    #                           versionMajor
+    #                           versionMinor
+    #                         }
+    #                       }
+    #                       cursor
+    #                     }
+    #                     pageInfo{
+    #                       hasNextPage
+    #                       hasPreviousPage
+    #                     }
+    #                   }
+    #                 }
+    #         """
+    #         snapshot.assert_match(client.execute(query))
+
+

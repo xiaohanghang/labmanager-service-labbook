@@ -73,6 +73,9 @@ class LabbookQuery(graphene.ObjectType):
 
     # Base Image Repository Interface
     available_bases = graphene.relay.ConnectionField(BaseComponentConnection)
+    # available_base_image_versions = graphene.relay.ConnectionField(BaseImageConnection, repository=graphene.String(),
+    #                                                                namespace=graphene.String(),
+    #                                                                component=graphene.String())
 
     # Custom Dependency Repository Interface
     available_custom_dependencies = graphene.relay.ConnectionField(CustomComponentConnection)

@@ -46,7 +46,7 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     readme = graphene.String()
 
     # Underlying version of the component
-    #version = graphene.String()
+    version = graphene.String()
 
     # Tags that can be used when searching/filtering components
     tags = graphene.List(graphene.String)
@@ -67,7 +67,7 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     url = graphene.String()
 
     # List of Gigantum usernames that "maintain" this component
-    #maintainers = graphene.List(graphene.String)
+    maintainers = graphene.List(graphene.String)
 
     # List of installed programming languages that are available to the user
     languages = graphene.List(graphene.String)
@@ -97,7 +97,6 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
             self._component_data = repo.get_component("base", self.repository, self.component_id, self.revision)
 
-
         self.name = self._component_data['name']
         self.description = self._component_data['description']
         self.readme = self._component_data['readme']
@@ -112,13 +111,12 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         # Currently no maintainers in spec??
         # self.maintainers = self._component_data['maintainers']
         self.languages = self._component_data['languages']
-        # Currently no developer tools in spec?
-
         self.development_tools = self._component_data['development_tools']
         self.docker_image_server = self._component_data['image']['server']
         self.docker_image_namespace = self._component_data['image']['namespace']
         self.docker_image_repository = self._component_data['image']['repository']
         self.docker_image_tag = self._component_data['image']['tag']
+
         self.package_managers = [list(x.keys())[0] for x in self._component_data['package_managers']]
 
     @classmethod

@@ -41,7 +41,7 @@ class TestAddComponentMutations(object):
         # Mock the configuration class it it returns the same mocked config file
         with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
             # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[3])
+            client = Client(fixture_working_dir_env_repo_scoped[2])
 
             # Add a base image
             query = """
@@ -63,7 +63,6 @@ class TestAddComponentMutations(object):
             """
             result = client.execute(query)
 
-        assert not 'errors' in result
         assert result['data']['addEnvironmentComponent']['environmentComponent']['name'] == 'ubuntu1604-python3'
 
         # Validate the LabBook .gigantum/env/ directory
