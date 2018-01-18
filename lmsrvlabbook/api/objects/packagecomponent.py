@@ -52,8 +52,9 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
-        if not self.manager or not self.package or self.version is None:
-            raise ValueError("Resolving a PackageComponent ID requires manager, package and version to be set")
+        # TODO: Add check back in once package mutation automatically adds the version
+        #if not self.manager or not self.package or self.version is None:
+        #    raise ValueError("Resolving a PackageComponent ID requires manager, package and version to be set")
 
         return f"{self.manager}&{self.package}&{self.version}"
 
