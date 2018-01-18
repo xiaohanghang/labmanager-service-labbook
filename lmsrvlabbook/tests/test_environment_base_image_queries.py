@@ -38,14 +38,12 @@ class TestEnvironmentBaseImageQueries(object):
                         name
                         description
                         readme
-                        version
                         tags
                         icon
                         osClass
                         osRelease
                         license
                         url
-                        maintainers
                         languages
                         developmentTools
                         dockerImageServer
@@ -72,14 +70,12 @@ class TestEnvironmentBaseImageQueries(object):
                         name
                         description
                         readme
-                        version
                         tags
                         icon
                         osClass
                         osRelease
                         license
                         url
-                        maintainers
                         languages
                         developmentTools
                         dockerImageServer
@@ -108,14 +104,12 @@ class TestEnvironmentBaseImageQueries(object):
                         name
                         description
                         readme
-                        version
                         tags
                         icon
                         osClass
                         osRelease
                         license
                         url
-                        maintainers
                         languages
                         developmentTools
                         dockerImageServer
@@ -144,14 +138,12 @@ class TestEnvironmentBaseImageQueries(object):
                         name
                         description
                         readme
-                        version
                         tags
                         icon
                         osClass
                         osRelease
                         license
                         url
-                        maintainers
                         languages
                         developmentTools
                         dockerImageServer
@@ -182,14 +174,12 @@ class TestEnvironmentBaseImageQueries(object):
                         name
                         description
                         readme
-                        version
                         tags
                         icon
                         osClass
                         osRelease
                         license
                         url
-                        maintainers
                         languages
                         developmentTools
                         dockerImageServer
@@ -219,14 +209,12 @@ class TestEnvironmentBaseImageQueries(object):
                         name
                         description
                         readme
-                        version
                         tags
                         icon
                         osClass
                         osRelease
                         license
                         url
-                        maintainers
                         languages
                         developmentTools
                         dockerImageServer
@@ -257,14 +245,12 @@ class TestEnvironmentBaseImageQueries(object):
                                 name
                                 description
                                 readme
-                                version
                                 tags
                                 icon
                                 osClass
                                 osRelease
                                 license
                                 url
-                                maintainers
                                 languages
                                 developmentTools
                                 dockerImageServer

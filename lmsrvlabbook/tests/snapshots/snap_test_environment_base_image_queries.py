@@ -28,7 +28,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Data Science Quickstart with JupyterLab',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -42,8 +41,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 },
                 {
@@ -63,7 +61,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Unit Test 3',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -77,8 +74,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 },
                 {
@@ -98,7 +94,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Unit Test1',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -112,8 +107,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 },
                 {
@@ -133,7 +127,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Unit Test 2',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -147,8 +140,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 }
             ]
@@ -178,7 +170,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Data Science Quickstart with JupyterLab',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -192,8 +183,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 }
             ],
@@ -226,7 +216,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Unit Test1',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -241,7 +230,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'jupyterlab'
                         ],
                         'url': None,
-                        'version': None
                     }
                 },
                 {
@@ -262,7 +250,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Unit Test 2',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -276,8 +263,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 }
             ],
@@ -310,7 +296,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Unit Test1',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -324,8 +309,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 }
             ],
@@ -358,7 +342,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Unit Test 2',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -372,8 +355,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 }
             ],
@@ -407,7 +389,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3'
                         ],
                         'license': 'MIT',
-                        'maintainers': None,
                         'name': 'Data Science Quickstart with JupyterLab',
                         'osClass': 'ubuntu',
                         'osRelease': '16.04',
@@ -421,8 +402,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                             'python3',
                             'jupyterlab'
                         ],
-                        'url': None,
-                        'version': None
+                        'url': None
                     }
                 }
             ],
@@ -452,7 +432,6 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_base_image_by_node 1'] = {
                 'python3'
             ],
             'license': 'MIT',
-            'maintainers': None,
             'name': 'Data Science Quickstart with JupyterLab',
             'osClass': 'ubuntu',
             'osRelease': '16.04',
@@ -466,8 +445,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_base_image_by_node 1'] = {
                 'python3',
                 'jupyterlab'
             ],
-            'url': None,
-            'version': None
+            'url': None
         }
     }
 }
