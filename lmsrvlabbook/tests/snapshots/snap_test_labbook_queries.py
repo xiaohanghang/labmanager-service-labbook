@@ -956,116 +956,6 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
     }
 }
 
-snapshots['TestLabBookServiceQueries.test_get_activity_records 1'] = {
-    'data': {
-        'labbook': {
-            'activityRecords': {
-                'edges': [
-                    {
-                        'node': {
-                            'importance': 255,
-                            'message': 'Added new Output Data file /test_file.txt',
-                            'show': True,
-                            'tags': [
-                                '.txt'
-                            ],
-                            'type': 'OUTPUT_DATA'
-                        }
-                    }
-                ],
-                'pageInfo': {
-                    'hasNextPage': True,
-                    'hasPreviousPage': False
-                }
-            },
-            'description': 'my test description',
-            'name': 'labbook11'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_get_activity_records 2'] = {
-    'data': {
-        'labbook': {
-            'activityRecords': {
-                'edges': [
-                    {
-                        'node': {
-                            'importance': 255,
-                            'message': 'Added new Input Data file /test_file.txt',
-                            'show': True,
-                            'tags': [
-                                '.txt'
-                            ],
-                            'type': 'INPUT_DATA'
-                        }
-                    },
-                    {
-                        'node': {
-                            'importance': 255,
-                            'message': 'Added new Code file /test_file.txt',
-                            'show': True,
-                            'tags': [
-                                '.txt'
-                            ],
-                            'type': 'CODE'
-                        }
-                    }
-                ],
-                'pageInfo': {
-                    'hasNextPage': True,
-                    'hasPreviousPage': False
-                }
-            },
-            'description': 'my test description',
-            'name': 'labbook11'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_get_activity_records 3'] = {
-    'data': {
-        'labbook': {
-            'activityRecords': {
-                'edges': [
-                    {
-                        'node': {
-                            'importance': 255,
-                            'message': 'Created new LabBook: default/labbook11',
-                            'show': True,
-                            'tags': None,
-                            'type': 'LABBOOK'
-                        }
-                    }
-                ],
-                'pageInfo': {
-                    'hasNextPage': False,
-                    'hasPreviousPage': False
-                }
-            },
-            'description': 'my test description',
-            'name': 'labbook11'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_get_activity_records 4'] = {
-    'data': {
-        'labbook': {
-            'activityRecords': {
-                'edges': [
-                ],
-                'pageInfo': {
-                    'hasNextPage': False,
-                    'hasPreviousPage': False
-                }
-            },
-            'description': 'my test description',
-            'name': 'labbook11'
-        }
-    }
-}
-
 snapshots['TestLabBookServiceQueries.test_get_activity_records_reverse_error 1'] = {
     'data': {
         'labbook': {
@@ -1320,6 +1210,130 @@ snapshots['TestLabBookServiceQueries.test_get_detail_records 1'] = {
                     'type': 'CODE'
                 }
             ],
+            'name': 'labbook11'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_activity_records_next_page 1'] = {
+    'data': {
+        'createLabbook': {
+            'labbook': {
+                'description': 'my test 1',
+                'id': 'TGFiYm9vazpkZWZhdWx0JmxhYmJvb2stcGFnZS10ZXN0',
+                'name': 'labbook-page-test'
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_activity_records 1'] = {
+    'data': {
+        'labbook': {
+            'activityRecords': {
+                'edges': [
+                    {
+                        'node': {
+                            'importance': 255,
+                            'message': 'Added new Output Data file /test_file.txt',
+                            'show': True,
+                            'tags': [
+                                '.txt'
+                            ],
+                            'type': 'OUTPUT_DATA'
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasNextPage': True,
+                    'hasPreviousPage': False
+                }
+            },
+            'description': 'my test description',
+            'name': 'labbook11'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_activity_records 2'] = {
+    'data': {
+        'labbook': {
+            'activityRecords': {
+                'edges': [
+                    {
+                        'node': {
+                            'importance': 255,
+                            'message': 'Added new Input Data file /test_file.txt',
+                            'show': True,
+                            'tags': [
+                                '.txt'
+                            ],
+                            'type': 'INPUT_DATA'
+                        }
+                    },
+                    {
+                        'node': {
+                            'importance': 255,
+                            'message': 'Added new Code file /test_file.txt',
+                            'show': True,
+                            'tags': [
+                                '.txt'
+                            ],
+                            'type': 'CODE'
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasNextPage': True,
+                    'hasPreviousPage': False
+                }
+            },
+            'description': 'my test description',
+            'name': 'labbook11'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_activity_records 3'] = {
+    'data': {
+        'labbook': {
+            'activityRecords': {
+                'edges': [
+                    {
+                        'node': {
+                            'importance': 255,
+                            'message': 'Added new Code file /test_file.txt',
+                            'show': True,
+                            'tags': [
+                                '.txt'
+                            ],
+                            'type': 'CODE'
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasNextPage': True,
+                    'hasPreviousPage': False
+                }
+            },
+            'description': 'my test description',
+            'name': 'labbook11'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_activity_records 4'] = {
+    'data': {
+        'labbook': {
+            'activityRecords': {
+                'edges': [
+                ],
+                'pageInfo': {
+                    'hasNextPage': False,
+                    'hasPreviousPage': False
+                }
+            },
+            'description': 'my test description',
             'name': 'labbook11'
         }
     }

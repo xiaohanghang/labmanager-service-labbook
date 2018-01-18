@@ -27,6 +27,8 @@ from zipfile import ZipFile
 from pkg_resources import resource_filename
 import getpass
 
+from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
+
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
 
@@ -80,8 +82,8 @@ class TestLabBookServiceMutations(object):
         }
         """
         variables = {"name": "test-lab-book1", "desc": "my test description",
-                     "component_id": "quickstart-jupyterlab", "repository": "gig-dev_components2",
-                     "revision": 1}
+                     "component_id": ENV_UNIT_TEST_BASE, "repository": ENV_UNIT_TEST_REPO,
+                     "revision": ENV_UNIT_TEST_REV}
         snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query, variable_values=variables))
 
         # Get LabBook you just created
@@ -128,8 +130,8 @@ class TestLabBookServiceMutations(object):
         }
         """
         variables = {"name": "test-lab-duplicate", "desc": "my test description",
-                     "component_id": "quickstart-jupyterlab", "repository": "gig-dev_components2",
-                     "revision": 1}
+                     "component_id": ENV_UNIT_TEST_BASE, "repository": ENV_UNIT_TEST_REPO,
+                     "revision": ENV_UNIT_TEST_REV}
         snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query, variable_values=variables))
 
         # Get LabBook you just created

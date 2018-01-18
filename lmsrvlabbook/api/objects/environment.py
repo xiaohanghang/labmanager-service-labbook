@@ -160,7 +160,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
         return container_status.value
 
-    def resolve_base_image(self, info):
+    def resolve_base(self, info):
         """Method to get the LabBook's base component
 
         Args:
@@ -173,9 +173,12 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
-        component_data = cm.get_component_list("base_image")
+        component_data = cm.get_component_list("base")
 
         if component_data:
+            if len(component_data) != 1:
+                raise IndexError("A LabBook should have exactly 1 base. Verify LabBook environment configuration")
+
             component_data = component_data[0]
             return BaseComponent(id=f"{component_data['###repository###']}&{component_data['id']}&{component_data['revision']}",
                                  repository=component_data['###repository###'],
@@ -209,12 +212,11 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             # Get DevEnv instances
             edge_objs = []
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                edge_objs.append(PackageComponentConnection.Edge(node=PackageComponent(owner=self.owner,
-                                                                                       name=self.name,
-                                                                                       manager=edge['package_manager'],
-                                                                                       package=edge['name'],
-                                                                                       revision=edge['revision']),
-                                                   cursor=cursor))
+                edge_objs.append(PackageComponentConnection.Edge(node=PackageComponent(manager=edge['manager'],
+                                                                                       package=edge['package'],
+                                                                                       version=edge['version'],
+                                                                                       from_base=edge['from_base']),
+                                                                 cursor=cursor))
 
             return PackageComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
@@ -247,9 +249,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             # Get DevEnv instances
             edge_objs = []
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                edge_objs.append(CustomComponentConnection.Edge(node=CustomComponent(owner=self.owner,
-                                                                                     name=self.name,
-                                                                                     repository=edge['###repository###'],
+                edge_objs.append(CustomComponentConnection.Edge(node=CustomComponent(repository=edge['###repository###'],
                                                                                      component_id=edge['id'],
                                                                                      revision=edge['revision']),
                                                                 cursor=cursor))

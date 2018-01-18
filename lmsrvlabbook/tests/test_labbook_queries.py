@@ -18,20 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
-import tempfile
+
 import os
-from datetime import datetime
-import pprint
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_populated_scoped, fixture_test_file
+from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped
+from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
 
-from graphene.test import Client
 import graphene
-from mock import patch
 
 from lmcommon.labbook import LabBook
 from lmcommon.fixtures import remote_labbook_repo
-from lmcommon.configuration import Configuration
 
 
 class TestLabBookServiceQueries(object):
@@ -819,6 +816,70 @@ class TestLabBookServiceQueries(object):
                     """
         snapshot.assert_match(fixture_working_dir[2].execute(query))
 
+    def test_get_activity_records_next_page(self, fixture_working_dir_env_repo_scoped, snapshot, fixture_test_file):
+        """Test next page logic, which requires a labbook to be created properly with an activity"""
+        # Create labbook
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!, $repository: String!, 
+                                 $component_id: String!, $revision: Int!) {
+          createLabbook(input: {name: $name, description: $desc, 
+                                repository: $repository, 
+                                componentId: $component_id, revision: $revision}) {
+            labbook {
+              id
+              name
+              description
+            }
+          }
+        }
+        """
+        variables = {"name": "labbook-page-test", "desc": "my test 1",
+                     "component_id": ENV_UNIT_TEST_BASE, "repository": ENV_UNIT_TEST_REPO,
+                     "revision": ENV_UNIT_TEST_REV}
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query, variable_values=variables))
+
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+        lb.from_name("default","default", "labbook-page-test")
+        lb.insert_file("code", fixture_test_file, "")
+
+        # Get all records at once with no pagination args and verify cursors look OK directly
+        query = """
+        {
+          labbook(name: "labbook-page-test", owner: "default") {
+            name
+            description
+            activityRecords {
+                edges{
+                    node{
+                        id
+                        commit
+                        linkedCommit
+                        message
+                        type
+                        show
+                        importance
+                        tags
+                        timestamp
+                        }
+                    cursor
+                    }                    
+                pageInfo{
+                    startCursor
+                    hasNextPage
+                    hasPreviousPage
+                    endCursor
+                }
+            }
+          }
+        }
+        """
+        result = fixture_working_dir_env_repo_scoped[2].execute(query)
+
+        # Check cursors
+        assert result['data']['labbook']['activityRecords']['pageInfo']['hasNextPage'] is False
+        assert result['data']['labbook']['activityRecords']['pageInfo']['hasPreviousPage'] is False
+        assert result['data']['labbook']['activityRecords']['edges'][-1]['node']['type'] == 'LABBOOK'
+
     def test_get_activity_records(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test paging through activity records"""
         lb = LabBook(fixture_working_dir[0])
@@ -850,8 +911,6 @@ class TestLabBookServiceQueries(object):
                     }                    
                 pageInfo{
                     startCursor
-                    hasNextPage
-                    hasPreviousPage
                     endCursor
                 }
             }
@@ -861,13 +920,10 @@ class TestLabBookServiceQueries(object):
         result = fixture_working_dir[2].execute(query)
 
         # Check cursors
-        assert result['data']['labbook']['activityRecords']['pageInfo']['hasNextPage'] is False
-        assert result['data']['labbook']['activityRecords']['pageInfo']['hasPreviousPage'] is False
         git_log = lb.git.log()
         assert result['data']['labbook']['activityRecords']['edges'][0]['cursor'] == git_log[0]['commit']
         assert result['data']['labbook']['activityRecords']['edges'][1]['cursor'] == git_log[2]['commit']
         assert result['data']['labbook']['activityRecords']['edges'][2]['cursor'] == git_log[4]['commit']
-        assert result['data']['labbook']['activityRecords']['edges'][3]['cursor'] == git_log[6]['commit']
 
         assert result['data']['labbook']['activityRecords']['edges'][0]['node']['commit'] == git_log[0]['commit']
         assert result['data']['labbook']['activityRecords']['edges'][0]['node']['linkedCommit'] == git_log[1]['commit']
@@ -957,7 +1013,7 @@ class TestLabBookServiceQueries(object):
             }}
           }}
         }}
-        """.format(result['data']['labbook']['activityRecords']['edges'][2]['cursor'])
+        """.format(result['data']['labbook']['activityRecords']['edges'][1]['cursor'])
         snapshot.assert_match(fixture_working_dir[2].execute(query))
 
         # Page after end, expecting nothing to come back
@@ -983,7 +1039,7 @@ class TestLabBookServiceQueries(object):
             }}
           }}
         }}
-        """.format(result['data']['labbook']['activityRecords']['edges'][3]['cursor'])
+        """.format(result['data']['labbook']['activityRecords']['edges'][2]['cursor'])
         snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_get_activity_records_reverse_error(self, fixture_working_dir, snapshot):

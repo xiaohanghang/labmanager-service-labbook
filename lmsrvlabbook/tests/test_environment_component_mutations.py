@@ -72,7 +72,7 @@ class TestAddComponentMutations(object):
             package_info_dict = yaml.load(pkg_yaml)
             assert package_info_dict['package'] == 'docker'
             assert package_info_dict['manager'] == 'apt'
-            assert package_info_dict['version'] == 1.0
+            assert package_info_dict['version'] == '1.0'
             assert package_info_dict['from_base'] is False
 
     def test_add_custom_dep(self, fixture_working_dir_env_repo_scoped, snapshot):
