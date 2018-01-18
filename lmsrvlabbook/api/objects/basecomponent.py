@@ -45,9 +45,6 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     # Arbitrary markdown description of the base
     readme = graphene.String()
 
-    # Underlying version of the component
-    version = graphene.String()
-
     # Tags that can be used when searching/filtering components
     tags = graphene.List(graphene.String)
 
@@ -65,9 +62,6 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
     # Url to more documentation or info about the base
     url = graphene.String()
-
-    # List of Gigantum usernames that "maintain" this component
-    maintainers = graphene.List(graphene.String)
 
     # List of installed programming languages that are available to the user
     languages = graphene.List(graphene.String)
@@ -100,16 +94,12 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         self.name = self._component_data['name']
         self.description = self._component_data['description']
         self.readme = self._component_data['readme']
-        # Currently no version in spec??
-        #self.version = self._component_data['version']
         self.tags = self._component_data['tags']
         self.icon = self._component_data['icon']
         self.os_class = self._component_data['os_class']
         self.os_release = self._component_data['os_release']
         self.license = self._component_data['license']
         self.url = self._component_data['url']
-        # Currently no maintainers in spec??
-        # self.maintainers = self._component_data['maintainers']
         self.languages = self._component_data['languages']
         self.development_tools = self._component_data['development_tools']
         self.docker_image_server = self._component_data['image']['server']
@@ -153,12 +143,6 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
             self._load_component_info()
         return self.readme
 
-    def resolve_version(self, info):
-        """Resolve the version field"""
-        if self.version is None:
-            self._load_component_info()
-        return self.version
-
     def resolve_tags(self, info):
         """Resolve the tags field"""
         if self.tags is None:
@@ -194,12 +178,6 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         if self.url is None:
             self._load_component_info()
         return self.url
-
-    def resolve_maintainers(self, info):
-        """Resolve the maintainers field"""
-        if self.maintainers is None:
-            self._load_component_info()
-        return self.maintainers
 
     def resolve_languages(self, info):
         """Resolve the languages field"""
