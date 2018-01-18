@@ -55,18 +55,18 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
 
         if version is None:
             # TODO: Use package manager instance to get the latest version if not specified
-            pass
+            version = "1.0"
 
         # Create Component Manager
         cm = ComponentManager(lb)
         cm.add_package(package_manager=manager,
                        package_name=package,
-                       package_version=version)
+                       package_version=version,
+                       from_base=False)
 
         # TODO: get cursor by checking how many packages are already installed
 
-        new_edge = PackageComponentConnection.Edge(node=PackageComponent(owner=owner, name=labbook_name,
-                                                                         manager=manager, package=package,
+        new_edge = PackageComponentConnection.Edge(node=PackageComponent(manager=manager, package=package,
                                                                          version=version),
                                                    cursor=0)
 
@@ -81,7 +81,7 @@ class AddCustomComponent(graphene.relay.ClientIDMutation):
         labbook_name = graphene.String(required=True)
         repository = graphene.String(required=True)
         component_id = graphene.String(required=True)
-        revision = graphene.String(required=True)
+        revision = graphene.Int(required=True)
 
     new_custom_component_edge = graphene.Field(lambda: CustomComponentConnection.Edge)
 
@@ -100,8 +100,7 @@ class AddCustomComponent(graphene.relay.ClientIDMutation):
 
         # TODO: get cursor by checking how many packages are already installed
 
-        new_edge = CustomComponentConnection.Edge(node=CustomComponent(owner=owner, name=labbook_name,
-                                                                       repository=repository, component_id=component_id,
+        new_edge = CustomComponentConnection.Edge(node=CustomComponent(repository=repository, component_id=component_id,
                                                                        revision=revision),
                                                   cursor=0)
 

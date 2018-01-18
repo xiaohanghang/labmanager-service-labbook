@@ -43,9 +43,6 @@ class CustomComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     # Short description of the Base
     description = graphene.String()
 
-    # Underlying version of the component
-    version = graphene.String()
-
     # Tags that can be used when searching/filtering components
     tags = graphene.List(graphene.String)
 
@@ -54,9 +51,6 @@ class CustomComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
     # Url to more documentation or info about the base
     url = graphene.String()
-
-    # List of Gigantum usernames that "maintain" this component
-    maintainers = graphene.List(graphene.String)
 
     # List of installed package managers that are available to the user
     required_package_managers = graphene.List(graphene.String)

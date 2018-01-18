@@ -49,19 +49,19 @@ class TestAddComponentMutations(object):
             manager: "apt"
           }) {
             clientMutationId
-            new_package_component_edge {
+            newPackageComponentEdge {
+              node{
+                id
                 manager
                 package
                 version
-                from_base
+                fromBase
+              }
             }
           }
         }
         """
-        result = fixture_working_dir_env_repo_scoped[2].execute(pkg_query)
-
-        assert result['data']['addEnvironmentPackage']['environmentPackage']['packageName'] == 'docker'
-        assert result['data']['addEnvironmentPackage']['environmentPackage']['packageManager'] == 'apt'
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
 
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
@@ -70,10 +70,10 @@ class TestAddComponentMutations(object):
 
         with open(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'apt_docker.yaml')) as pkg_yaml:
             package_info_dict = yaml.load(pkg_yaml)
-
-            assert package_info_dict['name'] == 'docker'
-            assert package_info_dict['package_manager'] == 'apt'
-            assert package_info_dict['in_base'] == False
+            assert package_info_dict['package'] == 'docker'
+            assert package_info_dict['manager'] == 'apt'
+            assert package_info_dict['version'] == 1.0
+            assert package_info_dict['from_base'] is False
 
     def test_add_custom_dep(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test adding a custom dependency"""
@@ -85,19 +85,36 @@ class TestAddComponentMutations(object):
         # Add a base image
         query = """
         mutation myEnvMutation{
-          addEnvironmentComponent(input: {componentClass: custom,
-          repository: "gig-dev_environment-components",
-          namespace: "gigantum", component: "ubuntu-python3-pillow",
-          version: "0.3", labbookName: "labbook3"}) {
+          addCustomComponent(input: {
+            owner: "default",
+            labbookName: "labbook3",
+            repository: "gig-dev_components2",
+            componentId: "pillow",
+            revision: 0
+          }) {
             clientMutationId
+            newCustomComponentEdge {
+              node{
+                id
+                repository
+                componentId
+                revision
+                name
+                description
+                tags
+                license
+                url
+                requiredPackageManagers
+                dockerSnippet
+              }
+            }
           }
         }
         """
-        fixture_working_dir_env_repo_scoped[2].execute(query)
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
         # Validate the LabBook .gigantum/env/ directory
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base_image')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'dev_env')) is True
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base')) is True
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'custom')) is True
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'entrypoint.sh')) is True
@@ -107,20 +124,11 @@ class TestAddComponentMutations(object):
                                       '.gigantum',
                                       'env',
                                       'custom',
-                                      "gig-dev_environment-components_gigantum_ubuntu-python3-pillow.yaml")
+                                      "gig-dev_components2_pillow_r0.yaml")
         assert os.path.exists(component_file) is True
-
-        with open(component_file, 'rt') as cf:
-            data = yaml.load(cf)
-
-        assert data['info']['name'] == 'ubuntu-python3-pillow'
-        assert data['info']['version_major'] == 0
-        assert data['info']['version_minor'] == 3
-        assert data['###namespace###'] == 'gigantum'
-        assert "docker" in data
 
         # Verify git/notes
         log = lb.git.log()
         assert len(log) == 4
         assert "_GTM_ACTIVITY_START_" in log[0]["message"]
-        assert 'ubuntu-python3-pillow' in log[0]["message"]
+        assert 'pillow' in log[0]["message"]
