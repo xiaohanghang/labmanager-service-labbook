@@ -30,18 +30,18 @@ class TestEnvironmentCustomDependencyQueries(object):
         """Test getting the available custom dependencies"""
         query = """
                {
-                  availableCustomDependencies(first: 3) {
+                  availableCustomDependencies {
                     edges {
                       node {
                         id
                         componentId
+                        repository
+                        revision
                         name
                         description                        
-                        version
                         tags
                         license
                         url
-                        maintainers
                         requiredPackageManagers
                         dockerSnippet
                       }

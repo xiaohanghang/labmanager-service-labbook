@@ -61,13 +61,16 @@ def mock_create_labbooks(fixture_working_dir):
 
 
 class TestLabBookServiceMutations(object):
-    def test_create_labbook(self, fixture_working_dir, snapshot):
+    def test_create_labbook(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test listing labbooks"""
         # Mock the configuration class it it returns the same mocked config file
         # Create LabBook
         query = """
-        mutation myCreateLabbook($name: String!, $desc: String!) {
-          createLabbook(input: {name: $name, description: $desc}) {
+        mutation myCreateLabbook($name: String!, $desc: String!, $repository: String!, 
+                                 $component_id: String!, $revision: Int!) {
+          createLabbook(input: {name: $name, description: $desc, 
+                                repository: $repository, 
+                                componentId: $component_id, revision: $revision}) {
             labbook {
               id
               name
@@ -76,8 +79,10 @@ class TestLabBookServiceMutations(object):
           }
         }
         """
-        variables = {"name": "test-lab-book1", "desc": "my test description"}
-        fixture_working_dir[2].execute(query, variable_values=variables)
+        variables = {"name": "test-lab-book1", "desc": "my test description",
+                     "component_id": "quickstart-jupyterlab", "repository": "gig-dev_components2",
+                     "revision": 1}
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query, variable_values=variables))
 
         # Get LabBook you just created
         query = """
@@ -104,27 +109,42 @@ class TestLabBookServiceMutations(object):
           }
         }
         """
-        snapshot.assert_match(fixture_working_dir[2].execute(query))
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
-    def test_create_labbook_already_exists(self, fixture_working_dir, snapshot):
+    def test_create_labbook_already_exists(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test listing labbooks"""
-        # Create LabBook
         query = """
-        mutation myCreateLabbook($name: String!, $desc: String!){
-          createLabbook(input: {name: $name, description: $desc}){
-            labbook{
+        mutation myCreateLabbook($name: String!, $desc: String!, $repository: String!, 
+                                 $component_id: String!, $revision: Int!) {
+          createLabbook(input: {name: $name, description: $desc, 
+                                repository: $repository, 
+                                componentId: $component_id, revision: $revision}) {
+            labbook {
+              id
               name
               description
             }
           }
         }
         """
-        variables = {"name": "test-lab-book", "desc": "my test description"}
+        variables = {"name": "test-lab-duplicate", "desc": "my test description",
+                     "component_id": "quickstart-jupyterlab", "repository": "gig-dev_components2",
+                     "revision": 1}
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query, variable_values=variables))
 
-        snapshot.assert_match(fixture_working_dir[2].execute(query, variable_values=variables))
+        # Get LabBook you just created
+        check_query = """
+        {
+          labbook(name: "test-lab-duplicate", owner: "default") {   
+            name
+            description
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(check_query))
 
         # Second should fail with an error message
-        snapshot.assert_match(fixture_working_dir[2].execute(query, variable_values=variables))
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query, variable_values=variables))
 
     def test_move_file(self, mock_create_labbooks, snapshot):
         """Test moving a file"""

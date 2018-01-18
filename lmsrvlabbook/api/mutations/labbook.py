@@ -54,7 +54,7 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         description = graphene.String(required=True)
         repository = graphene.String(required=True)
         component_id = graphene.String(required=True)
-        revision = graphene.String(required=True)
+        revision = graphene.Int(required=True)
 
     # Return the LabBook instance
     labbook = graphene.Field(lambda: Labbook)
@@ -93,21 +93,6 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         # Add Base component
         cm = ComponentManager(lb)
         cm.add_component("base", repository, component_id, revision)
-
-        # Create detail record for base addition
-        adr = ActivityDetailRecord(ActivityDetailType.LABBOOK, show=False, importance=0)
-        adr.add_value('text/plain', f"Added Base: {component_id} revision {revision}")
-
-        # Create activity record
-        ar = ActivityRecord(ActivityType.ENVIRONMENT,
-                            message="Added Base: {component_id} revision {revision}",
-                            show=True,
-                            importance=255,
-                            linked_commit=lb.git.commit_hash)
-        ar.add_detail_object(adr)
-
-        # Store
-        store.create_activity_record(ar)
 
         # Prime dataloader with labbook you just created
         dataloader = LabBookLoader()

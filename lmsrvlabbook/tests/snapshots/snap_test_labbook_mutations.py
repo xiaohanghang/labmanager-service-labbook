@@ -7,34 +7,6 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 1'] = {
-    'data': {
-        'createLabbook': {
-            'labbook': {
-                'description': 'my test description',
-                'name': 'test-lab-book'
-            }
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 2'] = {
-    'data': {
-        'createLabbook': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 11,
-                    'line': 3
-                }
-            ],
-            'message': 'LabBook `test-lab-book` already exists locally. Choose a new LabBook name'
-        }
-    ]
-}
-
 snapshots['TestLabBookServiceMutations.test_makedir 1'] = {
     'data': {
         'makeLabbookDirectory': {
@@ -623,9 +595,475 @@ snapshots['TestLabBookServiceMutations.test_update_favorite 5'] = {
 
 snapshots['TestLabBookServiceMutations.test_create_labbook 1'] = {
     'data': {
+        'createLabbook': {
+            'labbook': {
+                'description': 'my test description',
+                'id': 'TGFiYm9vazpkZWZhdWx0JnRlc3QtbGFiLWJvb2sx',
+                'name': 'test-lab-book1'
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_create_labbook 2'] = {
+    'data': {
         'labbook': {
             'activityRecords': {
                 'edges': [
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            '''Added a `base` class environment component quickstart-jupyterlab
+
+Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base for any analysis.
+
+  - repository: gig-dev_components2
+  - component: quickstart-jupyterlab
+  - revision: 1
+'''
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Add base environment component: quickstart-jupyterlab r1',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'base'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: pandas==0.22.0 vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'pip3'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: ipywidgets==7.1.0 vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'pip3'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: jupyterlab==0.31.1 vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'pip3'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: jupyter==1.0.0 vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'pip3'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: matplotlib==2.1.1 vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'pip3'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: numpy==1.14.0 vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'pip3'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: vim vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: curl vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: git vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: python3-pip vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: python3-dev vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: build-essential vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: gosu vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: curl vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: supervisor vLatest'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': True,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'importance': 0,
+                            'message': 'Added new software package',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT'
+                        }
+                    },
                     {
                         'node': {
                             'detailObjects': [
@@ -654,4 +1092,42 @@ snapshots['TestLabBookServiceMutations.test_create_labbook 1'] = {
             }
         }
     }
+}
+
+snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 1'] = {
+    'data': {
+        'createLabbook': {
+            'labbook': {
+                'description': 'my test description',
+                'id': 'TGFiYm9vazpkZWZhdWx0JnRlc3QtbGFiLWR1cGxpY2F0ZQ==',
+                'name': 'test-lab-duplicate'
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 2'] = {
+    'data': {
+        'labbook': {
+            'description': 'my test description',
+            'name': 'test-lab-duplicate'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 3'] = {
+    'data': {
+        'createLabbook': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 11,
+                    'line': 4
+                }
+            ],
+            'message': 'LabBook `test-lab-duplicate` already exists locally. Choose a new LabBook name'
+        }
+    ]
 }
