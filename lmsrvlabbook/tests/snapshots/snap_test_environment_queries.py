@@ -146,3 +146,95 @@ snapshots['TestEnvironmentServiceQueries.test_get_package_manager 1'] = {
         }
     }
 }
+
+snapshots['TestEnvironmentServiceQueries.test_get_package_manager 2'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'packageDependencies': {
+                    'edges': [
+                        {
+                            'cursor': 'MA==',
+                            'node': {
+                                'fromBase': False,
+                                'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmZG9ja2VyJk5vbmU=',
+                                'manager': 'apt',
+                                'package': 'docker',
+                                'version': None
+                            }
+                        },
+                        {
+                            'cursor': 'MQ==',
+                            'node': {
+                                'fromBase': False,
+                                'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmbHhtbCZOb25l',
+                                'manager': 'apt',
+                                'package': 'lxml',
+                                'version': None
+                            }
+                        },
+                        {
+                            'cursor': 'Mg==',
+                            'node': {
+                                'fromBase': False,
+                                'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmbnVtcHkmMS4xMg==',
+                                'manager': 'pip',
+                                'package': 'numpy',
+                                'version': '1.12'
+                            }
+                        },
+                        {
+                            'cursor': 'Mw==',
+                            'node': {
+                                'fromBase': False,
+                                'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmTm9uZQ==',
+                                'manager': 'pip',
+                                'package': 'requests',
+                                'version': None
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasNextPage': False
+                    }
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestEnvironmentServiceQueries.test_get_package_manager 3'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'packageDependencies': {
+                    'edges': [
+                        {
+                            'cursor': 'MQ==',
+                            'node': {
+                                'fromBase': False,
+                                'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmbHhtbCZOb25l',
+                                'manager': 'apt',
+                                'package': 'lxml',
+                                'version': None
+                            }
+                        },
+                        {
+                            'cursor': 'Mg==',
+                            'node': {
+                                'fromBase': False,
+                                'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmbnVtcHkmMS4xMg==',
+                                'manager': 'pip',
+                                'package': 'numpy',
+                                'version': '1.12'
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasNextPage': True
+                    }
+                }
+            }
+        }
+    }
+}

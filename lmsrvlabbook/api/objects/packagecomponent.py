@@ -33,7 +33,8 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     package = graphene.String(required=True)
 
     # The current version of the package
-    version = graphene.String(required=True)
+    # TODO: Temporarily allow version to be false until versions are automatically pinned.
+    version = graphene.String(required=False)
 
     # The latest available version of the package
     latest_version = graphene.String()

@@ -1247,30 +1247,14 @@ class TestLabBookServiceQueries(object):
             }}
           }}
         }}
-        """.format(activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key'])
+        """.format(activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['key'])
         detail_result = fixture_working_dir[2].execute(query)
         assert detail_result['data']['labbook']['detailRecord']['key'] == \
-               activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key']
+               activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['key']
         assert detail_result['data']['labbook']['detailRecord']['id'] == \
-               activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['id']
+               activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['id']
 
         # Try again in a snapshot compatible way, loading data as well
-        query = """
-        {{
-          labbook(name: "labbook11", owner: "default") {{
-            name
-            description
-            detailRecord(key: "{}") {{
-                type                                
-                show
-                data
-                importance
-                tags 
-            }}
-          }}
-        }}
-        """.format(activity_result['data']['labbook']['activityRecords']['edges'][1]['node']['detailObjects'][0]['key'])
-        snapshot.assert_match(fixture_working_dir[2].execute(query))
         query = """
         {{
           labbook(name: "labbook11", owner: "default") {{
@@ -1293,6 +1277,7 @@ class TestLabBookServiceQueries(object):
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
         lb.insert_file("code", fixture_test_file, "")
+        lb.insert_file("input", fixture_test_file, "")
 
         # Get all records at once and verify varying fields exist properly
         query = """

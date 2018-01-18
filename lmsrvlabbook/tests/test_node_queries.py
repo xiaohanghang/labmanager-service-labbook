@@ -20,7 +20,7 @@
 import pytest
 import os
 from snapshottest import snapshot
-from lmsrvlabbook.tests.fixtures import fixture_working_dir
+from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_test_file
 
 from graphene.test import Client
 import graphene
@@ -180,10 +180,11 @@ class TestNodeQueries(object):
                     """
         snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-    def test_activity_record_node(self, fixture_working_dir, snapshot):
+    def test_activity_record_node(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test getting an activity record by node ID"""
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my test description")
+        lb.insert_file("code", fixture_test_file, "")
 
         # Get activity record to
         query = """
@@ -245,10 +246,11 @@ class TestNodeQueries(object):
         result2 = fixture_working_dir[2].execute(query)
         assert result2['data']['node'] == result1['data']['labbook']['activityRecords']['edges'][0]['node']
 
-    def test_detail_record_node(self, fixture_working_dir, snapshot):
+    def test_detail_record_node(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test getting an detail record by node ID"""
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my test description")
+        lb.insert_file("code", fixture_test_file, "")
 
         # Get activity record to
         query = """

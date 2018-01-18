@@ -1019,144 +1019,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_reverse_error 3']
     ]
 }
 
-snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] = {
-    'data': {
-        'labbook': {
-            'activityRecords': {
-                'edges': [
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Added new Output Data file /test_file.txt'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'OUTPUT_DATA'
-                                }
-                            ],
-                            'importance': 255,
-                            'message': 'Added new Output Data file /test_file.txt',
-                            'show': True,
-                            'tags': [
-                                '.txt'
-                            ],
-                            'type': 'OUTPUT_DATA'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Added new Input Data file /test_file.txt'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'INPUT_DATA'
-                                }
-                            ],
-                            'importance': 255,
-                            'message': 'Added new Input Data file /test_file.txt',
-                            'show': True,
-                            'tags': [
-                                '.txt'
-                            ],
-                            'type': 'INPUT_DATA'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Added new Code file /test_file.txt'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'CODE'
-                                }
-                            ],
-                            'importance': 255,
-                            'message': 'Added new Code file /test_file.txt',
-                            'show': True,
-                            'tags': [
-                                '.txt'
-                            ],
-                            'type': 'CODE'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Created new LabBook: default/labbook11'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'LABBOOK'
-                                }
-                            ],
-                            'importance': 255,
-                            'message': 'Created new LabBook: default/labbook11',
-                            'show': True,
-                            'tags': None,
-                            'type': 'LABBOOK'
-                        }
-                    }
-                ]
-            },
-            'description': 'my test description',
-            'name': 'labbook11'
-        }
-    }
-}
-
 snapshots['TestLabBookServiceQueries.test_get_detail_record 1'] = {
-    'data': {
-        'labbook': {
-            'description': 'my test description',
-            'detailRecord': {
-                'data': [
-                    [
-                        'text/plain',
-                        'Created new LabBook: default/labbook11'
-                    ]
-                ],
-                'importance': 0,
-                'show': False,
-                'tags': [
-                ],
-                'type': 'LABBOOK'
-            },
-            'name': 'labbook11'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_get_detail_record 2'] = {
     'data': {
         'labbook': {
             'description': 'my test description',
@@ -1173,43 +1036,6 @@ snapshots['TestLabBookServiceQueries.test_get_detail_record 2'] = {
                 ],
                 'type': 'CODE'
             },
-            'name': 'labbook11'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_get_detail_records 1'] = {
-    'data': {
-        'labbook': {
-            'description': 'my test description',
-            'detailRecords': [
-                {
-                    'data': [
-                        [
-                            'text/plain',
-                            'Created new LabBook: default/labbook11'
-                        ]
-                    ],
-                    'importance': 0,
-                    'show': False,
-                    'tags': [
-                    ],
-                    'type': 'LABBOOK'
-                },
-                {
-                    'data': [
-                        [
-                            'text/plain',
-                            'Added new Code file /test_file.txt'
-                        ]
-                    ],
-                    'importance': 0,
-                    'show': False,
-                    'tags': [
-                    ],
-                    'type': 'CODE'
-                }
-            ],
             'name': 'labbook11'
         }
     }
@@ -1334,6 +1160,134 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records 4'] = {
                 }
             },
             'description': 'my test description',
+            'name': 'labbook11'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] = {
+    'data': {
+        'labbook': {
+            'activityRecords': {
+                'edges': [
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Added new Output Data file /test_file.txt'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'OUTPUT_DATA'
+                                }
+                            ],
+                            'importance': 255,
+                            'message': 'Added new Output Data file /test_file.txt',
+                            'show': True,
+                            'tags': [
+                                '.txt'
+                            ],
+                            'type': 'OUTPUT_DATA'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Added new Input Data file /test_file.txt'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'INPUT_DATA'
+                                }
+                            ],
+                            'importance': 255,
+                            'message': 'Added new Input Data file /test_file.txt',
+                            'show': True,
+                            'tags': [
+                                '.txt'
+                            ],
+                            'type': 'INPUT_DATA'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Added new Code file /test_file.txt'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'CODE'
+                                }
+                            ],
+                            'importance': 255,
+                            'message': 'Added new Code file /test_file.txt',
+                            'show': True,
+                            'tags': [
+                                '.txt'
+                            ],
+                            'type': 'CODE'
+                        }
+                    }
+                ]
+            },
+            'description': 'my test description',
+            'name': 'labbook11'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_detail_records 1'] = {
+    'data': {
+        'labbook': {
+            'description': 'my test description',
+            'detailRecords': [
+                {
+                    'data': [
+                        [
+                            'text/plain',
+                            'Added new Code file /test_file.txt'
+                        ]
+                    ],
+                    'importance': 0,
+                    'show': False,
+                    'tags': [
+                    ],
+                    'type': 'CODE'
+                },
+                {
+                    'data': [
+                        [
+                            'text/plain',
+                            'Added new Input Data file /test_file.txt'
+                        ]
+                    ],
+                    'importance': 0,
+                    'show': False,
+                    'tags': [
+                    ],
+                    'type': 'INPUT_DATA'
+                }
+            ],
             'name': 'labbook11'
         }
     }

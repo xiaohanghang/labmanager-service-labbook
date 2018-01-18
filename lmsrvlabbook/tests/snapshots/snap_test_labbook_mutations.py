@@ -605,6 +605,44 @@ snapshots['TestLabBookServiceMutations.test_create_labbook 1'] = {
     }
 }
 
+snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 1'] = {
+    'data': {
+        'createLabbook': {
+            'labbook': {
+                'description': 'my test description',
+                'id': 'TGFiYm9vazpkZWZhdWx0JnRlc3QtbGFiLWR1cGxpY2F0ZQ==',
+                'name': 'test-lab-duplicate'
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 2'] = {
+    'data': {
+        'labbook': {
+            'description': 'my test description',
+            'name': 'test-lab-duplicate'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 3'] = {
+    'data': {
+        'createLabbook': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 11,
+                    'line': 4
+                }
+            ],
+            'message': 'LabBook `test-lab-duplicate` already exists locally. Choose a new LabBook name'
+        }
+    ]
+}
+
 snapshots['TestLabBookServiceMutations.test_create_labbook 2'] = {
     'data': {
         'labbook': {
@@ -651,7 +689,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add pip3 managed package: pandas==0.22.0 vLatest'
+                                            'Add pip3 managed package: pandas v0.22.0'
                                         ]
                                     ],
                                     'importance': 0,
@@ -679,7 +717,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add pip3 managed package: ipywidgets==7.1.0 vLatest'
+                                            'Add pip3 managed package: ipywidgets v7.1.0'
                                         ]
                                     ],
                                     'importance': 0,
@@ -707,7 +745,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add pip3 managed package: jupyterlab==0.31.1 vLatest'
+                                            'Add pip3 managed package: jupyterlab v0.31.1'
                                         ]
                                     ],
                                     'importance': 0,
@@ -735,7 +773,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add pip3 managed package: jupyter==1.0.0 vLatest'
+                                            'Add pip3 managed package: jupyter v1.0.0'
                                         ]
                                     ],
                                     'importance': 0,
@@ -763,7 +801,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add pip3 managed package: matplotlib==2.1.1 vLatest'
+                                            'Add pip3 managed package: matplotlib v2.1.1'
                                         ]
                                     ],
                                     'importance': 0,
@@ -791,7 +829,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add pip3 managed package: numpy==1.14.0 vLatest'
+                                            'Add pip3 managed package: numpy v1.14.0'
                                         ]
                                     ],
                                     'importance': 0,
@@ -819,7 +857,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: vim vLatest'
+                                            'Add apt managed package: vim vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -847,7 +885,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: curl vLatest'
+                                            'Add apt managed package: curl vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -875,7 +913,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: git vLatest'
+                                            'Add apt managed package: git vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -903,7 +941,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: python3-pip vLatest'
+                                            'Add apt managed package: python3-pip vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -931,7 +969,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: python3-dev vLatest'
+                                            'Add apt managed package: python3-dev vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -959,7 +997,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: build-essential vLatest'
+                                            'Add apt managed package: build-essential vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -987,7 +1025,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: gosu vLatest'
+                                            'Add apt managed package: gosu vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -1015,7 +1053,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: curl vLatest'
+                                            'Add apt managed package: curl vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -1043,7 +1081,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: supervisor vLatest'
+                                            'Add apt managed package: supervisor vNone'
                                         ]
                                     ],
                                     'importance': 0,
@@ -1092,42 +1130,4 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
             }
         }
     }
-}
-
-snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 1'] = {
-    'data': {
-        'createLabbook': {
-            'labbook': {
-                'description': 'my test description',
-                'id': 'TGFiYm9vazpkZWZhdWx0JnRlc3QtbGFiLWR1cGxpY2F0ZQ==',
-                'name': 'test-lab-duplicate'
-            }
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 2'] = {
-    'data': {
-        'labbook': {
-            'description': 'my test description',
-            'name': 'test-lab-duplicate'
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 3'] = {
-    'data': {
-        'createLabbook': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 11,
-                    'line': 4
-                }
-            ],
-            'message': 'LabBook `test-lab-duplicate` already exists locally. Choose a new LabBook name'
-        }
-    ]
 }
