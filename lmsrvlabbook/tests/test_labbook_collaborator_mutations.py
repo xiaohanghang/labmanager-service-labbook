@@ -17,8 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-import os
 import getpass
 import responses
 
@@ -29,10 +27,7 @@ from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir, property_mocks_fixture, docker_socket_fixture
 
 import pytest
-from graphene.test import Client
-from mock import patch
 
-from lmcommon.configuration import Configuration
 from lmcommon.configuration import get_docker_client
 from lmcommon.labbook import LabBook
 
