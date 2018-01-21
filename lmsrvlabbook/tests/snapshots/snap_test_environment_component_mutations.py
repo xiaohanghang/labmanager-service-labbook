@@ -55,3 +55,53 @@ RUN pip3 install Pillow==4.2.1
         }
     }
 }
+
+snapshots['TestAddComponentMutations.test_remove_package 1'] = {
+    'data': {
+        'addPackageComponent': {
+            'clientMutationId': None,
+            'newPackageComponentEdge': {
+                'node': {
+                    'fromBase': False,
+                    'manager': 'pip',
+                    'package': 'docker'
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestAddComponentMutations.test_remove_package 2'] = {
+    'data': {
+        'removePackageComponent': {
+            'clientMutationId': None,
+            'success': True
+        }
+    }
+}
+
+snapshots['TestAddComponentMutations.test_remove_custom_dep 1'] = {
+    'data': {
+        'addCustomComponent': {
+            'clientMutationId': None,
+            'newCustomComponentEdge': {
+                'node': {
+                    'componentId': 'pillow',
+                    'description': 'Pillow v4.2.1 for Ubuntu and Python3',
+                    'name': 'Pillow',
+                    'repository': 'gig-dev_components2',
+                    'revision': 0
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestAddComponentMutations.test_remove_custom_dep 2'] = {
+    'data': {
+        'removeCustomComponent': {
+            'clientMutationId': None,
+            'success': True
+        }
+    }
+}
