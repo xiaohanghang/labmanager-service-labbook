@@ -19,13 +19,11 @@
 # SOFTWARE.
 import graphene
 
-from lmsrvcore.api.objects import Owner
-
 
 class GitCommit(graphene.Interface):
     """An interface for any object that is represented by a git commit"""
     # The git commit hash
-    hash = graphene.String()
+    hash = graphene.String(required=True)
 
     # The git commit hash, limited to 8-characters
     short_hash = graphene.String()
@@ -37,7 +35,7 @@ class GitCommit(graphene.Interface):
 class GitRef(graphene.Interface):
     """An interface for any git reference"""
     # The name of the reference
-    name = graphene.String()
+    ref_name = graphene.String(required=True)
 
     # The prefix of the reference
     prefix = graphene.String()
@@ -45,13 +43,11 @@ class GitRef(graphene.Interface):
 
 class GitRepository(graphene.Interface):
     """An interface for Objects backended with git repositories (LabBook and Datasets)"""
+    # The owner of the underlying git repository. Also can be referred to as the "namespace"
+    # Only A-Za-z0-9- allowed with no leading or trailing '-'
+    owner = graphene.String(required=True)
+
     # The name of the underlying git repository.
     # Must be unique to what exists locally and unique in a user's library when pushing
     # Only A-Za-z0-9- allowed with no leading or trailing '-'
-    name = graphene.String()
-
-    # A short description of the LabBook limited to 140 UTF-8 characters with some sanitization
-    description = graphene.String()
-
-    # Owner of the repository
-    owner = graphene.Field(Owner)
+    name = graphene.String(required=True)

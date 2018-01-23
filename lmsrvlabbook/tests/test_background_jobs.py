@@ -30,7 +30,6 @@ import redis
 import rq
 
 from lmcommon.dispatcher import Dispatcher, jobs
-from lmcommon.configuration import Configuration
 
 
 @pytest.fixture()
@@ -85,49 +84,45 @@ class TestBackgroundJobs(object):
         t2 = d.dispatch_task(jobs.test_exit_success).key_str
         t3 = d.dispatch_task(jobs.test_sleep, args=(1,)).key_str
 
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                    {
-                      backgroundJobs {
-                        edges {
-                          node {
-                            id
-                            jobKey
-                            failureMessage
-                            status
-                            result
-                          }
-                        }
+        query = """
+                {
+                  backgroundJobs {
+                    edges {
+                      node {
+                        id
+                        jobKey
+                        failureMessage
+                        status
+                        result
                       }
                     }
-            """
-            time.sleep(1)
-            try:
-                assert w.is_alive()
-                time1 = time.time()
-                result = client.execute(query)
-                import pprint; print('----'); pprint.pprint(result); print('-<<<')
-                time2 = time.time()
-                tdiff = time2 - time1
-                assert tdiff < 0.25, "Query should not take more than a few millis (took {}s)".format(tdiff)
+                  }
+                }
+        """
+        time.sleep(1)
+        try:
+            assert w.is_alive()
+            time1 = time.time()
+            result = fixture_working_dir_env_repo_scoped[2].execute(query)
+            #import pprint; print('----'); pprint.pprint(result); print('-<<<')
+            time2 = time.time()
+            tdiff = time2 - time1
+            assert tdiff < 0.5, "Query should not take more than a few millis (took {}s)".format(tdiff)
 
-                assert any([t1 == x['node']['jobKey']
-                            and 'failed' == x['node']['status']
-                            and 'Exception: ' in x['node']['failureMessage']
-                            for x in result['data']['backgroundJobs']['edges']])
-                assert any([t2 == x['node']['jobKey'] and "finished" == x['node']['status']
-                            and x['node']['failureMessage'] is None
-                            for x in result['data']['backgroundJobs']['edges']])
-                assert any([t3 == x['node']['jobKey'] and "started" == x['node']['status']
-                            and x['node']['failureMessage'] is None
-                            for x in result['data']['backgroundJobs']['edges']])
-                time.sleep(2)
-            except:
-                time.sleep(2)
-                w.terminate()
-                raise
-
+            assert any([t1 == x['node']['jobKey']
+                        and 'failed' == x['node']['status']
+                        and 'Exception: ' in x['node']['failureMessage']
+                        for x in result['data']['backgroundJobs']['edges']])
+            assert any([t2 == x['node']['jobKey'] and "finished" == x['node']['status']
+                        and x['node']['failureMessage'] is None
+                        for x in result['data']['backgroundJobs']['edges']])
+            assert any([t3 == x['node']['jobKey'] and "started" == x['node']['status']
+                        and x['node']['failureMessage'] is None
+                        for x in result['data']['backgroundJobs']['edges']])
+            time.sleep(2)
+        except:
+            time.sleep(2)
             w.terminate()
+            raise
+
+        w.terminate()

@@ -1,7 +1,4 @@
 import time
-import uuid
-
-from lmsrvcore.api.object import ObjectType
 from lmcommon.logging import LMLogger
 
 logger = LMLogger.get_logger()

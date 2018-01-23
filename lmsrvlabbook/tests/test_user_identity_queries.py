@@ -33,45 +33,37 @@ from lmcommon.configuration import Configuration
 class TestUserIdentityQueries(object):
 
     def test_logged_in_user(self, fixture_working_dir, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
+        query = """
+                {
+                    userIdentity{
+                                  id
+                                  username
+                                  email
+                                  givenName
+                                  familyName
+                                }
+                }
+                """
 
-            query = """
-                    {
-                        userIdentity{
-                                      id
-                                      username
-                                      email
-                                      givenName
-                                      familyName
-                                    }
-                    }
-                    """
-
-            snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_no_logged_in_user(self, fixture_working_dir, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
+        query = """
+                {
+                    userIdentity{
+                                  id
+                                  username
+                                  email
+                                  givenName
+                                  familyName
+                                }
+                }
+                """
 
-            query = """
-                    {
-                        userIdentity{
-                                      id
-                                      username
-                                      email
-                                      givenName
-                                      familyName
-                                    }
-                    }
-                    """
+        # Delete the stored user context
+        current_app.current_user = None
+        user_dir = os.path.join(fixture_working_dir[1], '.labmanager', 'identity')
+        os.remove(os.path.join(user_dir, 'user.json'))
 
-            # Delete the stored user context
-            current_app.current_user = None
-            user_dir = os.path.join(fixture_working_dir[1], '.labmanager', 'identity')
-            os.remove(os.path.join(user_dir, 'user.json'))
-
-            # Run query
-            snapshot.assert_match(client.execute(query))
+        # Run query
+        snapshot.assert_match(fixture_working_dir[2].execute(query))

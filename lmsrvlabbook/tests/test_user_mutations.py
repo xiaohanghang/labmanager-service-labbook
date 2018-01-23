@@ -31,39 +31,34 @@ from mock import patch
 
 class TestUserIdentityMutations(object):
     def test_remove_user_identity(self, fixture_working_dir, snapshot):
-        """Test listing labbooks"""
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            client = Client(fixture_working_dir[2])
+        query = """
+                {
+                    userIdentity{
+                                  id
+                                  username
+                                  email
+                                  givenName
+                                  familyName
+                                }
+                }
+                """
 
-            query = """
-                    {
-                        userIdentity{
-                                      id
-                                      username
-                                      email
-                                      givenName
-                                      familyName
-                                    }
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
+
+        identity_file = os.path.join(fixture_working_dir[1], '.labmanager', 'identity', 'user.json')
+        assert os.path.exists(identity_file) is True
+
+        query = """
+                mutation myRemoveMutation {
+                    removeUserIdentity(input:{}){
+                    userIdentityEdge{
+                      username
                     }
-                    """
+                  } 
+                }
+                """
 
-            snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            identity_file = os.path.join(fixture_working_dir[1], '.labmanager', 'identity', 'user.json')
-            assert os.path.exists(identity_file) is True
-
-            query = """
-                    mutation myRemoveMutation {
-                        removeUserIdentity(input:{}){
-                        userIdentityEdge{
-                          username
-                        }
-                      } 
-                    }
-                    """
-
-            snapshot.assert_match(client.execute(query))
-
-            identity_file = os.path.join(fixture_working_dir[1], '.labmanager', 'identity', 'user.json')
-            assert os.path.exists(identity_file) is False
+        identity_file = os.path.join(fixture_working_dir[1], '.labmanager', 'identity', 'user.json')
+        assert os.path.exists(identity_file) is False

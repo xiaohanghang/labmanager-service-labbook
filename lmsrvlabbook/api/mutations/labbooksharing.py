@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,18 +45,17 @@ class PublishLabbook(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
         # Load LabBook
         username = get_logged_in_username()
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
-                                             input['labbook_name'])
+        inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks', labbook_name)
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
 
         # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in context.headers.environ:
-            token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
@@ -78,20 +77,20 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
         # Load LabBook
         username = get_logged_in_username()
         working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, input['owner'], 'labbooks',
-                                             input['labbook_name'])
+        inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
+                                             labbook_name)
         lb = LabBook()
         lb.from_directory(inferred_lb_directory)
 
         # Extract valid Bearer token
         token = None
-        if hasattr(context.headers, 'environ'):
-            if "HTTP_AUTHORIZATION" in context.headers.environ:
-                token = parse_token(context.headers.environ["HTTP_AUTHORIZATION"])
+        if hasattr(info.context.headers, 'environ'):
+            if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+                token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
 
         if not token:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")

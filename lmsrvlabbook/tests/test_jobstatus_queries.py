@@ -34,17 +34,6 @@ import rq
 from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.configuration import Configuration
 
-from ..api import LabbookMutations, LabbookQuery
-
-
-# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
 
 @pytest.fixture()
 def temporary_worker():
@@ -83,132 +72,108 @@ class TestLabBookServiceQueries(object):
 
     def test_query_finished_task(self, fixture_working_dir, snapshot, temporary_worker):
         """Test listing labbooks"""
-
         w, d = temporary_worker
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
+        job_id = d.dispatch_task(jobs.test_exit_success)
 
-            job_id = d.dispatch_task(jobs.test_exit_success)
+        time.sleep(1)
 
-            time.sleep(1)
-
-            query = """
-            {
-                jobStatus(jobId: "%s") {
-                    result
-                    status
-                }
+        query = """
+        {
+            jobStatus(jobId: "%s") {
+                result
+                status
             }
-            """ % job_id.key_str
+        }
+        """ % job_id.key_str
 
-            try:
-                pprint.pprint(query)
-                snapshot.assert_match(client.execute(query))
-            except:
-                w.terminate()
-                raise
-
+        try:
+            snapshot.assert_match(fixture_working_dir[2].execute(query))
+        except:
             w.terminate()
+            raise
+
+        w.terminate()
 
     def test_query_failed_task(self, fixture_working_dir, snapshot, temporary_worker):
         """Test listing labbooks"""
 
         w, d = temporary_worker
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
+        job_id = d.dispatch_task(jobs.test_exit_fail)
 
-            job_id = d.dispatch_task(jobs.test_exit_fail)
+        time.sleep(1)
 
-            time.sleep(1)
-
-            query = """
-            {
-                jobStatus(jobId: "%s") {
-                    result
-                    status
-                }
+        query = """
+        {
+            jobStatus(jobId: "%s") {
+                result
+                status
             }
-            """ % job_id
+        }
+        """ % job_id
 
-            try:
-                pprint.pprint(query)
-                snapshot.assert_match(client.execute(query))
-            except:
-                w.terminate()
-                raise
-
+        try:
+            snapshot.assert_match(fixture_working_dir[2].execute(query))
+        except:
             w.terminate()
+            raise
+
+        w.terminate()
 
     def test_query_started_task(self, fixture_working_dir, snapshot, temporary_worker):
         """Test listing labbooks"""
 
         w, d = temporary_worker
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
+        job_id = d.dispatch_task(jobs.test_sleep, args=(2,))
 
-            job_id = d.dispatch_task(jobs.test_sleep, args=(2,))
+        time.sleep(1)
 
-            time.sleep(1)
-
-            query = """
-            {
-                jobStatus(jobId: "%s") {
-                    result
-                    status
-                }
+        query = """
+        {
+            jobStatus(jobId: "%s") {
+                result
+                status
             }
-            """ % job_id
+        }
+        """ % job_id
 
-            try:
-                snapshot.assert_match(client.execute(query))
-            except:
-                time.sleep(3)
-                w.terminate()
-                raise
-
+        try:
+            snapshot.assert_match(fixture_working_dir[2].execute(query))
+        except:
             time.sleep(3)
             w.terminate()
+            raise
+
+        time.sleep(3)
+        w.terminate()
 
     def test_query_queued_task(self, fixture_working_dir, snapshot, temporary_worker):
         """Test listing labbooks"""
 
         w, d = temporary_worker
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
+        job_id1 = d.dispatch_task(jobs.test_sleep, args=(2,))
+        job_id2 = d.dispatch_task(jobs.test_sleep, args=(2,))
 
-            job_id1 = d.dispatch_task(jobs.test_sleep, args=(2,))
-            job_id2 = d.dispatch_task(jobs.test_sleep, args=(2,))
+        time.sleep(0.5)
 
-
-            time.sleep(0.5)
-
-            query = """
-            {
-                jobStatus(jobId: "%s") {
-                    result
-                    status
-                }
+        query = """
+        {
+            jobStatus(jobId: "%s") {
+                result
+                status
             }
-            """ % job_id2
+        }
+        """ % job_id2
 
-            try:
-                snapshot.assert_match(client.execute(query))
-            except:
-                time.sleep(5)
-                w.terminate()
-                raise
-
+        try:
+            snapshot.assert_match(fixture_working_dir[2].execute(query))
+        except:
             time.sleep(5)
             w.terminate()
+            raise
+
+        time.sleep(5)
+        w.terminate()

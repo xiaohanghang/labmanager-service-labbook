@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,35 +21,35 @@ import base64
 from typing import List
 
 import graphene
-from graphene import resolve_only_args
 
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository
+from lmcommon.labbook.schemas import CURRENT_SCHEMA
 
 from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbook import Labbook
-from lmsrvlabbook.api.objects.baseimage import BaseImage
-from lmsrvlabbook.api.objects.devenv import DevEnv
-from lmsrvlabbook.api.objects.customdependency import CustomDependency
+from lmsrvlabbook.api.objects.basecomponent import BaseComponent
+from lmsrvlabbook.api.objects.customcomponent import CustomComponent
 from lmsrvlabbook.api.objects.jobstatus import JobStatus
 from lmsrvlabbook.api.connections.labbook import LabbookConnection
-from lmsrvlabbook.api.connections.baseimage import BaseImageConnection
-from lmsrvlabbook.api.connections.devenv import DevEnvConnection
-from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection
+from lmsrvlabbook.api.connections.environment import BaseComponentConnection, CustomComponentConnection
 from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
 
 from lmsrvcore.api.objects.user import UserIdentity
 
+
 logger = LMLogger.get_logger()
 
 
-class LabbookQuery(graphene.AbstractType):
+class LabbookQuery(graphene.ObjectType):
     """Entry point for all LabBook queryable fields"""
+    # Create instance of the LabBook dataloader for use across all objects within this query instance
+
     # Node Fields for Relay
     node = graphene.relay.Node.Field()
 
@@ -60,7 +60,7 @@ class LabbookQuery(graphene.AbstractType):
     # This indicates the most-recent labbook schema version.
     # Nominal usage of this field is to see if any given labbook is behind this version.
     # Any new labbook will be created with this schema version.
-    current_labbook_schema_version = graphene.String()
+    current_labbook_schema_version = graphene.Int()
 
     # Used to query for specific background jobs.
     # job_id is in the format of `rq:job:uuid`, though it should never need to be parsed.
@@ -73,54 +73,57 @@ class LabbookQuery(graphene.AbstractType):
     local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
 
     # Base Image Repository Interface
-    available_base_images = graphene.relay.ConnectionField(BaseImageConnection)
-    available_base_image_versions = graphene.relay.ConnectionField(BaseImageConnection, repository=graphene.String(),
-                                                                   namespace=graphene.String(),
-                                                                   component=graphene.String())
-    # Development Environment Repository Interface
-    available_dev_envs = graphene.relay.ConnectionField(DevEnvConnection)
-    available_dev_env_versions = graphene.relay.ConnectionField(DevEnvConnection, repository=graphene.String(),
-                                                                namespace=graphene.String(),
-                                                                component=graphene.String())
+    available_bases = graphene.relay.ConnectionField(BaseComponentConnection)
+
+    # Currently not fully supported, but will be added in the future.
+    # available_base_image_versions = graphene.relay.ConnectionField(BaseImageConnection, repository=graphene.String(),
+    #                                                                namespace=graphene.String(),
+    #                                                                component=graphene.String())
+
     # Custom Dependency Repository Interface
-    available_custom_dependencies = graphene.relay.ConnectionField(CustomDependencyConnection)
-    available_custom_dependencies_versions = graphene.relay.ConnectionField(CustomDependencyConnection,
-                                                                            repository=graphene.String(),
-                                                                            namespace=graphene.String(),
-                                                                            component=graphene.String())
+    available_custom_dependencies = graphene.relay.ConnectionField(CustomComponentConnection)
+
+    # Currently not fully supported, but will be added in the future.
+    # available_custom_dependencies_versions = graphene.relay.ConnectionField(CustomDependencyConnection,
+    #                                                                         repository=graphene.String(),
+    #                                                                         namespace=graphene.String(),
+    #                                                                         component=graphene.String())
 
     # Get the current logged in user identity, primarily used when running offline
     user_identity = graphene.Field(UserIdentity)
 
-    def resolve_build_info(self, args, context, info):
+    def resolve_build_info(self, info):
         """Return this LabManager build info (hash, build timestamp, etc)"""
         build_info = Configuration().config.get('build_info') or {}
         return '-'.join([build_info.get('application', 'UnknownDate'),
                          build_info.get('revision', 'UnknownHash'),
                          build_info.get('built_on', 'UnknownApplication')])
 
-    def resolve_labbook(self, args, context, info):
+    def resolve_labbook(self, info, owner: str, name: str):
         """Method to return a graphene Labbok instance based on the name
 
         Uses the "currently logged in" user
 
         Args:
-            owner(dict): Contains user details
+            owner(str): Username of the owner (aka namespace)
             name(str): Name of the LabBook
+            _dataloader: A dataloader instance
 
         Returns:
             Labbook
         """
-        id_data = {"name": args.get('name'), "owner": args.get('owner')}
-        return Labbook.create(id_data)
+        # Load the labbook data via a dataloader
+        loader_key = f"{get_logged_in_username()}&{owner}&{name}"
+        info.context.labbook_loader.load(loader_key)
 
-    def resolve_current_labbook_schema_version(self, args, context, info):
-        """Return the LabBook schema version (defined as static field in LabBook class."""
+        return Labbook(id="{}&{}".format(owner, name),
+                       name=name, owner=owner)
 
-        return LabBook.LABBOOK_DATA_SCHEMA_VERSION
+    def resolve_current_labbook_schema_version(self, info):
+        """Return the current LabBook schema version"""
+        return CURRENT_SCHEMA
 
-    @resolve_only_args
-    def resolve_job_status(self, job_id: str):
+    def resolve_job_status(self, info, job_id: str):
         """Method to return a graphene Labbok instance based on the name
 
         Uses the "currently logged in" user
@@ -134,7 +137,7 @@ class LabbookQuery(graphene.AbstractType):
         logger.info(f"Resolving jobStatus {job_id} (type {type(job_id)})")
         return JobStatus.create(job_id)
 
-    def resolve_background_jobs(self, args, context, info):
+    def resolve_background_jobs(self, info, **kwargs):
         """Method to return a all background jobs the system is aware of: Queued, Started, Finished, Failed.
 
         Returns:
@@ -146,7 +149,7 @@ class LabbookQuery(graphene.AbstractType):
         cursors = [base64.b64encode(f"{str(cnt)}".encode('utf-8')) for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
+        lbc = ListBasedConnection(edges, cursors, kwargs)
         lbc.apply()
 
         edge_objs = []
@@ -155,7 +158,7 @@ class LabbookQuery(graphene.AbstractType):
 
         return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_local_labbooks(self, args, context, info):
+    def resolve_local_labbooks(self, info, **kwargs):
         """Method to return a all graphene Labbook instances for the logged in user
 
         Uses the "currently logged in" user
@@ -178,138 +181,78 @@ class LabbookQuery(graphene.AbstractType):
                                                                                               x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
+        lbc = ListBasedConnection(edges, cursors, kwargs)
         lbc.apply()
 
         # Get Labbook instances
-        id_data = {"username": username}
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data["name"] = edge["name"]
-            id_data["owner"] = edge["owner"]
-            edge_objs.append(LabbookConnection.Edge(node=Labbook.create(id_data), cursor=cursor))
+            create_data = {"id": "{}&{}".format(edge["owner"], edge["name"]),
+                           "name": edge["name"],
+                           "owner": edge["owner"]}
+
+            edge_objs.append(LabbookConnection.Edge(node=Labbook(**create_data),
+                                                    cursor=cursor))
 
         return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_available_base_images(self, args, context, info):
+    def resolve_available_bases(self, info, **kwargs):
         """Method to return a all graphene BaseImages that are available
 
         Returns:
             list(Labbook)
         """
         repo = ComponentRepository()
-        edges = repo.get_component_list("base_image")
+        edges = repo.get_component_list("base")
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
+        lbc = ListBasedConnection(edges, cursors, kwargs)
         lbc.apply()
 
         # Get BaseImage instances
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'component_data': edge,
-                       'component_class': 'base_image',
-                       'repo': edge['###repository###'],
-                       'namespace': edge['###namespace###'],
-                       'component': edge['info']['name'],
-                       'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                       }
-            edge_objs.append(BaseImageConnection.Edge(node=BaseImage.create(id_data), cursor=cursor))
+            edge_objs.append(BaseComponentConnection.Edge(node=BaseComponent(repository=edge['###repository###'],
+                                                                             component_id=edge['id'],
+                                                                             revision=int(edge['revision'])),
+                                                          cursor=cursor))
 
-        return BaseImageConnection(edges=edge_objs, page_info=lbc.page_info)
+        return BaseComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_available_base_image_versions(self, args, context, info):
-        """Method to return a all graphene BaseImages that are available
+    # Currently not fully supported, but will be added in the future.
+    # def resolve_available_base_image_versions(self, info, repository, namespace, component, **kwargs):
+    #     """Method to return a all graphene BaseImages that are available
+    #
+    #     Returns:
+    #         list(Labbook)
+    #     """
+    #     repo = ComponentRepository()
+    #     edges = repo.get_component_versions("base_image",
+    #                                         repository,
+    #                                         namespace,
+    #                                         component)
+    #     cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+    #
+    #     # Process slicing and cursor args
+    #     lbc = ListBasedConnection(edges, cursors, kwargs)
+    #     lbc.apply()
+    #
+    #     # Get BaseImage instances
+    #     edge_objs = []
+    #     for edge, cursor in zip(lbc.edges, lbc.cursors):
+    #         id_data = {'component_data': edge[1],
+    #                    'component_class': 'base_image',
+    #                    'repo': repository,
+    #                    'namespace': namespace,
+    #                    'component': component,
+    #                    'version': edge[0]
+    #                    }
+    #         edge_objs.append(BaseImageConnection.Edge(node=BaseImage.create(id_data), cursor=cursor))
+    #
+    #     return BaseImageConnection(edges=edge_objs, page_info=lbc.page_info)
 
-        Returns:
-            list(Labbook)
-        """
-        repo = ComponentRepository()
-        edges = repo.get_component_versions("base_image",
-                                            args['repository'],
-                                            args['namespace'],
-                                            args['component'])
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        # Get BaseImage instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'component_data': edge[1],
-                       'component_class': 'base_image',
-                       'repo': args['repository'],
-                       'namespace': args['namespace'],
-                       'component': args['component'],
-                       'version': edge[0]
-                       }
-            edge_objs.append(BaseImageConnection.Edge(node=BaseImage.create(id_data), cursor=cursor))
-
-        return BaseImageConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_available_dev_envs(self, args, context, info):
-        """Method to return all graphene DevEnvs that are available (at the latest version)
-
-        Returns:
-            DevEnvConnection
-        """
-        repo = ComponentRepository()
-        edges = repo.get_component_list("dev_env")
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        # Get BaseImage instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'component_data': edge,
-                       'component_class': 'dev_env',
-                       'repo': edge['###repository###'],
-                       'namespace': edge['###namespace###'],
-                       'component': edge['info']['name'],
-                       'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                       }
-            edge_objs.append(DevEnvConnection.Edge(node=DevEnv.create(id_data), cursor=cursor))
-
-        return DevEnvConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_available_dev_env_versions(self, args, context, info):
-        """Method to return all versions of a Dev Env component
-
-        Returns:
-            DevEnvConnection
-        """
-        repo = ComponentRepository()
-        edges = repo.get_component_versions("dev_env",
-                                            args['repository'],
-                                            args['namespace'],
-                                            args['component'])
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        # Get BaseImage instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'component_data': edge[1],
-                       'component_class': 'dev_env',
-                       'repo': args['repository'],
-                       'namespace': args['namespace'],
-                       'component': args['component'],
-                       'version': edge[0]
-                       }
-            edge_objs.append(DevEnvConnection.Edge(node=DevEnv.create(id_data), cursor=cursor))
-
-        return DevEnvConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_available_custom_dependencies(self, args, context, info):
+    def resolve_available_custom_dependencies(self, info, **kwargs):
         """Method to return all graphene CustomDependencies that are available (at the latest version)
 
         Returns:
@@ -320,59 +263,55 @@ class LabbookQuery(graphene.AbstractType):
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
+        lbc = ListBasedConnection(edges, cursors, kwargs)
         lbc.apply()
 
         # Get BaseImage instances
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'component_data': edge,
-                       'component_class': 'custom',
-                       'repo': edge['###repository###'],
-                       'namespace': edge['###namespace###'],
-                       'component': edge['info']['name'],
-                       'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                       }
-            edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
+            edge_objs.append(CustomComponentConnection.Edge(node=CustomComponent(repository=edge['###repository###'],
+                                                                                 component_id=edge['id'],
+                                                                                 revision=edge['revision']),
+                                                            cursor=cursor))
 
-        return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
+        return CustomComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_available_custom_dependencies_versions(self, args, context, info):
-        """Method to return all versions of a Custom Dependency component
+    # Currently not fully supported, but will be added in the future.
+    # def resolve_available_custom_dependencies_versions(self, info, repository, namespace, component, **kwargs):
+    #     """Method to return all versions of a Custom Dependency component
+    #
+    #     Returns:
+    #         CustomDependencyConnection
+    #     """
+    #     repo = ComponentRepository()
+    #     edges = repo.get_component_versions("custom",
+    #                                         repository,
+    #                                         namespace,
+    #                                         component)
+    #     cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+    #
+    #     # Process slicing and cursor args
+    #     lbc = ListBasedConnection(edges, cursors, kwargs)
+    #     lbc.apply()
+    #
+    #     # Get BaseImage instances
+    #     edge_objs = []
+    #     for edge, cursor in zip(lbc.edges, lbc.cursors):
+    #         id_data = {'component_data': edge[1],
+    #                    'component_class': 'custom',
+    #                    'repo': repository,
+    #                    'namespace': namespace,
+    #                    'component': component,
+    #                    'version': edge[0]
+    #                    }
+    #         edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
+    #
+    #     return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
 
-        Returns:
-            CustomDependencyConnection
-        """
-        repo = ComponentRepository()
-        edges = repo.get_component_versions("custom",
-                                            args['repository'],
-                                            args['namespace'],
-                                            args['component'])
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, args)
-        lbc.apply()
-
-        # Get BaseImage instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            id_data = {'component_data': edge[1],
-                       'component_class': 'custom',
-                       'repo': args['repository'],
-                       'namespace': args['namespace'],
-                       'component': args['component'],
-                       'version': edge[0]
-                       }
-            edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
-
-        return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_user_identity(self, args, context, info):
+    def resolve_user_identity(self, info):
         """Method to return a graphene UserIdentity instance based on the current logged (both on & offline) user
 
         Returns:
             UserIdentity
         """
-        id_data = {}  # UserIdentity class does not use id_data. TODO: cleanup when restructuring API
-        return UserIdentity.create(id_data)
+        return UserIdentity()

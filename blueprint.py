@@ -25,7 +25,8 @@ from flask import Blueprint
 from flask_graphql import GraphQLView
 
 from lmcommon.configuration import Configuration
-from lmsrvcore.auth.identity import AuthorizationMiddleware
+from lmsrvcore.middleware import AuthorizationMiddleware, LabBookLoaderMiddleware, time_all_resolvers_middleware, \
+    error_middleware
 from lmsrvlabbook.api import LabbookQuery, LabbookMutations
 
 
@@ -54,7 +55,10 @@ schema = graphene.Schema(query=Query, mutation=Mutation)
 complete_labbook_service.add_url_rule('/labbook/',
                                       view_func=GraphQLView.as_view('graphql', schema=schema,
                                                                     graphiql=config.config["flask"]["DEBUG"],
-                                                                    middleware=[AuthorizationMiddleware()]),
+                                                                    middleware=[error_middleware,
+                                                                                time_all_resolvers_middleware,
+                                                                                AuthorizationMiddleware(),
+                                                                                LabBookLoaderMiddleware()]),
                                       methods=['GET', 'POST', 'OPTION'])
 
 

@@ -7,62 +7,209 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
+snapshots['TestEnvironmentBaseImageQueries.test_get_base_image_by_node 1'] = {
+    'data': {
+        'node': {
+            'componentId': 'quickstart-jupyterlab',
+            'description': 'Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base for any analysis.',
+            'developmentTools': [
+                'jupyterlab'
+            ],
+            'dockerImageNamespace': 'gigdev',
+            'dockerImageRepository': 'gm-quickstart',
+            'dockerImageServer': 'hub.docker.com',
+            'dockerImageTag': '9718fedc-2018-01-16',
+            'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+            'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+            'languages': [
+                'python3'
+            ],
+            'license': 'MIT',
+            'name': 'Data Science Quickstart with JupyterLab',
+            'osClass': 'ubuntu',
+            'osRelease': '16.04',
+            'packageManagers': [
+                'apt',
+                'pip3'
+            ],
+            'readme': 'Empty for now',
+            'tags': [
+                'ubuntu',
+                'python3',
+                'jupyterlab'
+            ],
+            'url': None
+        }
+    }
+}
+
 snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = {
     'data': {
-        'availableBaseImages': {
+        'availableBases': {
             'edges': [
                 {
                     'node': {
-                        'author': {
-                            'organization': 'Aperture Science'
-                        },
-                        'availablePackageManagers': [
-                            'pip3',
-                            'apt-get'
+                        'componentId': 'quickstart-jupyterlab',
+                        'description': 'Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base for any analysis.',
+                        'developmentTools': [
+                            'jupyterlab'
                         ],
-                        'component': {
-                            'componentClass': 'base_image',
-                            'name': 'ubuntu1604-python3',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.4'
-                        },
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjQ=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 4
-                        },
-                        'server': 'hub.docker.com',
-                        'tag': '7a7c9d41-2017-08-03'
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Data Science Quickstart with JupyterLab',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'schema': 1,
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
                     }
                 },
                 {
                     'node': {
-                        'author': {
-                            'organization': 'Aperture Science'
-                        },
-                        'availablePackageManagers': [
-                            'pip3',
-                            'apt-get'
+                        'componentId': 'ut-busybox',
+                        'description': 'Super lightweight image for build testing',
+                        'developmentTools': [
                         ],
-                        'component': {
-                            'componentClass': 'base_image',
-                            'name': 'ubuntu1604-python3-dup',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.2'
-                        },
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMy1kdXAmMC4y',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer Dup',
-                            'name': 'ubuntu1604-python3-dup',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        },
-                        'server': 'hub.docker.com',
-                        'tag': '7a7c9d41-2017-08-03'
+                        'dockerImageNamespace': 'library',
+                        'dockerImageRepository': 'busybox',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '1.28.0',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWJ1c3lib3gmMA==',
+                        'languages': [
+                        ],
+                        'license': 'MIT',
+                        'name': 'Unit Test Busybox',
+                        'osClass': 'busybox',
+                        'osRelease': '1.28',
+                        'packageManagers': [
+                            'apt'
+                        ],
+                        'readme': 'Empty for now',
+                        'schema': 1,
+                        'tags': [
+                            'busybox'
+                        ],
+                        'url': None
+                    }
+                },
+                {
+                    'node': {
+                        'componentId': 'ut-jupyterlab-1',
+                        'description': 'Unit Test 1',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMSYw',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Unit Test1',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'schema': 1,
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
+                    }
+                },
+                {
+                    'node': {
+                        'componentId': 'ut-jupyterlab-2',
+                        'description': 'Unit Test 2',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMiYw',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Unit Test 2',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'schema': 1,
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
+                    }
+                },
+                {
+                    'node': {
+                        'componentId': 'ut-jupyterlab-3',
+                        'description': 'Unit Test 3',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMyYw',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Unit Test 3',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'schema': 1,
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
                     }
                 }
             ]
@@ -72,29 +219,40 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
 
 snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagination 1'] = {
     'data': {
-        'availableBaseImages': {
+        'availableBases': {
             'edges': [
                 {
                     'cursor': 'MA==',
                     'node': {
-                        'component': {
-                            'componentClass': 'base_image',
-                            'name': 'ubuntu1604-python3',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.4'
-                        },
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjQ=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 4
-                        },
-                        'namespace': 'gigdev',
-                        'repository': 'ubuntu1604-python3',
-                        'server': 'hub.docker.com',
-                        'tag': '7a7c9d41-2017-08-03'
+                        'componentId': 'quickstart-jupyterlab',
+                        'description': 'Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base for any analysis.',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Data Science Quickstart with JupyterLab',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
                     }
                 }
             ],
@@ -107,27 +265,125 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
 
 snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagination 2'] = {
     'data': {
-        'availableBaseImages': {
+        'availableBases': {
             'edges': [
                 {
-                    'cursor': 'MQ==',
+                    'cursor': 'Mg==',
                     'node': {
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer Dup',
-                            'id': 'RW52aXJvbm1lbnRJbmZvOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMy1kdXAmMC4y',
-                            'name': 'ubuntu1604-python3-dup',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        },
-                        'namespace': 'gigdev',
-                        'repository': 'ubuntu1604-python3',
-                        'server': 'hub.docker.com',
-                        'tag': '7a7c9d41-2017-08-03'
+                        'componentId': 'ut-jupyterlab-1',
+                        'description': 'Unit Test 1',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMSYw',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Unit Test1',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
+                    }
+                },
+                {
+                    'cursor': 'Mw==',
+                    'node': {
+                        'componentId': 'ut-jupyterlab-2',
+                        'description': 'Unit Test 2',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMiYw',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Unit Test 2',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
                     }
                 }
             ],
             'pageInfo': {
-                'hasNextPage': False
+                'hasNextPage': True
+            }
+        }
+    }
+}
+
+snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagination 3'] = {
+    'data': {
+        'availableBases': {
+            'edges': [
+                {
+                    'cursor': 'Mg==',
+                    'node': {
+                        'componentId': 'ut-jupyterlab-1',
+                        'description': 'Unit Test 1',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMSYw',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Unit Test1',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
+                    }
+                }
+            ],
+            'pageInfo': {
+                'hasNextPage': True
             }
         }
     }
@@ -135,22 +391,40 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
 
 snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagination_reverse 1'] = {
     'data': {
-        'availableBaseImages': {
+        'availableBases': {
             'edges': [
                 {
-                    'cursor': 'MQ==',
+                    'cursor': 'NA==',
                     'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMy1kdXAmMC4y',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer Dup',
-                            'name': 'ubuntu1604-python3-dup',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        },
-                        'namespace': 'gigdev',
-                        'repository': 'ubuntu1604-python3',
-                        'server': 'hub.docker.com',
-                        'tag': '7a7c9d41-2017-08-03'
+                        'componentId': 'ut-jupyterlab-3',
+                        'description': 'Unit Test 3',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMyYw',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Unit Test 3',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
                     }
                 }
             ],
@@ -164,232 +438,40 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
 
 snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagination_reverse 2'] = {
     'data': {
-        'availableBaseImages': {
+        'availableBases': {
             'edges': [
                 {
                     'cursor': 'MA==',
                     'node': {
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'id': 'RW52aXJvbm1lbnRJbmZvOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjQ=',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 4
-                        },
-                        'namespace': 'gigdev',
-                        'repository': 'ubuntu1604-python3',
-                        'server': 'hub.docker.com',
-                        'tag': '7a7c9d41-2017-08-03'
-                    }
-                }
-            ],
-            'pageInfo': {
-                'hasNextPage': False,
-                'hasPreviousPage': False
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentBaseImageQueries.test_get_base_image_by_node 1'] = {
-    'data': {
-        'node': {
-            'component': {
-                'componentClass': 'base_image',
-                'name': 'ubuntu1604-python3',
-                'namespace': 'gigantum',
-                'repository': 'gig-dev_environment-components',
-                'version': '0.4'
-            },
-            'info': {
-                'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                'name': 'ubuntu1604-python3',
-                'versionMajor': 0,
-                'versionMinor': 4
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_image_versions 1'] = {
-    'data': {
-        'availableBaseImageVersions': {
-            'edges': [
-                {
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjQ=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 4
-                        }
-                    }
-                },
-                {
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjM=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        }
-                    }
-                },
-                {
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjI=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        }
-                    }
-                }
-            ]
-        }
-    }
-}
-
-snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_image_versions_pagination 1'] = {
-    'data': {
-        'availableBaseImageVersions': {
-            'edges': [
-                {
-                    'cursor': 'MA==',
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjQ=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 4
-                        }
-                    }
-                },
-                {
-                    'cursor': 'MQ==',
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjM=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        }
-                    }
-                },
-                {
-                    'cursor': 'Mg==',
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjI=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        }
-                    }
-                }
-            ],
-            'pageInfo': {
-                'hasNextPage': True,
-                'hasPreviousPage': False
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_image_versions_pagination 2'] = {
-    'data': {
-        'availableBaseImageVersions': {
-            'edges': [
-                {
-                    'cursor': 'Mw==',
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjE=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 1
-                        }
-                    }
-                }
-            ],
-            'pageInfo': {
-                'hasNextPage': False,
-                'hasPreviousPage': False
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_image_versions_pagination_reverse 1'] = {
-    'data': {
-        'availableBaseImageVersions': {
-            'edges': [
-                {
-                    'cursor': 'MQ==',
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjM=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        }
-                    }
-                },
-                {
-                    'cursor': 'Mg==',
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjI=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        }
-                    }
-                },
-                {
-                    'cursor': 'Mw==',
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjE=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 1
-                        }
-                    }
-                }
-            ],
-            'pageInfo': {
-                'hasNextPage': False,
-                'hasPreviousPage': True
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_image_versions_pagination_reverse 2'] = {
-    'data': {
-        'availableBaseImageVersions': {
-            'edges': [
-                {
-                    'cursor': 'MA==',
-                    'node': {
-                        'id': 'QmFzZUltYWdlOmJhc2VfaW1hZ2UmZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dTE2MDQtcHl0aG9uMyYwLjQ=',
-                        'info': {
-                            'humanName': 'Ubuntu 16.04 Python 3 Developer',
-                            'name': 'ubuntu1604-python3',
-                            'versionMajor': 0,
-                            'versionMinor': 4
-                        }
+                        'componentId': 'quickstart-jupyterlab',
+                        'description': 'Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base for any analysis.',
+                        'developmentTools': [
+                            'jupyterlab'
+                        ],
+                        'dockerImageNamespace': 'gigdev',
+                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageServer': 'hub.docker.com',
+                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+                        'languages': [
+                            'python3'
+                        ],
+                        'license': 'MIT',
+                        'name': 'Data Science Quickstart with JupyterLab',
+                        'osClass': 'ubuntu',
+                        'osRelease': '16.04',
+                        'packageManagers': [
+                            'apt',
+                            'pip3'
+                        ],
+                        'readme': 'Empty for now',
+                        'tags': [
+                            'ubuntu',
+                            'python3',
+                            'jupyterlab'
+                        ],
+                        'url': None
                     }
                 }
             ],

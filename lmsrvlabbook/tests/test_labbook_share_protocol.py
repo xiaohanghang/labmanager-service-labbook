@@ -75,24 +75,21 @@ class TestLabbookShareProtocol(object):
 
         test_user_lb = LabBook(mock_create_labbooks[0])
         test_user_lb.from_name('default', 'default', 'labbook1')
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
 
-            publish_query = f"""
-            mutation c {{
-                publishLabbook(input: {{
-                    labbookName: "labbook1",
-                    owner: "default"
-                }}) {{
-                    success
-                }}
+        publish_query = f"""
+        mutation c {{
+            publishLabbook(input: {{
+                labbookName: "labbook1",
+                owner: "default"
+            }}) {{
+                success
             }}
-            """
+        }}
+        """
 
-            r = client.execute(publish_query, context_value=req)
-            assert 'errors' not in r
-            assert r['data']['publishLabbook']['success'] is True
+        r = fixture_working_dir[2].execute(publish_query, context_value=req)
+        assert 'errors' not in r
+        assert r['data']['publishLabbook']['success'] is True
 
     @responses.activate
     @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
@@ -130,9 +127,7 @@ class TestLabbookShareProtocol(object):
             }
         }
         """
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            client = Client(fixture_working_dir[2])
-            r = client.execute(sync_query, context_value=req)
+        r = fixture_working_dir[2].execute(sync_query, context_value=req)
 
         assert 'errors' not in r
         assert r['data']['syncLabbook']['updateCount'] == 6

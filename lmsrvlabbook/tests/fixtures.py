@@ -27,25 +27,16 @@ from flask import Flask, current_app
 import json
 from mock import patch
 import responses
+from graphene.test import Client
 
 from lmcommon.environment import RepositoryManager
 from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.auth.identity import get_identity_manager
 from lmcommon.labbook import LabBook
+from lmsrvcore.middleware import LabBookLoaderMiddleware, error_middleware
 
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
-
-
-# Create ObjectType clases, since the EnvironmentQueries and EnvironmentMutations
-# are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
 
 def _create_temp_work_dir():
     """Helper method to create a temporary working directory and associated config file"""
@@ -55,7 +46,7 @@ def _create_temp_work_dir():
 
     config = Configuration()
     # Make sure the "test" environment components are always used
-    config.config["environment"]["repo_url"] = ["https://github.com/gig-dev/environment-components.git"]
+    config.config["environment"]["repo_url"] = ["https://github.com/gig-dev/components2.git"]
     config.config["flask"]["DEBUG"] = False
     # Set the working dir to the new temp dir
     config.config["git"]["working_directory"] = temp_dir
@@ -65,6 +56,12 @@ def _create_temp_work_dir():
     config.save(config_file)
 
     return config_file, temp_dir
+
+
+class ContextMock(object):
+    """A simple class to mock the Flask request context so you have a labbook_loader attribute"""
+    def __init__(self):
+        self.labbook_loader = None
 
 
 @pytest.fixture
@@ -84,7 +81,7 @@ def fixture_working_dir():
                    "family_name": "Doe"}, user_file)
 
     # Create test client
-    schema = graphene.Schema(query=Query, mutation=Mutation)
+    schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
 
     with patch.object(Configuration, 'find_default_config', lambda self: config_file):
         # Load User identity into app context
@@ -96,7 +93,10 @@ def fixture_working_dir():
             # within this block, current_app points to app. Set current usert explicitly(this is done in the middleware)
             current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
 
-            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+            # Create a test client
+            client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
+
+            yield config_file, temp_dir, client, schema  # name of the config file, temporary working directory, the schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
@@ -121,7 +121,7 @@ def fixture_working_dir_env_repo_scoped():
                    "family_name": "Doe"}, user_file)
 
     # Create test client
-    schema = graphene.Schema(query=Query, mutation=Mutation)
+    schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
 
     # get environment data and index
     erm = RepositoryManager(config_file)
@@ -138,7 +138,10 @@ def fixture_working_dir_env_repo_scoped():
             # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
             current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
 
-            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+            # Create a test client
+            client = Client(schema, middleware=[LabBookLoaderMiddleware(), error_middleware], context_value=ContextMock())
+
+            yield config_file, temp_dir, client, schema  # name of the config file, temporary working directory, the schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
@@ -163,7 +166,7 @@ def fixture_working_dir_populated_scoped():
                    "family_name": "Doe"}, user_file)
 
     # Create test client
-    schema = graphene.Schema(query=Query, mutation=Mutation)
+    schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
 
     # Create a bunch of lab books
     lb = LabBook(config_file)
@@ -189,7 +192,10 @@ def fixture_working_dir_populated_scoped():
             # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
             current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
 
-            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+            # Create a test client
+            client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
+
+            yield config_file, temp_dir, client, schema
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)

@@ -7,65 +7,6 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps 1'] = {
-    'data': {
-        'availableCustomDependencies': {
-            'edges': [
-                {
-                    'node': {
-                        'author': {
-                            'organization': 'Aperture Science'
-                        },
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.3'
-                        },
-                        'docker': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
-RUN pip3 install Pillow==4.2.1 
-''',
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjM=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        },
-                        'osBaseClass': 'ubuntu'
-                    }
-                },
-                {
-                    'node': {
-                        'author': {
-                            'organization': 'Aperture Science'
-                        },
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow-dup',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.2'
-                        },
-                        'docker': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
-RUN pip3 install Pillow==4.2.1 
-''',
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdy1kdXAmMC4y',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow-dup',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        },
-                        'osBaseClass': 'ubuntu'
-                    }
-                }
-            ]
-        }
-    }
-}
-
 snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps_pagination 1'] = {
     'data': {
         'availableCustomDependencies': {
@@ -73,27 +14,25 @@ snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps
                 {
                     'cursor': 'MA==',
                     'node': {
-                        'author': {
-                            'organization': 'Aperture Science'
-                        },
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.3'
-                        },
-                        'docker': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
-RUN pip3 install Pillow==4.2.1 
+                        'componentId': 'noop-1',
+                        'description': 'No Op for Unit Tests 1',
+                        'dockerSnippet': '''RUN echo "Noop" > /dev/null
 ''',
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjM=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        },
-                        'osBaseClass': 'ubuntu'
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImbm9vcC0xJjA=',
+                        'license': None,
+                        'name': 'Noop 1',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': None,
+                        'revision': 0,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': None
                     }
                 }
             ],
@@ -112,34 +51,169 @@ snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps
                 {
                     'cursor': 'MQ==',
                     'node': {
-                        'author': {
-                            'organization': 'Aperture Science'
-                        },
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow-dup',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.2'
-                        },
-                        'docker': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
-RUN pip3 install Pillow==4.2.1 
+                        'componentId': 'noop-2',
+                        'description': 'No Op for Unit Tests 2',
+                        'dockerSnippet': '''RUN echo "Noop" > /dev/null
 ''',
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdy1kdXAmMC4y',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow-dup',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        },
-                        'osBaseClass': 'ubuntu'
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImbm9vcC0yJjA=',
+                        'license': None,
+                        'name': 'Noop 2',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': None,
+                        'revision': 0,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': None
+                    }
+                },
+                {
+                    'cursor': 'Mg==',
+                    'node': {
+                        'componentId': 'noop-3',
+                        'description': 'No Op for Unit Tests 3',
+                        'dockerSnippet': '''RUN echo "Noop" > /dev/null
+''',
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImbm9vcC0zJjA=',
+                        'license': None,
+                        'name': 'Noop 3',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': None,
+                        'revision': 0,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': None
                     }
                 }
             ],
             'pageInfo': {
-                'hasNextPage': False,
+                'hasNextPage': True,
                 'hasPreviousPage': False
             }
+        }
+    }
+}
+
+snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps 1'] = {
+    'data': {
+        'availableCustomDependencies': {
+            'edges': [
+                {
+                    'node': {
+                        'componentId': 'noop-1',
+                        'description': 'No Op for Unit Tests 1',
+                        'dockerSnippet': '''RUN echo "Noop" > /dev/null
+''',
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImbm9vcC0xJjA=',
+                        'license': None,
+                        'name': 'Noop 1',
+                        'osBaseClass': 'ubuntu',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': None,
+                        'revision': 0,
+                        'schema': 1,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': None
+                    }
+                },
+                {
+                    'node': {
+                        'componentId': 'noop-2',
+                        'description': 'No Op for Unit Tests 2',
+                        'dockerSnippet': '''RUN echo "Noop" > /dev/null
+''',
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImbm9vcC0yJjA=',
+                        'license': None,
+                        'name': 'Noop 2',
+                        'osBaseClass': 'ubuntu',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': None,
+                        'revision': 0,
+                        'schema': 1,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': None
+                    }
+                },
+                {
+                    'node': {
+                        'componentId': 'noop-3',
+                        'description': 'No Op for Unit Tests 3',
+                        'dockerSnippet': '''RUN echo "Noop" > /dev/null
+''',
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImbm9vcC0zJjA=',
+                        'license': None,
+                        'name': 'Noop 3',
+                        'osBaseClass': 'ubuntu',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': None,
+                        'revision': 0,
+                        'schema': 1,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': None
+                    }
+                },
+                {
+                    'node': {
+                        'componentId': 'pillow',
+                        'description': 'Pillow v4.2.1 for Ubuntu and Python3',
+                        'dockerSnippet': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
+RUN pip3 install Pillow==4.2.1
+''',
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImcGlsbG93JjA=',
+                        'license': 'PIL Software License',
+                        'name': 'Pillow',
+                        'osBaseClass': 'ubuntu',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': [
+                            'apt',
+                            'pip'
+                        ],
+                        'revision': 0,
+                        'schema': 1,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': 'http://pillow.readthedocs.io/en/4.2.1/'
+                    }
+                }
+            ]
         }
     }
 }
@@ -149,29 +223,31 @@ snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps
         'availableCustomDependencies': {
             'edges': [
                 {
-                    'cursor': 'MQ==',
+                    'cursor': 'Mw==',
                     'node': {
-                        'author': {
-                            'organization': 'Aperture Science'
-                        },
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow-dup',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.2'
-                        },
-                        'docker': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
-RUN pip3 install Pillow==4.2.1 
+                        'componentId': 'pillow',
+                        'description': 'Pillow v4.2.1 for Ubuntu and Python3',
+                        'dockerSnippet': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
+RUN pip3 install Pillow==4.2.1
 ''',
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdy1kdXAmMC4y',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow-dup',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        },
-                        'osBaseClass': 'ubuntu'
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImcGlsbG93JjA=',
+                        'license': 'PIL Software License',
+                        'name': 'Pillow',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': [
+                            'apt',
+                            'pip'
+                        ],
+                        'revision': 0,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': 'http://pillow.readthedocs.io/en/4.2.1/'
                     }
                 }
             ],
@@ -190,27 +266,25 @@ snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps
                 {
                     'cursor': 'MA==',
                     'node': {
-                        'author': {
-                            'organization': 'Aperture Science'
-                        },
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.3'
-                        },
-                        'docker': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
-RUN pip3 install Pillow==4.2.1 
+                        'componentId': 'noop-1',
+                        'description': 'No Op for Unit Tests 1',
+                        'dockerSnippet': '''RUN echo "Noop" > /dev/null
 ''',
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjM=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        },
-                        'osBaseClass': 'ubuntu'
+                        'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImbm9vcC0xJjA=',
+                        'license': None,
+                        'name': 'Noop 1',
+                        'repository': 'gig-dev_components2',
+                        'requiredPackageManagers': None,
+                        'revision': 0,
+                        'tags': [
+                            'ubuntu',
+                            'python',
+                            'python3',
+                            'image',
+                            'jpeg',
+                            'png'
+                        ],
+                        'url': None
                     }
                 }
             ],
@@ -225,255 +299,29 @@ RUN pip3 install Pillow==4.2.1
 snapshots['TestEnvironmentCustomDependencyQueries.test_get_custom_deps_by_node 1'] = {
     'data': {
         'node': {
-            'component': {
-                'componentClass': 'custom',
-                'name': 'ubuntu-python3-pillow',
-                'namespace': 'gigantum',
-                'repository': 'gig-dev_environment-components',
-                'version': '0.1'
-            },
-            'info': {
-                'humanName': 'Pillow',
-                'name': 'ubuntu-python3-pillow',
-                'versionMajor': 0,
-                'versionMinor': 1
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps_versions 1'] = {
-    'data': {
-        'availableCustomDependenciesVersions': {
-            'edges': [
-                {
-                    'cursor': 'MA==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.3'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjM=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        }
-                    }
-                },
-                {
-                    'cursor': 'MQ==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.2'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjI=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        }
-                    }
-                },
-                {
-                    'cursor': 'Mg==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.1'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjE=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 1
-                        }
-                    }
-                }
+            'componentId': 'pillow',
+            'description': 'Pillow v4.2.1 for Ubuntu and Python3',
+            'dockerSnippet': '''RUN apt-get -y install libjpeg-dev libtiff5-dev zlib1g-dev libfreetype6-dev liblcms2-dev libopenjpeg-dev
+RUN pip3 install Pillow==4.2.1
+''',
+            'id': 'Q3VzdG9tQ29tcG9uZW50OmdpZy1kZXZfY29tcG9uZW50czImcGlsbG93JjA=',
+            'license': 'PIL Software License',
+            'name': 'Pillow',
+            'repository': 'gig-dev_components2',
+            'requiredPackageManagers': [
+                'apt',
+                'pip'
             ],
-            'pageInfo': {
-                'hasNextPage': False,
-                'hasPreviousPage': False
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps_versions_pagination 1'] = {
-    'data': {
-        'availableCustomDependenciesVersions': {
-            'edges': [
-                {
-                    'cursor': 'MA==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.3'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjM=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        }
-                    }
-                },
-                {
-                    'cursor': 'MQ==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.2'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjI=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        }
-                    }
-                }
+            'revision': 0,
+            'tags': [
+                'ubuntu',
+                'python',
+                'python3',
+                'image',
+                'jpeg',
+                'png'
             ],
-            'pageInfo': {
-                'hasNextPage': True,
-                'hasPreviousPage': False
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps_versions_pagination 2'] = {
-    'data': {
-        'availableCustomDependenciesVersions': {
-            'edges': [
-                {
-                    'cursor': 'Mg==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.1'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjE=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 1
-                        }
-                    }
-                }
-            ],
-            'pageInfo': {
-                'hasNextPage': False,
-                'hasPreviousPage': False
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps_versions_pagination_reverse 1'] = {
-    'data': {
-        'availableCustomDependenciesVersions': {
-            'edges': [
-                {
-                    'cursor': 'MQ==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.2'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjI=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 2
-                        }
-                    }
-                },
-                {
-                    'cursor': 'Mg==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.1'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjE=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 1
-                        }
-                    }
-                }
-            ],
-            'pageInfo': {
-                'hasNextPage': False,
-                'hasPreviousPage': True
-            }
-        }
-    }
-}
-
-snapshots['TestEnvironmentCustomDependencyQueries.test_get_available_custom_deps_versions_pagination_reverse 2'] = {
-    'data': {
-        'availableCustomDependenciesVersions': {
-            'edges': [
-                {
-                    'cursor': 'MA==',
-                    'node': {
-                        'component': {
-                            'componentClass': 'custom',
-                            'name': 'ubuntu-python3-pillow',
-                            'namespace': 'gigantum',
-                            'repository': 'gig-dev_environment-components',
-                            'version': '0.3'
-                        },
-                        'id': 'Q3VzdG9tRGVwZW5kZW5jeTpjdXN0b20mZ2lnLWRldl9lbnZpcm9ubWVudC1jb21wb25lbnRzJmdpZ2FudHVtJnVidW50dS1weXRob24zLXBpbGxvdyYwLjM=',
-                        'info': {
-                            'humanName': 'Pillow',
-                            'name': 'ubuntu-python3-pillow',
-                            'versionMajor': 0,
-                            'versionMinor': 3
-                        }
-                    }
-                }
-            ],
-            'pageInfo': {
-                'hasNextPage': False,
-                'hasPreviousPage': False
-            }
+            'url': 'http://pillow.readthedocs.io/en/4.2.1/'
         }
     }
 }

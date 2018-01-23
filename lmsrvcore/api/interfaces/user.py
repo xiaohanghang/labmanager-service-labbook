@@ -22,8 +22,14 @@ import graphene
 
 class User(graphene.Interface):
     """Interface representing a user in the system"""
+    # Gigantum username
     username = graphene.String()
+
     email = graphene.String()
+
+    # First name
     given_name = graphene.String()
+
+    # Last Name
     family_name = graphene.String()
 

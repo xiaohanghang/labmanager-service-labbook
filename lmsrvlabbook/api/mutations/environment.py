@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@ from lmcommon.logging import LMLogger
 from lmcommon.activity.services import stop_labbook_monitor, start_labbook_monitor
 
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import logged_mutation
 from lmsrvlabbook.api.objects.environment import Environment
 
 
@@ -42,7 +41,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
     """Mutator to build a LabBook's Docker Image"""
 
     class Input:
-        owner = graphene.String()
+        owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
 
     # Return the Environment instance
@@ -52,15 +51,8 @@ class BuildImage(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
-    @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
-        # TODO: Lookup name based on logged in user when available
+    def mutate_and_get_payload(cls, info, owner, labbook_name):
         username = get_logged_in_username()
-
-        if "owner" not in input:
-            owner = username
-        else:
-            owner = input["owner"]
 
         client = get_docker_client()
 
@@ -68,9 +60,9 @@ class BuildImage(graphene.relay.ClientIDMutation):
                                    username,
                                    owner,
                                    'labbooks',
-                                   input.get('labbook_name'))
+                                   labbook_name)
         labbook_dir = os.path.expanduser(labbook_dir)
-        tag = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+        tag = '{}-{}-{}'.format(username, owner, labbook_name)
 
         logger.info("BuildImage starting for labbook directory={}, tag={}".format(labbook_dir, tag))
 
@@ -84,12 +76,8 @@ class BuildImage(graphene.relay.ClientIDMutation):
         logger.info("Dispatched docker build for labbook directory={}, tag={}, job_key={}"
                     .format(labbook_dir, tag, img.get('background_job_key')))
 
-        id_data = {"username": username,
-                   "owner": owner,
-                   "name": input.get("labbook_name")}
-
-        env = Environment.create(id_data)
-        return BuildImage(environment=env, background_job_key=img['background_job_key'])
+        return BuildImage(environment=Environment(owner=owner, labbook_name=labbook_name),
+                          background_job_key=img['background_job_key'])
 
 
 class StartContainer(graphene.relay.ClientIDMutation):
@@ -106,24 +94,18 @@ class StartContainer(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
-    @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, info, owner, labbook_name):
         username = get_logged_in_username()
-
-        if "owner" not in input:
-            owner = username
-        else:
-            owner = input["owner"]
 
         # TODO: Move environment code into a library
         client = get_docker_client()
 
         # Load the labbook to retrieve root directory.
         lb = LabBook()
-        lb.from_name(username, owner, input.get('labbook_name'))
+        lb.from_name(username, owner, labbook_name)
         labbook_dir = lb.root_dir
 
-        container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+        container_name = '{}-{}-{}'.format(username, owner, labbook_name)
         image_builder = ImageBuilder(labbook_dir)
 
         try:
@@ -132,24 +114,21 @@ class StartContainer(graphene.relay.ClientIDMutation):
             logger.exception("Cannot run container, got {} exception: {}".format(type(e), e), exc_info=True)
             raise
 
-        id_data = {"username": username,
-                   "owner": owner,
-                   "name": input.get("labbook_name")}
-
         logger.info("Dispatched StartContainer to background, labbook_dir={}, job_key={}".format(
             labbook_dir, cnt.get('background_job_key')))
 
         # Start monitoring lab book environment for activity
         start_labbook_monitor(lb, username)
 
-        return StartContainer(environment=Environment.create(id_data), background_job_key=cnt.get('background_job_key'))
+        return StartContainer(environment=Environment(owner=owner, labbook_name=labbook_name),
+                              background_job_key=cnt.get('background_job_key'))
 
 
 class StopContainer(graphene.relay.ClientIDMutation):
     """Mutation to stop a Docker container. """
 
     class Input:
-        owner = graphene.String()
+        owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
 
     # Return the Environment instance
@@ -159,8 +138,7 @@ class StopContainer(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
-    @logged_mutation
-    def mutate_and_get_payload(cls, input, context, info):
+    def mutate_and_get_payload(cls, info, owner, labbook_name):
         username = get_logged_in_username()
 
         if "owner" not in input:
@@ -168,7 +146,7 @@ class StopContainer(graphene.relay.ClientIDMutation):
         else:
             owner = input["owner"]
 
-        container_name = '{}-{}-{}'.format(username, owner, input.get('labbook_name'))
+        container_name = '{}-{}-{}'.format(username, owner, labbook_name)
         logger.info("Preparing to stop container by name `{}`".format(container_name))
 
         d = Dispatcher()
@@ -180,7 +158,8 @@ class StopContainer(graphene.relay.ClientIDMutation):
 
         # Stop monitoring lab book environment for activity
         lb = LabBook()
-        lb.from_name(username, owner, input.get('labbook_name'))
+        lb.from_name(username, owner, labbook_name)
         stop_labbook_monitor(lb, username)
 
-        return StopContainer(environment=Environment.create(id_data), background_job_key=job_ref)
+        return StopContainer(environment=Environment(owner=owner, labbook_name=labbook_name),
+                             background_job_key=job_ref)
