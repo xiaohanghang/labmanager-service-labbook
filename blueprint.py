@@ -33,15 +33,6 @@ from lmsrvlabbook.api import LabbookQuery, LabbookMutations
 # ** This blueprint is the combined full LabBook service with all components served together from a single schema ** #
 
 
-# Create Classes to combine all sub-service components (to support breaking apart if desired)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
-
 # Load config data for the LabManager instance
 config = Configuration()
 
@@ -49,11 +40,11 @@ config = Configuration()
 complete_labbook_service = Blueprint('complete_labbook_service', __name__)
 
 # Create Schema
-schema = graphene.Schema(query=Query, mutation=Mutation)
+full_schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
 
 # Add route and require authentication
 complete_labbook_service.add_url_rule('/labbook/',
-                                      view_func=GraphQLView.as_view('graphql', schema=schema,
+                                      view_func=GraphQLView.as_view('graphql', schema=full_schema,
                                                                     graphiql=config.config["flask"]["DEBUG"],
                                                                     middleware=[error_middleware,
                                                                                 time_all_resolvers_middleware,
@@ -64,7 +55,7 @@ complete_labbook_service.add_url_rule('/labbook/',
 
 if __name__ == '__main__':
     # If the blueprint file is executed directly, generate a schema file
-    introspection_dict = schema.introspect()
+    introspection_dict = full_schema.introspect()
 
     # Save the schema
     with open('full_schema.json', 'wt') as fp:

@@ -27,15 +27,6 @@ from lmsrvlabbook.api import LabbookQuery, LabbookMutations
 from lmcommon.configuration import Configuration
 
 
-# Create ObjectType clases, since the LabbookQueries and LabbookMutations are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
-
 # Load config data for the LabManager instance
 config = Configuration()
 
@@ -45,8 +36,8 @@ labbook_service = Blueprint('labbook_service', __name__)
 # Add route
 labbook_service.add_url_rule('/labbook/',
                              view_func=GraphQLView.as_view('graphql',
-                                                           schema=graphene.Schema(query=Query,
-                                                                                  mutation=Mutation),
+                                                           schema=graphene.Schema(query=LabbookQuery,
+                                                                                  mutation=LabbookMutations),
                                                            graphiql=config.config["flask"]["DEBUG"]))
 
 # If running blueprint script directly, spin a dev server

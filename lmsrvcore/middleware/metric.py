@@ -31,7 +31,7 @@ def time_all_resolvers_middleware(next, root, info, **args):
     duration = timer() - start
 
     data = {"metric_type": "field_resolver_duration",
-            "parent_type": root._meta.name if root else '',
+            "parent_type": root._meta.name if root and hasattr(root, '_meta') else '',
             "field_name": info.field_name,
             "duration_ms": round(duration * 1000, 2)}
 
