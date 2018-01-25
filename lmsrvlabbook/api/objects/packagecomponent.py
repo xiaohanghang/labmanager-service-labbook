@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
+from lmcommon.environment import get_package_manager
 
 
 class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
@@ -36,8 +37,7 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     package = graphene.String(required=True)
 
     # The current version of the package
-    # TODO: Temporarily allow version to be false until versions are automatically pinned.
-    version = graphene.String(required=False)
+    version = graphene.String(required=True)
 
     # The latest available version of the package
     latest_version = graphene.String()
@@ -56,15 +56,18 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
-        # TODO: Add check back in once package mutation automatically adds the version
-        #if not self.manager or not self.package or self.version is None:
-        #    raise ValueError("Resolving a PackageComponent ID requires manager, package and version to be set")
+        if not self.manager or not self.package or self.version is None:
+            raise ValueError("Resolving a PackageComponent ID requires manager, package and version to be set")
 
         return f"{self.manager}&{self.package}&{self.version}"
 
     def resolve_latest_version(self, info):
         """Resolve the latest_version field"""
-        raise NotImplemented
+        if self.latest_version is None:
+            # look up latest version
+            mgr = get_package_manager(self.manager)
+            self.latest_version = mgr.latest_version(self.package)
+        return self.latest_version
 
     def resolve_from_base(self, info):
         """Resolve the from_base field"""

@@ -7,24 +7,6 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['TestAddComponentMutations.test_add_package 1'] = {
-    'data': {
-        'addPackageComponent': {
-            'clientMutationId': None,
-            'newPackageComponentEdge': {
-                'node': {
-                    'fromBase': False,
-                    'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmZG9ja2VyJjEuMA==',
-                    'manager': 'apt',
-                    'package': 'docker',
-                    'schema': 1,
-                    'version': '1.0'
-                }
-            }
-        }
-    }
-}
-
 snapshots['TestAddComponentMutations.test_add_custom_dep 1'] = {
     'data': {
         'addCustomComponent': {
@@ -58,4 +40,74 @@ RUN pip3 install Pillow==4.2.1
             }
         }
     }
+}
+
+snapshots['TestAddComponentMutations.test_add_package 1'] = {
+    'data': {
+        'addPackageComponent': {
+            'clientMutationId': None,
+            'newPackageComponentEdge': {
+                'node': {
+                    'fromBase': False,
+                    'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
+                    'manager': 'pip',
+                    'package': 'requests',
+                    'schema': 1,
+                    'version': '2.18.4'
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestAddComponentMutations.test_add_package_no_version 1'] = {
+    'data': {
+        'addPackageComponent': {
+            'clientMutationId': None,
+            'newPackageComponentEdge': {
+                'node': {
+                    'fromBase': False,
+                    'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
+                    'manager': 'pip',
+                    'package': 'requests',
+                    'schema': 1,
+                    'version': '2.18.4'
+                }
+            }
+        }
+    }
+}
+
+snapshots['TestAddComponentMutations.test_add_package_bad_version 1'] = {
+    'data': {
+        'addPackageComponent': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 11,
+                    'line': 3
+                }
+            ],
+            'message': 'pip managed package name requests version 100.100.100 is invalid'
+        }
+    ]
+}
+
+snapshots['TestAddComponentMutations.test_add_bad_package 1'] = {
+    'data': {
+        'addPackageComponent': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 11,
+                    'line': 3
+                }
+            ],
+            'message': 'pip managed package name asdfdfghghjfgsdasrftghrty is invalid'
+        }
+    ]
 }

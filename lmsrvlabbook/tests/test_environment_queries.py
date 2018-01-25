@@ -186,15 +186,15 @@ class TestEnvironmentServiceQueries(object):
 
         # Add a base image
         cm = ComponentManager(lb)
+        # Add one package without a version, which should cause an error in the API since version is required
         cm.add_package("apt", "docker")
-        cm.add_package("apt", "lxml")
-        cm.add_package("pip", "requests")
+        # Add 3 packages
+        cm.add_package("pip", "requests", "1.3")
         cm.add_package("pip", "numpy", "1.12")
+        cm.add_package("apt", "lxml", "3.4")
 
         # Test again
-        r1 = fixture_working_dir_env_repo_scoped[2].execute(query)
-        assert 'errors' not in r1
-        snapshot.assert_match(r1)
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
         query = """
                    {
@@ -219,5 +219,74 @@ class TestEnvironmentServiceQueries(object):
                      }
                    }
                    """
-        # should be null
+        r1 = fixture_working_dir_env_repo_scoped[2].execute(query)
+        assert 'errors' not in r1
+        snapshot.assert_match(r1)
+
+    def test_package_query(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test querying for package info"""
+        query = """
+                {
+                  package(manager: "pip", package: "requests", version: "2.18.0") {
+                    id
+                    schema
+                    manager
+                    package
+                    version
+                    latestVersion
+                    fromBase
+                  }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+    def test_package_query_no_version(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test querying for package info"""
+        query = """
+                {
+                  package(manager: "pip", package: "requests") {
+                    id
+                    schema
+                    manager
+                    package
+                    version
+                    latestVersion
+                    fromBase
+                  }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+    def test_package_query_bad_version(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test querying for package info"""
+        query = """
+                {
+                  package(manager: "pip", package: "requests", version: "100.100") {
+                    id
+                    schema
+                    manager
+                    package
+                    version
+                    latestVersion
+                    fromBase
+                  }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+    def test_package_query_bad_package(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test querying for package info"""
+        query = """
+                {
+                  package(manager: "pip", package: "asdfasdfasdf") {
+                    id
+                    schema
+                    manager
+                    package
+                    version
+                    latestVersion
+                    fromBase
+                  }
+                }
+                """
         snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))

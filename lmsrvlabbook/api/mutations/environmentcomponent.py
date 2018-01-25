@@ -18,11 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
+import glob
+import os
 
 from lmcommon.logging import LMLogger
 from lmcommon.labbook import LabBook
-from lmcommon.environment import ComponentManager
+from lmcommon.environment import ComponentManager, get_package_manager
+
 from lmcommon.labbook.schemas import CURRENT_SCHEMA
+
 
 from lmsrvcore.auth.user import get_logged_in_username
 
@@ -54,9 +58,22 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
         lb = LabBook()
         lb.from_name(username, owner, labbook_name)
 
+        # Get a package manager instance and check if package is valid
+        mgr = get_package_manager(manager)
+        result = mgr.is_valid(package, version)
+
+        if result.package is False:
+            raise ValueError(f"{manager} managed package name {package} is invalid")
+
+        latest_version = None
         if version is None:
-            # TODO: Use package manager instance to get the latest version if not specified
-            version = "1.0"
+            # look up latest version
+            version = mgr.latest_version(package)
+            # Since you already spent the time to look up the latest version, set it in case the field is queried
+            latest_version = version
+        else:
+            if result.version is False:
+                raise ValueError(f"{manager} managed package name {package} version {version} is invalid")
 
         # Create Component Manager
         cm = ComponentManager(lb)
@@ -65,12 +82,14 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
                        package_version=version,
                        from_base=False)
 
-        # TODO: get cursor by checking how many packages are already installed
+        # Set the cursor to the end of the collection of packages
+        glob_path = os.path.join(lb.root_dir, '.gigantum', 'env', 'package_manager', f"{manager}*")
+        cursor = len(glob.glob(glob_path))
 
         new_edge = PackageComponentConnection.Edge(node=PackageComponent(manager=manager, package=package,
-                                                                         version=version,
+                                                                         version=version, latest_version=latest_version,
                                                                          schema=CURRENT_SCHEMA),
-                                                   cursor=0)
+                                                   cursor=cursor)
 
         return AddPackageComponent(new_package_component_edge=new_edge)
 

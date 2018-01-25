@@ -89,22 +89,6 @@ snapshots['TestEnvironmentServiceQueries.test_get_custom 1'] = {
     }
 }
 
-snapshots['TestEnvironmentServiceQueries.test_get_package_manager 1'] = {
-    'data': {
-        'labbook': {
-            'environment': {
-                'packageDependencies': {
-                    'edges': [
-                    ],
-                    'pageInfo': {
-                        'hasNextPage': False
-                    }
-                }
-            }
-        }
-    }
-}
-
 snapshots['TestEnvironmentServiceQueries.test_get_custom 2'] = {
     'data': {
         'labbook': {
@@ -151,6 +135,81 @@ RUN pip3 install Pillow==4.2.1
     }
 }
 
+snapshots['TestEnvironmentServiceQueries.test_package_query 1'] = {
+    'data': {
+        'package': {
+            'fromBase': False,
+            'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC4w',
+            'latestVersion': '2.18.4',
+            'manager': 'pip',
+            'package': 'requests',
+            'schema': None,
+            'version': '2.18.0'
+        }
+    }
+}
+
+snapshots['TestEnvironmentServiceQueries.test_package_query_no_version 1'] = {
+    'data': {
+        'package': {
+            'fromBase': False,
+            'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
+            'latestVersion': '2.18.4',
+            'manager': 'pip',
+            'package': 'requests',
+            'schema': None,
+            'version': '2.18.4'
+        }
+    }
+}
+
+snapshots['TestEnvironmentServiceQueries.test_package_query_bad_version 1'] = {
+    'data': {
+        'package': {
+            'fromBase': False,
+            'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
+            'latestVersion': '2.18.4',
+            'manager': 'pip',
+            'package': 'requests',
+            'schema': None,
+            'version': '2.18.4'
+        }
+    }
+}
+
+snapshots['TestEnvironmentServiceQueries.test_package_query_bad_package 1'] = {
+    'data': {
+        'package': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 19,
+                    'line': 3
+                }
+            ],
+            'message': 'Package name asdfasdfasdf is invalid'
+        }
+    ]
+}
+
+snapshots['TestEnvironmentServiceQueries.test_get_package_manager 1'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'packageDependencies': {
+                    'edges': [
+                    ],
+                    'pageInfo': {
+                        'hasNextPage': False
+                    }
+                }
+            }
+        }
+    }
+}
+
 snapshots['TestEnvironmentServiceQueries.test_get_package_manager 2'] = {
     'data': {
         'labbook': {
@@ -159,24 +218,17 @@ snapshots['TestEnvironmentServiceQueries.test_get_package_manager 2'] = {
                     'edges': [
                         {
                             'cursor': 'MA==',
-                            'node': {
-                                'fromBase': False,
-                                'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmZG9ja2VyJk5vbmU=',
-                                'manager': 'apt',
-                                'package': 'docker',
-                                'schema': 1,
-                                'version': None
-                            }
+                            'node': None
                         },
                         {
                             'cursor': 'MQ==',
                             'node': {
                                 'fromBase': False,
-                                'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmbHhtbCZOb25l',
+                                'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmbHhtbCYzLjQ=',
                                 'manager': 'apt',
                                 'package': 'lxml',
                                 'schema': 1,
-                                'version': None
+                                'version': '3.4'
                             }
                         },
                         {
@@ -194,11 +246,11 @@ snapshots['TestEnvironmentServiceQueries.test_get_package_manager 2'] = {
                             'cursor': 'Mw==',
                             'node': {
                                 'fromBase': False,
-                                'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmTm9uZQ==',
+                                'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMS4z',
                                 'manager': 'pip',
                                 'package': 'requests',
                                 'schema': 1,
-                                'version': None
+                                'version': '1.3'
                             }
                         }
                     ],
@@ -208,7 +260,18 @@ snapshots['TestEnvironmentServiceQueries.test_get_package_manager 2'] = {
                 }
             }
         }
-    }
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 8
+                }
+            ],
+            'message': 'Resolving a PackageComponent ID requires manager, package and version to be set'
+        }
+    ]
 }
 
 snapshots['TestEnvironmentServiceQueries.test_get_package_manager 3'] = {
@@ -221,10 +284,10 @@ snapshots['TestEnvironmentServiceQueries.test_get_package_manager 3'] = {
                             'cursor': 'MQ==',
                             'node': {
                                 'fromBase': False,
-                                'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmbHhtbCZOb25l',
+                                'id': 'UGFja2FnZUNvbXBvbmVudDphcHQmbHhtbCYzLjQ=',
                                 'manager': 'apt',
                                 'package': 'lxml',
-                                'version': None
+                                'version': '3.4'
                             }
                         },
                         {
