@@ -666,14 +666,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Add base environment component: quickstart-jupyterlab r1',
+                            'message': 'Add base environment component: quickstart-jupyterlab',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -693,14 +693,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add pip3 managed package: pandas v0.22.0',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -721,14 +721,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add pip3 managed package: ipywidgets v7.1.0',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -749,14 +749,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add pip3 managed package: jupyterlab v0.31.1',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -777,14 +777,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add pip3 managed package: jupyter v1.0.0',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -805,14 +805,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add pip3 managed package: matplotlib v2.1.1',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -833,14 +833,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add pip3 managed package: numpy v1.14.0',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -861,14 +861,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add apt managed package: vim vNone',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -885,18 +885,18 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Add apt managed package: curl vNone'
+                                            'Update apt managed package: curl vNone'
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Update apt managed package: curl vNone',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -917,14 +917,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add apt managed package: git vNone',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -945,14 +945,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add apt managed package: python3-pip vNone',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -973,14 +973,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add apt managed package: python3-dev vNone',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -1001,14 +1001,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add apt managed package: build-essential vNone',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -1029,14 +1029,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add apt managed package: gosu vNone',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -1057,14 +1057,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add apt managed package: curl vNone',
                             'show': True,
                             'tags': [
                                 'environment',
@@ -1085,14 +1085,14 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                         ]
                                     ],
                                     'importance': 0,
-                                    'show': True,
+                                    'show': False,
                                     'tags': [
                                     ],
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
                             'importance': 0,
-                            'message': 'Added new software package',
+                            'message': 'Add apt managed package: supervisor vNone',
                             'show': True,
                             'tags': [
                                 'environment',

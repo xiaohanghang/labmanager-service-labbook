@@ -80,7 +80,8 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
         cm.add_package(package_manager=manager,
                        package_name=package,
                        package_version=version,
-                       from_base=False)
+                       from_base=False,
+                       force=True)
 
         # Set the cursor to the end of the collection of packages
         glob_path = os.path.join(lb.root_dir, '.gigantum', 'env', 'package_manager', f"{manager}*")
@@ -92,6 +93,33 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
                                                    cursor=cursor)
 
         return AddPackageComponent(new_package_component_edge=new_edge)
+
+
+class RemovePackageComponent(graphene.relay.ClientIDMutation):
+    """Mutation to remove a package from labbook"""
+
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        manager = graphene.String(required=True)
+        package = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, manager, package,
+                               client_mutation_id=None):
+        username = get_logged_in_username()
+
+        # Load LabBook instance
+        lb = LabBook()
+        lb.from_name(username, owner, labbook_name)
+
+        # Create Component Manager
+        cm = ComponentManager(lb)
+        cm.remove_package(package_manager=manager, package_name=package)
+
+        return RemovePackageComponent(success=True)
 
 
 class AddCustomComponent(graphene.relay.ClientIDMutation):
@@ -117,7 +145,7 @@ class AddCustomComponent(graphene.relay.ClientIDMutation):
 
         # Create Component Manager
         cm = ComponentManager(lb)
-        cm.add_component("custom", repository, component_id, revision)
+        cm.add_component("custom", repository, component_id, revision, force=True)
 
         # TODO: get cursor by checking how many packages are already installed
 
@@ -126,3 +154,29 @@ class AddCustomComponent(graphene.relay.ClientIDMutation):
                                                   cursor=0)
 
         return AddCustomComponent(new_custom_component_edge=new_edge)
+
+
+class RemoveCustomComponent(graphene.relay.ClientIDMutation):
+    """Mutation to remove an environment component to a LabBook"""
+
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        repository = graphene.String(required=True)
+        component_id = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, repository, component_id, client_mutation_id=None):
+        username = get_logged_in_username()
+
+        # Load LabBook instance
+        lb = LabBook()
+        lb.from_name(username, owner, labbook_name)
+
+        # Create Component Manager
+        cm = ComponentManager(lb)
+        cm.remove_component("custom", repository, component_id)
+
+        return RemoveCustomComponent(success=True)

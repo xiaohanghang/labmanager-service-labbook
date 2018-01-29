@@ -23,7 +23,7 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
-    DeleteLabbookCollaborator, SyncLabbook, PublishLabbook
+    DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent
 
 
 class LabbookMutations(graphene.ObjectType):
@@ -80,8 +80,14 @@ class LabbookMutations(graphene.ObjectType):
     # Add a custom dependency to Labbook environment.
     add_custom_component = AddCustomComponent.Field()
 
+    # Remove a custom dependency to Labbook environment.
+    remove_custom_component = RemoveCustomComponent.Field()
+
     # Add a package to a Labbook environment (e.g., pip package, apt)
     add_package_component = AddPackageComponent.Field()
+
+    # Remove a package from a Labbook environment (e.g., pip package, apt)
+    remove_package_component = RemovePackageComponent.Field()
 
     # Add a file to a labbook
     add_labbook_file = AddLabbookFile.Field()
