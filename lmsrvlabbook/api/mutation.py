@@ -23,7 +23,7 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
-    DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent
+    DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent, StartDevTool
 
 
 class LabbookMutations(graphene.ObjectType):
@@ -73,6 +73,9 @@ class LabbookMutations(graphene.ObjectType):
 
     # Start a labbook's Docker container.
     stop_container = StopContainer.Field()
+
+    # Start a tool such as Jupyer Lab
+    start_dev_tool = StartDevTool.Field()
 
     # Create a user note in the labbook's current working branch
     create_user_note = CreateUserNote.Field()
