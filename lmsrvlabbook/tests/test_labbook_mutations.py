@@ -98,6 +98,8 @@ class TestLabBookServiceMutations(object):
                         show
                         importance
                         tags
+                        username
+                        email
                         detailObjects{
                             type
                             data

@@ -30,7 +30,7 @@ from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.activity.services import stop_labbook_monitor, start_labbook_monitor
 
-from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 from lmsrvlabbook.api.objects.environment import Environment
 
 
@@ -101,7 +101,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
         client = get_docker_client()
 
         # Load the labbook to retrieve root directory.
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         labbook_dir = lb.root_dir
 
@@ -157,7 +157,7 @@ class StopContainer(graphene.relay.ClientIDMutation):
                    "name": input.get("labbook_name")}
 
         # Stop monitoring lab book environment for activity
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         stop_labbook_monitor(lb, username)
 

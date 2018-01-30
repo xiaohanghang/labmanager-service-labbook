@@ -29,6 +29,7 @@ import graphene
 
 from lmcommon.labbook import LabBook
 from lmcommon.fixtures import remote_labbook_repo
+from lmcommon.gitlib.git import GitAuthor
 
 
 class TestLabBookServiceQueries(object):
@@ -882,7 +883,7 @@ class TestLabBookServiceQueries(object):
 
     def test_get_activity_records(self, fixture_working_dir, snapshot, fixture_test_file):
         """Test paging through activity records"""
-        lb = LabBook(fixture_working_dir[0])
+        lb = LabBook(fixture_working_dir[0], author=GitAuthor(name="tester", email="tester@test.com"))
         lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
         lb.insert_file("code", fixture_test_file, "")
         lb.insert_file("input", fixture_test_file, "")
@@ -978,6 +979,8 @@ class TestLabBookServiceQueries(object):
                         show
                         importance
                         tags
+                        username
+                        email
                         }}                        
                     }}                    
                 pageInfo{{

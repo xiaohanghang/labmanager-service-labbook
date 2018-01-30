@@ -27,7 +27,7 @@ from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 
 from lmsrvcore.api import logged_mutation
-from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 
 from lmsrvlabbook.api.objects.ref import LabbookRef
 from lmsrvlabbook.api.objects.labbook import Labbook
@@ -58,7 +58,7 @@ class CreateBranch(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
 
         # Load an existing LabBook
-        labbook_obj = LabBook()
+        labbook_obj = LabBook(author=get_logged_in_author())
         labbook_obj.from_name(username, owner, labbook_name)
 
         # Create Branch
@@ -99,7 +99,7 @@ class CheckoutBranch(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
 
         # Load an existing LabBook
-        labbook_obj = LabBook()
+        labbook_obj = LabBook(author=get_logged_in_author())
         labbook_obj.from_name(username, owner, labbook_name)
 
         # Checkout

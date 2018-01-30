@@ -672,6 +672,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add base environment component: quickstart-jupyterlab',
                             'show': True,
@@ -679,7 +680,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'environment',
                                 'base'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -699,6 +701,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add pip3 managed package: pandas v0.22.0',
                             'show': True,
@@ -707,7 +710,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'pip3'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -727,6 +731,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add pip3 managed package: ipywidgets v7.1.0',
                             'show': True,
@@ -735,7 +740,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'pip3'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -755,6 +761,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add pip3 managed package: jupyterlab v0.31.1',
                             'show': True,
@@ -763,7 +770,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'pip3'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -783,6 +791,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add pip3 managed package: jupyter v1.0.0',
                             'show': True,
@@ -791,7 +800,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'pip3'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -811,6 +821,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add pip3 managed package: matplotlib v2.1.1',
                             'show': True,
@@ -819,7 +830,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'pip3'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -839,6 +851,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add pip3 managed package: numpy v1.14.0',
                             'show': True,
@@ -847,7 +860,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'pip3'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -867,6 +881,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add apt managed package: vim vNone',
                             'show': True,
@@ -875,7 +890,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -895,6 +911,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Update apt managed package: curl vNone',
                             'show': True,
@@ -903,7 +920,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -923,6 +941,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add apt managed package: git vNone',
                             'show': True,
@@ -931,7 +950,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -951,6 +971,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add apt managed package: python3-pip vNone',
                             'show': True,
@@ -959,7 +980,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -979,6 +1001,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add apt managed package: python3-dev vNone',
                             'show': True,
@@ -987,7 +1010,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -1007,6 +1031,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add apt managed package: build-essential vNone',
                             'show': True,
@@ -1015,7 +1040,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -1035,6 +1061,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add apt managed package: gosu vNone',
                             'show': True,
@@ -1043,7 +1070,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -1063,6 +1091,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add apt managed package: curl vNone',
                             'show': True,
@@ -1071,7 +1100,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -1091,6 +1121,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'ENVIRONMENT'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 0,
                             'message': 'Add apt managed package: supervisor vNone',
                             'show': True,
@@ -1099,7 +1130,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                 'package_manager',
                                 'apt'
                             ],
-                            'type': 'ENVIRONMENT'
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
                         }
                     },
                     {
@@ -1119,11 +1151,13 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                                     'type': 'LABBOOK'
                                 }
                             ],
+                            'email': 'jane@doe.com',
                             'importance': 255,
                             'message': 'Created new LabBook: default/test-lab-book1',
                             'show': True,
                             'tags': None,
-                            'type': 'LABBOOK'
+                            'type': 'LABBOOK',
+                            'username': 'default'
                         }
                     }
                 ]

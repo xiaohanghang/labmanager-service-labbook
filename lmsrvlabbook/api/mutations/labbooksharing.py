@@ -30,7 +30,7 @@ from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 
 from lmsrvcore.api import logged_mutation
 from lmsrvcore.auth.identity import parse_token
-from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 
 logger = LMLogger.get_logger()
 
@@ -50,7 +50,7 @@ class PublishLabbook(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks', labbook_name)
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
 
         # Extract valid Bearer token
@@ -83,7 +83,7 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
                                              labbook_name)
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
 
         # Extract valid Bearer token
