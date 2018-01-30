@@ -43,6 +43,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
+        no_cache = graphene.Boolean(required=False)
 
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
@@ -51,7 +52,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
-    def mutate_and_get_payload(cls, info, owner, labbook_name):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, no_cache=False, client_mutation_id=None):
         username = get_logged_in_username()
 
         client = get_docker_client()
@@ -68,7 +69,8 @@ class BuildImage(graphene.relay.ClientIDMutation):
 
         try:
             image_builder = ImageBuilder(labbook_dir)
-            img = image_builder.build_image(docker_client=client, image_tag=tag, username=username, background=True)
+            img = image_builder.build_image(docker_client=client, image_tag=tag, username=username, background=True,
+                                            nocache=no_cache)
         except Exception as e:
             logger.exception(e)
             raise
@@ -76,7 +78,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
         logger.info("Dispatched docker build for labbook directory={}, tag={}, job_key={}"
                     .format(labbook_dir, tag, img.get('background_job_key')))
 
-        return BuildImage(environment=Environment(owner=owner, labbook_name=labbook_name),
+        return BuildImage(environment=Environment(owner=owner, name=labbook_name),
                           background_job_key=img['background_job_key'])
 
 
@@ -94,10 +96,9 @@ class StartContainer(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
-    def mutate_and_get_payload(cls, info, owner, labbook_name):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
         username = get_logged_in_username()
 
-        # TODO: Move environment code into a library
         client = get_docker_client()
 
         # Load the labbook to retrieve root directory.
@@ -120,7 +121,7 @@ class StartContainer(graphene.relay.ClientIDMutation):
         # Start monitoring lab book environment for activity
         start_labbook_monitor(lb, username)
 
-        return StartContainer(environment=Environment(owner=owner, labbook_name=labbook_name),
+        return StartContainer(environment=Environment(owner=owner, name=labbook_name),
                               background_job_key=cnt.get('background_job_key'))
 
 
@@ -138,13 +139,8 @@ class StopContainer(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
-    def mutate_and_get_payload(cls, info, owner, labbook_name):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
         username = get_logged_in_username()
-
-        if "owner" not in input:
-            owner = username
-        else:
-            owner = input["owner"]
 
         container_name = '{}-{}-{}'.format(username, owner, labbook_name)
         logger.info("Preparing to stop container by name `{}`".format(container_name))
@@ -154,12 +150,12 @@ class StopContainer(graphene.relay.ClientIDMutation):
         logger.info("Dispatched StopContainer to background, container = `{}`".format(container_name))
         id_data = {"username": username,
                    "owner": owner,
-                   "name": input.get("labbook_name")}
+                   "name": labbook_name}
 
         # Stop monitoring lab book environment for activity
         lb = LabBook()
         lb.from_name(username, owner, labbook_name)
         stop_labbook_monitor(lb, username)
 
-        return StopContainer(environment=Environment(owner=owner, labbook_name=labbook_name),
+        return StopContainer(environment=Environment(owner=owner, name=labbook_name),
                              background_job_key=job_ref)
