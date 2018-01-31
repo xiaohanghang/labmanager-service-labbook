@@ -55,4 +55,8 @@ class StartDevTool(graphene.relay.ClientIDMutation):
         lb.from_name(username, owner, labbook_name)
         lb, tool_url = ContainerOps.start_dev_tool(lb, dev_tool_name=dev_tool, username=username,
                                                    tag=container_override_id)
+
+        # Start monitoring lab book environment for activity
+        start_labbook_monitor(lb, username, dev_tool)
+
         return StartDevTool(path=tool_url)

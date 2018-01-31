@@ -19,31 +19,28 @@
 # SOFTWARE.
 import pytest
 import getpass
-import yaml
 import os
-import pprint
+import time
 import shutil
 
 from snapshottest import snapshot
 
-from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_env_repo_scoped
 
 from lmcommon.configuration import get_docker_client
-from lmcommon.fixtures import (mock_config_with_repo, ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_REV, ENV_UNIT_TEST_BASE,
-                                build_lb_image_for_jupyterlab)
+from lmcommon.fixtures import (ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_REV, ENV_UNIT_TEST_BASE)
 from lmcommon.labbook import LabBook
 from lmcommon.labbook.operations import ContainerOps
 from lmcommon.environment import ComponentManager
 from lmcommon.imagebuilder import ImageBuilder
 
 
-@pytest.fixture()
-def my_build_lb_image_for_jupyterlab(mock_config_with_repo, fixture_working_dir_env_repo_scoped):
+@pytest.fixture(scope='class')
+def build_lb_image_for_jupyterlab(fixture_working_dir_env_repo_scoped):
     # Create a labook
-    lb = LabBook(fixture_working_dir_env_repo_scoped[0])#mock_config_with_repo[0])
-    labbook_dir = lb.new(name="jup-container-testlb", description="Testing docker building.",
-                         owner={"username": "default"})
+    lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+    lb.new(name="jup-container-testlb", description="Testing docker building.", owner={"username": "default"})
+
     # Create Component Manager
     cm = ComponentManager(lb)
     # Add a component
@@ -54,56 +51,127 @@ def my_build_lb_image_for_jupyterlab(mock_config_with_repo, fixture_working_dir_
     docker_lines = ib.assemble_dockerfile(write=True)
     assert 'RUN pip3 install requests==2.18.4' in docker_lines
     assert all(['==None' not in l for l in docker_lines.split()])
-    unit_test_tag = "unit-test-please-delete"
+    unit_test_tag = "default-default-jup-container-testlb"
     docker_client = get_docker_client()
-    docker_client.containers.prune()
 
     assert os.path.exists(os.path.join(lb.root_dir, '.gigantum', 'env', 'entrypoint.sh'))
 
     docker_image_id = ib.build_image(docker_client=docker_client, image_tag=unit_test_tag,
                                      nocache=False, username="default", assemble=False)['docker_image_id']
 
-    lb, keys, port_maps = ContainerOps.start_container(lb, override_docker_image=docker_image_id)
-    container_id = keys['docker_container_id']
+    yield lb, ib, docker_client, docker_image_id, fixture_working_dir_env_repo_scoped[2]
 
-    yield lb, ib, docker_client, docker_image_id, container_id, keys, port_maps, fixture_working_dir_env_repo_scoped[2]
-
+    # remove labbook
     shutil.rmtree(lb.root_dir)
-    docker_client.containers.get(container_id=container_id).stop(timeout=2)
-    docker_client.images.remove(docker_image_id, force=True, noprune=False)
 
 
 class TestContainerMutations(object):
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
-    def test_add_jupyterlab(self, my_build_lb_image_for_jupyterlab):
+    def test_start_stop_container(self, build_lb_image_for_jupyterlab, snapshot):
+        """Test start stop mutations"""
+        query = """
+           {
+               labbook(name: "jup-container-testlb", owner: "default") {
+                   environment {
+                       imageStatus
+                       containerStatus
+                   }
+               }
+           }
+           """
+        snapshot.assert_match(build_lb_image_for_jupyterlab[4].execute(query))
+
+        # Start the container
+        start_query = """
+           mutation myBuildImage {
+             startContainer(input: {labbookName: "jup-container-testlb", owner: "default"}) {
+               environment {
+                 imageStatus
+                 containerStatus
+               }
+             }
+           }
+           """
+        snapshot.assert_match(build_lb_image_for_jupyterlab[4].execute(start_query))
+
+        # Wait for start to succeed for up to 30 seconds
+        success = False
+        for _ in range(10):
+            result = build_lb_image_for_jupyterlab[4].execute(query)
+
+            if result['data']['labbook']['environment']['containerStatus'] == 'RUNNING':
+                success = True
+                break
+
+            time.sleep(1)
+
+        assert success is True, "Failed to start within 10 second timeout."
+        snapshot.assert_match(build_lb_image_for_jupyterlab[4].execute(query))
+
+        try:
+            # Stop the container
+            stop_query = """
+               mutation myBuildImage {
+                 stopContainer(input: {labbookName: "jup-container-testlb", owner: "default"}) {
+                   environment {
+                     imageStatus
+                     containerStatus
+                   }
+                 }
+               }
+               """
+            snapshot.assert_match(build_lb_image_for_jupyterlab[4].execute(stop_query))
+            assert 1==2
+            # Wait for start to succeed for up to 30 seconds
+            success = False
+            for _ in range(10):
+                result = build_lb_image_for_jupyterlab[4].execute(query)
+
+                if result['data']['labbook']['environment']['containerStatus'] == 'NOT_RUNNING':
+                    success = True
+                    break
+
+                time.sleep(1)
+
+            assert success is True, "Failed to start within 10 second timeout."
+            snapshot.assert_match(build_lb_image_for_jupyterlab[4].execute(query))
+
+        except:
+            build_lb_image_for_jupyterlab[2].containers.get(tag="").stop(timeout=4)
+
+    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
+    def test_start_jupyterlab(self, build_lb_image_for_jupyterlab):
         """Test listing labbooks"""
+        # Start the container
+        lb, keys, port_maps = ContainerOps.start_container(build_lb_image_for_jupyterlab[0],
+                                                           override_docker_image=build_lb_image_for_jupyterlab[3])
+        container_id = keys['docker_container_id']
 
-        lb = my_build_lb_image_for_jupyterlab[0]
-        docker_client = my_build_lb_image_for_jupyterlab[2]
-        client = my_build_lb_image_for_jupyterlab[7]
-        container_id = my_build_lb_image_for_jupyterlab[4]
+        try:
+            lb = build_lb_image_for_jupyterlab[0]
+            docker_client = build_lb_image_for_jupyterlab[2]
+            client = build_lb_image_for_jupyterlab[4]
 
-        q = f"""
-        mutation x {{
-            startDevTool(input: {{
-                owner: "{lb.owner['username']}",
-                labbookName: "{lb.name}",
-                devTool: "jupyterlab",
-                containerOverrideId: "{container_id}"
-            }}) {{
-                path
+            q = f"""
+            mutation x {{
+                startDevTool(input: {{
+                    owner: "{lb.owner['username']}",
+                    labbookName: "{lb.name}",
+                    devTool: "jupyterlab",
+                    containerOverrideId: "{container_id}"
+                }}) {{
+                    path
+                }}
             }}
-        }}
-        """
-        pprint.pprint(q)
-        r = client.execute(q)
-        pprint.pprint(r)
-        assert not 'errors' in r
+            """
+            r = client.execute(q)
+            assert 'errors' not in r
 
-        assert ':8888/lab' in r['data']['startDevTool']['path']
-        l = [a for a in docker_client.containers.get(container_id=container_id).exec_run(
-            'sh -c "ps aux | grep jupyter-lab | grep -v \' grep \'"', user='giguser').decode().split('\n') if a]
-        assert len(l) == 1
-
-    def test_fail_adding_jupyterlab(self):
-        pass
+            assert ':8888/lab' in r['data']['startDevTool']['path']
+            l = [a for a in docker_client.containers.get(container_id=container_id).exec_run(
+                'sh -c "ps aux | grep jupyter-lab | grep -v \' grep \'"', user='giguser').decode().split('\n') if a]
+            assert len(l) == 1
+        finally:
+            # Remove the container you fired up
+            build_lb_image_for_jupyterlab[2].containers.get(container_id=container_id).stop(timeout=4)
+            build_lb_image_for_jupyterlab[2].containers.get(container_id=container_id).remove()

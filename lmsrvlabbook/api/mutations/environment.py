@@ -111,9 +111,6 @@ class StartContainer(graphene.relay.ClientIDMutation):
         logger.info(f"Dispatched StartContainer to background"
                     f"labbook_dir={lb.key}, job_key={keys.get('background_job_key')}")
 
-        # Start monitoring lab book environment for activity
-        start_labbook_monitor(lb, username)
-
         return StartContainer(environment=Environment(owner=owner, name=labbook_name),
                               background_job_key=keys.get('background_job_key'))
 
@@ -141,9 +138,6 @@ class StopContainer(graphene.relay.ClientIDMutation):
         d = Dispatcher()
         job_ref = d.dispatch_task(jobs.stop_docker_container, args=(container_name,))
         logger.info("Dispatched StopContainer to background, container = `{}`".format(container_name))
-        id_data = {"username": username,
-                   "owner": owner,
-                   "name": labbook_name}
 
         # Stop monitoring lab book environment for activity
         lb = LabBook(author=get_logged_in_author())
