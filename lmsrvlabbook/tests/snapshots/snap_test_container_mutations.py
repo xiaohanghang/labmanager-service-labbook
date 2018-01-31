@@ -12,7 +12,7 @@ snapshots['TestContainerMutations.test_start_stop_container 1'] = {
         'labbook': {
             'environment': {
                 'containerStatus': 'NOT_RUNNING',
-                'imageStatus': 'DOES_NOT_EXIST'
+                'imageStatus': 'EXISTS'
             }
         }
     }
@@ -23,7 +23,40 @@ snapshots['TestContainerMutations.test_start_stop_container 2'] = {
         'startContainer': {
             'environment': {
                 'containerStatus': 'NOT_RUNNING',
-                'imageStatus': 'DOES_NOT_EXIST'
+                'imageStatus': 'EXISTS'
+            }
+        }
+    }
+}
+
+snapshots['TestContainerMutations.test_start_stop_container 3'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'containerStatus': 'RUNNING',
+                'imageStatus': 'EXISTS'
+            }
+        }
+    }
+}
+
+snapshots['TestContainerMutations.test_start_stop_container 4'] = {
+    'data': {
+        'stopContainer': {
+            'environment': {
+                'containerStatus': 'RUNNING',
+                'imageStatus': 'EXISTS'
+            }
+        }
+    }
+}
+
+snapshots['TestContainerMutations.test_start_stop_container 5'] = {
+    'data': {
+        'labbook': {
+            'environment': {
+                'containerStatus': 'NOT_RUNNING',
+                'imageStatus': 'EXISTS'
             }
         }
     }

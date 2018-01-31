@@ -121,7 +121,7 @@ class TestContainerMutations(object):
                }
                """
             snapshot.assert_match(build_lb_image_for_jupyterlab[4].execute(stop_query))
-            assert 1==2
+
             # Wait for start to succeed for up to 30 seconds
             success = False
             for _ in range(10):
@@ -137,7 +137,13 @@ class TestContainerMutations(object):
             snapshot.assert_match(build_lb_image_for_jupyterlab[4].execute(query))
 
         except:
-            build_lb_image_for_jupyterlab[2].containers.get(tag="").stop(timeout=4)
+            try:
+                # Mutation failed. Container *might* have stopped, but try to remove it just in case
+                build_lb_image_for_jupyterlab[2].containers.get('default-default-jup-container-testlb').stop(timeout=4)
+                build_lb_image_for_jupyterlab[2].containers.get('default-default-jup-container-testlb').remove()
+            except:
+                # Make a best effort to shutdown the container and remove it manually since the mutation failed
+                pass
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     def test_start_jupyterlab(self, build_lb_image_for_jupyterlab):
