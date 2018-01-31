@@ -29,6 +29,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
 from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 from lmcommon.labbook.lock import reset_all_locks
+from lmcommon.portmap.portmap import reset_all_ports
 
 
 logger = LMLogger.get_logger()
@@ -97,6 +98,9 @@ except Exception as e:
 if config.config["lock"]["reset_on_start"]:
     logger.info("Resetting ALL distributed locks")
     reset_all_locks(config.config['lock'])
+    # also reset portmap
+    logger.info("Resetting ALL assigned ports")
+    reset_all_ports(config)
 
 
 def main(debug=False) -> None:

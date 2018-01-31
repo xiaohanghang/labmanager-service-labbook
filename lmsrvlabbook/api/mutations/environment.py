@@ -29,6 +29,7 @@ from lmcommon.labbook import LabBook
 from lmcommon.labbook.operations import ContainerOps
 from lmcommon.logging import LMLogger
 from lmcommon.activity.services import stop_labbook_monitor, start_labbook_monitor
+from lmcommon.portmap import PortMap
 
 from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 from lmsrvlabbook.api.objects.environment import Environment
@@ -151,6 +152,9 @@ class StopContainer(graphene.relay.ClientIDMutation):
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         stop_labbook_monitor(lb, username)
+
+        pm = PortMap(lb.labmanager_config)
+        pm.release(lb.key)
 
         return StopContainer(environment=Environment(owner=owner, labbook_name=labbook_name),
                              background_job_key=job_ref)
