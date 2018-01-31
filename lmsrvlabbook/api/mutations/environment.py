@@ -21,16 +21,16 @@ import os
 import time
 
 import graphene
-import docker
 
 from lmcommon.configuration import (Configuration, get_docker_client)
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
+from lmcommon.labbook.operations import ContainerOps
 from lmcommon.logging import LMLogger
 from lmcommon.activity.services import stop_labbook_monitor, start_labbook_monitor
 
-from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 from lmsrvlabbook.api.objects.environment import Environment
 
 
@@ -99,30 +99,22 @@ class StartContainer(graphene.relay.ClientIDMutation):
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
         username = get_logged_in_username()
 
-        client = get_docker_client()
-
         # Load the labbook to retrieve root directory.
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
-        labbook_dir = lb.root_dir
 
         container_name = '{}-{}-{}'.format(username, owner, labbook_name)
-        image_builder = ImageBuilder(labbook_dir)
 
-        try:
-            cnt = image_builder.run_container(client, container_name, lb, background=True)
-        except Exception as e:
-            logger.exception("Cannot run container, got {} exception: {}".format(type(e), e), exc_info=True)
-            raise
+        lb, keys, ports = ContainerOps.start_container(lb, override_docker_image=container_name, background=True)
 
-        logger.info("Dispatched StartContainer to background, labbook_dir={}, job_key={}".format(
-            labbook_dir, cnt.get('background_job_key')))
+        logger.info(f"Dispatched StartContainer to background"
+                    f"labbook_dir={lb.key}, job_key={keys.get('background_job_key')}")
 
         # Start monitoring lab book environment for activity
         start_labbook_monitor(lb, username)
 
         return StartContainer(environment=Environment(owner=owner, name=labbook_name),
-                              background_job_key=cnt.get('background_job_key'))
+                              background_job_key=keys.get('background_job_key'))
 
 
 class StopContainer(graphene.relay.ClientIDMutation):
@@ -153,7 +145,7 @@ class StopContainer(graphene.relay.ClientIDMutation):
                    "name": labbook_name}
 
         # Stop monitoring lab book environment for activity
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         stop_labbook_monitor(lb, username)
 

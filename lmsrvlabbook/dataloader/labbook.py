@@ -23,6 +23,7 @@ from promise import Promise
 from promise.dataloader import DataLoader
 
 from lmcommon.labbook import LabBook
+from lmsrvcore.auth.user import get_logged_in_author
 
 
 class LabBookLoader(DataLoader):
@@ -37,7 +38,7 @@ class LabBookLoader(DataLoader):
         username, owner_name, labbook_name = key.split('&')
 
         # Create Labbook instance
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner_name, labbook_name)
 
         return lb

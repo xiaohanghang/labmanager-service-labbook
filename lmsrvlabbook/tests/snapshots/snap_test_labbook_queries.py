@@ -1088,24 +1088,28 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records 2'] = {
                 'edges': [
                     {
                         'node': {
+                            'email': 'tester@test.com',
                             'importance': 255,
                             'message': 'Added new Input Data file /test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
                             ],
-                            'type': 'INPUT_DATA'
+                            'type': 'INPUT_DATA',
+                            'username': 'tester'
                         }
                     },
                     {
                         'node': {
+                            'email': 'tester@test.com',
                             'importance': 255,
                             'message': 'Added new Code file /test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
                             ],
-                            'type': 'CODE'
+                            'type': 'CODE',
+                            'username': 'tester'
                         }
                     }
                 ],

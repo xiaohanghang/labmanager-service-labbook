@@ -28,7 +28,7 @@ from lmcommon.environment import ComponentManager, get_package_manager
 from lmcommon.labbook.schemas import CURRENT_SCHEMA
 
 
-from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 
 from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.customcomponent import CustomComponent
@@ -55,7 +55,7 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
 
         # Load LabBook instance
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Get a package manager instance and check if package is valid
@@ -112,7 +112,7 @@ class RemovePackageComponent(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
 
         # Load LabBook instance
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Create Component Manager
@@ -140,7 +140,7 @@ class AddCustomComponent(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
 
         # Load LabBook instance
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Create Component Manager
@@ -172,7 +172,7 @@ class RemoveCustomComponent(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
 
         # Load LabBook instance
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Create Component Manager

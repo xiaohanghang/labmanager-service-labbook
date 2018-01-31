@@ -163,6 +163,12 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
     # Datetime of the record creation
     timestamp = datetime.DateTime()
 
+    # Username of the user who created the activity record
+    username = graphene.String()
+
+    # Email of the user who created the activity record
+    email = graphene.String()
+
     def _load_activity_record(self, dataloader):
         """Private method to load an activity record if it has not been previously loaded and set"""
         if not self._activity_record:
@@ -185,6 +191,8 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
         self.tags = self._activity_record.tags
         self.timestamp = self._activity_record.timestamp
         self.importance = self._activity_record.importance
+        self.username = self._activity_record.username
+        self.email = self._activity_record.email
 
     @classmethod
     def get_node(cls, info, id):
@@ -244,6 +252,18 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
         if self.importance is None:
             self._load_activity_record(info.context.labbook_loader)
         return self.importance
+
+    def resolve_username(self, info):
+        """Resolve the username field"""
+        if self.username is None:
+            self._load_activity_record(info.context.labbook_loader)
+        return self.username
+
+    def resolve_email(self, info):
+        """Resolve the email field"""
+        if self.email is None:
+            self._load_activity_record(info.context.labbook_loader)
+        return self.email
 
     def resolve_detail_objects(self, info):
         """Resolve the detail_objects field"""

@@ -19,6 +19,7 @@
 # SOFTWARE.
 from flask import current_app
 from lmcommon.logging import LMLogger
+from lmcommon.gitlib.git import GitAuthor
 
 
 def get_logged_in_username():
@@ -36,4 +37,23 @@ def get_logged_in_username():
         raise ValueError("Failed to load load a user identity from request context.")
 
     return user.username
+
+
+def get_logged_in_author():
+    """A Method to get the current logged in user's GitAuthor instance
+
+
+    Returns:
+        GitAuthor
+    """
+    user = current_app.current_user
+
+    # Create a GitAuthor instance if possible
+    if current_app.current_user:
+        author = GitAuthor(name=user.username,
+                           email=user.email)
+    else:
+        author = None
+
+    return author
 

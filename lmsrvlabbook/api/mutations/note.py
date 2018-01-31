@@ -23,7 +23,7 @@ from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
-from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 
 from lmsrvlabbook.api.objects.activity import ActivityRecordObject
 from lmsrvlabbook.api.connections.activity import ActivityConnection
@@ -54,7 +54,7 @@ class CreateUserNote(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
 
         # Load LabBook instance
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Create a Activity Store instance

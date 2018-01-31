@@ -33,7 +33,7 @@ from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 from lmcommon.environment import ComponentManager
 
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
-from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 from lmsrvcore.auth.identity import parse_token
 
 from lmsrvlabbook.api.connections.labbookfileconnection import LabbookFavoriteConnection
@@ -65,7 +65,7 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
 
         # Create a new empty LabBook
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         # TODO: Set owner/namespace properly once supported fully
         lb.new(owner={"username": username},
                username=username,
@@ -128,7 +128,7 @@ class RenameLabbook(graphene.ClientIDMutation):
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
                                              original_labbook_name)
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
 
         # Image names
@@ -170,7 +170,7 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
                                              labbook_name)
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
 
         job_metadata = {'method': 'export_labbook_as_zip', 'labbook': lb.root_dir}
@@ -246,7 +246,7 @@ class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_url, client_mutation_id=None):
         username = get_logged_in_username()
         logger.info(f"Importing remote labbook from {remote_url}")
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
         default_remote = lb.labmanager_config.config['git']['default_remote']
@@ -284,7 +284,7 @@ class AddLabbookRemote(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
         logger.info(f"Adding labbook remote {remote_name} {remote_url}")
 
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         remote = remote_name
         lb.add_remote(remote, remote_url)
@@ -303,7 +303,7 @@ class PullActiveBranchFromRemote(graphene.relay.ClientIDMutation):
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, client_mutation_id=None):
         username = get_logged_in_username()
         logger.info(f"Importing remote labbook from {remote_name}")
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         remote = remote_name
         if remote:
@@ -325,7 +325,7 @@ class PushActiveBranchToRemote(graphene.relay.ClientIDMutation):
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, client_mutation_id=None):
         username = get_logged_in_username()
         logger.info(f"Importing remote labbook from {remote_name}")
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         remote = remote_name
         if remote:
@@ -358,7 +358,7 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, kwargs.get('owner'), 'labbooks',
                                              kwargs.get('labbook_name'))
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
 
         # Insert into labbook
@@ -404,7 +404,7 @@ class DeleteLabbookFile(graphene.ClientIDMutation):
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
                                              labbook_name)
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
         lb.delete_file(section=section, relative_path=file_path,
                        directory=is_directory)
@@ -432,7 +432,7 @@ class MoveLabbookFile(graphene.ClientIDMutation):
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
                                              labbook_name)
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
         file_info = lb.move_file(section, src_path, dst_path)
         logger.info(f"Moved file to `{dst_path}`")
@@ -472,7 +472,7 @@ class MakeLabbookDirectory(graphene.ClientIDMutation):
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
                                              labbook_name)
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
         lb.makedir(os.path.join(section, directory), create_activity_record=True)
         logger.info(f"Made new directory in `{directory}`")
@@ -512,7 +512,7 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, key, description=None, is_dir=False,
                                index=None, client_mutation_id=None):
         username = get_logged_in_username()
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Add Favorite
@@ -559,7 +559,7 @@ class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, index=None, updated_index=None,
                                updated_key=None, updated_description=None, client_mutation_id=None):
         username = get_logged_in_username()
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Update Favorite
@@ -599,7 +599,7 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, index, client_mutation_id=None):
         username = get_logged_in_username()
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Remove Favorite
@@ -619,7 +619,7 @@ class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, username, client_mutation_id=None):
         logged_in_username = get_logged_in_username()
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(logged_in_username, owner, labbook_name)
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
@@ -662,7 +662,7 @@ class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, username, client_mutation_id=None):
         logged_in_username = get_logged_in_username()
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(logged_in_username, owner, labbook_name)
 
         # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
