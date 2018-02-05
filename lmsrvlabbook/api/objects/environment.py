@@ -29,6 +29,7 @@ from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment.componentmanager import ComponentManager
 from lmcommon.configuration import get_docker_client
 from lmcommon.logging import LMLogger
+from lmcommon.container.utils import infer_docker_image_name
 
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
@@ -108,10 +109,13 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
     def resolve_image_status(self, info):
         """Resolve the image_status field"""
-        labbook_key = "{}-{}-{}".format(get_logged_in_username(), self.owner, self.name)
+        labbook_image_key = infer_docker_image_name(labbook_name=self.name, owner=self.owner,
+                                                    username=get_logged_in_username())
+
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         dispatcher = Dispatcher()
-        lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
+        lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(lb.key)]
 
         for j in lb_jobs:
             logger.debug("Current job for lb: status {}, meta {}".format(j.status, j.meta))
@@ -120,25 +124,25 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         # Therefore, we know that if one exists, there most likely is not one being built.
         try:
             client = get_docker_client()
-            client.images.get(labbook_key)
+            client.images.get(labbook_image_key)
             image_status = ImageStatus.EXISTS
         except (ImageNotFound, requests.exceptions.ConnectionError):
             image_status = ImageStatus.DOES_NOT_EXIST
 
         if any([j.status == 'failed' and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.info("Image status for {} is BUILD_FAILED".format(labbook_key))
+            logger.info("Image status for {} is BUILD_FAILED".format(lb.key))
             if image_status == ImageStatus.EXISTS:
                 # The indication that there's a failed job is probably lingering from a while back, so don't
                 # change the status to FAILED. Only do that if there is no Docker image.
-                logger.warning(f'Got failed build_image for labbook {labbook_key}, but image exists.')
+                logger.warning(f'Got failed build_image for labbook {lb.key}, but image exists.')
             else:
                 image_status = ImageStatus.BUILD_FAILED
 
         if any([j.status in ['started', 'queued'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.info(f"Image status for {labbook_key} is BUILD_IN_PROGRESS")
+            logger.info(f"Image status for {lb.key} is BUILD_IN_PROGRESS")
             # build_image being in progress takes precedence over if image already exists (unlikely event).
             if image_status == ImageStatus.EXISTS:
-                logger.warning(f'Got started/queued build_image for labbook {labbook_key}, but image exists.')
+                logger.warning(f'Got started/queued build_image for labbook {lb.key}, but image exists.')
             image_status = ImageStatus.BUILD_IN_PROGRESS
 
         return image_status.value
@@ -146,7 +150,9 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
     def resolve_container_status(self, info):
         """Resolve the image_status field"""
         # Check if the container is running by looking up the container
-        labbook_key = "{}-{}-{}".format(get_logged_in_username(), self.owner, self.name)
+
+        labbook_key = infer_docker_image_name(labbook_name=self.name, owner=self.owner,
+                                              username=get_logged_in_username())
 
         try:
             client = get_docker_client()

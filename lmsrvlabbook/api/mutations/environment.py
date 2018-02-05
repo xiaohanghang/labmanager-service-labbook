@@ -18,18 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
-import time
-
 import graphene
 
-from lmcommon.configuration import (Configuration, get_docker_client)
+from lmcommon.configuration import Configuration
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
-from lmcommon.labbook.operations import ContainerOps
+from lmcommon.container import ContainerOperations
 from lmcommon.logging import LMLogger
-from lmcommon.activity.services import stop_labbook_monitor, start_labbook_monitor
-from lmcommon.portmap import PortMap
+from lmcommon.activity.services import stop_labbook_monitor
 
 from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 from lmsrvlabbook.api.objects.environment import Environment
@@ -44,6 +41,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
+        no_cache = graphene.Boolean(required=False)
 
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
@@ -52,33 +50,33 @@ class BuildImage(graphene.relay.ClientIDMutation):
     background_job_key = graphene.Field(graphene.String)
 
     @classmethod
-    def mutate_and_get_payload(cls, info, owner, labbook_name):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, no_cache=False, client_mutation_id=None):
         username = get_logged_in_username()
+        labbook_dir = os.path.expanduser(os.path.join(Configuration().config['git']['working_directory'],
+                                         username, owner, 'labbooks', labbook_name))
 
-        client = get_docker_client()
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_directory(labbook_dir)
 
-        labbook_dir = os.path.join(Configuration().config['git']['working_directory'],
-                                   username,
-                                   owner,
-                                   'labbooks',
-                                   labbook_name)
-        labbook_dir = os.path.expanduser(labbook_dir)
-        tag = '{}-{}-{}'.format(username, owner, labbook_name)
+        # Generate Dockerfile
+        ib = ImageBuilder(labbook_directory=labbook_dir)
+        ib.assemble_dockerfile(write=True)
 
-        logger.info("BuildImage starting for labbook directory={}, tag={}".format(labbook_dir, tag))
+        # Kick off building in a background thread
+        d = Dispatcher()
+        build_kwargs = {
+            'path': labbook_dir,
+            'username': username,
+            'nocache': no_cache
+        }
 
-        try:
-            image_builder = ImageBuilder(labbook_dir)
-            img = image_builder.build_image(docker_client=client, image_tag=tag, username=username, background=True)
-        except Exception as e:
-            logger.exception(e)
-            raise
+        metadata = {'labbook': lb.key,
+                    'method': 'build_image'}
 
-        logger.info("Dispatched docker build for labbook directory={}, tag={}, job_key={}"
-                    .format(labbook_dir, tag, img.get('background_job_key')))
+        res = d.dispatch_task(jobs.build_labbook_image, kwargs=build_kwargs, metadata=metadata)
 
-        return BuildImage(environment=Environment(owner=owner, labbook_name=labbook_name),
-                          background_job_key=img['background_job_key'])
+        return BuildImage(environment=Environment(owner=owner, name=labbook_name),
+                          background_job_key=res.key_str)
 
 
 class StartContainer(graphene.relay.ClientIDMutation):
@@ -91,29 +89,16 @@ class StartContainer(graphene.relay.ClientIDMutation):
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
 
-    # The background job key, this may be None
-    background_job_key = graphene.Field(graphene.String)
-
     @classmethod
-    def mutate_and_get_payload(cls, info, owner, labbook_name):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
         username = get_logged_in_username()
-
-        # Load the labbook to retrieve root directory.
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
-        container_name = '{}-{}-{}'.format(username, owner, labbook_name)
+        lb, container_id, ports = ContainerOperations.start_container(labbook=lb, username=username)
+        logger.info(f'Started new {lb} container ({container_id}) with ports {ports}')
 
-        lb, keys, ports = ContainerOps.start_container(lb, override_docker_image=container_name, background=True)
-
-        logger.info(f"Dispatched StartContainer to background"
-                    f"labbook_dir={lb.key}, job_key={keys.get('background_job_key')}")
-
-        # Start monitoring lab book environment for activity
-        start_labbook_monitor(lb, username)
-
-        return StartContainer(environment=Environment(owner=owner, labbook_name=labbook_name),
-                              background_job_key=keys.get('background_job_key'))
+        return StartContainer(environment=Environment(owner=owner, name=labbook_name))
 
 
 class StopContainer(graphene.relay.ClientIDMutation):
@@ -126,35 +111,15 @@ class StopContainer(graphene.relay.ClientIDMutation):
     # Return the Environment instance
     environment = graphene.Field(lambda: Environment)
 
-    # The background job key, this may be None
-    background_job_key = graphene.Field(graphene.String)
-
     @classmethod
-    def mutate_and_get_payload(cls, info, owner, labbook_name):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
         username = get_logged_in_username()
-
-        if "owner" not in input:
-            owner = username
-        else:
-            owner = input["owner"]
-
-        container_name = '{}-{}-{}'.format(username, owner, labbook_name)
-        logger.info("Preparing to stop container by name `{}`".format(container_name))
-
-        d = Dispatcher()
-        job_ref = d.dispatch_task(jobs.stop_docker_container, args=(container_name,))
-        logger.info("Dispatched StopContainer to background, container = `{}`".format(container_name))
-        id_data = {"username": username,
-                   "owner": owner,
-                   "name": input.get("labbook_name")}
-
-        # Stop monitoring lab book environment for activity
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         stop_labbook_monitor(lb, username)
+        lb, stopped = ContainerOperations.stop_container(labbook=lb, username=username)
 
-        pm = PortMap(lb.labmanager_config)
-        pm.release(lb.key)
+        if not stopped:
+            raise ValueError(f"Failed to stop labbook {labbook_name}")
 
-        return StopContainer(environment=Environment(owner=owner, labbook_name=labbook_name),
-                             background_job_key=job_ref)
+        return StopContainer(environment=Environment(owner=owner, name=labbook_name))

@@ -7,29 +7,6 @@ from snapshottest import Snapshot
 
 snapshots = Snapshot()
 
-snapshots['TestLabBookServiceQueries.test_list_labbooks 1'] = {
-    'data': {
-        'localLabbooks': {
-            'edges': [
-                {
-                    'cursor': 'MA==',
-                    'node': {
-                        'description': 'my first labbook1',
-                        'name': 'labbook1'
-                    }
-                },
-                {
-                    'cursor': 'MQ==',
-                    'node': {
-                        'description': 'my first labbook2',
-                        'name': 'labbook2'
-                    }
-                }
-            ]
-        }
-    }
-}
-
 snapshots['TestLabBookServiceQueries.test_pagination_noargs 1'] = {
     'data': {
         'localLabbooks': {
@@ -378,18 +355,6 @@ snapshots['TestLabBookServiceQueries.test_pagination 2'] = {
                 'hasNextPage': False,
                 'hasPreviousPage': True
             }
-        }
-    }
-}
-
-snapshots['TestLabBookServiceQueries.test_get_labbook 1'] = {
-    'data': {
-        'labbook': {
-            'activeBranch': {
-                'name': 'gm.workspace-default'
-            },
-            'description': 'my first labbook1',
-            'name': 'labbook1'
         }
     }
 }

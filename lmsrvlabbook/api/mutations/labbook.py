@@ -173,8 +173,10 @@ class ExportLabbook(graphene.relay.ClientIDMutation):
         lb = LabBook(author=get_logged_in_author())
         lb.from_directory(inferred_lb_directory)
 
-        job_metadata = {'method': 'export_labbook_as_zip', 'labbook': lb.root_dir}
-        job_kwargs = {'labbook_path': lb.root_dir, 'lb_export_directory': os.path.join(working_directory, 'export')}
+        job_metadata = {'method': 'export_labbook_as_zip',
+                        'labbook': lb.key}
+        job_kwargs = {'labbook_path': lb.root_dir,
+                      'lb_export_directory': os.path.join(working_directory, 'export')}
         dispatcher = Dispatcher()
         job_key = dispatcher.dispatch_task(jobs.export_labbook_as_zip, kwargs=job_kwargs, metadata=job_metadata)
         logger.info(f"Exporting LabBook {lb.root_dir} in background job with key {job_key.key_str}")
@@ -216,17 +218,17 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
         inferred_lb_directory = os.path.join(working_directory, username, username, 'labbooks',
                                              assumed_lb_name)
         build_img_kwargs = {
-            'path': os.path.join(inferred_lb_directory, '.gigantum', 'env'),
-            'tag': f"{username}-{username}-{assumed_lb_name}",
-            'pull': True,
-            'nocache': False
+            'path': inferred_lb_directory,
+            'username': username,
+            'nocache': True
         }
         build_img_metadata = {
             'method': 'build_image',
-            'labbook': f"{username}-{username}-{assumed_lb_name}"
+            # TODO - we need labbook key but labbook is not available...
+            'labbook': f"{username}|{username}|{assumed_lb_name}"
         }
-        logger.info(f"Queueing job to build imported labbook at assumed directory `{inferred_lb_directory}`")
-        build_image_job_key = dispatcher.dispatch_task(jobs.build_docker_image, kwargs=build_img_kwargs,
+        logger.warning(f"Using assumed labbook name {build_img_metadata['labbook']}, better solution needed.")
+        build_image_job_key = dispatcher.dispatch_task(jobs.build_labbook_image, kwargs=build_img_kwargs,
                                                        dependent_job=job_key, metadata=build_img_metadata)
         logger.info(f"Adding dependent job {build_image_job_key} to build "
                     f"Docker image for labbook `{inferred_lb_directory}`")

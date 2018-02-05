@@ -886,7 +886,7 @@ class TestLabBookServiceMutations(object):
         # Make sure favorite is gone now
         snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
-    def test_import_labbook(self, fixture_working_dir, snapshot):
+    def test_import_labbook(self, fixture_working_dir):
         """Test batch uploading, but not full import"""
         class DummyContext(object):
             def __init__(self, file_handle):
@@ -945,22 +945,6 @@ class TestLabBookServiceMutations(object):
                     assert type(result['data']['importLabbook']['buildImageJobKey']) == str
                     assert "rq:job:" in result['data']['importLabbook']['importJobKey']
                     assert "rq:job:" in result['data']['importLabbook']['buildImageJobKey']
-
-                    # TODO: Move this test to integration level test where working dir is properly mocked in the rq worker
-
-                    # # Wait up to 10s for import to complete...if fail raise exception
-                    # d = Dispatcher()
-                    # t_start = datetime.datetime.now()
-                    # success = False
-                    # while (datetime.datetime.now() - t_start).seconds < 10:
-                    #     status = d.query_task(JobKey(result['data']['importLabbook']['importJobKey']))
-                    #     if status.status == 'finished':
-                    #         success = True
-                    #         break
-                    #     elif status.status == 'failed':
-                    #         break
-                    # assert success is True
-                    # assert os.path.exists(abs_lb_path) is True
 
                 chunk.close()
 

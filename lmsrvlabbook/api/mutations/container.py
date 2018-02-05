@@ -22,17 +22,13 @@ import time
 
 import graphene
 
-from lmcommon.configuration import (Configuration, get_docker_client)
-from lmcommon.imagebuilder import ImageBuilder
-from lmcommon.dispatcher import Dispatcher, jobs
+
 from lmcommon.labbook import LabBook
-from lmcommon.labbook.operations import ContainerOps
+from lmcommon.container import ContainerOperations
 from lmcommon.logging import LMLogger
-from lmcommon.activity.services import stop_labbook_monitor, start_labbook_monitor
+from lmcommon.activity.services import start_labbook_monitor
 
-from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvlabbook.api.objects.environment import Environment
-
+from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
 
 logger = LMLogger.get_logger()
 
@@ -51,8 +47,12 @@ class StartDevTool(graphene.relay.ClientIDMutation):
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, dev_tool,
                                container_override_id=None, client_mutation_id=None):
         username = get_logged_in_username()
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
-        lb, tool_url = ContainerOps.start_dev_tool(lb, dev_tool_name=dev_tool, username=username,
-                                                   tag=container_override_id)
+        lb, tool_url = ContainerOperations.start_dev_tool(lb, dev_tool_name=dev_tool, username=username,
+                                                          tag=container_override_id)
+
+        # Start monitoring lab book environment for activity
+        start_labbook_monitor(lb, username, dev_tool)
+        
         return StartDevTool(path=tool_url)

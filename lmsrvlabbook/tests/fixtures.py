@@ -35,8 +35,14 @@ from lmcommon.auth.identity import get_identity_manager
 from lmcommon.labbook import LabBook
 from lmsrvcore.middleware import LabBookLoaderMiddleware, error_middleware
 
+from lmcommon.fixtures import (ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_REV, ENV_UNIT_TEST_BASE)
+from lmcommon.container import ContainerOperations
+from lmcommon.environment import ComponentManager
+from lmcommon.imagebuilder import ImageBuilder
+
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
+
 
 def _create_temp_work_dir():
     """Helper method to create a temporary working directory and associated config file"""
@@ -199,6 +205,69 @@ def fixture_working_dir_populated_scoped():
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)
+
+
+@pytest.fixture(scope='class')
+def build_image_for_jupyterlab():
+    # Create temp dir
+    config_file, temp_dir = _create_temp_work_dir()
+
+    # Create user identity
+    user_dir = os.path.join(temp_dir, '.labmanager', 'identity')
+    os.makedirs(user_dir)
+    with open(os.path.join(user_dir, 'user.json'), 'wt') as user_file:
+        json.dump({"username": "unittester",
+                   "email": "unittester@test.com",
+                   "given_name": "unittester",
+                   "family_name": "tester"}, user_file)
+
+    # Create test client
+    schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
+
+    # get environment data and index
+    erm = RepositoryManager(config_file)
+    erm.update_repositories()
+    erm.index_repositories()
+
+    with patch.object(Configuration, 'find_default_config', lambda self: config_file):
+        # Load User identity into app context
+        app = Flask("lmsrvlabbook")
+        app.config["LABMGR_CONFIG"] = Configuration()
+        app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
+
+        with app.app_context():
+            # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
+            current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+
+            # Create a test client
+            client = Client(schema, middleware=[LabBookLoaderMiddleware(), error_middleware], context_value=ContextMock())
+
+            # Create a labook
+            lb = LabBook(config_file)
+            lb.new(name="containerunittestbook", description="Testing docker building.",
+                   owner={"username": "unittester"})
+
+            # Create Component Manager
+            cm = ComponentManager(lb)
+            # Add a component
+            cm.add_component("base", ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV)
+            cm.add_package("pip3", "requests", "2.18.4")
+
+            ib = ImageBuilder(lb.root_dir)
+            ib.assemble_dockerfile(write=True)
+            docker_client = get_docker_client()
+
+            try:
+                lb, docker_image_id = ContainerOperations.build_image(labbook=lb, username="unittester")
+
+                yield lb, ib, docker_client, docker_image_id, client
+
+            finally:
+                shutil.rmtree(lb.root_dir)
+                try:
+                    docker_client.images.remove(docker_image_id, force=True, noprune=False)
+                except:
+                    pass
 
 
 @pytest.fixture

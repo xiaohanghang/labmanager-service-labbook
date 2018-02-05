@@ -105,37 +105,6 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 6'] = {
     }
 }
 
-snapshots['TestLabBookServiceMutations.test_add_file 1'] = {
-    'data': {
-        'addLabbookFile': {
-            'newLabbookFileEdge': None
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_add_file 2'] = {
-    'data': {
-        'addLabbookFile': {
-            'newLabbookFileEdge': None
-        }
-    }
-}
-
-snapshots['TestLabBookServiceMutations.test_add_file 3'] = {
-    'data': {
-        'addLabbookFile': {
-            'newLabbookFileEdge': {
-                'node': {
-                    'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJm15ZmlsZS5iaW4=',
-                    'isDir': False,
-                    'key': 'myfile.bin',
-                    'size': 9000000
-                }
-            }
-        }
-    }
-}
-
 snapshots['TestLabBookServiceMutations.test_add_file_errors 1'] = {
     'data': {
         'addLabbookFile': None
