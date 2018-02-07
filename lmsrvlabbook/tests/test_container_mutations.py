@@ -62,22 +62,24 @@ class TestContainerMutations(object):
             assert r['data']['startContainer']['environment']['imageStatus'] == 'EXISTS'
             assert r['data']['startContainer']['environment']['containerStatus'] == 'RUNNING'
 
-            # Wait for start to succeed for up to 30 seconds
-            success = False
-            for _ in range(10):
-                result = build_image_for_jupyterlab[4].execute(query)
-
-                if result['data']['labbook']['environment']['containerStatus'] == 'RUNNING':
-                    success = True
-                    break
-
-                time.sleep(1)
-
-            assert success is True, "Failed to start within 10 second timeout."
-            r = build_image_for_jupyterlab[4].execute(query)
-            assert 'errors' not in r
-            assert r['data']['labbook']['environment']['imageStatus'] == 'EXISTS'
-            assert r['data']['labbook']['environment']['containerStatus'] == 'RUNNING'
+            # TEST GIG-909: Prevent rebuilding images when container for LB already running
+            build_q = """
+                mutation myBuild {
+                    buildImage(input: {
+                        labbookName: "containerunittestbook",
+                        owner: "unittester"
+                    }) {
+                        environment {
+                            imageStatus
+                            containerStatus
+                        }                        
+                    }
+                }
+            """
+            r = build_image_for_jupyterlab[4].execute(build_q)
+            assert 'errors' in r # Yes, we really want to check that the errors key exists
+            assert 'Cannot build image for running container' in r['errors'][0]['message']
+            assert not r['data']['buildImage'] # Yes, this should be empty due to failuire.
 
             # Stop the container
             stop_query = """

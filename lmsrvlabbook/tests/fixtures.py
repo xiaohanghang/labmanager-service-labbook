@@ -265,6 +265,12 @@ def build_image_for_jupyterlab():
             finally:
                 shutil.rmtree(lb.root_dir)
                 try:
+                    docker_client.containers.get(docker_image_id).stop()
+                    docker_client.containers.get(docker_image_id).remove()
+                except:
+                    pass
+
+                try:
                     docker_client.images.remove(docker_image_id, force=True, noprune=False)
                 except:
                     pass

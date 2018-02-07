@@ -20,16 +20,17 @@
 import os
 import graphene
 
-from lmcommon.configuration import Configuration
+from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
 from lmcommon.container import ContainerOperations
+from lmcommon.container.utils import infer_docker_image_name
 from lmcommon.logging import LMLogger
 from lmcommon.activity.services import stop_labbook_monitor
 
 from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
-from lmsrvlabbook.api.objects.environment import Environment
+from lmsrvlabbook.api.objects.environment import Environment, ContainerStatus
 
 
 logger = LMLogger.get_logger()
@@ -49,9 +50,30 @@ class BuildImage(graphene.relay.ClientIDMutation):
     # The background job key, this may be None
     background_job_key = graphene.Field(graphene.String)
 
+    @staticmethod
+    def get_container_status(labbook_name: str, owner: str, username: str) -> bool:
+        labbook_key = infer_docker_image_name(labbook_name=labbook_name, owner=owner,
+                                              username=username)
+        try:
+            client = get_docker_client()
+            container = client.containers.get(labbook_key)
+            if container.status == "running":
+                return True
+            else:
+                return False
+        except:
+            pass
+
+        return False
+
+
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, no_cache=False, client_mutation_id=None):
         username = get_logged_in_username()
+
+        if BuildImage.get_container_status(labbook_name, owner, username):
+            raise ValueError(f'Cannot build image for running container {owner}/{labbook_name}')
+
         labbook_dir = os.path.expanduser(os.path.join(Configuration().config['git']['working_directory'],
                                          username, owner, 'labbooks', labbook_name))
 
