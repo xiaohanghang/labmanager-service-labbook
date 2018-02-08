@@ -36,7 +36,7 @@ class LabbookCommit(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRep
         owner, name, hash_str = id.split("&")
 
         return LabbookCommit(id=f"{owner}&{name}&{hash_str}", name=name, owner=owner,
-                             hash=hash_str, _dataloader=LabBookLoader())
+                             hash=hash_str)
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
@@ -52,7 +52,7 @@ class LabbookCommit(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRep
     def resolve_committed_on(self, info):
         """Resolve the committed_on field"""
         if self.committed_on is None:
-            lb = self._dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
             self.committed_on = lb.git.repo.commit(self.hash).committed_datetime.isoformat()
 
         return self.committed_on

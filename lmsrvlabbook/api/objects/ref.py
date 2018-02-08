@@ -39,7 +39,7 @@ class LabbookRef(graphene.ObjectType, interfaces=(graphene.relay.Node, GitReposi
         # Parse the key
         owner, name, prefix, ref_name = id.split("&")
 
-        return LabbookRef(id=f"{owner}&{name}&{prefix}&{branch}", name=name, owner=owner,
+        return LabbookRef(id=f"{owner}&{name}&{prefix}&{ref_name}", name=name, owner=owner,
                           prefix=prefix, ref_name=ref_name,
                           _dataloader=LabBookLoader())
 
@@ -54,5 +54,5 @@ class LabbookRef(graphene.ObjectType, interfaces=(graphene.relay.Node, GitReposi
         """Resolve the commit field"""
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         git_ref = lb.git.repo.refs[self.ref_name]
-        return LabbookCommit(id=f"{self.owner}&{self.name}&None&{self.branch}",
+        return LabbookCommit(id=f"{self.owner}&{self.name}&None&{self.ref_name}",
                              owner=self.owner, name=self.name, hash=git_ref.commit.hexsha)
