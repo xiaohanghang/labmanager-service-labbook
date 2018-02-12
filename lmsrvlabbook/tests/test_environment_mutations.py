@@ -21,6 +21,7 @@ import pytest
 import time
 from docker.errors import ImageNotFound
 import getpass
+import pprint
 
 from lmcommon.configuration import get_docker_client
 from lmcommon.labbook import LabBook
@@ -174,10 +175,55 @@ class TestEnvironmentMutations(object):
 
         assert success is True, "Failed to build within 30 second timeout."
 
-
-        r= fixture_working_dir_env_repo_scoped[2].execute(query)
+        r = fixture_working_dir_env_repo_scoped[2].execute(query)
         assert 'errors' not in r
         assert r['data']['labbook']['environment']['imageStatus'] == 'EXISTS'
         assert r['data']['labbook']['environment']['containerStatus'] == 'NOT_RUNNING'
+
+    def test_set_lb_for_untracked_ins_and_outs(self, fixture_working_dir_env_repo_scoped):
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+        lb.new(owner={"username": "default"}, name="unittest-set-lb-large-f", description="test large f support")
+
+        client = r = fixture_working_dir_env_repo_scoped[2]
+        is_set_large_q = """
+        {
+            labbook(name: "unittest-set-lb-large-f", owner: "default") {
+                input {
+                    isUntracked
+                }
+                output {
+                    isUntracked
+                }
+                code {
+                    isUntracked
+                }
+            }
+        }
+        """
+        r = client.execute(is_set_large_q)
+        assert 'errors' not in r
+        assert r['data']['labbook']['input']['isUntracked'] is False
+        assert r['data']['labbook']['output']['isUntracked'] is False
+        assert r['data']['labbook']['code']['isUntracked'] is False
+
+        set_large_f_q = """
+        mutation setLarge {
+            setArtifactsUntracked(input: {
+                labbookName: "unittest-set-lb-large-f",
+                owner: "default"
+            }) {
+                success
+            }
+        }
+        """
+        r = client.execute(set_large_f_q)
+        assert 'errors' not in r
+        assert r['data']['setArtifactsUntracked']['success'] is True
+
+        r = client.execute(is_set_large_q)
+        assert 'errors' not in r
+        assert r['data']['labbook']['input']['isUntracked'] is True
+        assert r['data']['labbook']['output']['isUntracked'] is True
+        assert r['data']['labbook']['code']['isUntracked'] is False
 
 

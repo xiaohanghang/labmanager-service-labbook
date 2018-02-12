@@ -26,6 +26,7 @@ from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
 from lmcommon.container import ContainerOperations
 from lmcommon.container.utils import infer_docker_image_name
+from lmcommon.files import FileOperations
 from lmcommon.logging import LMLogger
 from lmcommon.activity.services import stop_labbook_monitor
 
@@ -34,6 +35,39 @@ from lmsrvlabbook.api.objects.environment import Environment, ContainerStatus
 
 
 logger = LMLogger.get_logger()
+
+
+class SetArtifactsUntracked(graphene.relay.ClientIDMutation):
+    """ Set a labbook to support extra-large files in the input and output directory. """
+
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
+        username = get_logged_in_username()
+        labbook_dir = os.path.expanduser(os.path.join(Configuration().config['git']['working_directory'],
+                                         username, owner, 'labbooks', labbook_name))
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_directory(labbook_dir)
+
+        input_set = FileOperations.is_set_untracked(lb, 'input')
+        output_set = FileOperations.is_set_untracked(lb, 'output')
+
+        if input_set and output_set:
+            logger.info(f'{str(lb)} is already set for large file support')
+            return SetArtifactsUntracked(success=True)
+        elif not input_set and not output_set:
+            logger.info(f'Setting {str(lb)} to support large files in input/output')
+            FileOperations.set_untracked(lb, 'input')
+            FileOperations.set_untracked(lb, 'output')
+            return SetArtifactsUntracked(success=True)
+
+        # If only one section is set but not the other, we may be in a weird state.
+        raise ValueError('LabBook input/output in malformed state')
 
 
 class BuildImage(graphene.relay.ClientIDMutation):

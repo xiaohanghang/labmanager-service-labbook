@@ -22,6 +22,7 @@ import graphene
 
 from lmcommon.logging import LMLogger
 
+from lmcommon.files import FileOperations
 from lmcommon.activity import ActivityStore
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 

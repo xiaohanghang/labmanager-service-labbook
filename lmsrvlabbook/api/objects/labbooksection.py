@@ -20,6 +20,8 @@
 import base64
 import graphene
 import os
+
+from lmcommon.files import FileOperations
 from lmcommon.logging import LMLogger
 
 from lmsrvcore.auth.user import get_logged_in_username
@@ -46,6 +48,9 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
 
     # List of favorites for a given subdir (code, input, output)
     favorites = graphene.relay.ConnectionField(LabbookFavoriteConnection)
+
+    # True if this directory is gitignored (to temporarily handle multigig files)
+    is_untracked = graphene.Boolean()
 
     @classmethod
     def get_node(cls, info, id):
@@ -143,3 +148,7 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
             edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite(**create_data), cursor=cursor))
 
         return LabbookFavoriteConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_is_untracked(self, info, **kwargs):
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        return FileOperations.is_set_untracked(labbook=lb, section=str(self.section))
