@@ -17,18 +17,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import current_app
-from lmsrvcore.auth.identity import get_identity_manager_instance, parse_token
+from lmsrvcore.auth.identity import get_identity_manager_instance, AuthenticationError, parse_token
+import flask
 
 
 class AuthorizationMiddleware(object):
-    """Middlewere to enforce authentication requirements and parse JWT"""
-    id_mgr = None
+    """Middleware to enforce authentication requirements and parse JWT"""
+    identity_mgr = None
 
     def resolve(self, next, root, info, **args):
-        if not self.id_mgr:
-            # Load ID manager instance on first run
-            self.id_mgr = get_identity_manager_instance()
+        if not self.identity_mgr:
+            self.identity_mgr = get_identity_manager_instance()
 
         # On first field processed in request, authenticate
         if not hasattr(info.context, "auth_middleware_complete"):
@@ -37,8 +36,15 @@ class AuthorizationMiddleware(object):
             if "Authorization" in info.context.headers:
                 token = parse_token(info.context.headers["Authorization"])
 
-            # Authenticate and set current user context on each request
-            current_app.current_user = self.id_mgr.authenticate(token)
+            # Save token to the request context for future use (e.g. look up a user's profile information if needed)
+            flask.g.access_token = token
+
+            # Check if you are authenticated
+            try:
+                self.identity_mgr.is_authenticated(token)
+            except AuthenticationError:
+                raise AuthenticationError("User not authenticated", 401)
+
             info.context.auth_middleware_complete = True
 
         return next(root, info, **args)

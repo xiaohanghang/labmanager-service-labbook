@@ -18,8 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
-
-from flask import current_app
+import flask
 import graphene
 
 from lmsrvcore.api.objects.user import UserIdentity
@@ -48,6 +47,6 @@ class RemoveUserIdentity(graphene.relay.ClientIDMutation):
             logger.warning("Attempted to remove user identity, but no identity is stored locally.")
 
         # Wipe current user from session
-        current_app.current_user = None
+        flask.g.user_obj = None
 
         return RemoveUserIdentity(user_identity_edge=UserIdentity())

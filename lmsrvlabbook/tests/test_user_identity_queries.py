@@ -22,12 +22,9 @@ import os
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir
 
-from graphene.test import Client
 import graphene
-from mock import patch
 from flask import current_app
-
-from lmcommon.configuration import Configuration
+import flask
 
 
 class TestUserIdentityQueries(object):
@@ -61,7 +58,7 @@ class TestUserIdentityQueries(object):
                 """
 
         # Delete the stored user context
-        current_app.current_user = None
+        flask.g.user_obj = None
         user_dir = os.path.join(fixture_working_dir[1], '.labmanager', 'identity')
         os.remove(os.path.join(user_dir, 'user.json'))
 

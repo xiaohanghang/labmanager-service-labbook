@@ -19,12 +19,14 @@
 # SOFTWARE.
 import graphene
 from lmsrvcore.api.interfaces import User
-
-from flask import current_app
+from lmsrvcore.auth.user import get_logged_in_user
+from lmsrvcore.auth.identity import get_identity_manager_instance
+import flask
 
 
 class UserIdentity(graphene.ObjectType, interfaces=(graphene.relay.Node, User)):
     """A type representing the identity of the logged in user"""
+    is_session_valid = graphene.Boolean
 
     @classmethod
     def get_node(cls, info, id):
@@ -33,7 +35,7 @@ class UserIdentity(graphene.ObjectType, interfaces=(graphene.relay.Node, User)):
     def _set_user_fields(self):
         """Private method to set all the fields of this instance"""
         try:
-            user = current_app.current_user
+            user = get_logged_in_user()
             self.username = user.username
             self.email = user.email
             self.given_name = user.given_name
@@ -106,3 +108,15 @@ class UserIdentity(graphene.ObjectType, interfaces=(graphene.relay.Node, User)):
         if not self.family_name:
             self._set_user_fields()
         return self.family_name
+
+    def resolve_is_session_valid(self, info):
+        """Return the is_session_valid field
+
+        Args:
+            info: Graphene info object
+
+        Returns:
+            dict
+        """
+        # Load the current identity manager and check the token, provided by the request context
+        get_identity_manager_instance().is_token_valid(flask.g.get('access_token', None))

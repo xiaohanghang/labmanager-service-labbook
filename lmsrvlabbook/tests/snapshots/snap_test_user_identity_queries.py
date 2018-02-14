@@ -21,12 +21,17 @@ snapshots['TestUserIdentityQueries.test_logged_in_user 1'] = {
 
 snapshots['TestUserIdentityQueries.test_no_logged_in_user 1'] = {
     'data': {
-        'userIdentity': {
-            'email': None,
-            'familyName': None,
-            'givenName': None,
-            'id': 'VXNlcklkZW50aXR5Ok5vbmU=',
-            'username': None
+        'userIdentity': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 35,
+                    'line': 4
+                }
+            ],
+            'message': "({'code': 'missing_token', 'description': 'JWT must be provided to authenticate user if no local stored identity is available'}, 401)"
         }
-    }
+    ]
 }

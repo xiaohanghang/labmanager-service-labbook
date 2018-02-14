@@ -23,7 +23,8 @@ import os
 import uuid
 import shutil
 import graphene
-from flask import Flask, current_app
+from flask import Flask
+import flask
 import json
 from mock import patch
 import responses
@@ -97,7 +98,7 @@ def fixture_working_dir():
 
         with app.app_context():
             # within this block, current_app points to app. Set current usert explicitly(this is done in the middleware)
-            current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+            flask.g.user_obj = app.config["LABMGR_ID_MGR"].get_user_profile()
 
             # Create a test client
             client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
@@ -142,7 +143,7 @@ def fixture_working_dir_env_repo_scoped():
 
         with app.app_context():
             # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
-            current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+            flask.g.user_obj = app.config["LABMGR_ID_MGR"].get_user_profile()
 
             # Create a test client
             client = Client(schema, middleware=[LabBookLoaderMiddleware(), error_middleware], context_value=ContextMock())
@@ -196,7 +197,7 @@ def fixture_working_dir_populated_scoped():
 
         with app.app_context():
             # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
-            current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+            flask.g.user_obj = app.config["LABMGR_ID_MGR"].get_user_profile()
 
             # Create a test client
             client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
@@ -237,7 +238,7 @@ def build_image_for_jupyterlab():
 
         with app.app_context():
             # within this block, current_app points to app. Set current user explicitly (this is done in the middleware)
-            current_app.current_user = app.config["LABMGR_ID_MGR"].authenticate()
+            flask.g.user_obj = app.config["LABMGR_ID_MGR"].get_user_profile()
 
             # Create a test client
             client = Client(schema, middleware=[LabBookLoaderMiddleware(), error_middleware], context_value=ContextMock())

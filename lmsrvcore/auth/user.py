@@ -17,9 +17,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import current_app
+import flask
 from lmcommon.logging import LMLogger
 from lmcommon.gitlib.git import GitAuthor
+from lmsrvcore.auth.identity import get_identity_manager_instance
+
+
+def get_logged_in_user():
+    """A method to get the current logged in User object"""
+    # Check for user in request context
+    user = flask.g.get('user_obj', None)
+
+    if not user:
+        # User not loaded yet, so get it from the identity manager
+        user = get_identity_manager_instance().get_user_profile(flask.g.get('access_token', None))
+        flask.g.user_obj = user
+
+    return user
 
 
 def get_logged_in_username():
@@ -29,12 +43,12 @@ def get_logged_in_username():
     Returns:
         str
     """
-    user = current_app.current_user
+    user = get_logged_in_user()
 
     if not user:
         logger = LMLogger()
-        logger.logger.error("Failed to load load a user identity from request context.")
-        raise ValueError("Failed to load load a user identity from request context.")
+        logger.logger.error("Failed to load a user identity from request context.")
+        raise ValueError("Failed to load a user identity from request context.")
 
     return user.username
 
@@ -46,14 +60,13 @@ def get_logged_in_author():
     Returns:
         GitAuthor
     """
-    user = current_app.current_user
+    user = get_logged_in_user()
+
+    if not user:
+        logger = LMLogger()
+        logger.logger.error("Failed to load a user identity from request context.")
+        raise ValueError("Failed to load a user identity from request context.")
 
     # Create a GitAuthor instance if possible
-    if current_app.current_user:
-        author = GitAuthor(name=user.username,
-                           email=user.email)
-    else:
-        author = None
 
-    return author
-
+    return GitAuthor(name=user.username, email=user.email)
