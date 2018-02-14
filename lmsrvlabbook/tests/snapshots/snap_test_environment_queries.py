@@ -41,10 +41,10 @@ snapshots['TestEnvironmentServiceQueries.test_get_base 2'] = {
                     'developmentTools': [
                         'jupyterlab'
                     ],
-                    'dockerImageNamespace': 'gigdev',
-                    'dockerImageRepository': 'gm-quickstart',
+                    'dockerImageNamespace': 'gigantum',
+                    'dockerImageRepository': 'python3-minimal',
                     'dockerImageServer': 'hub.docker.com',
-                    'dockerImageTag': '9718fedc-2018-01-16',
+                    'dockerImageTag': '826b6f24-2018-02-09',
                     'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                     'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
                     'languages': [

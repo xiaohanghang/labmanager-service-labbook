@@ -15,10 +15,10 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_base_image_by_node 1'] = {
             'developmentTools': [
                 'jupyterlab'
             ],
-            'dockerImageNamespace': 'gigdev',
-            'dockerImageRepository': 'gm-quickstart',
+            'dockerImageNamespace': 'gigantum',
+            'dockerImageRepository': 'python3-minimal',
             'dockerImageServer': 'hub.docker.com',
-            'dockerImageTag': '9718fedc-2018-01-16',
+            'dockerImageTag': '826b6f24-2018-02-09',
             'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
             'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
             'languages': [
@@ -54,10 +54,10 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                         'developmentTools': [
                             'jupyterlab'
                         ],
-                        'dockerImageNamespace': 'gigdev',
-                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageNamespace': 'gigantum',
+                        'dockerImageRepository': 'python3-minimal',
                         'dockerImageServer': 'hub.docker.com',
-                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'dockerImageTag': '826b6f24-2018-02-09',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                         'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
                         'languages': [
@@ -229,10 +229,10 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                         'developmentTools': [
                             'jupyterlab'
                         ],
-                        'dockerImageNamespace': 'gigdev',
-                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageNamespace': 'gigantum',
+                        'dockerImageRepository': 'python3-minimal',
                         'dockerImageServer': 'hub.docker.com',
-                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'dockerImageTag': '826b6f24-2018-02-09',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                         'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
                         'languages': [
@@ -448,10 +448,10 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                         'developmentTools': [
                             'jupyterlab'
                         ],
-                        'dockerImageNamespace': 'gigdev',
-                        'dockerImageRepository': 'gm-quickstart',
+                        'dockerImageNamespace': 'gigantum',
+                        'dockerImageRepository': 'python3-minimal',
                         'dockerImageServer': 'hub.docker.com',
-                        'dockerImageTag': '9718fedc-2018-01-16',
+                        'dockerImageTag': '826b6f24-2018-02-09',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                         'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
                         'languages': [
