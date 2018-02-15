@@ -30,6 +30,9 @@ from lmsrvcore.auth.user import get_logged_in_username
 from lmcommon.environment import ComponentManager
 
 
+TIMEOUT_MAX = 45
+
+
 @pytest.fixture
 def reset_images(request):
     """A pytest fixture that checks if the test images exist and deletes them"""
@@ -55,7 +58,6 @@ def reset_images(request):
 
 
 class TestEnvironmentMutations(object):
-    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     @pytest.mark.parametrize('reset_images', ["labbook-build1"], indirect=['reset_images'])
     def test_build_image(self, fixture_working_dir_env_repo_scoped, reset_images):
         """Test building a labbook's image"""
@@ -101,25 +103,26 @@ class TestEnvironmentMutations(object):
         assert r['data']['buildImage']['environment']['imageStatus'] == 'BUILD_IN_PROGRESS'
         assert r['data']['buildImage']['environment']['containerStatus'] == 'NOT_RUNNING'
 
-        # Wait for build to succeed for up to 30 seconds
+        # Wait for build to succeed for up to TIMEOUT_MAX seconds
         success = False
-        for _ in range(30):
+        for _ in range(TIMEOUT_MAX):
             result = fixture_working_dir_env_repo_scoped[2].execute(query)
 
             if result['data']['labbook']['environment']['imageStatus'] == 'EXISTS':
                 success = True
                 break
 
+            assert result['data']['labbook']['environment']['imageStatus'] == 'BUILD_IN_PROGRESS'
+
             time.sleep(1)
 
-        assert success is True, "Failed to build within 30 second timeout."
+        assert success is True, f"Failed to build within {TIMEOUT_MAX} second timeout."
 
         r = fixture_working_dir_env_repo_scoped[2].execute(query)
         assert 'errors' not in r
         assert r['data']['labbook']['environment']['imageStatus'] == 'EXISTS'
         assert r['data']['labbook']['environment']['containerStatus'] == 'NOT_RUNNING'
 
-    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     @pytest.mark.parametrize('reset_images', ["labbook-build2"], indirect=['reset_images'])
     def test_build_image_no_cache(self, fixture_working_dir_env_repo_scoped, reset_images):
         """Test building a labbook's image"""
@@ -162,18 +165,20 @@ class TestEnvironmentMutations(object):
         assert r['data']['buildImage']['environment']['imageStatus'] == 'BUILD_IN_PROGRESS'
         assert r['data']['buildImage']['environment']['containerStatus'] == 'NOT_RUNNING'
 
-        # Wait for build to succeed for up to 30 seconds
+        # Wait for build to succeed for up to TIMEOUT_MAX seconds
         success = False
-        for _ in range(30):
+        for _ in range(TIMEOUT_MAX):
             result = fixture_working_dir_env_repo_scoped[2].execute(query)
 
             if result['data']['labbook']['environment']['imageStatus'] == 'EXISTS':
                 success = True
                 break
 
+            assert result['data']['labbook']['environment']['imageStatus'] == 'BUILD_IN_PROGRESS'
+
             time.sleep(1)
 
-        assert success is True, "Failed to build within 30 second timeout."
+        assert success is True, f"Failed to build within {TIMEOUT_MAX} second timeout."
 
         r = fixture_working_dir_env_repo_scoped[2].execute(query)
         assert 'errors' not in r

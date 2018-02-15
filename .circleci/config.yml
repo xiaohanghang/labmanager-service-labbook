@@ -12,7 +12,7 @@ jobs:
           name: Install build essentials
           command: |
             sudo apt-get update
-            sudo apt-get install build-essential redis-server
+            sudo apt-get install -y build-essential redis-server
       
       - run:
           name: Set Git credentials config
@@ -35,9 +35,9 @@ jobs:
             cd /home/circleci/project
             redis-server &
             rqscheduler --interval=2 2> /dev/null &
+            python /home/circleci/gigantum/labmanager-common/lmcommon/dispatcher/worker.py 7 &
             pytest --cov=lmsrvlabbook --cov=lmsrvcore lmsrvlabbook/
             pytest --cov=lmsrvcore --cov-append lmsrvcore/
             sudo mkdir /mnt/share
-            rq worker labmanager_jobs &
             pytest --cov=lmsrvlabbook --cov=lmsrvcore --cov-append lmsrvlabbook/tests/int_labbook_mutations.py
             coveralls

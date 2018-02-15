@@ -61,6 +61,7 @@ def _create_temp_work_dir():
     config.config["auth"]["audience"] = "io.gigantum.api.dev"
     config_file = os.path.join(temp_dir, "temp_config.yaml")
     config.save(config_file)
+    os.environ['HOST_WORK_DIR'] = temp_dir
 
     return config_file, temp_dir
 

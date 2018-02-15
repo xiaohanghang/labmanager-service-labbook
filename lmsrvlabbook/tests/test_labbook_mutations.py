@@ -948,7 +948,6 @@ class TestLabBookServiceMutations(object):
 
                 chunk.close()
 
-    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     def test_rename_labbook(self, fixture_working_dir):
         """Test renaming a labbook"""
         # Create a dummy labbook to make sure directory structure is set up

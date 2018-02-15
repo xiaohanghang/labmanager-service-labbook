@@ -28,7 +28,6 @@ from lmcommon.container import ContainerOperations
 
 
 class TestContainerMutations(object):
-    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     def test_start_stop_container(self, build_image_for_jupyterlab):
         """Test start stop mutations"""
         query = """
@@ -113,7 +112,6 @@ class TestContainerMutations(object):
                 # Make a best effort
                 pass
 
-    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot build images on CircleCI")
     def test_start_jupyterlab(self, build_image_for_jupyterlab):
         """Test listing labbooks"""
         # Start the container
