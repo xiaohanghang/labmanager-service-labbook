@@ -53,6 +53,6 @@ class StartDevTool(graphene.relay.ClientIDMutation):
                                                           tag=container_override_id)
 
         # Start monitoring lab book environment for activity
-        start_labbook_monitor(lb, username, dev_tool)
+        start_labbook_monitor(lb, username, dev_tool, author=get_logged_in_author())
         
         return StartDevTool(path=tool_url)
