@@ -44,6 +44,17 @@ class TestUserIdentityQueries(object):
 
         snapshot.assert_match(fixture_working_dir[2].execute(query))
 
+    def test_logged_in_user_invalid_token(self, fixture_working_dir, snapshot):
+        query = """
+                {
+                    userIdentity{
+                                  isSessionValid
+                                }
+                }
+                """
+
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
+
     def test_no_logged_in_user(self, fixture_working_dir, snapshot):
         query = """
                 {
@@ -53,12 +64,36 @@ class TestUserIdentityQueries(object):
                                   email
                                   givenName
                                   familyName
+                                  isSessionValid
                                 }
                 }
                 """
 
         # Delete the stored user context
         flask.g.user_obj = None
+        user_dir = os.path.join(fixture_working_dir[1], '.labmanager', 'identity')
+        os.remove(os.path.join(user_dir, 'user.json'))
+
+        # Run query
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
+
+    def test_invalid_token(self, fixture_working_dir, snapshot):
+        query = """
+                {
+                    userIdentity{
+                                  id
+                                  username
+                                  email
+                                  givenName
+                                  familyName
+                                  isSessionValid
+                                }
+                }
+                """
+
+        # Delete the stored user context
+        flask.g.user_obj = None
+        flask.g.access_token = "adsfasdfasdfasdfasdf"
         user_dir = os.path.join(fixture_working_dir[1], '.labmanager', 'identity')
         os.remove(os.path.join(user_dir, 'user.json'))
 

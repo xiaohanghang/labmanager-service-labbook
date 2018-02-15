@@ -26,7 +26,7 @@ import flask
 
 class UserIdentity(graphene.ObjectType, interfaces=(graphene.relay.Node, User)):
     """A type representing the identity of the logged in user"""
-    is_session_valid = graphene.Boolean
+    is_session_valid = graphene.Boolean()
 
     @classmethod
     def get_node(cls, info, id):
@@ -119,4 +119,4 @@ class UserIdentity(graphene.ObjectType, interfaces=(graphene.relay.Node, User)):
             dict
         """
         # Load the current identity manager and check the token, provided by the request context
-        get_identity_manager_instance().is_token_valid(flask.g.get('access_token', None))
+        return get_identity_manager_instance().is_token_valid(flask.g.get('access_token', None))

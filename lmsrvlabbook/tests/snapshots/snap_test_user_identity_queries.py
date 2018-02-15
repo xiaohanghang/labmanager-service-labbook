@@ -35,3 +35,28 @@ snapshots['TestUserIdentityQueries.test_no_logged_in_user 1'] = {
         }
     ]
 }
+
+snapshots['TestUserIdentityQueries.test_logged_in_user_invalid_token 1'] = {
+    'data': {
+        'userIdentity': {
+            'isSessionValid': False
+        }
+    }
+}
+
+snapshots['TestUserIdentityQueries.test_invalid_token 1'] = {
+    'data': {
+        'userIdentity': None
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 35,
+                    'line': 4
+                }
+            ],
+            'message': "('Error decoding token headers.', 401)"
+        }
+    ]
+}
