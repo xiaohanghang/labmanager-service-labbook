@@ -47,7 +47,7 @@ complete_labbook_service.add_url_rule('/labbook/',
                                       view_func=GraphQLView.as_view('graphql', schema=full_schema,
                                                                     graphiql=config.config["flask"]["DEBUG"],
                                                                     middleware=[error_middleware,
-                                                                                time_all_resolvers_middleware,
+                                                                                #time_all_resolvers_middleware,
                                                                                 AuthorizationMiddleware(),
                                                                                 LabBookLoaderMiddleware()]),
                                       methods=['GET', 'POST', 'OPTION'])

@@ -143,7 +143,7 @@ class ChunkUploadMutation(object):
                 return cls.mutate_and_process_upload(info, **kwargs)
             else:
                 # Assume more chunks to go. Short circuit request
-                return cls
+                return cls.mutate_and_wait_for_chunks(info, **kwargs)
 
         except Exception as e:
             logger.error(e)
@@ -163,4 +163,10 @@ class ChunkUploadMutation(object):
     @abc.abstractclassmethod
     def mutate_and_process_upload(cls, info, **kwargs):
         """Method to implement to process the upload. Must return a Mutation type"""
+        raise NotImplemented
+
+    @abc.abstractclassmethod
+    def mutate_and_wait_for_chunks(cls, info, **kwargs):
+        """Method to implement to process set any non-null fields, but essentially just return.
+         Must return a Mutation type"""
         raise NotImplemented

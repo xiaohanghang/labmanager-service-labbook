@@ -192,6 +192,10 @@ class ImportLabbook(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     build_image_job_key = graphene.String()
 
     @classmethod
+    def mutate_and_wait_for_chunks(cls, info, **kwargs):
+        return ImportLabbook()
+
+    @classmethod
     def mutate_and_process_upload(cls, info, **kwargs):
         if not cls.upload_file_path:
             logger.error('No file uploaded')
@@ -348,6 +352,11 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
         chunk_upload_params = ChunkUploadInput(required=True)
 
     new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
+
+    @classmethod
+    def mutate_and_wait_for_chunks(cls, info, **kwargs):
+        return AddLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=None,
+                                                                               cursor="null"))
 
     @classmethod
     def mutate_and_process_upload(cls, info, **kwargs):
