@@ -55,6 +55,26 @@ class TestNodeQueries(object):
 
         snapshot.assert_match(fixture_working_dir[2].execute(query))
 
+    def test_node_package(self, fixture_working_dir, snapshot):
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="node-env-test-lb", description="Example labbook by mutation.")
+
+        env_query = """
+        {
+            node(id: "UGFja2FnZUNvbXBvbmVudDpwaXAmbnVtcHkmMS4xMg==") {
+                id
+                ... on PackageComponent {
+                    manager
+                    package
+                    version
+                    latestVersion
+                }
+            }
+        }
+        """
+        results = fixture_working_dir[2].execute(env_query)
+        snapshot.assert_match(results)
+
     def test_node_environment(self, fixture_working_dir, snapshot):
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="node-env-test-lb", description="Example labbook by mutation.")

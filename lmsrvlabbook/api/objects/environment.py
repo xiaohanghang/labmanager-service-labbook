@@ -39,6 +39,7 @@ from lmsrvlabbook.api.connections.environment import CustomComponentConnection, 
 from lmsrvlabbook.api.objects.basecomponent import BaseComponent
 from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.customcomponent import CustomComponent
+from lmsrvlabbook.dataloader.package import PackageLoader
 
 logger = LMLogger.get_logger()
 
@@ -215,10 +216,15 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             lbc = ListBasedConnection(edges, cursors, kwargs)
             lbc.apply()
 
+            # Create version dataloader
+            keys = [f"{k['manager']}&{k['package']}" for k in lbc.edges]
+            vd = PackageLoader(keys)
+
             # Get DevEnv instances
             edge_objs = []
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                edge_objs.append(PackageComponentConnection.Edge(node=PackageComponent(manager=edge['manager'],
+                edge_objs.append(PackageComponentConnection.Edge(node=PackageComponent(_version_dataloader=vd,
+                                                                                       manager=edge['manager'],
                                                                                        package=edge['package'],
                                                                                        version=edge['version'],
                                                                                        from_base=edge['from_base'],

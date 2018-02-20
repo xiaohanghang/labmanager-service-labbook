@@ -27,6 +27,9 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     # The loaded yaml data
     _component_data = None
 
+    # The version dataloader used to coalesce conda commands
+    _version_dataloader = None
+
     # The Component schema version
     schema = graphene.Int()
 
@@ -63,11 +66,12 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
     def resolve_latest_version(self, info):
         """Resolve the latest_version field"""
-        if self.latest_version is None:
-            # look up latest version
+        if not self._version_dataloader:
+            # No dataloader is available, so load manually
             mgr = get_package_manager(self.manager)
-            self.latest_version = mgr.latest_version(self.package)
-        return self.latest_version
+            return mgr.latest_version(self.package)
+
+        return self._version_dataloader.load(f"{self.manager}&{self.package}")
 
     def resolve_from_base(self, info):
         """Resolve the from_base field"""

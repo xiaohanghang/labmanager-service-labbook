@@ -149,3 +149,15 @@ snapshots['TestNodeQueries.test_favorites_node 2'] = {
         }
     ]
 }
+
+snapshots['TestNodeQueries.test_node_package 1'] = {
+    'data': {
+        'node': {
+            'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmbnVtcHkmMS4xMg==',
+            'latestVersion': '1.14.0',
+            'manager': 'pip',
+            'package': 'numpy',
+            'version': '1.12'
+        }
+    }
+}
