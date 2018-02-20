@@ -27,6 +27,7 @@ from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
+from lmcommon.workflows import GitWorkflow
 
 from lmsrvcore.api import logged_mutation
 from lmsrvcore.auth.identity import parse_token
@@ -61,7 +62,8 @@ class PublishLabbook(graphene.relay.ClientIDMutation):
 
         # BVB -- Should this defer to `sync` if Labbook's remote is already set?
         # Otherwise, it will throw an exception, which may still be ok.
-        lb.publish(username=username, access_token=token)
+        wf = GitWorkflow(labbook=lb)
+        wf.publish(username=username, access_token=token)
 
         return PublishLabbook(success=True)
 
@@ -71,13 +73,14 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
+        force = graphene.Boolean(required=False)
 
     # How many upstream commits it pulled in.
     update_count = graphene.Int()
 
     @classmethod
     @logged_mutation
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, force=False, client_mutation_id=None):
         # Load LabBook
         username = get_logged_in_username()
         working_directory = Configuration().config['git']['working_directory']
@@ -110,6 +113,7 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
                                       username=username, owner=lb.owner['username'], labbook_name=lb.name)
         mgr.configure_git_credentials(default_remote, username)
 
-        cnt = lb.sync(username=username)
+        wf = GitWorkflow(labbook=lb)
+        cnt = lb.sync(username=username, force=force)
 
         return SyncLabbook(update_count=cnt)
