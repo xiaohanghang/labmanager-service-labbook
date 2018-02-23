@@ -19,6 +19,7 @@
 # SOFTWARE.
 import pytest
 import flask
+import redis
 
 from lmsrvcore.auth.user import get_logged_in_author, get_logged_in_username, get_logged_in_user
 from lmcommon.gitlib.git import GitAuthor
@@ -35,9 +36,24 @@ class TestUserAuthHelpers(object):
         assert user.given_name == "Jane"
         assert user.family_name == "Doe"
 
-        # User should now be loaded into the flask global context for this request
-        assert flask.g.user_obj is not None
-        assert flask.g.user_obj == user
+    def test_get_logged_in_user_cached(self, fixture_working_dir_with_cached_user):
+        """Test getting identity manager in a flask app"""
+        # Fake a token
+        flask.g.access_token = "asioauhsdfikollhasdfioluasdlkfbjxclmjvkbdwklurfghaisudfhbasilkdfbaiwulsfbklsadbvf"
+
+        user = get_logged_in_user()
+        assert user.username == "default"
+        assert user.email == "jane@doe.com"
+        assert user.given_name == "Jane"
+        assert user.family_name == "Doe"
+
+        # User should now be loaded into redis
+        client = redis.StrictRedis(db=4)
+        key = flask.g.access_token[0::6]
+        assert "default" == client.hget(key, "username").decode()
+        assert "jane@doe.com" == client.hget(key, "email").decode()
+        assert "Jane" == client.hget(key, "given_name").decode()
+        assert "Doe" == client.hget(key, "family_name").decode()
 
     def test_get_logged_in_username(self, fixture_working_dir_with_cached_user):
         """Test authorization middlewhere when loading a user exists locally"""

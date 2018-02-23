@@ -154,7 +154,7 @@ snapshots['TestNodeQueries.test_node_package 1'] = {
     'data': {
         'node': {
             'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmbnVtcHkmMS4xMg==',
-            'latestVersion': '1.14.0',
+            'latestVersion': '1.14.1',
             'manager': 'pip',
             'package': 'numpy',
             'version': '1.12'

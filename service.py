@@ -22,7 +22,7 @@ import flask
 from flask_cors import CORS, cross_origin
 import shutil
 import os
-
+import base64
 import blueprint
 
 from lmcommon.configuration import Configuration
@@ -39,7 +39,8 @@ logger = LMLogger.get_logger()
 app = Flask("lmsrvlabbook")
 
 # Load configuration class into the flask application
-
+random_bytes = os.urandom(32)
+app.config["SECRET_KEY"] = base64.b64encode(random_bytes).decode('utf-8')
 app.config["LABMGR_CONFIG"] = config = Configuration()
 app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 

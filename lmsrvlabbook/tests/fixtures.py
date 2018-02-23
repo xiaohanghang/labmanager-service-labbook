@@ -45,7 +45,7 @@ from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
 
 
-def _create_temp_work_dir():
+def _create_temp_work_dir(lfs_enabled: bool = True):
     """Helper method to create a temporary working directory and associated config file"""
     # Create a temporary working directory
     temp_dir = os.path.join(tempfile.gettempdir(), uuid.uuid4().hex)
@@ -57,6 +57,7 @@ def _create_temp_work_dir():
     config.config["flask"]["DEBUG"] = False
     # Set the working dir to the new temp dir
     config.config["git"]["working_directory"] = temp_dir
+    config.config["git"]["lfs_enabled"] = lfs_enabled
     # Set the auth0 client to the test client (only contains 1 test user and is partitioned from prod)
     config.config["auth"]["audience"] = "io.gigantum.api.dev"
     config_file = os.path.join(temp_dir, "temp_config.yaml")
@@ -78,6 +79,44 @@ def fixture_working_dir():
     """
     # Create temp dir
     config_file, temp_dir = _create_temp_work_dir()
+
+    # Create user identity
+    user_dir = os.path.join(temp_dir, '.labmanager', 'identity')
+    os.makedirs(user_dir)
+    with open(os.path.join(user_dir, 'user.json'), 'wt') as user_file:
+        json.dump({"username": "default",
+                   "email": "jane@doe.com",
+                   "given_name": "Jane",
+                   "family_name": "Doe"}, user_file)
+
+    # Create test client
+    schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
+
+    with patch.object(Configuration, 'find_default_config', lambda self: config_file):
+        # Load User identity into app context
+        app = Flask("lmsrvlabbook")
+        app.config["LABMGR_CONFIG"] = Configuration()
+        app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
+
+        with app.app_context():
+            # within this block, current_app points to app. Set current usert explicitly(this is done in the middleware)
+            flask.g.user_obj = app.config["LABMGR_ID_MGR"].get_user_profile()
+
+            # Create a test client
+            client = Client(schema, middleware=[LabBookLoaderMiddleware()], context_value=ContextMock())
+
+            yield config_file, temp_dir, client, schema  # name of the config file, temporary working directory, the schema
+
+    # Remove the temp_dir
+    shutil.rmtree(temp_dir)
+
+
+@pytest.fixture
+def fixture_working_dir_lfs_disabled():
+    """A pytest fixture that creates a temporary working directory, config file, schema, and local user identity
+    """
+    # Create temp dir
+    config_file, temp_dir = _create_temp_work_dir(lfs_enabled=False)
 
     # Create user identity
     user_dir = os.path.join(temp_dir, '.labmanager', 'identity')

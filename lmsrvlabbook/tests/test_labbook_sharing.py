@@ -138,7 +138,8 @@ class TestLabbookSharing(object):
 
     def test_import_remote_labbook_from_same_user(self, remote_labbook_repo, fixture_working_dir):
         # Create a labbook by the "default" user
-        conf_file, working_dir = _create_temp_work_dir()
+        # TODO: enable LFS when integration tests support it
+        conf_file, working_dir = _create_temp_work_dir(lfs_enabled=False)
         lb = LabBook(conf_file)
         labbook_dir = lb.new(username="default", name="default-owned-repo-lb", description="my first labbook",
                              owner={"username": "default"})

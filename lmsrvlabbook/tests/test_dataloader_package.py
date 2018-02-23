@@ -52,7 +52,7 @@ class TestDataloaderPackage(object):
         assert len(version_list) == 3
         assert version_list[0] == "2.18.4"
         assert version_list[1] == "0.5"
-        assert version_list[2] == "1.14.0"
+        assert version_list[2] == "1.14.1"
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Conda not available on CircleCI")
     def test_load_many_conda(self):
@@ -67,7 +67,7 @@ class TestDataloaderPackage(object):
         assert len(version_list) == 3
         assert version_list[0] == "2.18.4"
         assert version_list[1] == "1.0.0"
-        assert version_list[2] == "1.14.0"
+        assert version_list[2] == "1.14.1"
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Conda not available on CircleCI")
     def test_load_many_conda2(self):
@@ -82,7 +82,7 @@ class TestDataloaderPackage(object):
         assert len(version_list) == 3
         assert version_list[0] == "2.18.4"
         assert version_list[1] == "1.0.0"
-        assert version_list[2] == "1.14.0"
+        assert version_list[2] == "1.14.1"
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Conda not available on CircleCI")
     def test_load_many_mixed(self):
@@ -97,6 +97,6 @@ class TestDataloaderPackage(object):
         assert len(version_list) == 3
         assert version_list[0] == "2.18.4"
         assert version_list[1] == "1.0.0rc2"
-        assert version_list[2] == "1.14.0"
+        assert version_list[2] == "1.14.1"
 
 
