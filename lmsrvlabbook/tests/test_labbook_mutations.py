@@ -115,6 +115,42 @@ class TestLabBookServiceMutations(object):
         """
         snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
+
+    def test_set_lb_for_untracked_ins_and_outs(self, fixture_working_dir_env_repo_scoped):
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!, $repository: String!, 
+                                 $component_id: String!, $revision: Int!) {
+          createLabbook(input: {name: $name, description: $desc, 
+                                repository: $repository, 
+                                componentId: $component_id,
+                                revision: $revision,
+                                isUntracked: true}) {
+            labbook {
+              id
+              name
+              description
+              input {
+                isUntracked
+              }
+              output {
+                isUntracked
+              }
+              code {
+                isUntracked
+              }
+            }
+          }
+        }
+        """
+        variables = {"name": "unittest-untracked-inout-1", "desc": "my test description",
+                     "component_id": ENV_UNIT_TEST_BASE, "repository": ENV_UNIT_TEST_REPO,
+                     "revision": ENV_UNIT_TEST_REV}
+        r = fixture_working_dir_env_repo_scoped[2].execute(query, variable_values=variables)
+        assert 'errors' not in r
+        assert r['data']['createLabbook']['labbook']['input']['isUntracked'] is True
+        assert r['data']['createLabbook']['labbook']['output']['isUntracked'] is True
+        assert r['data']['createLabbook']['labbook']['code']['isUntracked'] is False
+
     def test_create_labbook_already_exists(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test listing labbooks"""
         query = """
@@ -947,6 +983,7 @@ class TestLabBookServiceMutations(object):
                     assert "rq:job:" in result['data']['importLabbook']['buildImageJobKey']
 
                 chunk.close()
+
 
     def test_rename_labbook(self, fixture_working_dir):
         """Test renaming a labbook"""

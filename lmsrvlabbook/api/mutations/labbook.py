@@ -27,6 +27,7 @@ from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
+from lmcommon.files import FileOperations
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
@@ -55,13 +56,14 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         repository = graphene.String(required=True)
         component_id = graphene.String(required=True)
         revision = graphene.Int(required=True)
+        is_untracked = graphene.Boolean(required=False)
 
     # Return the LabBook instance
     labbook = graphene.Field(lambda: Labbook)
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, name, description, repository, component_id, revision,
-                               client_mutation_id=None):
+                               is_untracked=False, client_mutation_id=None):
         username = get_logged_in_username()
 
         # Create a new empty LabBook
@@ -70,7 +72,18 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
         lb.new(owner={"username": username},
                username=username,
                name=name,
-               description=description)
+               description=description,
+               bypass_lfs=is_untracked)
+
+        if is_untracked:
+            FileOperations.set_untracked(lb, 'input')
+            FileOperations.set_untracked(lb, 'output')
+            input_set = FileOperations.is_set_untracked(lb, 'input')
+            output_set = FileOperations.is_set_untracked(lb, 'output')
+            if not (input_set and output_set):
+                raise ValueError(f'{str(lb)} untracking for input/output in malformed state')
+            if not lb.is_repo_clean:
+                raise ValueError(f'{str(lb)} should have clean Git state after setting for untracked')
 
         # Create a Activity Store instance
         store = ActivityStore(lb)

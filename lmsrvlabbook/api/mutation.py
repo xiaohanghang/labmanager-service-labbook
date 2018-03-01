@@ -24,7 +24,7 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
     DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent, \
-    StartDevTool, SetArtifactsUntracked
+    StartDevTool
 
 
 class LabbookMutations(graphene.ObjectType):
@@ -56,9 +56,6 @@ class LabbookMutations(graphene.ObjectType):
 
     # Update a given labbook to be at the tip of a particular git branch.
     checkout_branch = CheckoutBranch.Field()
-
-    # Set a new labbook to untrack input & output dir (for faster/functional git status).
-    set_artifacts_untracked = SetArtifactsUntracked.Field()
 
     #
     pull_active_branch_from_remote = PullActiveBranchFromRemote.Field()
