@@ -126,25 +126,10 @@ class TestNodeQueries(object):
         # Create favorites
         lb.create_favorite("code", "test1.txt", description="My file with stuff 1")
 
-        # Test bad node ids that index out of bounds
+        # Test bad node that isn't a file
         query = """
                     {
-                        node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYxMDA=") {
-                            ... on LabbookFavorite {
-                                id
-                                key
-                                description
-                                isDir
-                                index
-                            }
-                        }
-                    }
-                    """
-        snapshot.assert_match(fixture_working_dir[2].execute(query))
-
-        query = """
-                    {
-                        node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYtMQ==") {
+                        node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSZ0ZXN0MzMzLnR4dA==") {
                             ... on LabbookFavorite {
                                 id
                                 key
@@ -160,7 +145,7 @@ class TestNodeQueries(object):
         # Get the actual item
         query = """
                     {
-                        node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw") {
+                        node(id: "TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSZ0ZXN0MS50eHQ=") {
                             ... on LabbookFavorite {
                                 id
                                 key

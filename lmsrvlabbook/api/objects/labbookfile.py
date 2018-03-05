@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
+import base64
 
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
@@ -115,63 +116,57 @@ class LabbookFavorite(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
     # Section in the LabBook (code, input, output)
     section = graphene.String(required=True)
 
-    # Index value indicating the order of the favorite
-    index = graphene.Int(required=True)
-
     # Relative path from labbook root directory.
-    key = graphene.String()
+    key = graphene.String(required=True)
+
+    # Index value indicating the order of the favorite
+    index = graphene.Int()
 
     # Short description about the favorite
     description = graphene.String()
+
+    # The graphene type id for the associated file
+    associated_labbook_file_id = graphene.String()
 
     # True indicates that the favorite is a directory
     is_dir = graphene.Boolean()
 
     def _load_favorite_info(self, dataloader):
         """Private method to retrieve file info for a given key"""
-        if self._favorite_data:
-            # File info is already available in this instance
-            favorite_data = self._favorite_data
-        else:
+        if not self._favorite_data:
             # Load file info from LabBook
-            if not self.section or self.index is None:
-                raise ValueError("Must set `section` and `index` on object creation to resolve favorite info")
+            if not self.section or self.key is None:
+                raise ValueError("Must set `section` and `key` on object creation to resolve favorite info")
 
             # Load labbook instance
             lb = dataloader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
             data = lb.get_favorites(self.section)
 
-            # Make sure index is valid
-            if self.index > len(data) - 1:
-                raise ValueError("Invalid favorite index value")
-            if self.index < 0:
-                raise ValueError("Invalid favorite index value")
-
             # Pull out single entry
-            favorite_data = data[self.index]
+            self._favorite_data = data[self.key]
 
         # Set class properties
-        self.description = favorite_data['description']
-        self.key = favorite_data['key']
-        self.is_dir = favorite_data['is_dir']
+        self.description = self._favorite_data['description']
+        self.index = self._favorite_data['index']
+        self.is_dir = self._favorite_data['is_dir']
 
     @classmethod
     def get_node(cls, info, id):
         """Method to resolve the object based on it's Node ID"""
         # Parse the key
-        owner, name, section, index = id.split("&")
+        owner, name, section, key = id.split("&")
 
-        return LabbookFavorite(id=f"{owner}&{name}&{section}&{index}", name=name, owner=owner, section=section,
-                               index=int(index))
+        return LabbookFavorite(id=f"{owner}&{name}&{section}&{key}", name=name, owner=owner, section=section,
+                               key=key)
 
     def resolve_id(self, info):
         """Resolve the unique Node id for this object"""
         if not self.id:
-            if not self.owner or not self.name or not self.section or self.index is None:
-                raise ValueError("Resolving a LabbookFavorite Node ID requires owner,name,section, and index to be set")
+            if not self.owner or not self.name or not self.section or self.key is None:
+                raise ValueError("Resolving a LabbookFavorite Node ID requires owner,name,section, and key to be set")
 
-            self.id = f"{self.owner}&{self.name}&{self.section}&{self.index}"
+            self.id = f"{self.owner}&{self.name}&{self.section}&{self.key}"
 
         return self.id
 
@@ -187,8 +182,18 @@ class LabbookFavorite(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
             self._load_favorite_info(info.context.labbook_loader)
         return self.key
 
+    def resolve_index(self, info):
+        """Resolve the index field"""
+        if self.index is None:
+            self._load_favorite_info(info.context.labbook_loader)
+        return self.index
+
     def resolve_description(self, info):
         """Resolve the is_dir field"""
         if self.description is None:
             self._load_favorite_info(info.context.labbook_loader)
         return self.description
+
+    def resolve_associated_labbook_file_id(self, info):
+        """Resolve the associated_labbook_file_id field"""
+        return base64.b64encode(f"LabbookFile:{self.owner}&{self.name}&{self.section}&{self.key}".encode()).decode()

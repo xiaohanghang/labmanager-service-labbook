@@ -138,12 +138,14 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
         lbc.apply()
 
         edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            create_data = {"id": f"{self.owner}&{self.name}&{self.section}&{edge['index']}",
+        for edge_name, cursor in zip(lbc.edges, lbc.cursors):
+            edge = edges[edge_name]
+            create_data = {"id": f"{self.owner}&{self.name}&{self.section}&{edge['key']}",
                            "owner": self.owner,
                            "section": self.section,
                            "name": self.name,
                            "index": int(edge['index']),
+                           "key": edge['key'],
                            "_favorite_data": edge}
             edge_objs.append(LabbookFavoriteConnection.Edge(node=LabbookFavorite(**create_data), cursor=cursor))
 

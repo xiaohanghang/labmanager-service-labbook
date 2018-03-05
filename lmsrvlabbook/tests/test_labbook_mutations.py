@@ -652,111 +652,6 @@ class TestLabBookServiceMutations(object):
         # Verify the favorite is there
         snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
-    def test_add_favorite_at_index(self, mock_create_labbooks, snapshot):
-        """Method to test adding a favorite"""
-        # Verify no favs
-        fav_query = """
-                   {
-                     labbook(name: "labbook1", owner: "default") {
-                       name
-                       code{
-                           favorites{
-                               edges {
-                                   node {
-                                       id
-                                       index
-                                       key
-                                       description
-                                       isDir
-                                   }
-                               }
-                           }
-                       }
-                     }
-                   }
-                   """
-        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
-
-        test_file_root = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
-                                 'labbook1', 'code')
-        with open(os.path.join(test_file_root, 'test1.txt'), 'wt') as tf:
-            tf.write("a test file 1")
-        with open(os.path.join(test_file_root, 'test2.txt'), 'wt') as tf:
-            tf.write("a test file 2")
-        with open(os.path.join(test_file_root, 'test3.txt'), 'wt') as tf:
-            tf.write("a test file 3")
-
-        # Add a favorite in code
-        query = """
-        mutation addFavorite {
-          addFavorite(
-            input: {
-              owner: "default",
-              labbookName: "labbook1",
-              section: "code",
-              key: "test1.txt",
-              description: "my test favorite 1"
-            }) {
-              newFavoriteEdge{
-                node{
-                   index
-                   key
-                   description
-                   }
-              }
-            }
-        }
-        """
-        snapshot.assert_match(mock_create_labbooks[2].execute(query))
-
-        query = """
-        mutation addFavorite {
-          addFavorite(
-            input: {
-              owner: "default",
-              labbookName: "labbook1",
-              section: "code",
-              key: "test2.txt",
-              description: "my test favorite 2"
-            }) {
-              newFavoriteEdge{
-                node{
-                   index
-                   key
-                   description
-                   }
-              }
-            }
-        }
-        """
-        snapshot.assert_match(mock_create_labbooks[2].execute(query))
-
-        query = """
-        mutation addFavorite {
-          addFavorite(
-            input: {
-              owner: "default",
-              labbookName: "labbook1",
-              section: "code",
-              key: "test3.txt",
-              description: "my test favorite 3",
-              index: 1
-            }) {
-              newFavoriteEdge{
-                node{
-                   index
-                   key
-                   description
-                   }
-              }
-            }
-        }
-        """
-        snapshot.assert_match(mock_create_labbooks[2].execute(query))
-
-        # Verify the favorites are there
-        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
-
     def test_update_favorite(self, mock_create_labbooks, snapshot):
         """Method to test updating a favorite"""
         # Verify no favs
@@ -788,6 +683,8 @@ class TestLabBookServiceMutations(object):
                                   'labbook1', 'code', 'test2.txt')
         with open(test_file, 'wt') as tf:
             tf.write("a test file...")
+        with open(test_file2, 'wt') as tf:
+            tf.write("a test file...")
 
         # Add a favorite in code
         query = """
@@ -814,11 +711,33 @@ class TestLabBookServiceMutations(object):
         """
         snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
-        # Verify the favorite is there
-        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
+        # Add a favorite in code
+        query = """
+        mutation addFavorite {
+          addFavorite(
+            input: {
+              owner: "default",
+              labbookName: "labbook1",
+              section: "code",
+              key: "test2.txt",
+              description: "my test favorite 2"
+            }) {
+              newFavoriteEdge{
+                node {
+                   id
+                   index
+                   key
+                   description
+                   isDir
+                }
+              }
+            }
+        }
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
-        # rename the favorite
-        os.rename(test_file, test_file2)
+        # Verify the favorites are there
+        snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
         query = """
         mutation updateFavorite {
@@ -827,8 +746,8 @@ class TestLabBookServiceMutations(object):
               owner: "default",
               labbookName: "labbook1",
               section: "code",
-              index: 0,
-              updatedKey: "test2.txt",
+              updatedIndex: 0,
+              key: "test2.txt",
               updatedDescription: "UPDATED"
             }) {
               updatedFavoriteEdge{
@@ -845,6 +764,7 @@ class TestLabBookServiceMutations(object):
         """
         snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
+        # Make sure they are reordered
         snapshot.assert_match(mock_create_labbooks[2].execute(fav_query))
 
     def test_delete_favorite(self, mock_create_labbooks, snapshot):
@@ -911,7 +831,7 @@ class TestLabBookServiceMutations(object):
               owner: "default",
               labbookName: "labbook1",
               section: "code",
-              index: 0
+              key: "test.txt"
             }) {
               success
             }

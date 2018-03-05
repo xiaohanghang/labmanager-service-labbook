@@ -68,88 +68,6 @@ snapshots['TestNodeQueries.test_file_node 1'] = {
     }
 }
 
-snapshots['TestNodeQueries.test_favorites_node 1'] = {
-    'data': {
-        'node': {
-            'description': None,
-            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYxMDA=',
-            'index': 100,
-            'isDir': None,
-            'key': None
-        }
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 6
-                }
-            ],
-            'message': 'Invalid favorite index value'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 7
-                }
-            ],
-            'message': 'Invalid favorite index value'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 8
-                }
-            ],
-            'message': 'Invalid favorite index value'
-        }
-    ]
-}
-
-snapshots['TestNodeQueries.test_favorites_node 2'] = {
-    'data': {
-        'node': {
-            'description': None,
-            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYtMQ==',
-            'index': -1,
-            'isDir': None,
-            'key': None
-        }
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 6
-                }
-            ],
-            'message': 'Invalid favorite index value'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 7
-                }
-            ],
-            'message': 'Invalid favorite index value'
-        },
-        {
-            'locations': [
-                {
-                    'column': 33,
-                    'line': 8
-                }
-            ],
-            'message': 'Invalid favorite index value'
-        }
-    ]
-}
-
 snapshots['TestNodeQueries.test_node_package 1'] = {
     'data': {
         'node': {
@@ -158,6 +76,59 @@ snapshots['TestNodeQueries.test_node_package 1'] = {
             'manager': 'pip',
             'package': 'numpy',
             'version': '1.12'
+        }
+    }
+}
+
+snapshots['TestNodeQueries.test_favorites_node 1'] = {
+    'data': {
+        'node': {
+            'description': None,
+            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSZ0ZXN0MzMzLnR4dA==',
+            'index': None,
+            'isDir': None,
+            'key': 'test333.txt'
+        }
+    },
+    'errors': [
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 7
+                }
+            ],
+            'message': "'test333.txt'"
+        },
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 8
+                }
+            ],
+            'message': "'test333.txt'"
+        },
+        {
+            'locations': [
+                {
+                    'column': 33,
+                    'line': 9
+                }
+            ],
+            'message': "'test333.txt'"
+        }
+    ]
+}
+
+snapshots['TestNodeQueries.test_favorites_node 2'] = {
+    'data': {
+        'node': {
+            'description': 'My file with stuff 1',
+            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSZ0ZXN0MS50eHQ=',
+            'index': 0,
+            'isDir': False,
+            'key': 'test1.txt'
         }
     }
 }

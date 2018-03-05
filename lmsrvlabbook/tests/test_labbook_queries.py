@@ -596,6 +596,7 @@ class TestLabBookServiceQueries(object):
                                         key
                                         description
                                         isDir
+                                        associatedLabbookFileId
                                     }
                                 }
                             }
@@ -619,6 +620,7 @@ class TestLabBookServiceQueries(object):
                                         key
                                         description
                                         isDir
+                                        associatedLabbookFileId
                                     }
                                 }
                             }
@@ -642,6 +644,7 @@ class TestLabBookServiceQueries(object):
                                         key
                                         description
                                         isDir
+                                        associatedLabbookFileId
                                     }
                                 }
                             }
@@ -665,6 +668,7 @@ class TestLabBookServiceQueries(object):
                                         key
                                         description
                                         isDir
+                                        associatedLabbookFileId
                                     }
                                 }
                             }
@@ -678,6 +682,7 @@ class TestLabBookServiceQueries(object):
                                         key
                                         description
                                         isDir
+                                        associatedLabbookFileId
                                     }
                                 }
                             }
@@ -691,6 +696,7 @@ class TestLabBookServiceQueries(object):
                                         key
                                         description
                                         isDir
+                                        associatedLabbookFileId
                                     }
                                 }
                             }

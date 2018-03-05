@@ -528,13 +528,12 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
         key = graphene.String(required=True)
         description = graphene.String(required=False)
         is_dir = graphene.Boolean(required=False)
-        index = graphene.Int(required=False)
 
     new_favorite_edge = graphene.Field(LabbookFavoriteConnection.Edge)
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, key, description=None, is_dir=False,
-                               index=None, client_mutation_id=None):
+                               client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
@@ -543,21 +542,19 @@ class AddLabbookFavorite(graphene.relay.ClientIDMutation):
         if is_dir:
             is_dir = is_dir
 
-        new_favorite = lb.create_favorite(section, key,
-                                          description=description,
-                                          position=index,
-                                          is_dir=is_dir)
+            # Make sure trailing slashes are always present when favoriting a dir
+            if key[-1] != "/":
+                key = f"{key}/"
 
-        # Prime dataloader with labbook you already loaded
-        dataloader = LabBookLoader()
-        dataloader.prime(f"{owner}&{labbook_name}&{lb.name}", lb)
+        new_favorite = lb.create_favorite(section, key, description=description, is_dir=is_dir)
 
         # Create data to populate edge
-        create_data = {"id": f"{owner}&{labbook_name}&{section}&{new_favorite['index']}",
+        create_data = {"id": f"{owner}&{labbook_name}&{section}&{key}",
                        "owner": owner,
                        "section": section,
                        "name": labbook_name,
-                       "index": int(new_favorite['index']),
+                       "key": key,
+                       "index": new_favorite['index'],
                        "_favorite_data": new_favorite}
 
         # Create cursor
@@ -572,36 +569,29 @@ class UpdateLabbookFavorite(graphene.relay.ClientIDMutation):
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         section = graphene.String(required=True)
-        index = graphene.Int(required=True)
+        key = graphene.String(required=True)
         updated_index = graphene.Int(required=False)
-        updated_key = graphene.String(required=False)
         updated_description = graphene.String(required=False)
 
     updated_favorite_edge = graphene.Field(LabbookFavoriteConnection.Edge)
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, index=None, updated_index=None,
-                               updated_key=None, updated_description=None, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, key, updated_index=None,
+                               updated_description=None, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Update Favorite
-        new_favorite = lb.update_favorite(section, index,
+        new_favorite = lb.update_favorite(section, key,
                                           new_description=updated_description,
-                                          new_index=updated_index,
-                                          new_key=updated_key)
-
-        # Prime dataloader with labbook you already loaded
-        dataloader = LabBookLoader()
-        dataloader.prime(f"{owner}&{labbook_name}&{lb.name}", lb)
+                                          new_index=updated_index)
 
         # Create data to populate edge
-        create_data = {"id": f"{owner}&{labbook_name}&{section}&{new_favorite['index']}",
+        create_data = {"id": f"{owner}&{labbook_name}&{section}&{key}",
                        "owner": owner,
                        "section": section,
-                       "name": labbook_name,
-                       "index": int(new_favorite['index']),
+                       "key": key,
                        "_favorite_data": new_favorite}
 
         # Create dummy cursor
@@ -616,18 +606,18 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         section = graphene.String(required=True)
-        index = graphene.Int(required=True)
+        key = graphene.String(required=True)
 
     success = graphene.Boolean()
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, index, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, key, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
         # Remove Favorite
-        lb.remove_favorite(section, index)
+        lb.remove_favorite(section, key)
 
         return RemoveLabbookFavorite(success=True)
 
