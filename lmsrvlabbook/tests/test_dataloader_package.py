@@ -51,7 +51,7 @@ class TestDataloaderPackage(object):
         version_list = promise1.get()
         assert len(version_list) == 3
         assert version_list[0] == "2.18.4"
-        assert version_list[1] == "0.5"
+        assert version_list[1] == "0.6"
         assert version_list[2] == "1.14.1"
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Conda not available on CircleCI")

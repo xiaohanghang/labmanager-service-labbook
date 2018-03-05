@@ -706,6 +706,93 @@ class TestLabBookServiceQueries(object):
                     """
         snapshot.assert_match(fixture_working_dir[2].execute(query))
 
+    def test_page_favorites(self, fixture_working_dir, snapshot):
+        """Test listing labbook favorites"""
+
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook1")
+
+        # Setup some favorites in code
+        with open(os.path.join(lb.root_dir, 'code', 'test1.txt'), 'wt') as test_file:
+            test_file.write("blah1")
+        with open(os.path.join(lb.root_dir, 'code', 'test2.txt'), 'wt') as test_file:
+            test_file.write("blah2")
+
+        # Setup a favorite dir in input
+        os.makedirs(os.path.join(lb.root_dir, 'code', 'blah'))
+        os.makedirs(os.path.join(lb.root_dir, 'input', 'data1'))
+        os.makedirs(os.path.join(lb.root_dir, 'output', 'data2'))
+
+        # Create favorites
+        lb.create_favorite("code", "test1.txt", description="My file with stuff 1")
+        lb.create_favorite("code", "test2.txt", description="My file with stuff 2")
+        lb.create_favorite("code", "blah/", description="testing", is_dir=True)
+        lb.create_favorite("input", "data1/", description="Data dir 1", is_dir=True)
+        lb.create_favorite("output", "data2/", description="Data dir 2", is_dir=True)
+
+        # Get 2 only
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            favorites(first: 2){
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
+                                        associatedLabbookFileId
+                                    }
+                                    cursor
+                                }                                                   
+                                pageInfo{
+                                    startCursor
+                                    hasNextPage
+                                    hasPreviousPage
+                                    endCursor
+                                }
+                            }
+                        }
+                      }
+                    }
+                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
+
+        # Get last page
+        query = """
+                    {
+                      labbook(name: "labbook1", owner: "default") {
+                        name
+                        code{
+                            favorites(first: 2, after: "MQ=="){
+                                edges {
+                                    node {
+                                        id
+                                        index
+                                        key
+                                        description
+                                        isDir
+                                        associatedLabbookFileId
+                                    }
+                                    cursor
+                                }                                                   
+                                pageInfo{
+                                    startCursor
+                                    hasNextPage
+                                    hasPreviousPage
+                                    endCursor
+                                }
+                            }
+                        }
+                      }
+                    }
+                    """
+
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
+
     def test_list_favorite_and_files(self, fixture_working_dir, snapshot):
         """Test listing labbook favorites"""
         lb = LabBook(fixture_working_dir[0])
