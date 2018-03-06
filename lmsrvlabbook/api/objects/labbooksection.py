@@ -130,7 +130,7 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.get_favorites(self.section)
+        edges = [x[1] for x in lb.get_favorites(self.section).items()]
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
@@ -138,8 +138,7 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
         lbc.apply()
 
         edge_objs = []
-        for edge_name, cursor in zip(lbc.edges, lbc.cursors):
-            edge = edges[edge_name]
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
             create_data = {"id": f"{self.owner}&{self.name}&{self.section}&{edge['key']}",
                            "owner": self.owner,
                            "section": self.section,

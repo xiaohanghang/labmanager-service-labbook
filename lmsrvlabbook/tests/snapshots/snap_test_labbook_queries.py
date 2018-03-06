@@ -1271,3 +1271,76 @@ snapshots['TestLabBookServiceQueries.test_list_favorite_and_files 1'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_page_favorites 1'] = {
+    'data': {
+        'labbook': {
+            'code': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'cursor': 'MA==',
+                            'node': {
+                                'associatedLabbookFileId': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QxLnR4dA==',
+                                'description': 'My file with stuff 1',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSZ0ZXN0MS50eHQ=',
+                                'index': 0,
+                                'isDir': False,
+                                'key': 'test1.txt'
+                            }
+                        },
+                        {
+                            'cursor': 'MQ==',
+                            'node': {
+                                'associatedLabbookFileId': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QyLnR4dA==',
+                                'description': 'My file with stuff 2',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSZ0ZXN0Mi50eHQ=',
+                                'index': 1,
+                                'isDir': False,
+                                'key': 'test2.txt'
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'endCursor': 'MQ==',
+                        'hasNextPage': True,
+                        'hasPreviousPage': False,
+                        'startCursor': 'MA=='
+                    }
+                }
+            },
+            'name': 'labbook1'
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_page_favorites 2'] = {
+    'data': {
+        'labbook': {
+            'code': {
+                'favorites': {
+                    'edges': [
+                        {
+                            'cursor': 'Mg==',
+                            'node': {
+                                'associatedLabbookFileId': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJmJsYWgv',
+                                'description': 'testing',
+                                'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSZibGFoLw==',
+                                'index': 2,
+                                'isDir': True,
+                                'key': 'blah/'
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'endCursor': 'Mg==',
+                        'hasNextPage': False,
+                        'hasPreviousPage': False,
+                        'startCursor': 'Mg=='
+                    }
+                }
+            },
+            'name': 'labbook1'
+        }
+    }
+}
