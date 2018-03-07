@@ -834,6 +834,7 @@ class TestLabBookServiceMutations(object):
               key: "test.txt"
             }) {
               success
+              removedNodeId
             }
         }
         """

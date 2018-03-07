@@ -415,6 +415,7 @@ snapshots['TestLabBookServiceMutations.test_delete_favorite 2'] = {
 snapshots['TestLabBookServiceMutations.test_delete_favorite 3'] = {
     'data': {
         'removeFavorite': {
+            'removedNodeId': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSZ0ZXN0LnR4dA==',
             'success': True
         }
     }

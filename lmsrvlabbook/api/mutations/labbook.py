@@ -609,6 +609,7 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
         key = graphene.String(required=True)
 
     success = graphene.Boolean()
+    removed_node_id = graphene.String()
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, section, key, client_mutation_id=None):
@@ -616,10 +617,15 @@ class RemoveLabbookFavorite(graphene.ClientIDMutation):
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
+        # Manually generate the Node ID for now. This simplifies the connection between the file browser and favorites
+        # widgets in the UI
+        favorite_node_id = f"LabbookFavorite:{owner}&{labbook_name}&{section}&{key}"
+        favorite_node_id = base64.b64encode(favorite_node_id.encode()).decode()
+
         # Remove Favorite
         lb.remove_favorite(section, key)
 
-        return RemoveLabbookFavorite(success=True)
+        return RemoveLabbookFavorite(success=True, removed_node_id=favorite_node_id)
 
 
 class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
