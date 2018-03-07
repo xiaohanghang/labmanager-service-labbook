@@ -34,6 +34,7 @@ from lmsrvcore.auth.identity import parse_token
 
 from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.objects.environment import Environment
+from lmsrvlabbook.api.objects.overview import LabbookOverview
 from lmsrvlabbook.api.objects.ref import LabbookRef
 from lmsrvlabbook.api.objects.labbooksection import LabbookSection
 from lmsrvlabbook.api.connections.activity import ActivityConnection
@@ -79,6 +80,9 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # Environment Information
     environment = graphene.Field(Environment)
 
+    # Overview Information
+    overview = graphene.Field(LabbookOverview)
+
     # List of sections
     code = graphene.Field(LabbookSection)
     input = graphene.Field(LabbookSection)
@@ -121,6 +125,10 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     def resolve_environment(self, info):
         """"""
         return Environment(id=f"{self.owner}&{self.name}", owner=self.owner, name=self.name)
+
+    def resolve_overview(self, info):
+        """"""
+        return LabbookOverview(id=f"{self.owner}&{self.name}", owner=self.owner, name=self.name)
 
     def resolve_schema_version(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
