@@ -53,6 +53,9 @@ class ImageStatus(graphene.Enum):
     # The image is being built
     BUILD_IN_PROGRESS = 1
 
+    # The task to build the image is stuck in queued
+    BUILD_QUEUED = 99
+
     # The image has been built and the Dockerfile has yet to change
     EXISTS = 2
 
@@ -139,12 +142,16 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             else:
                 image_status = ImageStatus.BUILD_FAILED
 
-        if any([j.status in ['started', 'queued'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.info(f"Image status for {lb.key} is BUILD_IN_PROGRESS")
+        if any([j.status in ['started'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
+            logger.debug(f"Image status for {lb.key} is BUILD_IN_PROGRESS")
             # build_image being in progress takes precedence over if image already exists (unlikely event).
             if image_status == ImageStatus.EXISTS:
-                logger.warning(f'Got started/queued build_image for labbook {lb.key}, but image exists.')
+                logger.warning(f'Got build_image for labbook {lb.key}, but image exists.')
             image_status = ImageStatus.BUILD_IN_PROGRESS
+
+        if any([j.status in ['queued'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
+            logger.warning(f"build_image for {lb.key} stuck in queued state")
+            image_status = ImageStatus.BUILD_QUEUED
 
         return image_status.value
 

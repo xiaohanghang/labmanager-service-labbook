@@ -95,12 +95,13 @@ class TestEnvironmentMutations(object):
           }
         }
         """
+
         r = fixture_working_dir_env_repo_scoped[2].execute(build_query)
         import pprint;
         pprint.pprint(r)
         assert 'errors' not in r
 
-        assert r['data']['buildImage']['environment']['imageStatus'] == 'BUILD_IN_PROGRESS'
+        assert r['data']['buildImage']['environment']['imageStatus'] in ['BUILD_QUEUED', 'BUILD_IN_PROGRESS']
         assert r['data']['buildImage']['environment']['containerStatus'] == 'NOT_RUNNING'
 
         # Wait for build to succeed for up to TIMEOUT_MAX seconds
@@ -162,7 +163,7 @@ class TestEnvironmentMutations(object):
         """
         r = fixture_working_dir_env_repo_scoped[2].execute(build_query)
         assert 'errors' not in r
-        assert r['data']['buildImage']['environment']['imageStatus'] == 'BUILD_IN_PROGRESS'
+        assert r['data']['buildImage']['environment']['imageStatus'] in ['BUILD_QUEUED', 'BUILD_IN_PROGRESS']
         assert r['data']['buildImage']['environment']['containerStatus'] == 'NOT_RUNNING'
 
         # Wait for build to succeed for up to TIMEOUT_MAX seconds
