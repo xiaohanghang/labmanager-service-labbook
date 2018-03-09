@@ -124,23 +124,14 @@ class LabbookOverview(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
 
         return self._package_manager_counts['pip']
 
-    def resolve_num_pip_packages(self, info, **kwargs):
+    def resolve_num_custom_dependencies(self, info, **kwargs):
         """Resolver for getting number of custom dependencies in the labbook"""
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        custom_dir = os.path.join(lb.root_dir, ".gigantum", "env", "custom")
 
-        self._package_manager_counts = {'apt': 0,
-                                        'conda2': 0,
-                                        'conda3': 0,
-                                        'pip': 0}
+        count = len([x for x in glob.glob(os.path.join(custom_dir, "*.yaml"))])
 
-        for f in glob.glob(os.path.join(pkg_dir, "*.yaml")):
-            f = os.path.basename(f)
-            mgr, _ = f.split('_', 1)
-
-            self._package_manager_counts[mgr] = self._package_manager_counts[mgr] + 1
-
-        return self._package_manager_counts['pip']
-
+        return count
 
     def resolve_recent_activity(self, info, **kwargs):
         """Resolver for getting number of pip packages in the labbook"""
