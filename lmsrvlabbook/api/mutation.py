@@ -19,7 +19,7 @@
 # SOFTWARE.
 import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
-    AddCustomComponent, AddPackageComponent, CreateUserNote, StopContainer, ImportLabbook,\
+    AddCustomComponent, AddPackageComponent, CreateUserNote, StopContainer, ImportLabbook, DeleteLabbook, \
     ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
@@ -41,6 +41,9 @@ class LabbookMutations(graphene.ObjectType):
 
     # Create a new labbook on the file system.
     create_labbook = CreateLabbook.Field()
+
+    # Delete a labbook off the file system
+    delete_labbook = DeleteLabbook.Field()
 
     # Rename new labbook
     rename_labbook = RenameLabbook.Field()

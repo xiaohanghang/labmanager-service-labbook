@@ -115,6 +115,52 @@ class TestLabBookServiceMutations(object):
         """
         snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
+    def test_delete_labbook(self, mock_create_labbooks, fixture_working_dir_env_repo_scoped):
+        """Test deleting a LabBook off disk. """
+        labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')
+
+        assert os.path.exists(labbook_dir)
+
+        delete_query = f"""
+        mutation delete {{
+            deleteLabbook(input: {{
+                owner: "default",
+                labbookName: "labbook1",
+                confirm: true
+            }}) {{
+                success
+            }}
+        }}
+        """
+
+        r = fixture_working_dir_env_repo_scoped[2].execute(delete_query)
+        assert 'errors' not in r
+        assert r['data']['deleteLabbook']['success'] is True
+        assert not os.path.exists(labbook_dir)
+
+    def test_delete_labbook_dry_run(self, mock_create_labbooks, fixture_working_dir_env_repo_scoped):
+        """Test deleting a LabBook off disk. """
+        labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')
+
+        assert os.path.exists(labbook_dir)
+
+        delete_query = f"""
+        mutation delete {{
+            deleteLabbook(input: {{
+                owner: "default",
+                labbookName: "labbook1",
+                confirm: false
+            }}) {{
+                success
+            }}
+        }}
+        """
+
+        r = fixture_working_dir_env_repo_scoped[2].execute(delete_query)
+        assert 'errors' not in r
+        assert r['data']['deleteLabbook']['success'] is False
+        assert os.path.exists(labbook_dir)
+
 
     def test_set_lb_for_untracked_ins_and_outs(self, fixture_working_dir_env_repo_scoped):
         query = """

@@ -20,10 +20,12 @@
 import base64
 import os
 from docker.errors import ImageNotFound
+import shutil
 
 import graphene
 
 from lmcommon.configuration import Configuration, get_docker_client
+from lmcommon.container import ContainerOperations
 from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
@@ -113,6 +115,44 @@ class CreateLabbook(graphene.relay.ClientIDMutation):
 
         # Get a graphene instance of the newly created LabBook
         return CreateLabbook(labbook=Labbook(owner=username, name=lb.name))
+
+
+class DeleteLabbook(graphene.ClientIDMutation):
+    """Delete a labbook from disk. """
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        confirm = graphene.Boolean(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, confirm):
+        username = get_logged_in_username()
+        working_directory = Configuration().config['git']['working_directory']
+        inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
+                                             labbook_name)
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_directory(inferred_lb_directory)
+
+        if confirm:
+            logger.warning(f"Deleting {str(lb)}...")
+            try:
+                lb, stopped = ContainerOperations.stop_container(labbook=lb, username=username)
+            except OSError:
+                pass
+            lb, docker_removed = ContainerOperations.delete_image(labbook=lb, username=username)
+            if not docker_removed:
+                raise ValueError(f'Cannot delete docker image for {str(lb)} - unable to delete LB from disk')
+            shutil.rmtree(lb.root_dir, ignore_errors=True)
+            if os.path.exists(lb.root_dir):
+                logger.error(f'Deleted {str(lb)} but root directory {lb.root_dir} still exists!')
+                return DeleteLabbook(success=False)
+            else:
+                return DeleteLabbook(success=True)
+        else:
+            logger.info(f"Dry run in deleting {str(lb)} -- not deleted.")
+            return DeleteLabbook(success=False)
 
 
 class RenameLabbook(graphene.ClientIDMutation):
