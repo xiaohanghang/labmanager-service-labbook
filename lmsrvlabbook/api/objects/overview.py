@@ -46,6 +46,7 @@ class LabbookOverview(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
     num_conda2_packages = graphene.Int()
     num_conda3_packages = graphene.Int()
     num_pip_packages = graphene.Int()
+    num_custom_dependencies = graphene.Int()
 
     # List last 4 activity items that have show=True
     recent_activity = graphene.List(ActivityRecordObject)
@@ -122,6 +123,15 @@ class LabbookOverview(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
             self._get_all_package_manager_counts(lb)
 
         return self._package_manager_counts['pip']
+
+    def resolve_num_custom_dependencies(self, info, **kwargs):
+        """Resolver for getting number of custom dependencies in the labbook"""
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        custom_dir = os.path.join(lb.root_dir, ".gigantum", "env", "custom")
+
+        count = len([x for x in glob.glob(os.path.join(custom_dir, "*.yaml"))])
+
+        return count
 
     def resolve_recent_activity(self, info, **kwargs):
         """Resolver for getting number of pip packages in the labbook"""
