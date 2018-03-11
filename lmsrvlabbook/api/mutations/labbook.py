@@ -127,7 +127,7 @@ class DeleteLabbook(graphene.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, confirm):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, confirm, client_mutation_id=None):
         username = get_logged_in_username()
         working_directory = Configuration().config['git']['working_directory']
         inferred_lb_directory = os.path.join(working_directory, username, owner, 'labbooks',
