@@ -45,18 +45,6 @@ snapshots['TestNodeQueries.test_node_environment 2'] = {
     }
 }
 
-snapshots['TestNodeQueries.test_favorites_node 3'] = {
-    'data': {
-        'node': {
-            'description': 'My file with stuff 1',
-            'id': 'TGFiYm9va0Zhdm9yaXRlOmRlZmF1bHQmbGFiYm9vazEmY29kZSYw',
-            'index': 0,
-            'isDir': False,
-            'key': 'test1.txt'
-        }
-    }
-}
-
 snapshots['TestNodeQueries.test_file_node 1'] = {
     'data': {
         'node': {
@@ -72,7 +60,7 @@ snapshots['TestNodeQueries.test_node_package 1'] = {
     'data': {
         'node': {
             'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmbnVtcHkmMS4xMg==',
-            'latestVersion': '1.14.1',
+            'latestVersion': '1.14.2',
             'manager': 'pip',
             'package': 'numpy',
             'version': '1.12'

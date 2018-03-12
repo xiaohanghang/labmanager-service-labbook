@@ -112,6 +112,7 @@ class TestContainerMutations(object):
                 # Make a best effort
                 pass
 
+    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot run this networking test in CircleCI environment")
     def test_start_jupyterlab(self, build_image_for_jupyterlab):
         """Test listing labbooks"""
         # Start the container
