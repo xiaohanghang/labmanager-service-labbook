@@ -185,7 +185,8 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         """
         # Get base image data from the LabBook
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        component_data = lb.get_base()
+        cm = ComponentManager(lb)
+        component_data = cm.base_fields
 
         if component_data:
             return BaseComponent(id=f"{component_data['###repository###']}&{component_data['id']}&{component_data['revision']}",
