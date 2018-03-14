@@ -183,21 +183,17 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         Returns:
 
         """
-        # Get base image data
+        # Get base image data from the LabBook
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
-
-        component_data = cm.get_component_list("base")
+        component_data = cm.base_fields
 
         if component_data:
-            if len(component_data) != 1:
-                raise IndexError("A LabBook should have exactly 1 base. Verify LabBook environment configuration")
-
-            component_data = component_data[0]
             return BaseComponent(id=f"{component_data['###repository###']}&{component_data['id']}&{component_data['revision']}",
                                  repository=component_data['###repository###'],
                                  component_id=component_data['id'],
-                                 revision=int(component_data['revision']))
+                                 revision=int(component_data['revision']),
+                                 _component_data=component_data)
         else:
             return None
 
