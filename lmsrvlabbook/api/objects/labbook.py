@@ -21,8 +21,7 @@ import base64
 import graphene
 
 from lmcommon.logging import LMLogger
-
-from lmcommon.files import FileOperations
+from lmcommon.dispatcher import Dispatcher
 from lmcommon.activity import ActivityStore
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 
@@ -32,6 +31,8 @@ from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.identity import parse_token
 
+
+from lmsrvlabbook.api.objects.jobstatus import JobStatus
 from lmsrvlabbook.api.connections.ref import LabbookRefConnection
 from lmsrvlabbook.api.objects.environment import Environment
 from lmsrvlabbook.api.objects.overview import LabbookOverview
@@ -94,6 +95,9 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # Access a detail record directly, which is useful when fetching detail items
     detail_record = graphene.Field(ActivityDetailObject, key=graphene.String())
     detail_records = graphene.List(ActivityDetailObject, keys=graphene.List(graphene.String))
+
+    # List of keys of all background jobs pertaining to this labbook (queued, started, failed, etc.)
+    background_jobs = graphene.List(str)
 
     @classmethod
     def get_node(cls, info, id):
@@ -418,3 +422,13 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
                     can_manage = True
 
         return can_manage
+
+    def resolve_background_jobs(self, info):
+        """ Return the job keys, tasks, and statuses for all background jobs. """
+        username = get_logged_in_username()
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+
+        d = Dispatcher()
+        jobs = d.get_jobs_for_labbook(labbook_key=lb.key)
+        return [JobStatus.create(j.job_key.key_str) for j in jobs]
+
