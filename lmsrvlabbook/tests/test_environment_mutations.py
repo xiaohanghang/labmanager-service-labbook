@@ -104,6 +104,27 @@ class TestEnvironmentMutations(object):
         assert r['data']['buildImage']['environment']['imageStatus'] in ['BUILD_QUEUED', 'BUILD_IN_PROGRESS']
         assert r['data']['buildImage']['environment']['containerStatus'] == 'NOT_RUNNING'
 
+        ## Sneak in a test for background jobs
+        get_bg_jobs_query = """
+        {
+            labbook(name: "labbook-build1", owner: "default") {
+                backgroundJobs {
+                    jobKey
+                    status
+                    failureMessage
+                    jobMetadata
+                    startedAt
+                    result
+                }
+            }
+        }
+        """
+        r = fixture_working_dir_env_repo_scoped[2].execute(get_bg_jobs_query)
+        assert 'errors' not in r, "There should be no errors when querying for background job status"
+        assert r['data']['labbook']['backgroundJobs'][0]['status'], "Background Jobs status query should not be None"
+        pprint.pprint(r)
+
+
         # Wait for build to succeed for up to TIMEOUT_MAX seconds
         success = False
         for _ in range(TIMEOUT_MAX):
@@ -116,6 +137,13 @@ class TestEnvironmentMutations(object):
             assert result['data']['labbook']['environment']['imageStatus'] == 'BUILD_IN_PROGRESS'
 
             time.sleep(1)
+
+        r = fixture_working_dir_env_repo_scoped[2].execute(get_bg_jobs_query)
+        assert 'errors' not in r
+        assert r['data']['labbook']['backgroundJobs'][0]['status'] == 'finished'
+        assert r['data']['labbook']['backgroundJobs'][0]['result'].isalnum()
+        assert 'build_image' in r['data']['labbook']['backgroundJobs'][0]['jobMetadata']
+        pprint.pprint(r)
 
         assert success is True, f"Failed to build within {TIMEOUT_MAX} second timeout."
 

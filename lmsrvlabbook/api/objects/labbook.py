@@ -24,6 +24,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.activity import ActivityStore
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
+from lmcommon.files import FileOperations
 
 from lmsrvcore.auth.user import get_logged_in_username
 
@@ -101,7 +102,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     detail_records = graphene.List(ActivityDetailObject, keys=graphene.List(graphene.String))
 
     # List of keys of all background jobs pertaining to this labbook (queued, started, failed, etc.)
-    background_jobs = graphene.List(str)
+    background_jobs = graphene.List(JobStatus)
 
     @classmethod
     def get_node(cls, info, id):
