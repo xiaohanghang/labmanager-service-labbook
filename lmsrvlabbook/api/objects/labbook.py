@@ -57,6 +57,10 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # to be upgraded.
     schema_version = graphene.Int()
 
+    # Size on disk of LabBook in bytes
+    # NOTE: This is a string since graphene can't represent ints bigger than 2**32
+    size_bytes = graphene.String()
+
     # The name of the current branch
     active_branch = graphene.Field(LabbookRef)
 
@@ -139,6 +143,12 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns 0 if up-to-date or if local only."""
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         return lb.schema
+
+    def resolve_size_bytes(self, info):
+        """Return the size of the labbook on disk (in bytes).
+        NOTE! This must be a string, as graphene can't quite handle big integers. """
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        return str(FileOperations.content_size(labbook=lb))
 
     def resolve_updates_available_count(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
