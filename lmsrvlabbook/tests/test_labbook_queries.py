@@ -288,6 +288,7 @@ class TestLabBookServiceQueries(object):
             name
             sizeBytes
             description
+            creationDateUtc
             activeBranch {
                 refName
                 prefix
@@ -303,6 +304,9 @@ class TestLabBookServiceQueries(object):
         assert r['data']['labbook']['activeBranch']['refName'] == 'gm.workspace-default'
         assert r['data']['labbook']['activeBranch']['prefix'] is None
         assert r['data']['labbook']['name'] == 'labbook1'
+        d = r['data']['labbook']['creationDateUtc']
+        import datetime
+        n = datetime.datetime.strptime(d, '%Y-%m-%dT%H:%M:%S.%f')
 
     def test_get_labbook_size_rediculously_huge(self, monkeypatch, fixture_working_dir):
         """Test listing labbooks"""
