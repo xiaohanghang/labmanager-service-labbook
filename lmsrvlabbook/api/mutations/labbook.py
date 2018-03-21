@@ -394,6 +394,26 @@ class PushActiveBranchToRemote(graphene.relay.ClientIDMutation):
         return PushActiveBranchToRemote(success=True)
 
 
+class SetLabbookDescription(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        description_content = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, description_content, client_mutation_id=None):
+        username = get_logged_in_username()
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_name(username, owner, labbook_name)
+        lb.description = description_content
+        # Note - skipping activity record - That will be TODO
+        lb.git.add(os.path.join(lb.root_dir, '.gigantum/labbook.yaml'))
+        lb.git.commit('Updating description')
+        return SetLabbookDescription(success=True)
+
+
 class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     """Mutation to add a file to a labbook. File should be sent in the `uploadFile` key as a multi-part/form upload.
     file_path is the relative path from the labbook section specified."""
