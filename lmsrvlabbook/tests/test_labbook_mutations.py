@@ -138,6 +138,46 @@ class TestLabBookServiceMutations(object):
         assert r['data']['deleteLabbook']['success'] is True
         assert not os.path.exists(labbook_dir)
 
+    def test_update_labbook_description(self, mock_create_labbooks, fixture_working_dir_env_repo_scoped):
+        labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')
+        assert os.path.exists(labbook_dir)
+
+        desc_md = f"# Titłe\n ## \"Subtitle\"\n{'æbčdęfghį:*&^&%$%$@!_t ' * 200}. ## Ænother Sübtitle's\n{'xyz.?/<>č ' * 300}.\n"
+        #desc_md = "abc"
+        description_query = f"""
+        mutation setDesc($content: String!) {{
+            setLabbookDescription(input: {{
+                owner: "default",
+                labbookName: "labbook1",
+                descriptionContent: $content
+            }}) {{
+                success
+            }}
+        }}
+        """
+        variables = {'content': desc_md}
+        r = fixture_working_dir_env_repo_scoped[2].execute(description_query, variable_values=variables)
+        pprint.pprint(r)
+        assert 'errors' not in r
+        assert r['data']['setLabbookDescription']['success'] is True
+
+        # Get LabBook you just created
+        query = """
+        {
+          labbook(name: "labbook1", owner: "default") {
+            description
+            isRepoClean
+          }
+        }
+        """
+        r = fixture_working_dir_env_repo_scoped[2].execute(query)
+        pprint.pprint(r['data']['labbook']['description'])
+        assert 'errors' not in r
+        # There's a lot of weird characters getting filtered out, make sure the bulk of the text remains
+        assert abs(1.0 * len(r['data']['labbook']['description']) / len(desc_md)) > 0.75
+        assert r['data']['labbook']['isRepoClean'] == True
+
+
     def test_delete_labbook_dry_run(self, mock_create_labbooks, fixture_working_dir_env_repo_scoped):
         """Test deleting a LabBook off disk. """
         labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')

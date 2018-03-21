@@ -24,7 +24,7 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
     DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent, \
-    StartDevTool
+    StartDevTool, SetLabbookDescription
 
 
 class LabbookMutations(graphene.ObjectType):
@@ -47,6 +47,9 @@ class LabbookMutations(graphene.ObjectType):
 
     # Rename new labbook
     rename_labbook = RenameLabbook.Field()
+
+    # (Re-)set labbook description
+    set_labbook_description = SetLabbookDescription.Field()
 
     # Publish a labbook to a remote (for the first time
     publish_labbook = PublishLabbook.Field()
