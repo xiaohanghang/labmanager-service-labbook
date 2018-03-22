@@ -25,6 +25,8 @@ from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped
 from lmcommon.files import FileOperations
 from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
+import datetime
+import pprint
 
 import graphene
 
@@ -288,6 +290,7 @@ class TestLabBookServiceQueries(object):
             name
             sizeBytes
             description
+            creationDateUtc
             activeBranch {
                 refName
                 prefix
@@ -303,6 +306,9 @@ class TestLabBookServiceQueries(object):
         assert r['data']['labbook']['activeBranch']['refName'] == 'gm.workspace-default'
         assert r['data']['labbook']['activeBranch']['prefix'] is None
         assert r['data']['labbook']['name'] == 'labbook1'
+        d = r['data']['labbook']['creationDateUtc']
+        n = datetime.datetime.strptime(d, '%Y-%m-%dT%H:%M:%S.%f')
+        assert (datetime.datetime.utcnow() - n).total_seconds() < 30
 
     def test_get_labbook_size_rediculously_huge(self, monkeypatch, fixture_working_dir):
         """Test listing labbooks"""

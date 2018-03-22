@@ -68,6 +68,9 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # Get the URL of the remote origin
     default_remote = graphene.String()
 
+    # Creation date/timestamp in UTC in ISO format
+    creation_date_utc = graphene.types.datetime.DateTime()
+
     # List of branches
     branches = graphene.relay.ConnectionField(LabbookRefConnection)
 
@@ -190,6 +193,21 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         """
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         return lb.is_repo_clean
+
+    def resolve_creation_date_utc(self, info):
+        """Return the creation timestamp (if available - otherwise empty string)
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        # Note! creation_date might be None!!
+        return lb.creation_date
 
     def resolve_default_remote(self, info):
         """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
