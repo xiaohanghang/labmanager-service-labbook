@@ -17,36 +17,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import io
-import math
 import os
 import responses
-import tempfile
-import datetime
-import pprint
-from zipfile import ZipFile
-from pkg_resources import resource_filename
-import getpass
 
-import git
-
-from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir, \
     fixture_working_dir_lfs_disabled
 
 import pytest
-from graphene.test import Client
 from mock import patch
 from werkzeug.test import EnvironBuilder
 from werkzeug.wrappers import Request
-from werkzeug.datastructures import FileStorage
 
-from lmcommon.configuration import Configuration
-from lmcommon.dispatcher.jobs import export_labbook_as_zip
 from lmcommon.fixtures import (remote_labbook_repo, remote_bare_repo, mock_labbook,
-                               mock_config_file, _MOCK_create_remote_repo)
+                               mock_config_file, _MOCK_create_remote_repo2)
 from lmcommon.labbook import LabBook
-
+from lmcommon.workflows import GitWorkflow
 
 @pytest.fixture()
 def mock_create_labbooks(fixture_working_dir):
@@ -82,7 +67,7 @@ def mock_create_labbooks_no_lfs(fixture_working_dir_lfs_disabled):
 
 
 class TestLabbookShareProtocol(object):
-    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
+    @patch('lmcommon.workflows.core.create_remote_gitlab_repo', new=_MOCK_create_remote_repo2)
     def test_publish_basic(self, fixture_working_dir, remote_bare_repo, mock_create_labbooks_no_lfs):
 
         # Mock the request context so a fake authorization header is present
@@ -109,7 +94,7 @@ class TestLabbookShareProtocol(object):
         assert r['data']['publishLabbook']['success'] is True
 
     @responses.activate
-    @patch('lmcommon.labbook.LabBook._create_remote_repo', new=_MOCK_create_remote_repo)
+    @patch('lmcommon.workflows.core.create_remote_gitlab_repo', new=_MOCK_create_remote_repo2)
     def test_sync_1(self, remote_bare_repo, mock_create_labbooks_no_lfs, mock_config_file):
 
         # Setup responses mock for this test
@@ -131,9 +116,10 @@ class TestLabbookShareProtocol(object):
 
         sally_lb = LabBook(mock_config_file[0])
         sally_lb.from_remote(remote_url, username="sally", owner="default", labbook_name="labbook1")
+        sally_wf = GitWorkflow(sally_lb)
         assert sally_lb.active_branch == "gm.workspace-sally"
         sally_lb.makedir(relative_path='code/sally-dir', create_activity_record=True)
-        sally_lb.sync('sally')
+        sally_wf.sync('sally')
 
         sync_query = """
         mutation x {
