@@ -411,7 +411,22 @@ class SetLabbookDescription(graphene.relay.ClientIDMutation):
             # Note - skipping activity record - That will be TODO
         with lb.lock_labbook():
             lb.git.add(os.path.join(lb.root_dir, '.gigantum/labbook.yaml'))
-            lb.git.commit('Updating description')
+            commit = lb.git.commit('Updating description')
+
+            # Create detail record
+            adr = ActivityDetailRecord(ActivityDetailType.ENVIRONMENT, show=False)
+            adr.add_value('text/plain', "Updated description of LabBook")
+
+            # Create activity record
+            ar = ActivityRecord(ActivityType.ENVIRONMENT,
+                                message="Updated description of LabBook",
+                                linked_commit=commit.hexsha,
+                                tags=["labbook"])
+            ar.add_detail_object(adr)
+
+            # Store
+            ars = ActivityStore(lb)
+            ars.create_activity_record(ar)
         return SetLabbookDescription(success=True)
 
 
