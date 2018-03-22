@@ -103,8 +103,8 @@ class TestLabbookShareProtocol(object):
 
         test_user_lb = LabBook(mock_create_labbooks_no_lfs[0])
         test_user_lb.from_name('default', 'default', 'labbook1')
-
-        test_user_lb.publish('default')
+        test_user_wf = GitWorkflow(test_user_lb)
+        test_user_wf.publish('default')
 
         # Mock the request context so a fake authorization header is present
         builder = EnvironBuilder(path='/labbook', method='POST', headers={'Authorization': 'Bearer AJDFHASD'})
