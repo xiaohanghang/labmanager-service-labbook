@@ -407,10 +407,11 @@ class SetLabbookDescription(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
-        lb.description = description_content
-        # Note - skipping activity record - That will be TODO
-        lb.git.add(os.path.join(lb.root_dir, '.gigantum/labbook.yaml'))
-        lb.git.commit('Updating description')
+        with lb.lock_labbook():
+            lb.description = description_content
+            # Note - skipping activity record - That will be TODO
+            lb.git.add(os.path.join(lb.root_dir, '.gigantum/labbook.yaml'))
+            lb.git.commit('Updating description')
         return SetLabbookDescription(success=True)
 
 
