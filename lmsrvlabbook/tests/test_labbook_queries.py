@@ -306,9 +306,9 @@ class TestLabBookServiceQueries(object):
         assert r['data']['labbook']['activeBranch']['refName'] == 'gm.workspace-default'
         assert r['data']['labbook']['activeBranch']['prefix'] is None
         assert r['data']['labbook']['name'] == 'labbook1'
-        pprint.pprint(r['data']['labbook']['creationDateUtc'])
-        assert False
-        #n = datetime.datetime.strptime(d, '%Y-%m-%dT%H:%M:%S.%f')
+        d = r['data']['labbook']['creationDateUtc']
+        n = datetime.datetime.strptime(d, '%Y-%m-%dT%H:%M:%S.%f')
+        assert (datetime.datetime.utcnow() - n).total_seconds() < 30
 
     def test_get_labbook_size_rediculously_huge(self, monkeypatch, fixture_working_dir):
         """Test listing labbooks"""
