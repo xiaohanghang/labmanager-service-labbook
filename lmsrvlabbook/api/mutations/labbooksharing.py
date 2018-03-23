@@ -17,13 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import base64
 import os
-from docker.errors import ImageNotFound
-
 import graphene
 
-from lmcommon.configuration import Configuration, get_docker_client
+from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
@@ -114,6 +111,6 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
         mgr.configure_git_credentials(default_remote, username)
 
         wf = GitWorkflow(labbook=lb)
-        cnt = lb.sync(username=username, force=force)
+        cnt = wf.sync(username=username, force=force)
 
         return SyncLabbook(update_count=cnt)
