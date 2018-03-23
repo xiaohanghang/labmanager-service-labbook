@@ -137,5 +137,5 @@ class TestLabbookShareProtocol(object):
         assert r['data']['syncLabbook']['updateCount'] == 6
         assert test_user_lb.active_branch == 'gm.workspace-default'
 
-        c = test_user_lb.sync('default')
+        c = test_user_wf.sync('default')
         assert c == 0

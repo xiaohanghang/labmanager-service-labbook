@@ -111,6 +111,6 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
         mgr.configure_git_credentials(default_remote, username)
 
         wf = GitWorkflow(labbook=lb)
-        cnt = lb.sync(username=username, force=force)
+        cnt = wf.sync(username=username, force=force)
 
         return SyncLabbook(update_count=cnt)
