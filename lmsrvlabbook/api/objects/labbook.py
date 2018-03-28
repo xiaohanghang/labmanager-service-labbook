@@ -65,6 +65,12 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # The name of the current branch
     active_branch = graphene.Field(LabbookRef)
 
+    # Primary user branch of repo (known also as "Workspace Branch")
+    user_branch_name = graphene.String()
+
+    # All available feature/rollback branches (Collectively known as experimental branches)
+
+
     # Get the URL of the remote origin
     default_remote = graphene.String()
 
