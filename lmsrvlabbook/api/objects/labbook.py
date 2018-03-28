@@ -22,6 +22,7 @@ import graphene
 
 from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher
+from lmcommon.workflows import BranchManager
 from lmcommon.activity import ActivityStore
 from lmcommon.gitlib.gitlab import GitLabRepositoryManager
 from lmcommon.files import FileOperations
@@ -62,23 +63,31 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # NOTE: This is a string since graphene can't represent ints bigger than 2**32
     size_bytes = graphene.String()
 
-    # The name of the current branch
-    active_branch = graphene.Field(LabbookRef)
+    # Name of active (checked-out) branch
+    active_branch_name = graphene.String()
 
     # Primary user branch of repo (known also as "Workspace Branch")
     user_branch_name = graphene.String()
 
     # All available feature/rollback branches (Collectively known as experimental branches)
+    available_branch_names = graphene.List(graphene.String)
 
+    # Names of branches that can be merged into the current active branch
+    mergeable_branch_names = graphene.List(graphene.String)
+
+    # The name of the current branch
+    # NOTE: DEPRECATED
+    active_branch = graphene.Field(LabbookRef)
+
+    # List of branches
+    # NOTE: DEPRECATED
+    branches = graphene.relay.ConnectionField(LabbookRefConnection)
 
     # Get the URL of the remote origin
     default_remote = graphene.String()
 
     # Creation date/timestamp in UTC in ISO format
     creation_date_utc = graphene.types.datetime.DateTime()
-
-    # List of branches
-    branches = graphene.relay.ConnectionField(LabbookRefConnection)
 
     # List of collaborators
     collaborators = graphene.List(graphene.String)
@@ -167,6 +176,26 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         # Note, by default using remote "origin"
         return lb.get_commits_behind_remote("origin")[1]
+
+    def resolve_active_branch_name(self, info):
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        bm = BranchManager(labbook=lb, username=get_logged_in_username())
+        return bm.active_branch
+
+    def resolve_user_branch_name(self, info):
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        bm = BranchManager(labbook=lb, username=get_logged_in_username())
+        return bm.workspace_branch
+
+    def resolve_available_branch_names(self, info):
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        bm = BranchManager(labbook=lb, username=get_logged_in_username())
+        return bm.branches
+
+    def resolve_mergeable_branch_names(self, info):
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        bm = BranchManager(labbook=lb, username=get_logged_in_username())
+        return bm.mergeable_branches
 
     def resolve_active_branch(self, info):
         """Method to get the active branch
