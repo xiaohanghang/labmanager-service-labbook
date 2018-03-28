@@ -23,6 +23,7 @@ import shutil
 import flask
 from flask import Flask
 import graphene
+import pprint
 from graphene.test import Client
 from mock import patch
 
@@ -36,7 +37,7 @@ from lmsrvlabbook.tests.fixtures import ContextMock, fixture_working_dir, _creat
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
 
-UT_USERNAME = "unittestbranchuser"
+UT_USERNAME = "default"
 UT_LBNAME = "unittest-workflow-branch-1"
 
 
@@ -97,8 +98,9 @@ class TestWorkflowsBranching(object):
         }}
         """
         r = client.execute(q)
+        pprint.pprint(r)
         assert 'errors' not in r
-        assert r['data']['labbook']['activeBranchName'] == bm.active_branch
+        assert r['data']['labbook']['availableBranchNames'] == bm.branches
 
     def test_query_mergeable_branches_from_main(self):
         pass
