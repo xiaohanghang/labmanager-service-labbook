@@ -32,7 +32,7 @@ from lmcommon.workflows import BranchManager
 from lmcommon.labbook import LabBook
 
 from lmsrvcore.middleware import LabBookLoaderMiddleware, error_middleware
-from lmsrvlabbook.tests.fixtures import ContextMock, fixture_working_dir
+from lmsrvlabbook.tests.fixtures import ContextMock, fixture_working_dir, _create_temp_work_dir
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.api.mutation import LabbookMutations
 
@@ -43,6 +43,7 @@ UT_LBNAME = "unittest-workflow-branch-1"
 @pytest.fixture()
 def mock_create_labbooks(fixture_working_dir):
     # Create a labbook in the temporary directory
+    config_file = fixture_working_dir[0]
     lb = LabBook(fixture_working_dir[0])
     lb.new(owner={"username": UT_USERNAME}, name=UT_LBNAME, description="Cats labbook 1")
 
