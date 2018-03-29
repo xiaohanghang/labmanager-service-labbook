@@ -161,3 +161,21 @@ snapshots['TestAddComponentMutations.test_remove_custom_dep 2'] = {
         }
     }
 }
+
+snapshots['TestAddComponentMutations.test_add_package_skip_validation 1'] = {
+    'data': {
+        'addPackageComponent': {
+            'clientMutationId': None,
+            'newPackageComponentEdge': {
+                'node': {
+                    'fromBase': False,
+                    'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
+                    'manager': 'pip',
+                    'package': 'requests',
+                    'schema': 1,
+                    'version': '2.18.4'
+                }
+            }
+        }
+    }
+}
