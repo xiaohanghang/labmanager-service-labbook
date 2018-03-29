@@ -265,10 +265,31 @@ class TestWorkflowsBranching(object):
         assert bm.active_branch == bm.workspace_branch
         assert lb.is_repo_clean
 
-    def test_workon_feature_branch_bad_name_fail(self):
-        pass
+    def test_workon_feature_branch_bad_name_fail(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        b1 = bm.create_branch("tester1")
+        bm.workon_branch(bm.workspace_branch)
 
-    def test_workon_feature_branch_success(self):
+        q = f"""
+        mutation makeFeatureBranch {{
+            workonExperimentalBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                branchName: "{b1}"
+            }}) {{
+                success
+            }}
+        }}
+        """
+        r = client.execute(q)
+        pprint.pprint(r)
+        # Cannot delete branch when it's the currently active branch
+        assert 'errors' not in r
+        assert bm.active_branch == bm.workspace_branch
+        assert lb.is_repo_clean
+
+    def test_workon_feature_branch_success(self, mock_create_labbooks):
         pass
 
     def test_merge_from_simple_success(self):

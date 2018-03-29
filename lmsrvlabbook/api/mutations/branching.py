@@ -68,7 +68,7 @@ class DeleteExperimentalBranch(graphene.relay.ClientIDMutation):
         lb.from_name(username, owner, labbook_name)
         bm = BranchManager(labbook=lb, username=username)
         bm.remove_branch(target_branch=branch_name)
-        logger.info(f'Removed experimental branch {branch_name} from {str(labbook)}')
+        logger.info(f'Removed experimental branch {branch_name} from {str(lb)}')
         return DeleteExperimentalBranch(success=True)
 
 
@@ -81,16 +81,16 @@ class WorkonBranch(graphene.relay.ClientIDMutation):
         branch_name = graphene.String(required=True)
         revision = graphene.String()
 
-    success = graphene.Boolean()
+    current_branch_name = graphene.String()
 
     @classmethod
-    def mutate_and_get_payload(cls, owner, labbook_name, branch_name, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, branch_name, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         bm = BranchManager(labbook=lb, username=username)
-        bm.remove_branch(target_branch=branch_name)
-        return WorkonBranch(success=True)
+        bm.workon_branch(target_branch=branch_name)
+        return WorkonBranch(current_branch_name=bm.active_branch)
 
 
 class MergeFromBranch(graphene.relay.ClientIDMutation):
@@ -105,7 +105,7 @@ class MergeFromBranch(graphene.relay.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    def mutate_and_get_payload(cls, owner, labbook_name, other_branch_name, force=False, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, other_branch_name, force=False, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
