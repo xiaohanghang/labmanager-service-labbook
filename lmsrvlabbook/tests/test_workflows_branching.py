@@ -102,26 +102,168 @@ class TestWorkflowsBranching(object):
         assert 'errors' not in r
         assert r['data']['labbook']['availableBranchNames'] == bm.branches
 
-    def test_query_mergeable_branches_from_main(self):
-        pass
+    def test_query_mergeable_branches_from_main(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        b1 = bm.create_branch("tester1")
+        bm.workon_branch(bm.workspace_branch)
+        b2 = bm.create_branch("tester2")
+        bm.workon_branch(bm.workspace_branch)
+        assert bm.active_branch == bm.workspace_branch
 
-    def test_query_mergeable_branches_from_feature_branch(self):
-        pass
+        q = f"""
+        {{
+            labbook(name: "{UT_LBNAME}", owner: "{UT_USERNAME}") {{
+                mergeableBranchNames
+            }}
+        }}
+        """
+        r = client.execute(q)
+        pprint.pprint(r)
+        assert 'errors' not in r
+        assert len(r['data']['labbook']['mergeableBranchNames']) == 2
+        assert set(r['data']['labbook']['mergeableBranchNames']).issubset(set([b1, b2]))
 
-    def test_create_feature_branch_bad_name_fail(self):
-        pass
+    def test_query_mergeable_branches_from_feature_branch(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        b1 = bm.create_branch("tester1")
+        bm.workon_branch(bm.workspace_branch)
+        b2 = bm.create_branch("tester2")
 
-    def test_create_feature_branch_from_feature_branch_fail(self):
-        pass
+        q = f"""
+        {{
+            labbook(name: "{UT_LBNAME}", owner: "{UT_USERNAME}") {{
+                mergeableBranchNames
+            }}
+        }}
+        """
+        r = client.execute(q)
+        pprint.pprint(r)
+        assert 'errors' not in r
+        assert len(r['data']['labbook']['mergeableBranchNames']) == 1
+        assert r['data']['labbook']['mergeableBranchNames'] == [bm.workspace_branch]
 
-    def test_create_feature_branch_success(self):
-        pass
+    def test_create_feature_branch_bad_name_fail(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        bad_branch_names = ['', '_', 'Über-bad', 'xxx-xxx' * 40, 'cats_99', 'bad-', '-', '-bad', 'bad--bad',
+                            'bad---bad--bad-bad', 'Nope', 'Nope99', 'Nope-99', 'N&PE', 'n*ope', 'no;way', 'no:way',
+                            '<nope>-not-a-branch', 'Robert") DROP TABLE Students; --', "no way not a branch",
+                            ''.join(chr(x) for x in range(0, 78)), ''.join(chr(x) for x in range(0, 255)),
+                            chr(0) * 10, chr(0) * 10000]
 
-    def test_delete_feature_branch_fail(self):
-        pass
+        for bad_name in bad_branch_names:
+            q = f"""
+            mutation makeFeatureBranch {{
+                createExperimentalBranch(input: {{
+                    owner: "{UT_USERNAME}",
+                    labbookName: "{UT_LBNAME}",
+                    branchName: "{bad_name}"
+                }}) {{
+                    newBranchName
+                }}
+            }}
+            """
+            r = client.execute(q)
+            pprint.pprint(r)
+            assert 'errors' in r
+            assert bm.active_branch == bm.workspace_branch
+            assert lb.is_repo_clean
 
-    def test_delete_feature_branch_success(self):
-        pass
+    def test_create_feature_branch_from_feature_branch_fail(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        b1 = bm.create_branch("tester1")
+
+        q = f"""
+        mutation makeFeatureBranch {{
+            createExperimentalBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                branchName: "valid-branch-name"
+            }}) {{
+                newBranchName
+            }}
+        }}
+        """
+        r = client.execute(q)
+        pprint.pprint(r)
+        assert 'errors' in r
+        assert bm.active_branch == b1
+        assert lb.is_repo_clean
+
+    def test_create_feature_branch_success(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        b1 = bm.create_branch("tester1")
+        bm.workon_branch(bm.workspace_branch)
+
+        q = f"""
+        mutation makeFeatureBranch {{
+            createExperimentalBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                branchName: "valid-branch-name-working1"
+            }}) {{
+                newBranchName
+            }}
+        }}
+        """
+        r = client.execute(q)
+        pprint.pprint(r)
+        assert 'errors' not in r
+        r['data']['createExperimentalBranch']['newBranchName'] == 'gm.workspace-default.valid-branch-name-working1'
+        assert bm.active_branch == 'gm.workspace-default.valid-branch-name-working1'
+        assert lb.is_repo_clean
+
+    def test_delete_feature_branch_fail(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        b1 = bm.create_branch("tester1")
+        #bm.workon_branch(bm.workspace_branch)
+
+        q = f"""
+        mutation makeFeatureBranch {{
+            deleteExperimentalBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                branchName: "{b1}"
+            }}) {{
+                success
+            }}
+        }}
+        """
+        r = client.execute(q)
+        pprint.pprint(r)
+        # Cannot delete branch when it's the currently active branch
+        assert 'errors' in r
+        assert bm.active_branch == b1
+        assert lb.is_repo_clean
+
+    def test_delete_feature_branch_success(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        b1 = bm.create_branch("tester1")
+        bm.workon_branch(bm.workspace_branch)
+
+        q = f"""
+        mutation makeFeatureBranch {{
+            deleteExperimentalBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                branchName: "{b1}"
+            }}) {{
+                success
+            }}
+        }}
+        """
+        r = client.execute(q)
+        pprint.pprint(r)
+        # Cannot delete branch when it's the currently active branch
+        assert 'errors' not in r
+        assert bm.active_branch == bm.workspace_branch
+        assert lb.is_repo_clean
 
     def test_workon_feature_branch_bad_name_fail(self):
         pass

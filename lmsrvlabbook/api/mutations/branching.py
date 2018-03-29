@@ -41,7 +41,7 @@ class CreateExperimentalBranch(graphene.relay.ClientIDMutation):
     new_branch_name = graphene.Boolean()
 
     @classmethod
-    def mutate_and_get_payload(cls, owner, labbook_name, branch_name, revision=None, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, branch_name, revision=None, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
@@ -62,7 +62,7 @@ class DeleteExperimentalBranch(graphene.relay.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    def mutate_and_get_payload(cls, owner, labbook_name, branch_name, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, branch_name, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
