@@ -183,7 +183,7 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         bm = BranchManager(labbook=lb, username=get_logged_in_username())
         return bm.active_branch
 
-    def resolve_user_branch_name(self, info):
+    def resolve_workspace_branch_name(self, info):
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         bm = BranchManager(labbook=lb, username=get_logged_in_username())
         return bm.workspace_branch

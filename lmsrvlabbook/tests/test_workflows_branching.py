@@ -79,12 +79,14 @@ class TestWorkflowsBranching(object):
         {{
             labbook(name: "{UT_LBNAME}", owner: "{UT_USERNAME}") {{
                 activeBranchName
+                workspaceBranchName
             }}
         }}
         """
         r = client.execute(q)
         assert 'errors' not in r
         assert r['data']['labbook']['activeBranchName'] == bm.active_branch
+        assert r['data']['labbook']['workspaceBranchName'] == bm.workspace_branch
 
     def test_available_branches(self, mock_create_labbooks):
         lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
@@ -135,6 +137,7 @@ class TestWorkflowsBranching(object):
         {{
             labbook(name: "{UT_LBNAME}", owner: "{UT_USERNAME}") {{
                 mergeableBranchNames
+                workspaceBranchName
             }}
         }}
         """
@@ -143,6 +146,7 @@ class TestWorkflowsBranching(object):
         assert 'errors' not in r
         assert len(r['data']['labbook']['mergeableBranchNames']) == 1
         assert r['data']['labbook']['mergeableBranchNames'] == [bm.workspace_branch]
+        assert r['data']['labbook']['workspaceBranchName'] == bm.workspace_branch
 
     def test_create_feature_branch_bad_name_fail(self, mock_create_labbooks):
         lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
