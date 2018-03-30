@@ -89,7 +89,7 @@ class WorkonBranch(graphene.relay.ClientIDMutation):
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         bm = BranchManager(labbook=lb, username=username)
-        bm.workon_branch(target_branch=branch_name)
+        bm.workon_branch(branch_name=branch_name)
         return WorkonBranch(current_branch_name=bm.active_branch)
 
 

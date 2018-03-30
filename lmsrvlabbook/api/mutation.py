@@ -133,7 +133,7 @@ class LabbookMutations(graphene.ObjectType):
     delete_experimental_branch = DeleteExperimentalBranch.Field()
 
     # Merge from a given branch into the current checked-out branch
-    merge_branch_from = MergeFromBranch.Field()
+    merge_from_branch = MergeFromBranch.Field()
 
     # Work on a given feature branch (perform a git checkout).
     workon_experimental_branch = WorkonBranch.Field()

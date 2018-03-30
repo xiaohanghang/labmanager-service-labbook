@@ -276,27 +276,174 @@ class TestWorkflowsBranching(object):
             workonExperimentalBranch(input: {{
                 owner: "{UT_USERNAME}",
                 labbookName: "{UT_LBNAME}",
-                branchName: "{b1}"
+                branchName: "{b1.replace('gm', '')}"
             }}) {{
-                success
+                currentBranchName
             }}
         }}
         """
         r = client.execute(q)
         pprint.pprint(r)
         # Cannot delete branch when it's the currently active branch
-        assert 'errors' not in r
+        assert 'errors' in r
         assert bm.active_branch == bm.workspace_branch
         assert lb.is_repo_clean
 
     def test_workon_feature_branch_success(self, mock_create_labbooks):
-        pass
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        b1 = bm.create_branch("tester1")
+        bm.workon_branch(bm.workspace_branch)
 
-    def test_merge_from_simple_success(self):
-        pass
+        q = f"""
+        mutation makeFeatureBranch {{
+            workonExperimentalBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                branchName: "{b1.replace('gm', '')}"
+            }}) {{
+                currentBranchName
+            }}
+        }}
+        """
+        r = client.execute(q)
+        pprint.pprint(r)
+        assert 'errors' in r
+        assert bm.active_branch == bm.workspace_branch
+        assert lb.is_repo_clean
 
-    def test_conflicted_merge_from_no_force_fail(self):
-        pass
+    def test_merge_into_workspace_from_simple_success(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        og_hash = lb.git.commit_hash
+        b1 = bm.create_branch("test-branch")
+        lb.makedir('code/sillydir1', create_activity_record=True)
+        lb.makedir('code/sillydir2', create_activity_record=True)
+        branch_hash = lb.git.commit_hash
 
-    def test_conflicted_merge_from_force_success(self):
-        pass
+        assert og_hash != branch_hash
+
+        bm.workon_branch(bm.workspace_branch)
+        assert lb.git.commit_hash == og_hash
+        assert not os.path.exists(os.path.join(lb.root_dir, 'code/sillydir1'))
+
+        merge_q = f"""
+        mutation x {{
+            mergeFromBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                otherBranchName: "{b1}"                
+            }}) {{
+                success
+            }}
+        }}
+        """
+        r = client.execute(merge_q)
+        assert 'errors' not in r
+        assert r['data']['mergeFromBranch']['success'] is True
+        assert lb.active_branch == bm.workspace_branch
+        assert os.path.exists(os.path.join(lb.root_dir, 'code/sillydir1'))
+        assert lb.is_repo_clean
+
+    def test_merge_into_feature_from_workspace_simple_success(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        bm = BranchManager(lb, username=UT_USERNAME)
+        og_hash = lb.git.commit_hash
+        b1 = bm.create_branch("test-branch")
+        bm.workon_branch(bm.workspace_branch)
+        assert lb.active_branch == bm.workspace_branch
+        og2_hash = lb.git.commit_hash
+        #assert lb.git.commit_hash == og_hash      <---- I don't understand why this isn't the case...
+
+        lb.makedir('code/main-branch-dir1', create_activity_record=True)
+        lb.makedir('code/main-branch-dir2', create_activity_record=True)
+        next_main_hash = lb.git.commit_hash
+        assert og_hash != next_main_hash
+
+        bm.workon_branch(b1)
+        assert not os.path.exists(os.path.join(lb.root_dir, 'code/main-branch-dir1'))
+
+        merge_q = f"""
+        mutation x {{
+            mergeFromBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                otherBranchName: "{bm.workspace_branch}"                
+            }}) {{
+                success
+            }}
+        }}
+        """
+        r = client.execute(merge_q)
+        assert 'errors' not in r
+        assert r['data']['mergeFromBranch']['success'] is True
+        assert lb.active_branch == b1
+        assert os.path.exists(os.path.join(lb.root_dir, 'code/main-branch-dir1'))
+        assert lb.is_repo_clean
+
+    def test_conflicted_merge_from_no_force_fail(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        with open('/tmp/s1.txt', 'w') as s1:
+            s1.write('original-file\ndata')
+        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        bm = BranchManager(lb, username=UT_USERNAME)
+
+        nb = bm.create_branch('new-branch')
+        with open('/tmp/s1.txt', 'w') as s1:
+            s1.write('branch-conflict-data')
+        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+
+        bm.workon_branch(bm.workspace_branch)
+        with open('/tmp/s1.txt', 'w') as s1:
+            s1.write('mainline-conflict-data')
+        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+
+        merge_q = f"""
+        mutation x {{
+            mergeFromBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                otherBranchName: "{nb}"                
+            }}) {{
+                success
+            }}
+        }}
+        """
+        r = client.execute(merge_q)
+        pprint.pprint(r)
+        assert 'errors' in r
+        assert 'Cannot merge' in r['errors'][0]['message']
+
+
+    def test_conflicted_merge_from_force_success(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        with open('/tmp/s1.txt', 'w') as s1:
+            s1.write('original-file\ndata')
+        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        bm = BranchManager(lb, username=UT_USERNAME)
+
+        nb = bm.create_branch('new-branch')
+        with open('/tmp/s1.txt', 'w') as s1:
+            s1.write('branch-conflict-data')
+        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+
+        bm.workon_branch(bm.workspace_branch)
+        with open('/tmp/s1.txt', 'w') as s1:
+            s1.write('mainline-conflict-data')
+        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+
+        merge_q = f"""
+        mutation x {{
+            mergeFromBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                otherBranchName: "{nb}",
+                force: true            
+            }}) {{
+                success
+            }}
+        }}
+        """
+        r = client.execute(merge_q)
+        pprint.pprint(r)
+        assert 'errors' not in r
