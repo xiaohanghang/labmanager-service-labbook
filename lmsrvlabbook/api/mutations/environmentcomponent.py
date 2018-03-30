@@ -38,7 +38,12 @@ logger = LMLogger.get_logger()
 
 
 class AddPackageComponent(graphene.relay.ClientIDMutation):
-    """Mutation to add a new package to labbook"""
+    """Mutation to add a new package to labbook
+
+    The optional argument `skipValidation` will skip the validation step when adding the package.
+    You MUST have previously validated the package information or errors can occur at build time.
+    You MUST include a version, since auto-addition of a package version is done during validation.
+    """
 
     class Input:
         owner = graphene.String(required=True)
@@ -46,12 +51,13 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
         manager = graphene.String(required=True)
         package = graphene.String(required=True)
         version = graphene.String()
+        skip_validation = graphene.Boolean()
 
     new_package_component_edge = graphene.Field(lambda: PackageComponentConnection.Edge)
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, manager, package, version=None,
-                               client_mutation_id=None):
+                               skip_validation=False, client_mutation_id=None):
         username = get_logged_in_username()
 
         # Load LabBook instance
@@ -60,20 +66,27 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
 
         # Get a package manager instance and check if package is valid
         mgr = get_package_manager(manager)
-        result = mgr.is_valid(package, version)
-
-        if result.package is False:
-            raise ValueError(f"{manager} managed package name {package} is invalid")
 
         latest_version = None
+        if not skip_validation:
+            # Validate Package
+            result = mgr.is_valid(package, version)
+
+            if result.package is False:
+                raise ValueError(f"{manager} managed package name {package} is invalid")
+
+            if version is None:
+                # look up latest version
+                version = mgr.latest_version(package)
+                # Since you already spent the time to look up the latest version, set it in case the field is queried
+                latest_version = version
+            else:
+                if result.version is False:
+                    raise ValueError(f"{manager} managed package name {package} version {version} is invalid")
+
         if version is None:
-            # look up latest version
-            version = mgr.latest_version(package)
-            # Since you already spent the time to look up the latest version, set it in case the field is queried
-            latest_version = version
-        else:
-            if result.version is False:
-                raise ValueError(f"{manager} managed package name {package} version {version} is invalid")
+            # if you get here, you skipped validation but didn't provide a version!
+            raise ValueError(f"Package validation has been skipped and version omitted. You must include a version.")
 
         # Create Component Manager
         cm = ComponentManager(lb)
