@@ -84,6 +84,7 @@ class TestLabbookMutation(object):
             assert not os.path.exists('/tmp/cats')
             assert os.path.exists('/tmp/dogs')
 
+
     def test_launch_api_server(self, pause, fixture_working_dir_env_repo_scoped):
         proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
         proc.daemon = True

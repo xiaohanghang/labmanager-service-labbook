@@ -20,7 +20,7 @@
 import pytest
 import yaml
 import os
-
+import graphql
 from snapshottest import snapshot
 
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped
@@ -74,6 +74,89 @@ class TestAddComponentMutations(object):
             assert package_info_dict['version'] == '2.18.4'
             assert package_info_dict['schema'] == 1
             assert package_info_dict['from_base'] is False
+
+    def test_add_package_skip_validation(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test listing labbooks"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="catbook-package-tester-skip", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Add a base image
+        pkg_query = """
+        mutation myPkgMutation {
+          addPackageComponent (input: {
+            owner: "default",
+            labbookName: "catbook-package-tester-skip",
+            package: "requests",
+            manager: "pip",
+            version: "2.18.4",
+            skipValidation: true
+          }) {
+            clientMutationId
+            newPackageComponentEdge {
+              node{
+                id
+                schema
+                manager
+                package
+                version
+                fromBase
+              }
+            }
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
+
+        # Validate the LabBook .gigantum/env/ directory
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
+
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml'))
+
+        with open(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml')) as pkg_yaml:
+            package_info_dict = yaml.load(pkg_yaml)
+            assert package_info_dict['package'] == 'requests'
+            assert package_info_dict['manager'] == 'pip'
+            assert package_info_dict['version'] == '2.18.4'
+            assert package_info_dict['schema'] == 1
+            assert package_info_dict['from_base'] is False
+
+    def test_add_package_skip_validation_errors(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test listing labbooks"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="catbook-package-tester-skip-errors", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Test with version missing
+        pkg_query = """
+        mutation myPkgMutation {
+          addPackageComponent (input: {
+            owner: "default",
+            labbookName: "catbook-package-tester-skip-errors",
+            package: "requests",
+            manager: "pip",
+            skipValidation: true
+          }) {
+            clientMutationId
+            newPackageComponentEdge {
+              node{
+                id
+                schema
+                manager
+                package
+                version
+                fromBase
+              }
+            }
+          }
+        }
+        """
+        result = fixture_working_dir_env_repo_scoped[2].execute(pkg_query)
+        assert "errors" in result
+        assert result['errors'][0]['message'] == 'Package validation has been skipped and version omitted. ' \
+                                                 'You must include a version.'
 
     def test_add_package_no_version(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test adding a package but omitting the version"""
@@ -230,7 +313,7 @@ class TestAddComponentMutations(object):
 
         # Verify git/notes
         log = lb.git.log()
-        assert len(log) == 4
+        assert len(log) == 5
         assert "_GTM_ACTIVITY_START_" in log[0]["message"]
         assert 'pillow' in log[0]["message"]
 
