@@ -63,11 +63,11 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # NOTE: This is a string since graphene can't represent ints bigger than 2**32
     size_bytes = graphene.String()
 
-    # Name of active (checked-out) branch
+    # Name of currently active (checked-out) branch
     active_branch_name = graphene.String()
 
-    # Primary user branch of repo (known also as "Workspace Branch")
-    user_branch_name = graphene.String()
+    # Primary user branch of repo (known also as "Workspace Branch" or "trunk")
+    workspace_branch_name = graphene.String()
 
     # All available feature/rollback branches (Collectively known as experimental branches)
     available_branch_names = graphene.List(graphene.String)
@@ -77,11 +77,12 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
     # The name of the current branch
     # NOTE: DEPRECATED
-    active_branch = graphene.Field(LabbookRef)
+    active_branch = graphene.Field(LabbookRef, deprecation_reason="Can use workspaceBranchName instead")
 
     # List of branches
     # NOTE: DEPRECATED
-    branches = graphene.relay.ConnectionField(LabbookRefConnection)
+    branches = graphene.relay.ConnectionField(LabbookRefConnection,
+                                              deprecation_reason="Can use availableBranchNames instead")
 
     # Get the URL of the remote origin
     default_remote = graphene.String()
