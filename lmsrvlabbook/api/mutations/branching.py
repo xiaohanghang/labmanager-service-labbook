@@ -52,7 +52,7 @@ class CreateExperimentalBranch(graphene.relay.ClientIDMutation):
 
 
 class DeleteExperimentalBranch(graphene.relay.ClientIDMutation):
-    """Mutation to create a local experimental (or Rollback) branch. """
+    """Delete a feature/rollback branch. Fails for any other attempt."""
 
     class Input:
         owner = graphene.String(required=True)
@@ -73,7 +73,7 @@ class DeleteExperimentalBranch(graphene.relay.ClientIDMutation):
 
 
 class WorkonBranch(graphene.relay.ClientIDMutation):
-    """Mutation to create a local experimental (or Rollback) branch. """
+    """Work on another branch (perform a git checkout)."""
 
     class Input:
         owner = graphene.String(required=True)
@@ -94,7 +94,7 @@ class WorkonBranch(graphene.relay.ClientIDMutation):
 
 
 class MergeFromBranch(graphene.relay.ClientIDMutation):
-    """Mutation to create a local experimental (or Rollback) branch. """
+    """Merge from another branch into the current active branch. Force if necessary. """
 
     class Input:
         owner = graphene.String(required=True)
