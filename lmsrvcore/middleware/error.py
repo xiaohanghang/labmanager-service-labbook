@@ -12,18 +12,23 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THEt
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import graphene
-from lmsrvlabbook.api.objects.packagemanager import PackageManager
+from lmcommon.logging import LMLogger
+
+logger = LMLogger.get_logger()
 
 
-class PackageManagerConnection(graphene.relay.Connection):
-    """A Connection for paging through available Package manager installed packages"""
-    class Meta:
-        node = PackageManager
+def error_middleware(next, root, info, **args):
+    """Middleware function to log all exceptions"""
+    try:
+        return_value = next(root, info, **args)
+    except Exception as e:
+        logger.error(f"{type(e)} raised while resolving {info.field_name}: {e}")
+        logger.exception(e)
+        raise
 
-
+    return return_value

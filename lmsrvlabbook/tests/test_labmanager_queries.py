@@ -17,12 +17,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import graphene
-from lmsrvlabbook.api.objects.noteobject import NoteObject
+import pytest
+from lmsrvlabbook.tests.fixtures import fixture_working_dir
 
 
-class NoteObjectConnection(graphene.relay.Connection):
-    """A Connection for paging through labbook git refs (branches)"""
-    class Meta:
-        node = NoteObject
+class TestLabManagerQueries(object):
+    def test_get_build_info(self, fixture_working_dir):
+        """Test getting the build info field"""
+        query = """
+        {
+            buildInfo
+        }
+        """
+        r = fixture_working_dir[2].execute(query)
+        assert 'errors' not in r
+        assert '-' in r['data']['buildInfo']
 

@@ -33,45 +33,39 @@ from lmcommon.labbook import LabBook
 class TestNoteService(object):
     def test_create_user_note_no_body(self, fixture_working_dir, snapshot):
         """Test creating and getting a user note"""
-
         # Create labbook
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="user-note-test", description="testing user notes")
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            # Create a user note
-            query = """
-            mutation makeUserNote {
-              createUserNote(input: {
-                owner: "default",
-                labbookName: "user-note-test",
-                title: "I think this is a thing"
-              })
-              {
-                newActivityRecordEdge {
-                  node{
-                    message
-                    detailObjects{                
-                      data
-                      type
-                      show
-                      importance
-                      tags
-                    }
-                    type
-                    show
-                    importance
-                    tags
-                  }
+        # Create a user note
+        query = """
+        mutation makeUserNote {
+          createUserNote(input: {
+            owner: "default",
+            labbookName: "user-note-test",
+            title: "I think this is a thing"
+          })
+          {
+            newActivityRecordEdge {
+              node{
+                message
+                detailObjects{                
+                  data
+                  type
+                  show
+                  importance
+                  tags
                 }
+                type
+                show
+                importance
+                tags
               }
             }
-            """
-            snapshot.assert_match(client.execute(query))
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_create_user_note_full(self, fixture_working_dir, snapshot):
         """Test creating a full user note"""
@@ -79,11 +73,6 @@ class TestNoteService(object):
         # Create labbook
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="user-note-test", description="testing user notes")
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
 
         # Create a user note
         query = """
@@ -115,19 +104,13 @@ class TestNoteService(object):
           }
         }
         """
-        snapshot.assert_match(client.execute(query))
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_create_user_note_check_vals(self, fixture_working_dir, snapshot):
         """Test to make sure keys and IDs are getting set OK"""
-
         # Create labbook
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="user-note-test", description="testing user notes")
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
 
         # Create a user note
         query = """
@@ -165,13 +148,13 @@ class TestNoteService(object):
           }
         }
         """
-        result = client.execute(query)
+        result = fixture_working_dir[2].execute(query)
 
         assert len(result['data']['createUserNote']['newActivityRecordEdge']['node']['id']) > 10
         assert type(result['data']['createUserNote']['newActivityRecordEdge']['node']['id']) == str
         assert len(result['data']['createUserNote']['newActivityRecordEdge']['node']['commit']) == 40
         assert type(result['data']['createUserNote']['newActivityRecordEdge']['node']['commit']) == str
-        assert result['data']['createUserNote']['newActivityRecordEdge']['node']['linkedCommit'] == "xxx"
+        assert result['data']['createUserNote']['newActivityRecordEdge']['node']['linkedCommit'] == "no-linked-commit"
         assert result['data']['createUserNote']['newActivityRecordEdge']['node']['message'] == "I think this is a thing"
 
         assert len(result['data']['createUserNote']['newActivityRecordEdge']['node']['detailObjects'][0]['id']) > 10

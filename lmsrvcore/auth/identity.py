@@ -46,20 +46,3 @@ def parse_token(auth_header: str) -> str:
         raise AuthenticationError("Could not parse JWT from Authorization Header. Should be `Bearer XXX`", 401)
 
     return token
-
-
-class AuthorizationMiddleware(object):
-    """Middlewere to enforce authentication requirements and parse JWT"""
-    def resolve(self, next, root, args, context, info, **kwargs):
-        # Get the identity manager class
-        id_mgr = get_identity_manager_instance()
-
-        # Pull the token out of the header if available
-        token = None
-        if "Authorization" in context.headers:
-            token = parse_token(context.headers["Authorization"])
-
-        # Authenticate and set current user context on each request
-        current_app.current_user = id_mgr.authenticate(token)
-
-        return next(root, args, context, info, **kwargs)

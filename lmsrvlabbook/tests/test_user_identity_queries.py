@@ -22,56 +22,80 @@ import os
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir
 
-from graphene.test import Client
 import graphene
-from mock import patch
 from flask import current_app
-
-from lmcommon.configuration import Configuration
+import flask
 
 
 class TestUserIdentityQueries(object):
 
     def test_logged_in_user(self, fixture_working_dir, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
+        query = """
+                {
+                    userIdentity{
+                                  id
+                                  username
+                                  email
+                                  givenName
+                                  familyName
+                                }
+                }
+                """
 
-            query = """
-                    {
-                        userIdentity{
-                                      id
-                                      username
-                                      email
-                                      givenName
-                                      familyName
-                                    }
-                    }
-                    """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            snapshot.assert_match(client.execute(query))
+    def test_logged_in_user_invalid_token(self, fixture_working_dir, snapshot):
+        query = """
+                {
+                    userIdentity{
+                                  isSessionValid
+                                }
+                }
+                """
+
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
     def test_no_logged_in_user(self, fixture_working_dir, snapshot):
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
+        query = """
+                {
+                    userIdentity{
+                                  id
+                                  username
+                                  email
+                                  givenName
+                                  familyName
+                                  isSessionValid
+                                }
+                }
+                """
 
-            query = """
-                    {
-                        userIdentity{
-                                      id
-                                      username
-                                      email
-                                      givenName
-                                      familyName
-                                    }
-                    }
-                    """
+        # Delete the stored user context
+        flask.g.user_obj = None
+        user_dir = os.path.join(fixture_working_dir[1], '.labmanager', 'identity')
+        os.remove(os.path.join(user_dir, 'user.json'))
 
-            # Delete the stored user context
-            current_app.current_user = None
-            user_dir = os.path.join(fixture_working_dir[1], '.labmanager', 'identity')
-            os.remove(os.path.join(user_dir, 'user.json'))
+        # Run query
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
 
-            # Run query
-            snapshot.assert_match(client.execute(query))
+    def test_invalid_token(self, fixture_working_dir, snapshot):
+        query = """
+                {
+                    userIdentity{
+                                  id
+                                  username
+                                  email
+                                  givenName
+                                  familyName
+                                  isSessionValid
+                                }
+                }
+                """
+
+        # Delete the stored user context
+        flask.g.user_obj = None
+        flask.g.access_token = "adsfasdfasdfasdfasdf"
+        user_dir = os.path.join(fixture_working_dir[1], '.labmanager', 'identity')
+        os.remove(os.path.join(user_dir, 'user.json'))
+
+        # Run query
+        snapshot.assert_match(fixture_working_dir[2].execute(query))

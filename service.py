@@ -18,10 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from flask import Flask, jsonify
+import flask
 from flask_cors import CORS, cross_origin
 import shutil
 import os
-
+import base64
 import blueprint
 
 from lmcommon.configuration import Configuration
@@ -29,6 +30,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
 from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 from lmcommon.labbook.lock import reset_all_locks
+from lmcommon.portmap.portmap import reset_all_ports
 
 
 logger = LMLogger.get_logger()
@@ -37,6 +39,8 @@ logger = LMLogger.get_logger()
 app = Flask("lmsrvlabbook")
 
 # Load configuration class into the flask application
+random_bytes = os.urandom(32)
+app.config["SECRET_KEY"] = base64.b64encode(random_bytes).decode('utf-8')
 app.config["LABMGR_CONFIG"] = config = Configuration()
 app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
@@ -65,6 +69,20 @@ def handle_auth_error(ex):
 def ping():
     """Unauthorized endpoint for validating the API is up"""
     return jsonify(config.config['build_info'])
+
+
+# TEMPORARY KLUDGE
+# Due to GitPython implementation, resources leak. This block deletes all GitPython instances at the end of the request
+# Future work will remove GitPython, at which point this block should be removed.
+@app.after_request
+def cleanup_git(response):
+    loader = getattr(flask.request, 'labbook_loader', None)
+    if loader:
+        for key in loader.__dict__["_promise_cache"]:
+            lb = loader.__dict__["_promise_cache"][key].value
+            lb.git.repo.__del__()
+    return response
+# TEMPORARY KLUDGE
 
 
 logger.info("Cloning/Updating environment repositories.")
@@ -97,6 +115,9 @@ except Exception as e:
 if config.config["lock"]["reset_on_start"]:
     logger.info("Resetting ALL distributed locks")
     reset_all_locks(config.config['lock'])
+    # also reset portmap
+    logger.info("Resetting ALL assigned ports")
+    reset_all_ports(config)
 
 
 def main(debug=False) -> None:

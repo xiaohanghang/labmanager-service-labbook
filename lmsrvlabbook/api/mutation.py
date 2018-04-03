@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,14 +19,15 @@
 # SOFTWARE.
 import graphene
 from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
-    AddEnvironmentComponent, AddEnvironmentPackage, CreateUserNote, StopContainer, ImportLabbook,\
+    AddCustomComponent, AddPackageComponent, CreateUserNote, StopContainer, ImportLabbook, DeleteLabbook, \
     ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
-    DeleteLabbookCollaborator, SyncLabbook, PublishLabbook
+    DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent, \
+    StartDevTool
 
 
-class LabbookMutations(graphene.AbstractType):
+class LabbookMutations(graphene.ObjectType):
     """Entry point for all graphql mutations"""
 
     # Import a labbook from an uploaded file (Archive as zip).
@@ -40,6 +41,9 @@ class LabbookMutations(graphene.AbstractType):
 
     # Create a new labbook on the file system.
     create_labbook = CreateLabbook.Field()
+
+    # Delete a labbook off the file system
+    delete_labbook = DeleteLabbook.Field()
 
     # Rename new labbook
     rename_labbook = RenameLabbook.Field()
@@ -74,14 +78,23 @@ class LabbookMutations(graphene.AbstractType):
     # Start a labbook's Docker container.
     stop_container = StopContainer.Field()
 
+    # Start a tool such as Jupyer Lab
+    start_dev_tool = StartDevTool.Field()
+
     # Create a user note in the labbook's current working branch
     create_user_note = CreateUserNote.Field()
 
-    # Add a development environment or complex dependency to Labbook environment.
-    add_environment_component = AddEnvironmentComponent.Field()
+    # Add a custom dependency to Labbook environment.
+    add_custom_component = AddCustomComponent.Field()
+
+    # Remove a custom dependency to Labbook environment.
+    remove_custom_component = RemoveCustomComponent.Field()
 
     # Add a package to a Labbook environment (e.g., pip package, apt)
-    add_environment_package = AddEnvironmentPackage.Field()
+    add_package_component = AddPackageComponent.Field()
+
+    # Remove a package from a Labbook environment (e.g., pip package, apt)
+    remove_package_component = RemovePackageComponent.Field()
 
     # Add a file to a labbook
     add_labbook_file = AddLabbookFile.Field()

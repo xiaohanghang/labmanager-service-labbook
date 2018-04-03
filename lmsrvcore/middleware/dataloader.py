@@ -12,18 +12,21 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THEt
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import graphene
-from lmsrvlabbook.api.objects.baseimage import BaseImage
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 
-class BaseImageConnection(graphene.relay.Connection):
-    """A Connection for paging through available Base images"""
-    class Meta:
-        node = BaseImage
+class LabBookLoaderMiddleware(object):
+    """Middleware to insert an instance of the LabBookLoader dataloader into the request context"""
+    def resolve(self, next, root, info, **args):
+        if hasattr(info.context, "labbook_loader"):
+            if not info.context.labbook_loader:
+                info.context.labbook_loader = LabBookLoader()
+        else:
+            info.context.labbook_loader = LabBookLoader()
 
-
+        return next(root, info, **args)

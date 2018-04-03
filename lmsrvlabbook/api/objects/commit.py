@@ -1,5 +1,5 @@
 
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,90 +19,40 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-import os
-
-from lmcommon.gitlib import get_git_interface
-from lmcommon.configuration import Configuration
 
 from lmsrvcore.auth.user import get_logged_in_username
 
-from lmsrvcore.api import ObjectType, logged_query
-from lmsrvcore.api.interfaces import GitCommit
+from lmsrvcore.api.interfaces import GitCommit, GitRepository
+from lmsrvlabbook.dataloader.labbook import LabBookLoader
 
 
-class LabbookCommit(ObjectType):
+class LabbookCommit(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository, GitCommit)):
     """An object representing a commit to a LabBook"""
-    class Meta:
-        interfaces = (GitCommit, graphene.relay.Node)
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name, hash_str = id.split("&")
 
-        Args:
-            id_data(dict):
+        return LabbookCommit(id=f"{owner}&{name}&{hash_str}", name=name, owner=owner,
+                             hash=hash_str)
 
-        Returns:
-            str
-        """
-        return "{}&{}&{}".format(id_data["owner"], id_data["name"], id_data["hash"])
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.id:
+            if not self.owner or not self.name or not self.hash:
+                raise ValueError("Resolving a LabbookCommit Node ID requires owner, name, and hash to be set")
+            self.id = f"{self.owner}&{self.name}&{self.hash}"
 
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
+    def resolve_short_hash(self, info):
+        """Resolve the short_hash field"""
+        return self.hash[:8]
 
-        Args:
-            type_id (str): type unique identifier
+    def resolve_committed_on(self, info):
+        """Resolve the committed_on field"""
+        if self.committed_on is None:
+            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+            self.committed_on = lb.git.repo.commit(self.hash).committed_datetime.isoformat()
 
-        Returns:
-            dict
-        """
-        split = type_id.split("&")
-        return {"owner": split[0], "name": split[1], "hash": split[2]}
-
-    @staticmethod
-    @logged_query
-    def create(id_data):
-        """Method to create a graphene LabBookCommit object based on the type node ID or owner+name+hash
-
-        id_data should at a minimum contain either `type_id` or `owner` & `name` & `hash`
-
-            {
-                "type_id": <unique id for this object Type),
-                "username": <optional username for logged in user>,
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>,
-                "hash": <full hexsha hash of the commit>,
-                "git": <optional gitlib instance already instantiated>
-            }
-
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance
-
-        Returns:
-            LabbookCommit
-        """
-        if "username" not in id_data:
-            id_data["username"] = get_logged_in_username()
-
-        if "type_id" in id_data:
-            # Parse ID components
-            id_data.update(LabbookCommit.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
-
-        # Get the commit information
-        if "git" not in id_data:
-            git = get_git_interface(Configuration().config["git"])
-            git.set_working_directory(os.path.join(git.working_directory,
-                                                   id_data["username"],
-                                                   id_data["owner"],
-                                                   "labbooks",
-                                                   id_data["name"]))
-        else:
-            git = id_data["git"]
-
-        committed_on = git.repo.commit(id_data["hash"]).committed_datetime.isoformat()
-
-        return LabbookCommit(id=LabbookCommit.to_type_id(id_data),
-                             hash=id_data["hash"], short_hash=id_data["hash"][:8],
-                             committed_on=committed_on)
+        return self.committed_on

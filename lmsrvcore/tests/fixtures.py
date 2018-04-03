@@ -30,19 +30,6 @@ from mock import patch
 from lmcommon.configuration import Configuration
 from lmcommon.auth.identity import get_identity_manager
 
-from lmsrvlabbook.api.query import LabbookQuery
-from lmsrvlabbook.api.mutation import LabbookMutations
-
-
-# Create ObjectType clases, since the EnvironmentQueries and EnvironmentMutations
-# are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
-
 
 def _create_temp_work_dir():
     """Helper method to create a temporary working directory and associated config file"""
@@ -60,7 +47,7 @@ def _create_temp_work_dir():
 
 
 @pytest.fixture
-def fixture_working_dir():
+def fixture_working_dir_with_cached_user():
     """A pytest fixture that creates a temporary working directory, config file, schema, and local user identity
     """
     # Create temp dir
@@ -75,9 +62,6 @@ def fixture_working_dir():
                    "given_name": "Jane",
                    "family_name": "Doe"}, user_file)
 
-    # Create test client
-    schema = graphene.Schema(query=Query, mutation=Mutation)
-
     with patch.object(Configuration, 'find_default_config', lambda self: config_file):
         app = Flask("lmsrvlabbook")
 
@@ -87,7 +71,7 @@ def fixture_working_dir():
 
         with app.app_context():
             # within this block, current_app points to app.
-            yield config_file, temp_dir, schema  # name of the config file, temporary working directory, the schema
+            yield config_file, temp_dir  # name of the config file, temporary working directory
 
     # Remove the temp_dir
     shutil.rmtree(temp_dir)

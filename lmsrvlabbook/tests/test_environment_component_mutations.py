@@ -20,139 +20,14 @@
 import pytest
 import yaml
 import os
-
+import graphql
 from snapshottest import snapshot
-from graphene.test import Client
-from mock import patch
 
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped
-from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 
 
 class TestAddComponentMutations(object):
-    def test_add_base_image(self, fixture_working_dir_env_repo_scoped, snapshot):
-        """Test listing labbooks"""
-        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
-
-        labbook_dir = lb.new(name="labbook1", description="my first labbook",
-                             owner={"username": "default"})
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            # Add a base image
-            query = """
-            mutation myEnvMutation{
-              addEnvironmentComponent(input: {
-                componentClass: base_image,
-                repository: "gig-dev_environment-components",
-                namespace: "gigantum",
-                component: "ubuntu1604-python3",
-                version: "0.4",
-                labbookName: "labbook1"
-              }) {
-                clientMutationId
-                environmentComponent {
-                    name
-                }
-              }
-            }
-            """
-            result = client.execute(query)
-
-        assert result['data']['addEnvironmentComponent']['environmentComponent']['name'] == 'ubuntu1604-python3'
-
-        # Validate the LabBook .gigantum/env/ directory
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base_image')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'dev_env')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'custom')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'entrypoint.sh')) is True
-
-        # Verify file
-        component_file = os.path.join(labbook_dir,
-                                      '.gigantum',
-                                      'env',
-                                      'base_image',
-                                      "gig-dev_environment-components_gigantum_ubuntu1604-python3.yaml")
-        assert os.path.exists(component_file) is True
-
-        with open(component_file, 'rt') as cf:
-            data = yaml.load(cf)
-
-        assert data['info']['name'] == 'ubuntu1604-python3'
-        assert data['info']['version_major'] == 0
-        assert data['info']['version_minor'] == 4
-        assert data['image']['namespace'] == 'gigdev'
-        assert data['image']['repo'] == 'ubuntu1604-python3'
-        assert data['###namespace###'] == 'gigantum'
-
-        # Verify git/notes
-        log = lb.git.log()
-        assert len(log) == 4
-        assert "_GTM_ACTIVITY_START_" in log[0]["message"]
-        assert 'ubuntu1604-python3' in log[0]["message"]
-
-    def test_add_dev_env(self, fixture_working_dir_env_repo_scoped, snapshot):
-        """Test listing labbooks"""
-        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
-
-        labbook_dir = lb.new(name="labbook2", description="my first labbook",
-                             owner={"username": "default"})
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            # Add a base image
-            query = """
-            mutation myEnvMutation{
-              addEnvironmentComponent(input: {componentClass: dev_env,
-              repository: "gig-dev_environment-components",
-              namespace: "gigantum", component: "jupyter-ubuntu",
-              version: "0.1", labbookName: "labbook2"}) {
-                clientMutationId
-              }
-            }
-            """
-            client.execute(query)
-
-        # Validate the LabBook .gigantum/env/ directory
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base_image')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'dev_env')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'custom')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'entrypoint.sh')) is True
-
-        # Verify file
-        component_file = os.path.join(labbook_dir,
-                                      '.gigantum',
-                                      'env',
-                                      'dev_env',
-                                      "gig-dev_environment-components_gigantum_jupyter-ubuntu.yaml")
-        assert os.path.exists(component_file) is True
-
-        with open(component_file, 'rt') as cf:
-            data = yaml.load(cf)
-
-        assert data['info']['name'] == 'jupyter-ubuntu'
-        assert data['info']['version_major'] == 0
-        assert data['info']['version_minor'] == 1
-        assert data['###namespace###'] == 'gigantum'
-        assert len(data['install_commands']) == 1
-        assert data['install_commands'][0] == 'pip3 install jupyter'
-        assert "exec_commands" in data
-        assert "exposed_tcp_ports" in data
-
-        # Verify git/notes
-        log = lb.git.log()
-        assert len(log) == 4
-        assert "_GTM_ACTIVITY_START_" in log[0]["message"]
-        assert 'jupyter-ubuntu' in log[0]["message"]
 
     def test_add_package(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test listing labbooks"""
@@ -161,59 +36,228 @@ class TestAddComponentMutations(object):
         labbook_dir = lb.new(name="catbook-package-tester", description="LB to test package mutation",
                              owner={"username": "default"})
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            # Add a base image
-            query = """
-            mutation myEnvMutation{
-              addEnvironmentComponent(input: {
-                componentClass: dev_env,
-                repository: "gig-dev_environment-components",
-                namespace: "gigantum", component: "jupyter-ubuntu",
-                version: "0.1",
-                labbookName: "catbook-package-tester"
-              }) {
-                clientMutationId
+        # Add a base image
+        pkg_query = """
+        mutation myPkgMutation {
+          addPackageComponent (input: {
+            owner: "default",
+            labbookName: "catbook-package-tester",
+            package: "requests",
+            manager: "pip",
+            version: "2.18.4"
+          }) {
+            clientMutationId
+            newPackageComponentEdge {
+              node{
+                id
+                schema
+                manager
+                package
+                version
+                fromBase
               }
             }
-            """
-            client.execute(query)
-
-            # Add a base image
-            pkg_query = """
-            mutation myPkgMutation {
-              addEnvironmentPackage(input: {
-                labbookName: "catbook-package-tester",
-                packageName: "docker",
-                packageManager: "apt"
-              }) {
-                clientMutationId
-                environmentPackage {
-                    packageName
-                    packageManager
-                }
-              }
-            }
-            """
-            result = client.execute(pkg_query)
-
-        import pprint; pprint.pprint(result)
-        assert result['data']['addEnvironmentPackage']['environmentPackage']['packageName'] == 'docker'
-        assert result['data']['addEnvironmentPackage']['environmentPackage']['packageManager'] == 'apt'
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
 
         # Validate the LabBook .gigantum/env/ directory
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
 
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'apt_docker.yaml'))
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml'))
 
-        with open(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'apt_docker.yaml')) as pkg_yaml:
+        with open(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml')) as pkg_yaml:
             package_info_dict = yaml.load(pkg_yaml)
+            assert package_info_dict['package'] == 'requests'
+            assert package_info_dict['manager'] == 'pip'
+            assert package_info_dict['version'] == '2.18.4'
+            assert package_info_dict['schema'] == 1
+            assert package_info_dict['from_base'] is False
 
-            assert package_info_dict['name'] == 'docker'
-            assert package_info_dict['package_manager'] == 'apt'
+    def test_add_package_skip_validation(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test listing labbooks"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="catbook-package-tester-skip", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Add a base image
+        pkg_query = """
+        mutation myPkgMutation {
+          addPackageComponent (input: {
+            owner: "default",
+            labbookName: "catbook-package-tester-skip",
+            package: "requests",
+            manager: "pip",
+            version: "2.18.4",
+            skipValidation: true
+          }) {
+            clientMutationId
+            newPackageComponentEdge {
+              node{
+                id
+                schema
+                manager
+                package
+                version
+                fromBase
+              }
+            }
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
+
+        # Validate the LabBook .gigantum/env/ directory
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
+
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml'))
+
+        with open(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml')) as pkg_yaml:
+            package_info_dict = yaml.load(pkg_yaml)
+            assert package_info_dict['package'] == 'requests'
+            assert package_info_dict['manager'] == 'pip'
+            assert package_info_dict['version'] == '2.18.4'
+            assert package_info_dict['schema'] == 1
+            assert package_info_dict['from_base'] is False
+
+    def test_add_package_skip_validation_errors(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test listing labbooks"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="catbook-package-tester-skip-errors", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Test with version missing
+        pkg_query = """
+        mutation myPkgMutation {
+          addPackageComponent (input: {
+            owner: "default",
+            labbookName: "catbook-package-tester-skip-errors",
+            package: "requests",
+            manager: "pip",
+            skipValidation: true
+          }) {
+            clientMutationId
+            newPackageComponentEdge {
+              node{
+                id
+                schema
+                manager
+                package
+                version
+                fromBase
+              }
+            }
+          }
+        }
+        """
+        result = fixture_working_dir_env_repo_scoped[2].execute(pkg_query)
+        assert "errors" in result
+        assert result['errors'][0]['message'] == 'Package validation has been skipped and version omitted. ' \
+                                                 'You must include a version.'
+
+    def test_add_package_no_version(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test adding a package but omitting the version"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="catbook-package-no-version", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Add a base image
+        pkg_query = """
+        mutation myPkgMutation {
+          addPackageComponent (input: {
+            owner: "default",
+            labbookName: "catbook-package-no-version",
+            package: "requests",
+            manager: "pip"
+          }) {
+            clientMutationId
+            newPackageComponentEdge {
+              node{
+                id
+                schema
+                manager
+                package
+                version
+                fromBase
+              }
+            }
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml'))
+
+    def test_add_package_bad_version(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test adding a package with an invalid version"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="catbook-package-bad-version", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Add a base image
+        pkg_query = """
+        mutation myPkgMutation {
+          addPackageComponent (input: {
+            owner: "default",
+            labbookName: "catbook-package-bad-version",
+            package: "requests",
+            manager: "pip",
+            version: "100.100.100"
+          }) {
+            clientMutationId
+            newPackageComponentEdge {
+              node{
+                id
+                schema
+                manager
+                package
+                version
+                fromBase
+              }
+            }
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
+        assert not os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml'))
+
+    def test_add_bad_package(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test adding a bad package"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="catbook-package-bad", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Add a base image
+        pkg_query = """
+        mutation myPkgMutation {
+          addPackageComponent (input: {
+            owner: "default",
+            labbookName: "catbook-package-bad",
+            package: "asdfdfghghjfgsdasrftghrty",
+            manager: "pip",
+            version: "1.0"
+          }) {
+            clientMutationId
+            newPackageComponentEdge {
+              node{
+                id
+                schema
+                manager
+                package
+                version
+                fromBase
+              }
+            }
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
+        assert not os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_requests.yaml'))
 
     def test_add_custom_dep(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test adding a custom dependency"""
@@ -222,27 +266,39 @@ class TestAddComponentMutations(object):
         labbook_dir = lb.new(name="labbook3", description="my first labbook",
                              owner={"username": "default"})
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            # Add a base image
-            query = """
-            mutation myEnvMutation{
-              addEnvironmentComponent(input: {componentClass: custom,
-              repository: "gig-dev_environment-components",
-              namespace: "gigantum", component: "ubuntu-python3-pillow",
-              version: "0.3", labbookName: "labbook3"}) {
-                clientMutationId
+        # Add a base image
+        query = """
+        mutation myEnvMutation{
+          addCustomComponent(input: {
+            owner: "default",
+            labbookName: "labbook3",
+            repository: "gig-dev_components2",
+            componentId: "pillow",
+            revision: 0
+          }) {
+            clientMutationId
+            newCustomComponentEdge {
+              node{
+                id
+                repository
+                componentId
+                revision
+                name
+                description
+                tags
+                license
+                url
+                requiredPackageManagers
+                dockerSnippet
               }
             }
-            """
-            client.execute(query)
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
         # Validate the LabBook .gigantum/env/ directory
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base_image')) is True
-        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'dev_env')) is True
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'base')) is True
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager')) is True
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'custom')) is True
         assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'entrypoint.sh')) is True
@@ -252,20 +308,119 @@ class TestAddComponentMutations(object):
                                       '.gigantum',
                                       'env',
                                       'custom',
-                                      "gig-dev_environment-components_gigantum_ubuntu-python3-pillow.yaml")
+                                      "gig-dev_components2_pillow.yaml")
         assert os.path.exists(component_file) is True
-
-        with open(component_file, 'rt') as cf:
-            data = yaml.load(cf)
-
-        assert data['info']['name'] == 'ubuntu-python3-pillow'
-        assert data['info']['version_major'] == 0
-        assert data['info']['version_minor'] == 3
-        assert data['###namespace###'] == 'gigantum'
-        assert "docker" in data
 
         # Verify git/notes
         log = lb.git.log()
-        assert len(log) == 4
+        assert len(log) == 5
         assert "_GTM_ACTIVITY_START_" in log[0]["message"]
-        assert 'ubuntu-python3-pillow' in log[0]["message"]
+        assert 'pillow' in log[0]["message"]
+
+    def test_remove_package(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test removing a package from a labbook"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="catbook-package-tester-remove", description="LB to test package mutation",
+                             owner={"username": "default"})
+
+        # Add a pip package
+        pkg_query = """
+       mutation myPkgMutation {
+         addPackageComponent (input: {
+           owner: "default",
+           labbookName: "catbook-package-tester-remove",
+           package: "docker",
+           manager: "pip"
+         }) {
+           clientMutationId
+           newPackageComponentEdge {
+             node{
+               manager
+               package
+               fromBase
+             }
+           }
+         }
+       }
+       """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
+
+        # Assert that the dependency was added
+        assert os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_docker.yaml'))
+
+        # Remove a pip package
+        pkg_query = """
+       mutation myPkgMutation {
+         removePackageComponent (input: {
+           owner: "default",
+           labbookName: "catbook-package-tester-remove",
+           package: "docker",
+           manager: "pip"
+         }) {
+           clientMutationId
+           success
+         }
+       }
+       """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(pkg_query))
+
+        # Assert that the dependency is gone
+        assert not os.path.exists(os.path.join(labbook_dir, '.gigantum', 'env', 'package_manager', 'pip_docker.yaml'))
+
+    def test_remove_custom_dep(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test removing a custom dependency"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+
+        labbook_dir = lb.new(name="labbook-remove-custom", description="my first labbook",
+                             owner={"username": "default"})
+
+        # Add a custom dep
+        query = """
+        mutation myEnvMutation{
+          addCustomComponent(input: {
+            owner: "default",
+            labbookName: "labbook-remove-custom",
+            repository: "gig-dev_components2",
+            componentId: "pillow",
+            revision: 0
+          }) {
+            clientMutationId
+            newCustomComponentEdge {
+              node{
+                repository
+                componentId
+                revision
+                name
+                description
+              }
+            }
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+        # Verify file
+        component_file = os.path.join(labbook_dir,
+                                      '.gigantum',
+                                      'env',
+                                      'custom',
+                                      "gig-dev_components2_pillow.yaml")
+        assert os.path.exists(component_file) is True
+
+        # Remove a custom dep
+        query = """
+        mutation myEnvMutation{
+          removeCustomComponent(input: {
+            owner: "default",
+            labbookName: "labbook-remove-custom",
+            repository: "gig-dev_components2",
+            componentId: "pillow"
+          }) {
+            clientMutationId
+            success
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+        assert os.path.exists(component_file) is False

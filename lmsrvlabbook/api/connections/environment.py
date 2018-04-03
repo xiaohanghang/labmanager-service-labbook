@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,12 +18,28 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.objects.note import Note
+from lmsrvlabbook.api.objects.basecomponent import BaseComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
+from lmsrvlabbook.api.objects.customcomponent import CustomComponent
 
 
-class NoteConnection(graphene.relay.Connection):
-    """A Connection for paging through labbook git refs (branches)"""
+class BaseComponentConnection(graphene.relay.Connection):
+    """A Connection for paging through Base components"""
     class Meta:
-        node = Note
+        node = BaseComponent
+
+
+class PackageComponentConnection(graphene.relay.Connection):
+    """A Connection for paging through Package components"""
+    class Meta:
+        node = PackageComponent
+
+
+class CustomComponentConnection(graphene.relay.Connection):
+    """A Connection for paging through Custom components"""
+    class Meta:
+        node = CustomComponent
+
+
 
 

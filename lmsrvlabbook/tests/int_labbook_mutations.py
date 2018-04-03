@@ -28,17 +28,17 @@ import time
 import uuid
 
 import graphene
-from graphene.test import Client
 from mock import patch
 import requests
 
 from lmcommon.environment import ComponentManager, RepositoryManager
 from lmcommon.dispatcher import Dispatcher, JobKey
-from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 from lmsrvlabbook.api.mutation import LabbookMutations
 from lmsrvlabbook.api.query import LabbookQuery
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
+from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
+
 
 import service
 
@@ -84,15 +84,15 @@ class TestLabbookMutation(object):
             assert not os.path.exists('/tmp/cats')
             assert os.path.exists('/tmp/dogs')
 
-    def test_launch_api_server(self, pause, fixture_working_dir_env_repo_scoped):
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
-            proc.daemon = True
-            proc.start()
 
-            time.sleep(4)
-            assert proc.is_alive()
-            proc.terminate()
+    def test_launch_api_server(self, pause, fixture_working_dir_env_repo_scoped):
+        proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
+        proc.daemon = True
+        proc.start()
+
+        time.sleep(4)
+        assert proc.is_alive()
+        proc.terminate()
 
 
     def test_insert_file(self, fixture_working_dir_env_repo_scoped):
@@ -100,76 +100,73 @@ class TestLabbookMutation(object):
         pass
 
     def test_export_and_import_lb(self, fixture_working_dir_env_repo_scoped):
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            api_server_proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
-            api_server_proc.daemon = True
-            api_server_proc.start()
-            assert api_server_proc.is_alive()
-            time.sleep(5)
-            assert api_server_proc.is_alive()
 
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-            assert api_server_proc.is_alive()
+        api_server_proc = multiprocessing.Process(target=service.main, kwargs={'debug': False})
+        api_server_proc.daemon = True
+        api_server_proc.start()
+        assert api_server_proc.is_alive()
+        time.sleep(5)
+        assert api_server_proc.is_alive()
 
-            lb_name = "mutation-export-import-unittest"
-            lb = LabBook(fixture_working_dir_env_repo_scoped[0])
-            lb.new(name=lb_name, description="Import/Export Mutation Testing.",
-                   owner={"username": "default"})
-            cm = ComponentManager(lb)
-            cm.add_component("base_image", "gig-dev_environment-components", "gigantum", "ubuntu1604-python3", "0.4")
-            cm.add_component("dev_env", "gig-dev_environment-components", "gigantum", "jupyter-ubuntu", "0.1")
-            pprint.pprint(f"NEW TEST LB IN: {lb.root_dir}")
+        # Make and validate request
+        assert api_server_proc.is_alive()
 
-            assert api_server_proc.is_alive()
-            export_query = """
-            mutation export {
-              exportLabbook(input: {
-                owner: "default",
-                labbookName: "%s"
-              }) {
-                jobKey
-              }
-            }
-            """ % lb.name
-            r = client.execute(export_query)
-            pprint.pprint(r)
+        lb_name = "mutation-export-import-unittest"
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+        lb.new(name=lb_name, description="Import/Export Mutation Testing.",
+               owner={"username": "default"})
+        cm = ComponentManager(lb)
+        cm.add_component("base", ENV_UNIT_TEST_REPO, 'ut-busybox', 0)
 
-            # Sleep while the background job completes, and then delete new lb.
-            time.sleep(5)
-            d = Dispatcher()
-            job_status = d.query_task(JobKey(r['data']['exportLabbook']['jobKey']))
+        assert api_server_proc.is_alive()
+        export_query = """
+        mutation export {
+          exportLabbook(input: {
+            owner: "default",
+            labbookName: "%s"
+          }) {
+            jobKey
+          }
+        }
+        """ % lb.name
+        r = fixture_working_dir_env_repo_scoped[2].execute(export_query)
+        pprint.pprint(r)
 
-            # Delete existing labbook in file system.
-            shutil.rmtree(lb.root_dir)
-            assert api_server_proc.is_alive()
+        # Sleep while the background job completes, and then delete new lb.
+        time.sleep(5)
+        d = Dispatcher()
+        job_status = d.query_task(JobKey(r['data']['exportLabbook']['jobKey']))
 
-            assert job_status.status == 'finished'
-            assert not os.path.exists(lb.root_dir)
-            assert os.path.exists(job_status.result)
-            pprint.pprint(job_status.result)
+        # Delete existing labbook in file system.
+        shutil.rmtree(lb.root_dir)
+        assert api_server_proc.is_alive()
 
-            if os.path.exists(os.path.join('/tmp', os.path.basename(job_status.result))):
-                os.remove(os.path.join('/tmp', os.path.basename(job_status.result)))
-            new_path = shutil.move(job_status.result, '/tmp')
+        assert job_status.status == 'finished'
+        assert not os.path.exists(lb.root_dir)
+        assert os.path.exists(job_status.result)
+        pprint.pprint(job_status.result)
 
-            # Now, import the labbook that was just exported.
-            export_query = """
-            mutation import {
-              importLabbook(input: {
-              }) {
-                jobKey
-              }
-            }
-            """
+        if os.path.exists(os.path.join('/tmp', os.path.basename(job_status.result))):
+            os.remove(os.path.join('/tmp', os.path.basename(job_status.result)))
+        new_path = shutil.move(job_status.result, '/tmp')
 
-            files = {'uploadFile': open(new_path, 'rb')}
-            qry = {"query": export_query}
-            assert api_server_proc.is_alive()
-            r = requests.post('http://localhost:10001/labbook/', data=qry, files=files)
+        # Now, import the labbook that was just exported.
+        export_query = """
+        mutation import {
+          importLabbook(input: {
+          }) {
+            jobKey
+          }
+        }
+        """
 
-            time.sleep(0.5)
-            pprint.pprint(r)
-            assert 'errors' not in r
-            time.sleep(2)
+        files = {'uploadFile': open(new_path, 'rb')}
+        qry = {"query": export_query}
+        assert api_server_proc.is_alive()
+        r = requests.post('http://localhost:10001/labbook/', data=qry, files=files)
+
+        time.sleep(0.5)
+        pprint.pprint(r)
+        assert 'errors' not in r
+        time.sleep(2)
 

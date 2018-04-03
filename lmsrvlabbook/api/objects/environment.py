@@ -1,5 +1,5 @@
 
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,10 +18,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import graphene
-
-import os
 import base64
 
 import docker
@@ -30,21 +27,19 @@ import requests
 
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment.componentmanager import ComponentManager
-from lmcommon.labbook import LabBook
 from lmcommon.configuration import get_docker_client
 from lmcommon.logging import LMLogger
+from lmcommon.container.utils import infer_docker_image_name
 
+from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.api import ObjectType, logged_query
 from lmsrvcore.api.connections import ListBasedConnection
 
-from lmsrvlabbook.api.objects.environmentauthor import EnvironmentAuthor
-from lmsrvlabbook.api.objects.environmentinfo import EnvironmentInfo
-from lmsrvlabbook.api.objects.environmentcomponentid import EnvironmentComponent
-from lmsrvlabbook.api.connections.devenv import DevEnvConnection, DevEnv
-from lmsrvlabbook.api.connections.customdependency import CustomDependencyConnection, CustomDependency
-from lmsrvlabbook.api.connections.packagemanager import PackageManagerConnection, PackageManager
-from lmsrvlabbook.api.objects.baseimage import BaseImage
+from lmsrvlabbook.api.connections.environment import CustomComponentConnection, PackageComponentConnection
+from lmsrvlabbook.api.objects.basecomponent import BaseComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
+from lmsrvlabbook.api.objects.customcomponent import CustomComponent
+from lmsrvlabbook.dataloader.package import PackageLoader
 
 logger = LMLogger.get_logger()
 
@@ -57,6 +52,9 @@ class ImageStatus(graphene.Enum):
 
     # The image is being built
     BUILD_IN_PROGRESS = 1
+
+    # The task to build the image is stuck in queued
+    BUILD_QUEUED = 99
 
     # The image has been built and the Dockerfile has yet to change
     EXISTS = 2
@@ -81,87 +79,47 @@ class ContainerStatus(graphene.Enum):
     RUNNING = 2
 
 
-class Environment(ObjectType):
+class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
     """A type that represents the Environment for a LabBook"""
-    class Meta:
-        interfaces = (graphene.relay.Node, )
-
     # The name of the current branch
     image_status = graphene.Field(ImageStatus)
 
     # The name of the current branch
     container_status = graphene.Field(ContainerStatus)
 
-    # The LabBook's Base Image
-    base_image = graphene.Field(BaseImage)
-
-    # The LabBook's Dev Envs
-    dev_envs = graphene.ConnectionField(DevEnvConnection)
+    # The LabBook's Base Component
+    base = graphene.Field(BaseComponent)
 
     # The LabBook's Package manager installed dependencies
-    package_manager_dependencies = graphene.ConnectionField(PackageManagerConnection)
+    package_dependencies = graphene.ConnectionField(PackageComponentConnection)
 
     # The LabBook's Custom dependencies
-    custom_dependencies = graphene.ConnectionField(CustomDependencyConnection)
+    custom_dependencies = graphene.ConnectionField(CustomComponentConnection)
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
+        owner, name = id.split("&")
 
-        Args:
-            id_data(dict):
+        return Environment(id=f"{owner}&{name}", name=name, owner=owner)
 
-        Returns:
-            str
-        """
-        return "{}&{}&{}".format(id_data["username"], id_data["owner"], id_data["name"])
+    def resolve_id(self, info):
+        """Resolve the unique Node id for this object"""
+        if not self.owner or not self.name:
+            raise ValueError("Resolving a Environment Node ID requires owner and name to be set")
 
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
+        return f"{self.owner}&{self.name}"
 
-        Args:
-            type_id (str): type unique identifier
+    def resolve_image_status(self, info):
+        """Resolve the image_status field"""
+        labbook_image_key = infer_docker_image_name(labbook_name=self.name, owner=self.owner,
+                                                    username=get_logged_in_username())
 
-        Returns:
-            dict
-        """
-        split = type_id.split("&")
-        return {"username": split[0], "owner": split[1], "name": split[2]}
-
-    @staticmethod
-    @logged_query
-    def create(id_data):
-        """Method to create a graphene Environment object based on the type node ID or owner+name+hash
-
-        id_data should at a minimum contain either `type_id` or `owner` & `name` & `hash`
-
-            {
-                "type_id": <unique id for this object Type),
-                "username": <optional username for logged in user>,
-                "owner": <owner username (or org)>,
-                "name": <name of the labbook>,
-            }
-
-        Args:
-            id_data(dict): A dictionary of variables that uniquely ID the instance
-
-        Returns:
-            Environment
-        """
-        if "username" not in id_data:
-            # TODO: Lookup name based on logged in user when available
-            id_data["username"] = get_logged_in_username()
-
-        if "type_id" in id_data:
-            # Parse ID components
-            id_data.update(Environment.parse_type_id(id_data["type_id"]))
-            del id_data["type_id"]
-
-        labbook_key = "{}-{}-{}".format(id_data["username"], id_data["owner"], id_data["name"])
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         dispatcher = Dispatcher()
-        lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(labbook_key)]
+        lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(lb.key)]
 
         for j in lb_jobs:
             logger.debug("Current job for lb: status {}, meta {}".format(j.status, j.meta))
@@ -170,28 +128,40 @@ class Environment(ObjectType):
         # Therefore, we know that if one exists, there most likely is not one being built.
         try:
             client = get_docker_client()
-            client.images.get(labbook_key)
+            client.images.get(labbook_image_key)
             image_status = ImageStatus.EXISTS
         except (ImageNotFound, requests.exceptions.ConnectionError):
             image_status = ImageStatus.DOES_NOT_EXIST
 
         if any([j.status == 'failed' and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.info("Image status for {} is BUILD_FAILED".format(labbook_key))
+            logger.info("Image status for {} is BUILD_FAILED".format(lb.key))
             if image_status == ImageStatus.EXISTS:
                 # The indication that there's a failed job is probably lingering from a while back, so don't
                 # change the status to FAILED. Only do that if there is no Docker image.
-                logger.warning(f'Got failed build_image for labbook {labbook_key}, but image exists.')
+                logger.warning(f'Got failed build_image for labbook {lb.key}, but image exists.')
             else:
                 image_status = ImageStatus.BUILD_FAILED
 
-        if any([j.status in ['started', 'queued'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.info(f"Image status for {labbook_key} is BUILD_IN_PROGRESS")
+        if any([j.status in ['started'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
+            logger.debug(f"Image status for {lb.key} is BUILD_IN_PROGRESS")
             # build_image being in progress takes precedence over if image already exists (unlikely event).
             if image_status == ImageStatus.EXISTS:
-                logger.warning(f'Got started/queued build_image for labbook {labbook_key}, but image exists.')
+                logger.warning(f'Got build_image for labbook {lb.key}, but image exists.')
             image_status = ImageStatus.BUILD_IN_PROGRESS
 
+        if any([j.status in ['queued'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
+            logger.warning(f"build_image for {lb.key} stuck in queued state")
+            image_status = ImageStatus.BUILD_QUEUED
+
+        return image_status.value
+
+    def resolve_container_status(self, info):
+        """Resolve the image_status field"""
         # Check if the container is running by looking up the container
+
+        labbook_key = infer_docker_image_name(labbook_name=self.name, owner=self.owner,
+                                              username=get_logged_in_username())
+
         try:
             client = get_docker_client()
             container = client.containers.get(labbook_key)
@@ -202,127 +172,41 @@ class Environment(ObjectType):
         except (NotFound, requests.exceptions.ConnectionError):
             container_status = ContainerStatus.NOT_RUNNING
 
-        return Environment(id=Environment.to_type_id(id_data),
-                           image_status=image_status.value,
-                           container_status=container_status.value)
+        return container_status.value
 
-    def resolve_base_image(self, args, context, info):
-        """Method to get the LabBook's base image
+    def resolve_base(self, info):
+        """Method to get the LabBook's base component
 
         Args:
-            args:
-            context:
             info:
 
         Returns:
 
         """
-        # TODO: Implement better method to share data between resolvers
-        # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_username()}
-        id_data.update(Environment.parse_type_id(self.id))
-
-        # Get base image data
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        # Get base image data from the LabBook
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
-
-        component_data = cm.get_component_list("base_image")
+        component_data = cm.base_fields
 
         if component_data:
-            component_data = component_data[0]
-            # Switch ID data to a BaseImage
-            id_data["component_class"] = "base_image"
-            id_data["repo"] = component_data["###repository###"]
-            id_data["namespace"] = component_data["###namespace###"]
-            id_data["component"] = component_data['info']['name']
-            id_data["version"] = "{}.{}".format(component_data['info']['version_major'],
-                                                component_data['info']['version_minor'])
-
-            package_managers = [pm['name'] for pm in component_data['available_package_managers']]
-
-            return BaseImage(id=BaseImage.to_type_id(id_data),
-                             author=EnvironmentAuthor.create(id_data),
-                             info=EnvironmentInfo.create(id_data),
-                             component=EnvironmentComponent.create(id_data),
-                             os_class=component_data['os_class'],
-                             os_release=component_data['os_release'],
-                             server=component_data['image']['server'],
-                             namespace=component_data['image']['namespace'],
-                             repository=component_data['image']['repo'],
-                             tag=component_data['image']['tag'],
-                             available_package_managers=package_managers)
+            return BaseComponent(id=f"{component_data['###repository###']}&{component_data['id']}&{component_data['revision']}",
+                                 repository=component_data['###repository###'],
+                                 component_id=component_data['id'],
+                                 revision=int(component_data['revision']),
+                                 _component_data=component_data)
         else:
             return None
 
-    def resolve_dev_envs(self, args, context, info):
-        """Method to get the LabBook's dev envs
+    def resolve_package_dependencies(self, info, **kwargs):
+        """Method to get the LabBook's package manager dependencies
 
         Args:
-            args:
-            context:
             info:
 
         Returns:
 
         """
-        # TODO: Implement better method to share data between resolvers
-        # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_username()}
-        id_data.update(Environment.parse_type_id(self.id))
-
-        # Get base image data
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
-        cm = ComponentManager(lb)
-
-        edges = cm.get_component_list("dev_env")
-
-        if edges:
-            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in
-                       enumerate(edges)]
-
-            # Process slicing and cursor args
-            lbc = ListBasedConnection(edges, cursors, args)
-            lbc.apply()
-
-            # Get DevEnv instances
-            edge_objs = []
-            for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {'component_data': edge,
-                           'component_class': 'dev_env',
-                           'repo': edge['###repository###'],
-                           'namespace': edge['###namespace###'],
-                           'component': edge['info']['name'],
-                           'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                           }
-                edge_objs.append(DevEnvConnection.Edge(node=DevEnv.create(id_data), cursor=cursor))
-
-            return DevEnvConnection(edges=edge_objs, page_info=lbc.page_info)
-
-        else:
-            return DevEnvConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
-                                                                                has_previous_page=False))
-
-    def resolve_package_manager_dependencies(self, args, context, info):
-        """Method to get the LabBook's package manager deps
-
-        Args:
-            args:
-            context:
-            info:
-
-        Returns:
-
-        """
-        # TODO: Implement better method to share data between resolvers
-        # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_username()}
-        id_data.update(Environment.parse_type_id(self.id))
-
-        # Get base image data
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
         edges = cm.get_component_list("package_manager")
@@ -332,45 +216,40 @@ class Environment(ObjectType):
                        enumerate(edges)]
 
             # Process slicing and cursor args
-            lbc = ListBasedConnection(edges, cursors, args)
+            lbc = ListBasedConnection(edges, cursors, kwargs)
             lbc.apply()
+
+            # Create version dataloader
+            keys = [f"{k['manager']}&{k['package']}" for k in lbc.edges]
+            vd = PackageLoader(keys)
 
             # Get DevEnv instances
             edge_objs = []
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {'component_data': edge,
-                           'component_class': 'package_manager',
-                           'package_manager': edge['package_manager'],
-                           'package_name': edge['name'],
-                           'package_version': edge['version']
-                           }
-                edge_objs.append(PackageManagerConnection.Edge(node=PackageManager.create(id_data), cursor=cursor))
+                edge_objs.append(PackageComponentConnection.Edge(node=PackageComponent(_version_dataloader=vd,
+                                                                                       manager=edge['manager'],
+                                                                                       package=edge['package'],
+                                                                                       version=edge['version'],
+                                                                                       from_base=edge['from_base'],
+                                                                                       schema=edge['schema']),
+                                                                 cursor=cursor))
 
-            return PackageManagerConnection(edges=edge_objs, page_info=lbc.page_info)
+            return PackageComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
         else:
-            return PackageManagerConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
-                                                                                        has_previous_page=False))
+            return PackageComponentConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
+                                                                                          has_previous_page=False))
 
-    def resolve_custom_dependencies(self, args, context, info):
-        """Method to get the LabBook's custom deps
+    def resolve_custom_dependencies(self, info, **kwargs):
+        """Method to get the LabBook's custom dependencies
 
         Args:
-            args:
-            context:
             info:
 
         Returns:
 
         """
-        # TODO: Implement better method to share data between resolvers
-        # The id field is populated at this point, so should be able to use that info for now
-        id_data = {"username": get_logged_in_username()}
-        id_data.update(Environment.parse_type_id(self.id))
-
-        # Get base image data
-        lb = LabBook()
-        lb.from_name(id_data["username"], id_data["owner"], id_data["name"])
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         cm = ComponentManager(lb)
 
         edges = cm.get_component_list("custom")
@@ -380,23 +259,20 @@ class Environment(ObjectType):
                        enumerate(edges)]
 
             # Process slicing and cursor args
-            lbc = ListBasedConnection(edges, cursors, args)
+            lbc = ListBasedConnection(edges, cursors, kwargs)
             lbc.apply()
 
             # Get DevEnv instances
             edge_objs = []
             for edge, cursor in zip(lbc.edges, lbc.cursors):
-                id_data = {'component_data': edge,
-                           'component_class': 'custom',
-                           'repo': edge['###repository###'],
-                           'namespace': edge['###namespace###'],
-                           'component': edge['info']['name'],
-                           'version': "{}.{}".format(edge['info']['version_major'], edge['info']['version_minor'])
-                           }
-                edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
+                edge_objs.append(CustomComponentConnection.Edge(node=CustomComponent(repository=edge['###repository###'],
+                                                                                     component_id=edge['id'],
+                                                                                     revision=edge['revision']),
+                                                                cursor=cursor))
 
-            return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
+            return CustomComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
         else:
-            return CustomDependencyConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
-                                                                                          has_previous_page=False))
+            return CustomComponentConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
+                                                                                         has_previous_page=False))
+

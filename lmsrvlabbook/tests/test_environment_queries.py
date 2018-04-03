@@ -17,27 +17,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from graphene.test import Client
 import graphene
-from mock import patch
 
 from lmcommon.labbook import LabBook
-from lmcommon.configuration import Configuration
+from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
 from lmcommon.environment import ComponentManager
 
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
-from lmsrvlabbook.api.query import LabbookQuery
-from lmsrvlabbook.api.mutation import LabbookMutations
-
-
-# Create ObjectType clases, since the EnvironmentQueries and EnvironmentMutations
-# are abstract (allowing multiple inheritance)
-class Query(LabbookQuery, graphene.ObjectType):
-    pass
-
-
-class Mutation(LabbookMutations, graphene.ObjectType):
-    pass
 
 
 class TestEnvironmentServiceQueries(object):
@@ -47,143 +33,71 @@ class TestEnvironmentServiceQueries(object):
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook10", description="my first labbook10000")
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir[2])
-
-            query = """
-            {
-              labbook(owner: "default", name: "labbook10") {
-                  environment {
-                    containerStatus
-                    imageStatus
-                  }
+        query = """
+        {
+          labbook(owner: "default", name: "labbook10") {
+              environment {
+                containerStatus
+                imageStatus
               }
+          }
+        }
+        """
+        snapshot.assert_match(fixture_working_dir[2].execute(query))
+
+    def test_get_base(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test getting the a LabBook's base"""
+        # Create labbook
+        query = """
+        mutation myCreateLabbook($name: String!, $desc: String!, $repository: String!, 
+                                 $component_id: String!, $revision: Int!) {
+          createLabbook(input: {name: $name, description: $desc, 
+                                repository: $repository, 
+                                componentId: $component_id, revision: $revision}) {
+            labbook {
+              id
+              name
+              description
             }
-            """
-            snapshot.assert_match(client.execute(query))
+          }
+        }
+        """
+        variables = {"name": "labbook-base-test", "desc": "my test 1",
+                     "component_id": ENV_UNIT_TEST_BASE, "repository": ENV_UNIT_TEST_REPO,
+                     "revision": ENV_UNIT_TEST_REV}
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query, variable_values=variables))
 
-    def test_get_base_image(self, fixture_working_dir_env_repo_scoped, snapshot):
-        """Test getting the a LabBook's base image"""
-        # Create labbook
-        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
-        lb.new(owner={"username": "default"}, name="labbook1", description="my first labbook10000")
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                    {
-                      labbook(owner: "default", name: "labbook1") {
-                        environment {
-                          baseImage {
-                            id
-                            component {
-                              repository
-                              namespace
-                              name
-                              componentClass
-                              version
-                            }
-                            info {
-                              name
-                              humanName
-                              versionMajor
-                              versionMinor
-                            }
-                            author {
-                              organization
-                            }
-                            availablePackageManagers
-                            server
-                            tag
-                          }
-                        }
+        query = """
+                {
+                  labbook(owner: "default", name: "labbook-base-test") {
+                    name
+                    description
+                    environment {
+                      base{                        
+                        id
+                        componentId
+                        name
+                        description
+                        readme
+                        tags
+                        icon
+                        osClass
+                        osRelease
+                        license
+                        url
+                        languages
+                        developmentTools
+                        dockerImageServer
+                        dockerImageNamespace
+                        dockerImageRepository
+                        dockerImageTag
+                        packageManagers
                       }
                     }
-            """
-            # should be null
-            snapshot.assert_match(client.execute(query))
-
-            # Add a base image
-            cm = ComponentManager(lb)
-            cm.add_component("base_image",
-                             "gig-dev_environment-components",
-                             "gigantum",
-                             "ubuntu1604-python3",
-                             "0.4")
-
-            # Test again
-            snapshot.assert_match(client.execute(query))
-
-    def test_get_dev_env(self, fixture_working_dir_env_repo_scoped, snapshot):
-        """Test getting the a LabBook's development environment"""
-        # Create labbook
-        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
-        lb.new(owner={"username": "default"}, name="labbook2", description="my first labbook10000")
-
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                    {
-                      labbook(owner: "default", name: "labbook2") {
-                        environment {
-                          devEnvs(first: 1) {
-                            edges {
-                              node {
-                                id
-                                component {
-                                  repository
-                                  namespace
-                                  name
-                                  componentClass
-                                  version
-                                }
-                                info {
-                                  name
-                                  humanName
-                                  versionMajor
-                                  versionMinor
-                                }
-                                author {
-                                  organization
-                                }
-                                osBaseClass
-                                developmentEnvironmentClass
-                                installCommands
-                                exposedTcpPorts
-                                execCommands
-                              }
-                              cursor
-                            }
-                            pageInfo {
-                              hasNextPage
-                              hasPreviousPage
-                            }
-                          }   
-                        }
-                      }
-                    }
-            """
-            # should be null
-            snapshot.assert_match(client.execute(query))
-
-            # Add a base image
-            cm = ComponentManager(lb)
-            cm.add_component("dev_env",
-                             "gig-dev_environment-components",
-                             "gigantum",
-                             "jupyter-ubuntu",
-                             "0.1")
-
-            # Test again
-            snapshot.assert_match(client.execute(query))
+                  }
+                }
+        """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
     def test_get_custom(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the a LabBook's custom dependencies"""
@@ -191,61 +105,51 @@ class TestEnvironmentServiceQueries(object):
         lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.new(owner={"username": "default"}, name="labbook3", description="my first labbook10000")
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                        {
-                          labbook(owner: "default", name: "labbook3") {
-                            environment {
-                             customDependencies(first: 1) {
-                                edges {
-                                  node {
-                                    id
-                                    component {
-                                      repository
-                                      namespace
-                                      name
-                                      componentClass
-                                      version
-                                    }
-                                    info {
-                                      name
-                                      humanName
-                                      versionMajor
-                                      versionMinor
-                                    }
-                                    author {
-                                      organization
-                                    }
-                                    osBaseClass
-                                    docker
-                                  }
-                                  cursor
-                                }
-                                pageInfo {
-                                  hasNextPage
-                                }
+        query = """
+                    {
+                      labbook(owner: "default", name: "labbook3") {
+                        environment {
+                         customDependencies { 
+                            edges {
+                              node {
+                                id
+                                schema
+                                componentId
+                                repository
+                                revision
+                                name
+                                description                        
+                                tags
+                                license
+                                url
+                                requiredPackageManagers
+                                dockerSnippet
                               }
+                              cursor
                             }
-                          }
-                        }            
-                        """
-            # should be null
-            snapshot.assert_match(client.execute(query))
+                            pageInfo {
+                              hasNextPage
+                              hasPreviousPage
+                            }
+                         }
+                       }  
+                      }
+                    }            
+                    """
+        # should be null
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
-            # Add a base image
-            cm = ComponentManager(lb)
-            cm.add_component("custom",
-                             "gig-dev_environment-components",
-                             "gigantum",
-                             "ubuntu-python3-pillow",
-                             "0.3")
+        # Add a base image
+        cm = ComponentManager(lb)
+        cm.add_component("custom",
+                         ENV_UNIT_TEST_REPO,
+                         "pillow",
+                         0)
 
-            # Test again
-            snapshot.assert_match(client.execute(query))
+        # Test again
+        r2 = fixture_working_dir_env_repo_scoped[2].execute(query)
+        assert 'errors' not in r2
+        snapshot.assert_match(r2)
 
     def test_get_package_manager(self, fixture_working_dir_env_repo_scoped, snapshot):
         """Test getting the a LabBook's package manager dependencies"""
@@ -253,67 +157,136 @@ class TestEnvironmentServiceQueries(object):
         lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.new(owner={"username": "default"}, name="labbook4", description="my first labbook10000")
 
-        # Mock the configuration class it it returns the same mocked config file
-        with patch.object(Configuration, 'find_default_config', lambda self: fixture_working_dir_env_repo_scoped[0]):
-            # Make and validate request
-            client = Client(fixture_working_dir_env_repo_scoped[2])
-
-            query = """
-                        {
-                          labbook(owner: "default", name: "labbook4") {
-                            environment {
-                             packageManagerDependencies(first: 1) {
-                                edges {
-                                  node {
-                                    id
-                                    packageName
-                                    packageManager
-                                    packageVersion
-                                  }
-                                  cursor
-                                }
-                                pageInfo {
-                                  hasNextPage
-                                }
+        query = """
+                    {
+                      labbook(owner: "default", name: "labbook4") {
+                        environment {
+                         packageDependencies {
+                            edges {
+                              node {
+                                id
+                                schema
+                                manager
+                                package
+                                version
+                                fromBase
                               }
+                              cursor
+                            }
+                            pageInfo {
+                              hasNextPage
                             }
                           }
                         }
-                        """
-            # should be null
-            snapshot.assert_match(client.execute(query))
+                      }
+                    }
+                    """
+        # should be null
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
-            # Add a base image
-            cm = ComponentManager(lb)
-            cm.add_package("apt-get", "docker")
-            cm.add_package("apt-get", "lxml")
-            cm.add_package("pip3", "requests")
-            cm.add_package("pip3", "numpy", "1.12")
+        # Add a base image
+        cm = ComponentManager(lb)
+        # Add one package without a version, which should cause an error in the API since version is required
+        cm.add_package("apt", "docker")
+        # Add 3 packages
+        cm.add_package("pip", "requests", "1.3")
+        cm.add_package("pip", "numpy", "1.12")
+        cm.add_package("apt", "lxml", "3.4")
 
-            # Test again
-            snapshot.assert_match(client.execute(query))
+        # Test again
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
-            query = """
-                       {
-                         labbook(owner: "default", name: "labbook4") {
-                           environment {
-                            packageManagerDependencies(first: 4, after: "MA==") {
-                               edges {
-                                 node {
-                                   id
-                                   packageName
-                                   packageManager
-                                   packageVersion
-                                 }
-                                 cursor
-                               }
-                               pageInfo {
-                                 hasNextPage
-                               }
-                             }
-                           }
-                         }
+        query = """
+                   {
+                     labbook(owner: "default", name: "labbook4") {
+                       environment {
+                        packageDependencies(first: 2, after: "MA==") {
+                            edges {
+                              node {
+                                id
+                                manager
+                                package
+                                version
+                                fromBase
+                              }
+                              cursor
+                            }
+                            pageInfo {
+                              hasNextPage
+                            }
+                          }
                        }
-                       """
-            # should be null
-            snapshot.assert_match(client.execute(query))
+                     }
+                   }
+                   """
+        r1 = fixture_working_dir_env_repo_scoped[2].execute(query)
+        assert 'errors' not in r1
+        snapshot.assert_match(r1)
+
+    def test_package_query(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test querying for package info"""
+        query = """
+                {
+                  package(manager: "pip", package: "requests", version: "2.18.0") {
+                    id
+                    schema
+                    manager
+                    package
+                    version
+                    latestVersion
+                    fromBase
+                  }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+    def test_package_query_no_version(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test querying for package info"""
+        query = """
+                {
+                  package(manager: "pip", package: "requests") {
+                    id
+                    schema
+                    manager
+                    package
+                    version
+                    latestVersion
+                    fromBase
+                  }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+    def test_package_query_bad_version(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test querying for package info"""
+        query = """
+                {
+                  package(manager: "pip", package: "requests", version: "100.100") {
+                    id
+                    schema
+                    manager
+                    package
+                    version
+                    latestVersion
+                    fromBase
+                  }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+    def test_package_query_bad_package(self, fixture_working_dir_env_repo_scoped, snapshot):
+        """Test querying for package info"""
+        query = """
+                {
+                  package(manager: "pip", package: "asdfasdfasdf") {
+                    id
+                    schema
+                    manager
+                    package
+                    version
+                    latestVersion
+                    fromBase
+                  }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))

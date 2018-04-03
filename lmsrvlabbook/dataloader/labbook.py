@@ -17,13 +17,39 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import graphene
-from lmsrvlabbook.api.objects.devenv import DevEnv
+from typing import List
+
+from promise import Promise
+from promise.dataloader import DataLoader
+
+from lmcommon.labbook import LabBook
+from lmsrvcore.auth.user import get_logged_in_author
 
 
-class DevEnvConnection(graphene.relay.Connection):
-    """A Connection for paging through available Base images"""
-    class Meta:
-        node = DevEnv
+class LabBookLoader(DataLoader):
+    """Dataloader for lmcommon.labbook.LabBook instances
 
+    The key for this object is username&owner&labbook_name
+    """
 
+    @staticmethod
+    def get_labbook_instance(key: str):
+        # Get identifying info from key
+        username, owner_name, labbook_name = key.split('&')
+
+        # Create Labbook instance
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_name(username, owner_name, labbook_name)
+
+        return lb
+
+    def batch_load_fn(self, keys: List[str]):
+        """Method to load labbook objects based on a list of unique keys
+
+        Args:
+            keys(list(str)): Unique key to identify the labbook
+
+        Returns:
+
+        """
+        return Promise.resolve([self.get_labbook_instance(key) for key in keys])
