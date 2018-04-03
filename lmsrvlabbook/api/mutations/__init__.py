@@ -8,6 +8,8 @@ from lmsrvlabbook.api.mutations.labbook import (CreateLabbook, DeleteLabbook, Ex
 from lmsrvlabbook.api.mutations.environment import (BuildImage, StartContainer, StopContainer)
 from lmsrvlabbook.api.mutations.container import StartDevTool
 from lmsrvlabbook.api.mutations.note import CreateUserNote
+from lmsrvlabbook.api.mutations.branching import (CreateExperimentalBranch, DeleteExperimentalBranch,
+                                                  MergeFromBranch, WorkonBranch)
 from lmsrvlabbook.api.mutations.environmentcomponent import (AddCustomComponent, AddPackageComponent,
                                                              RemoveCustomComponent, RemovePackageComponent)
 from lmsrvlabbook.api.mutations.user import RemoveUserIdentity
