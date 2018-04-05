@@ -824,3 +824,18 @@ snapshots['TestLabBookServiceMutations.test_update_favorite 6'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceMutations.test_write_readme 1'] = {
+    'data': {
+        'writeReadme': {
+            'updatedLabbook': {
+                'description': 'Cats labbook 1',
+                'name': 'labbook1',
+                'readme': '''##Overview
+
+This is my readme
+ :df,a//3p49kasdf'''
+            }
+        }
+    }
+}
