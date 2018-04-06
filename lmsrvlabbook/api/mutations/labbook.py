@@ -469,12 +469,13 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
                                    dst_dir=os.path.dirname(kwargs.get('file_path')),
                                    base_filename=cls.filename)
 
+
         # Prime dataloader with labbook you already loaded
         dataloader = LabBookLoader()
         dataloader.prime(f"{kwargs.get('owner')}&{kwargs.get('labbook_name')}&{lb.name}", lb)
 
         logger.debug(f"Removing copied temp file {cls.upload_file_path}")
-        os.remove(cls.upload_file_path)
+        #os.remove(cls.upload_file_path)
         # Create data to populate edge
         create_data = {'owner': kwargs.get('owner'),
                        'name': kwargs.get('labbook_name'),
