@@ -48,6 +48,7 @@ class TestEnvironmentBaseImageQueries(object):
                         dockerImageRepository
                         dockerImageTag
                         packageManagers
+                        installedPackages
                       }
                     }
                   }
