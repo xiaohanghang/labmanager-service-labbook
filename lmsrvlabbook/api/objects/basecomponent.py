@@ -135,8 +135,9 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         for entry in self._component_data['package_managers']:
             for package_manager in entry:
                 self.package_managers.append(package_manager)
-                for package in entry[package_manager]:
-                    self.installed_packages.append(f"{package_manager}|{self._format_package(package)}")
+                if entry[package_manager]:
+                    for package in entry[package_manager]:
+                        self.installed_packages.append(f"{package_manager}|{self._format_package(package)}")
 
     @classmethod
     def get_node(cls, info, id):
