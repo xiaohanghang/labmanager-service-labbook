@@ -104,22 +104,3 @@ snapshots['TestWorkflowsBranching.test_conflicted_merge_from_force_success 1'] =
         }
     }
 }
-
-snapshots['TestWorkflowsBranching.test_conflicted_merge_from_no_force_fail 1'] = {
-    'data': {
-        'mergeFromBranch': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 13,
-                    'line': 3
-                }
-            ],
-            'message': '''Cmd('git') failed due to: exit code(128)
-  cmdline: git read-tree --aggressive -i -m 1033c4b49a3dfe6938cd3ee6f38a1e58af90c067 gm.workspace-default.new-branch
-  stderr: 'error: Entry 'code/s1.txt' would be overwritten by merge. Cannot merge.''''
-        }
-    ]
-}

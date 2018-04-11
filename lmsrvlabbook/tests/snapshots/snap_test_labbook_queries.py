@@ -774,7 +774,7 @@ snapshots['TestLabBookServiceQueries.test_get_detail_record 1'] = {
                 'data': [
                     [
                         'text/plain',
-                        'Added new Code file /test_file.txt'
+                        'Added new Code file code/test_file.txt'
                     ]
                 ],
                 'importance': 0,
@@ -808,7 +808,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records 1'] = {
                     {
                         'node': {
                             'importance': 255,
-                            'message': 'Added new Output Data file /test_file.txt',
+                            'message': 'Added new Output Data file output/test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
@@ -837,7 +837,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records 2'] = {
                         'node': {
                             'email': 'tester@test.com',
                             'importance': 255,
-                            'message': 'Added new Input Data file /test_file.txt',
+                            'message': 'Added new Input Data file input/test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
@@ -850,7 +850,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records 2'] = {
                         'node': {
                             'email': 'tester@test.com',
                             'importance': 255,
-                            'message': 'Added new Code file /test_file.txt',
+                            'message': 'Added new Code file code/test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
@@ -879,7 +879,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records 3'] = {
                     {
                         'node': {
                             'importance': 255,
-                            'message': 'Added new Code file /test_file.txt',
+                            'message': 'Added new Code file code/test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
@@ -928,7 +928,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Added new Output Data file /test_file.txt'
+                                            'Added new Output Data file output/test_file.txt'
                                         ]
                                     ],
                                     'importance': 0,
@@ -939,7 +939,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                                 }
                             ],
                             'importance': 255,
-                            'message': 'Added new Output Data file /test_file.txt',
+                            'message': 'Added new Output Data file output/test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
@@ -954,7 +954,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Added new Input Data file /test_file.txt'
+                                            'Added new Input Data file input/test_file.txt'
                                         ]
                                     ],
                                     'importance': 0,
@@ -965,7 +965,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                                 }
                             ],
                             'importance': 255,
-                            'message': 'Added new Input Data file /test_file.txt',
+                            'message': 'Added new Input Data file input/test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
@@ -980,7 +980,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                                     'data': [
                                         [
                                             'text/plain',
-                                            'Added new Code file /test_file.txt'
+                                            'Added new Code file code/test_file.txt'
                                         ]
                                     ],
                                     'importance': 0,
@@ -991,7 +991,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                                 }
                             ],
                             'importance': 255,
-                            'message': 'Added new Code file /test_file.txt',
+                            'message': 'Added new Code file code/test_file.txt',
                             'show': True,
                             'tags': [
                                 '.txt'
@@ -1016,7 +1016,7 @@ snapshots['TestLabBookServiceQueries.test_get_detail_records 1'] = {
                     'data': [
                         [
                             'text/plain',
-                            'Added new Code file /test_file.txt'
+                            'Added new Code file code/test_file.txt'
                         ]
                     ],
                     'importance': 0,
@@ -1029,7 +1029,7 @@ snapshots['TestLabBookServiceQueries.test_get_detail_records 1'] = {
                     'data': [
                         [
                             'text/plain',
-                            'Added new Input Data file /test_file.txt'
+                            'Added new Input Data file input/test_file.txt'
                         ]
                     ],
                     'importance': 0,

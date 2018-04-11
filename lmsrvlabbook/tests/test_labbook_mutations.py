@@ -477,12 +477,17 @@ class TestLabBookServiceMutations(object):
 
         client = Client(mock_create_labbooks[3], middleware=[LabBookLoaderMiddleware()])
 
-        new_file_size = 9000000
         # Create file to upload
         test_file = os.path.join(tempfile.gettempdir(), "myValidFile.dat")
+        est_size = 9000000
+        try:
+            os.remove(test_file)
+        except:
+            pass
         with open(test_file, 'wb') as tf:
-            tf.write(os.urandom(new_file_size))
+            tf.write(os.urandom(est_size))
 
+        new_file_size = os.path.getsize(tf.name)
         # Get upload params
         chunk_size = 4194000
         file_info = os.stat(test_file)
@@ -513,7 +518,7 @@ class TestLabBookServiceMutations(object):
                                                       section: "code",
                                                       filePath: "newdir/myValidFile.dat",
                                 chunkUploadParams:{{
-                                  uploadId: "jfdjfdjdisdjwdoijwlkfjd",
+                                  uploadId: "fdsfdsfdsfdfs",
                                   chunkSize: {chunk_size},
                                   totalChunks: {total_chunks},
                                   chunkIndex: {chunk_index},
@@ -571,6 +576,10 @@ class TestLabBookServiceMutations(object):
 
         target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
                                    'labbook1', 'code', 'newdir', '.DS_Store')
+        try:
+            os.remove(target_file)
+        except:
+            pass
         lb = LabBook(mock_create_labbooks[0])
         lb.from_directory(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1'))
         lb.makedir('code/newdir', create_activity_record=True)
@@ -618,16 +627,12 @@ class TestLabBookServiceMutations(object):
             # This must be outside of the chunk upload loop
             pprint.pprint(r)
             assert 'errors' in r
-            assert '.gitignore' in r['errors'][0]['message'] and 'ignored' in r['errors'][0]['message']
-
-            # So, these will only be populated once the last chunk is uploaded. Will be None otherwise.
-            #assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['isDir'] is False
-            #assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['key'] == 'newdir/.__init__.py'
-            #assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['size'] == new_file_size
+            assert len(r['errors']) == 1
 
         # When done uploading, file should exist in the labbook
-        assert os.path.exists(target_file) is False
+        print(os.listdir(os.path.dirname(target_file)))
         assert os.path.isfile(target_file) is False
+        assert os.path.exists(target_file) is False
 
     def test_add_file_errors(self, mock_create_labbooks, snapshot):
         """Test new file error handling"""

@@ -41,7 +41,7 @@ snapshots['TestLabBookOverviewQueries.test_get_recent_activity 1'] = {
                 'recentActivity': [
                     {
                         'importance': 255,
-                        'message': 'Added new Output Data file /test_file.txt',
+                        'message': 'Added new Output Data file output/test_file.txt',
                         'show': True,
                         'tags': [
                             '.txt'
@@ -50,7 +50,7 @@ snapshots['TestLabBookOverviewQueries.test_get_recent_activity 1'] = {
                     },
                     {
                         'importance': 255,
-                        'message': 'Added new Input Data file /test2/test_file.txt',
+                        'message': 'Added new Input Data file input/test2/test_file.txt',
                         'show': True,
                         'tags': [
                             '.txt'
@@ -59,7 +59,7 @@ snapshots['TestLabBookOverviewQueries.test_get_recent_activity 1'] = {
                     },
                     {
                         'importance': 255,
-                        'message': 'Added new Input Data file /test/test_file.txt',
+                        'message': 'Added new Input Data file input/test/test_file.txt',
                         'show': True,
                         'tags': [
                             '.txt'
@@ -68,7 +68,7 @@ snapshots['TestLabBookOverviewQueries.test_get_recent_activity 1'] = {
                     },
                     {
                         'importance': 255,
-                        'message': 'Added new Input Data file /test_file.txt',
+                        'message': 'Added new Input Data file input/test_file.txt',
                         'show': True,
                         'tags': [
                             '.txt'
