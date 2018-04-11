@@ -1344,3 +1344,24 @@ snapshots['TestLabBookServiceQueries.test_page_favorites 2'] = {
         }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_get_labbook_readme 1'] = {
+    'data': {
+        'labbook': {
+            'description': 'my first labbook1',
+            'name': 'labbook1',
+            'readme': None
+        }
+    }
+}
+
+snapshots['TestLabBookServiceQueries.test_get_labbook_readme 2'] = {
+    'data': {
+        'labbook': {
+            'description': 'my first labbook1',
+            'name': 'labbook1',
+            'readme': '''##Summary
+This is my readme!!'''
+        }
+    }
+}

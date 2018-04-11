@@ -139,7 +139,7 @@ class TestContainerMutations(object):
             r = client.execute(q)
             assert 'errors' not in r
 
-            assert ':8888/lab' in r['data']['startDevTool']['path']
+            assert ':8890/lab' in r['data']['startDevTool']['path']
             l = [a for a in docker_client.containers.get(container_id=container_id).exec_run(
                 'sh -c "ps aux | grep jupyter-lab | grep -v \' grep \'"', user='giguser').decode().split('\n') if a]
             assert len(l) == 1

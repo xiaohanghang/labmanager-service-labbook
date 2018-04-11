@@ -26,6 +26,7 @@ import pprint
 from zipfile import ZipFile
 from pkg_resources import resource_filename
 import getpass
+import json
 
 from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
 
@@ -1106,6 +1107,27 @@ class TestLabBookServiceMutations(object):
         assert r['data']['renameLabbook'] is None
         assert 'errors' in r
         assert 'NotImplemented' in r['errors'][0]['message']
+
+    def test_write_readme(self, mock_create_labbooks, snapshot):
+        content = json.dumps('##Overview\n\nThis is my readme\n :df,a//3p49kasdf')
+
+        query = f"""
+        mutation writeReadme {{
+          writeReadme(
+            input: {{
+              owner: "default",
+              labbookName: "labbook1",
+              content: {content},
+            }}) {{
+              updatedLabbook{{
+                name
+                description
+                readme
+              }}
+            }}
+        }}
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         # TODO - Re-enable this when rename comes back.
         #snapshot.assert_match(client.execute(query))

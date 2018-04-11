@@ -790,3 +790,23 @@ class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
                        "name": labbook_name}
 
         return DeleteLabbookCollaborator(updated_labbook=Labbook(**create_data))
+
+
+class WriteReadme(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        content = graphene.String(required=True)
+
+    updated_labbook = graphene.Field(Labbook)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, content, client_mutation_id=None):
+        logged_in_username = get_logged_in_username()
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_name(logged_in_username, owner, labbook_name)
+
+        # Write data
+        lb.write_readme(content)
+
+        return WriteReadme(updated_labbook=Labbook(owner=owner, name=labbook_name))

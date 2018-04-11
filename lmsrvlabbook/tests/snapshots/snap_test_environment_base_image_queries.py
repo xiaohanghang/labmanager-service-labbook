@@ -60,6 +60,15 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                         'dockerImageTag': '826b6f24-2018-02-09',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                         'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+                        'installedPackages': [
+                            'apt|vim|2:7.4.1689-3ubuntu1.2',
+                            'pip3|numpy|1.14.0',
+                            'pip3|matplotlib|2.1.1',
+                            'pip3|jupyter|1.0.0',
+                            'pip3|jupyterlab|0.31.1',
+                            'pip3|ipywidgets|7.1.0',
+                            'pip3|pandas|0.22.0'
+                        ],
                         'languages': [
                             'python3'
                         ],
@@ -93,6 +102,8 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                         'dockerImageTag': '1.28.0',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                         'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWJ1c3lib3gmMA==',
+                        'installedPackages': [
+                        ],
                         'languages': [
                         ],
                         'license': 'MIT',
@@ -123,6 +134,23 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                         'dockerImageTag': '9718fedc-2018-01-16',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                         'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMSYw',
+                        'installedPackages': [
+                            'apt|supervisor|latest',
+                            'apt|curl|latest',
+                            'apt|gosu|latest',
+                            'apt|build-essential|latest',
+                            'apt|python3-dev|latest',
+                            'apt|python3-pip|latest',
+                            'apt|git|latest',
+                            'apt|curl|latest',
+                            'apt|vim|latest',
+                            'pip3|numpy|1.14.0',
+                            'pip3|matplotlib|2.1.1',
+                            'pip3|jupyter|1.0.0',
+                            'pip3|jupyterlab|0.31.1',
+                            'pip3|ipywidgets|7.1.0',
+                            'pip3|pandas|0.22.0'
+                        ],
                         'languages': [
                             'python3'
                         ],
@@ -157,6 +185,18 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                         'dockerImageTag': '9718fedc-2018-01-16',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                         'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMiYw',
+                        'installedPackages': [
+                            'apt|supervisor|latest',
+                            'apt|python3-dev|latest',
+                            'apt|python3-pip|latest',
+                            'apt|git|latest',
+                            'apt|curl|latest',
+                            'apt|vim|latest',
+                            'pip3|numpy|1.14.0',
+                            'pip3|matplotlib|2.1.1',
+                            'pip3|jupyter|1.0.0',
+                            'pip3|jupyterlab|0.31.1'
+                        ],
                         'languages': [
                             'python3'
                         ],
@@ -191,6 +231,15 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                         'dockerImageTag': '9718fedc-2018-01-16',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
                         'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnV0LWp1cHl0ZXJsYWItMyYw',
+                        'installedPackages': [
+                            'apt|supervisor|latest',
+                            'apt|python3-dev|latest',
+                            'apt|python3-pip|latest',
+                            'apt|git|latest',
+                            'apt|curl|latest',
+                            'pip3|jupyter|1.0.0',
+                            'pip3|jupyterlab|0.31.1'
+                        ],
                         'languages': [
                             'python3'
                         ],
@@ -482,3 +531,4 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
         }
     }
 }
+

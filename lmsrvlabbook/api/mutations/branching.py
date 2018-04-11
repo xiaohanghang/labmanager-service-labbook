@@ -17,14 +17,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import os
 import graphene
 
 from lmcommon.logging import LMLogger
 from lmcommon.labbook import LabBook
 from lmcommon.workflows import BranchManager
+from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 
 from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
+from lmsrvlabbook.api.objects.labbook import Labbook
 
 logger = LMLogger.get_logger()
 
@@ -37,18 +39,48 @@ class CreateExperimentalBranch(graphene.relay.ClientIDMutation):
         labbook_name = graphene.String(required=True)
         branch_name = graphene.String(required=True)
         revision = graphene.String()
+        description = graphene.String()
 
-    new_branch_name = graphene.Boolean()
+    labbook = graphene.Field(Labbook)
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, branch_name, revision=None, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, branch_name, revision=None,
+                               description=None, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         bm = BranchManager(labbook=lb, username=username)
         full_branch_title = bm.create_branch(title=branch_name, revision=revision)
         logger.info(f"In {str(lb)} created new experimental feature branch {full_branch_title}")
-        return CreateExperimentalBranch(new_branch_name=full_branch_title)
+
+        # TODO: Refactor description implementation into BranchManager.create_branch()
+        if description:
+            # Update the description on branch creation
+            lb.description = description
+
+            with lb.lock_labbook():
+                lb.git.add(os.path.join(lb.root_dir, '.gigantum/labbook.yaml'))
+                commit = lb.git.commit('Updating description')
+
+                # Create detail record
+                adr = ActivityDetailRecord(ActivityDetailType.LABBOOK, show=False)
+                adr.add_value('text/plain', description)
+
+                # Create activity record
+                ar = ActivityRecord(ActivityType.LABBOOK,
+                                    message="Updated description of LabBook",
+                                    linked_commit=commit.hexsha,
+                                    tags=["labbook"],
+                                    show=False)
+                ar.add_detail_object(adr)
+
+                # Store
+                ars = ActivityStore(lb)
+                ars.create_activity_record(ar)
+                logger.info(f"In {str(lb)} update description")
+
+        return CreateExperimentalBranch(labbook=Labbook(id="{}&{}".format(owner, labbook_name),
+                                                        name=labbook_name, owner=owner))
 
 
 class DeleteExperimentalBranch(graphene.relay.ClientIDMutation):
@@ -81,7 +113,7 @@ class WorkonBranch(graphene.relay.ClientIDMutation):
         branch_name = graphene.String(required=True)
         revision = graphene.String()
 
-    current_branch_name = graphene.String()
+    labbook = graphene.Field(Labbook)
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name, branch_name, client_mutation_id=None):
@@ -90,7 +122,8 @@ class WorkonBranch(graphene.relay.ClientIDMutation):
         lb.from_name(username, owner, labbook_name)
         bm = BranchManager(labbook=lb, username=username)
         bm.workon_branch(branch_name=branch_name)
-        return WorkonBranch(current_branch_name=bm.active_branch)
+        return WorkonBranch(labbook=Labbook(id="{}&{}".format(owner, labbook_name),
+                                            name=labbook_name, owner=owner))
 
 
 class MergeFromBranch(graphene.relay.ClientIDMutation):
@@ -102,13 +135,16 @@ class MergeFromBranch(graphene.relay.ClientIDMutation):
         other_branch_name = graphene.String(required=True)
         force = graphene.Boolean()
 
-    success = graphene.Boolean()
+    labbook = graphene.Field(Labbook)
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, other_branch_name, force=False, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, other_branch_name, force=False,
+                               client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         bm = BranchManager(labbook=lb, username=username)
         bm.merge_from(other_branch=other_branch_name, force=force)
-        return MergeFromBranch(success=True)
+
+        return MergeFromBranch(labbook=Labbook(id="{}&{}".format(owner, labbook_name),
+                                               name=labbook_name, owner=owner))
