@@ -71,7 +71,9 @@ class LabbookQuery(graphene.ObjectType):
     background_jobs = graphene.relay.ConnectionField(JobStatusConnection)
 
     # Connection to locally available labbooks
-    local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
+    local_labbooks = graphene.relay.ConnectionField(LabbookConnection,
+                                                    sort=graphene.String(default_value="az"),
+                                                    reverse=graphene.Boolean(default_value=False))
 
     # Base Image Repository Interface
     available_bases = graphene.relay.ConnectionField(BaseComponentConnection)
@@ -165,7 +167,7 @@ class LabbookQuery(graphene.ObjectType):
 
         return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_local_labbooks(self, info, **kwargs):
+    def resolve_local_labbooks(self, info, sort: str, reverse: bool, **kwargs):
         """Method to return a all graphene Labbook instances for the logged in user
 
         Uses the "currently logged in" user
@@ -176,16 +178,10 @@ class LabbookQuery(graphene.ObjectType):
         lb = LabBook()
 
         username = get_logged_in_username()
-        labbooks = lb.list_local_labbooks(username=username)
 
         # Collect all labbooks for all owners
-        edges = []
-        cursors = []
-        if labbooks:
-            for key in labbooks.keys():
-                edges.extend(labbooks[key])
-            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
-                                                                                              x in enumerate(edges)]
+        edges = lb.list_local_labbooks(username=username, sort_mode=sort, reverse=reverse)
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
         lbc = ListBasedConnection(edges, cursors, kwargs)

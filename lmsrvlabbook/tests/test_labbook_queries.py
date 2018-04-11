@@ -57,6 +57,102 @@ class TestLabBookServiceQueries(object):
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
+    def test_pagination_sort_az(self, fixture_working_dir_populated_scoped, snapshot):
+        query = """
+                {
+                    localLabbooks(sort: "az") {
+                        edges {
+                            node {
+                                id
+                                name
+                                description
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
+                        }
+                    }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
+
+    def test_pagination_sort_az_reverse(self, fixture_working_dir_populated_scoped, snapshot):
+        query = """
+                {
+                    localLabbooks(sort: "az", reverse: true) {
+                        edges {
+                            node {
+                                id
+                                name
+                                description
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
+                        }
+                    }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
+
+    def test_pagination_sort_create(self, fixture_working_dir_populated_scoped, snapshot):
+        query = """
+                {
+                    localLabbooks(sort: "created_on") {
+                        edges {
+                            node {
+                                id
+                                name
+                                description
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
+                        }
+                    }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
+
+    def test_pagination_sort_modified(self, fixture_working_dir_populated_scoped, snapshot):
+
+        query = """
+                {
+                    localLabbooks(sort: "modified_on") {
+                        edges {
+                            node {
+                                id
+                                name
+                                description
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            hasNextPage
+                            hasPreviousPage
+                        }
+                    }
+                }
+                """
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
+
+        # Modify a labbook
+        lb = LabBook()
+        lb.from_name("default", "default", "labbook4")
+        with open(os.path.join(lb.root_dir, "code", "test.txt"), 'wt') as tf:
+            tf.write("asdfasdf")
+        lb.git.add_all()
+        lb.git.commit("Changing the repo")
+
+        # Run query again
+        snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
+
     def test_pagination_first_only(self, fixture_working_dir_populated_scoped, snapshot):
         query = """
                 {
