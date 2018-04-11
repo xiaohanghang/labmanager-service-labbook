@@ -618,6 +618,7 @@ class TestLabBookServiceMutations(object):
             pprint.pprint(r)
             assert 'errors' in r
             assert '.gitignore' in r['errors'][0]['message'] and 'ignored' in r['errors'][0]['message']
+
             # So, these will only be populated once the last chunk is uploaded. Will be None otherwise.
             #assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['isDir'] is False
             #assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['key'] == 'newdir/.__init__.py'
