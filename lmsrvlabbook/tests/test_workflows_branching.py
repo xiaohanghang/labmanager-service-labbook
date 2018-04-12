@@ -449,7 +449,7 @@ class TestWorkflowsBranching(object):
         assert os.path.exists(os.path.join(lb.root_dir, 'code/main-branch-dir1'))
         assert lb.is_repo_clean
 
-    def test_conflicted_merge_from_no_force_fail(self, mock_create_labbooks, snapshot):
+    def test_conflicted_merge_from_no_force_fail(self, mock_create_labbooks):
         lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
         with open('/tmp/s1.txt', 'w') as s1:
             s1.write('original-file\ndata')

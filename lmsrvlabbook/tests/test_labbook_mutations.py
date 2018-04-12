@@ -622,15 +622,14 @@ class TestLabBookServiceMutations(object):
                             }}
                             """
                 r = client.execute(query, context_value=DummyContext(file))
-                #assert 'errors' not in r
 
             # This must be outside of the chunk upload loop
             pprint.pprint(r)
             assert 'errors' in r
             assert len(r['errors']) == 1
+            assert 'matches ignored pattern' in r['errors'][0]['message']
 
         # When done uploading, file should exist in the labbook
-        print(os.listdir(os.path.dirname(target_file)))
         assert os.path.isfile(target_file) is False
         assert os.path.exists(target_file) is False
 
