@@ -26,6 +26,7 @@ import graphene
 from flask import Flask
 import flask
 import json
+import time
 from mock import patch
 import responses
 from graphene.test import Client
@@ -219,14 +220,23 @@ def fixture_working_dir_populated_scoped():
     lb = LabBook(config_file)
 
     lb.new(owner={"username": "default"}, name="labbook1", description="Cats labbook 1")
+    time.sleep(1.1)
     lb.new(owner={"username": "default"}, name="labbook2", description="Dogs labbook 2")
+    time.sleep(1.1)
     lb.new(owner={"username": "default"}, name="labbook3", description="Mice labbook 3")
+    time.sleep(1.1)
     lb.new(owner={"username": "default"}, name="labbook4", description="Horses labbook 4")
+    time.sleep(1.1)
     lb.new(owner={"username": "default"}, name="labbook5", description="Cheese labbook 5")
+    time.sleep(1.1)
     lb.new(owner={"username": "default"}, name="labbook6", description="Goat labbook 6")
+    time.sleep(1.1)
     lb.new(owner={"username": "default"}, name="labbook7", description="Turtle labbook 7")
+    time.sleep(1.1)
     lb.new(owner={"username": "default"}, name="labbook8", description="Lamb labbook 8")
+    time.sleep(1.1)
     lb.new(owner={"username": "default"}, name="labbook9", description="Taco labbook 9")
+    time.sleep(1.1)
     lb.new(owner={"username": "test3"}, name="labbook-0", description="This should not show up.")
 
     with patch.object(Configuration, 'find_default_config', lambda self: config_file):
