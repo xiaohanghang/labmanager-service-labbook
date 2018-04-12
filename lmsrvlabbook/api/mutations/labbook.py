@@ -464,17 +464,23 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
 
         # Insert into labbook
         # Note: insert_file() will strip out any '..' in dst_dir.
-        file_info = lb.insert_file(section=kwargs.get('section'),
-                                   src_file=cls.upload_file_path,
-                                   dst_dir=os.path.dirname(kwargs.get('file_path')),
-                                   base_filename=cls.filename)
+        try:
+            file_info = lb.insert_file(section=kwargs.get('section'),
+                                       src_file=cls.upload_file_path,
+                                       dst_dir=os.path.dirname(kwargs.get('file_path')),
+                                       base_filename=cls.filename)
+        finally:
+            try:
+                logger.debug(f"Removing copied temp file {cls.upload_file_path}")
+                os.remove(cls.upload_file_path)
+            except FileNotFoundError:
+                pass
+
 
         # Prime dataloader with labbook you already loaded
         dataloader = LabBookLoader()
         dataloader.prime(f"{kwargs.get('owner')}&{kwargs.get('labbook_name')}&{lb.name}", lb)
 
-        logger.debug(f"Removing copied temp file {cls.upload_file_path}")
-        os.remove(cls.upload_file_path)
         # Create data to populate edge
         create_data = {'owner': kwargs.get('owner'),
                        'name': kwargs.get('labbook_name'),
