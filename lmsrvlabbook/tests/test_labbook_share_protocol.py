@@ -134,7 +134,7 @@ class TestLabbookShareProtocol(object):
         r = mock_create_labbooks_no_lfs[2].execute(sync_query, context_value=req)
 
         assert 'errors' not in r
-        assert r['data']['syncLabbook']['updateCount'] == 6
+        assert r['data']['syncLabbook']['updateCount'] == 1
         assert test_user_lb.active_branch == 'gm.workspace-default'
 
         c = test_user_wf.sync('default')

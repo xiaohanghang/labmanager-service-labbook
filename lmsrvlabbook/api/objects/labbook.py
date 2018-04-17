@@ -371,13 +371,14 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         # Create page info based on first commit. Since only paging backwards right now, just check for commit
         if edges:
+            has_next_page = True
+
             # Get the message of the linked commit and check if it is the non-activity record labbook creation commit
-            linked_msg = lb.git.log_entry(edges[-1].linked_commit)['message']
-            if linked_msg == f"Creating new empty LabBook: {lb.name}" and "_GTM_ACTIVITY_" not in linked_msg:
-                # if you get here, this is the first activity record
-                has_next_page = False
-            else:
-                has_next_page = True
+            if edges[-1].linked_commit != "no-linked-commit":
+                linked_msg = lb.git.log_entry(edges[-1].linked_commit)['message']
+                if linked_msg == f"Creating new empty LabBook: {lb.name}" and "_GTM_ACTIVITY_" not in linked_msg:
+                    # if you get here, this is the first activity record
+                    has_next_page = False
 
             end_cursor = cursors[-1]
         else:
