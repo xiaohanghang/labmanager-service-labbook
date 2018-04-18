@@ -136,21 +136,19 @@ class AddCustomDocker(graphene.relay.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        name = graphene.String(required=True)
-        docker_text = graphene.String(required=True)
-        description = graphene.String(required=False)
+        docker_content = graphene.String(required=True)
 
     updated_environment = graphene.Field(Environment)
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, name, docker_text, description=None,
-                               client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, docker_content, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
-        docker_lines = [n for n in docker_text.strip().split('\n') if n]
+        docker_lines = [n for n in docker_content.strip().split('\n') if n]
+        # TODO - Validation of docker lines (length, content, encoding, security, etc).
         cm = ComponentManager(lb)
-        cm.add_docker_snippet(name, docker_lines, description)
+        cm.add_docker_snippet(cm.DEFAULT_CUSTOM_DOCKER_NAME, docker_lines)
         return AddCustomDocker(updated_environment=Environment(owner=owner, name=labbook_name))
 
 
@@ -158,17 +156,18 @@ class RemoveCustomDocker(graphene.relay.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        name = graphene.String(required=True)
 
     updated_environment = graphene.Field(Environment)
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, name, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
+        # TODO - Should we cehck if a custom docker component already exists?
         cm = ComponentManager(lb)
-        cm.remove_docker_snippet(name)
+        cm.remove_docker_snippet(cm.DEFAULT_CUSTOM_DOCKER_NAME)
+        return RemoveCustomDocker(updated_environment=Environment(owner=owner, name=labbook_name))
 
 
 class AddCustomComponent(graphene.relay.ClientIDMutation):
