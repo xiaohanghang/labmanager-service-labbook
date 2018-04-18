@@ -27,7 +27,7 @@ from lmcommon.dispatcher import Dispatcher, JobKey
 logger = LMLogger.get_logger()
 
 
-class JobStatus(graphene.ObjectType, interface=(graphene.relay.Node,)):
+class JobStatus(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     """A query to get the status of a background task launched with the Dispatcher"""
 
     # The Dispatcher returns a unique opaque id of the background job.
@@ -51,19 +51,56 @@ class JobStatus(graphene.ObjectType, interface=(graphene.relay.Node,)):
     # Result.. None if no result or void method.
     result = graphene.Field(graphene.String)
 
+    def _loader(self):
+        self.job_key = self.id
+        d = Dispatcher()
+        q = d.query_task(JobKey(self.job_key))
+        self.status = q.status
+        self.job_metadata = q.meta
+        self.failure_message = q.failure_message
+        self.started_at = q.started_at
+        self.finished_at = q.finished_at
+        self.result = q.result
+
+    def resolve_job_key(self, info):
+        if self.job_key is None:
+            self._loader()
+        return self.job_key
+
+    def resolve_status(self, info):
+        if self.status is None:
+            self._loader()
+        return self.status
+
+    def resolve_job_metadata(self, info):
+        if self.job_metadata is None:
+            self._loader()
+        return self.job_metadata
+
+    def resolve_failure_message(self, info):
+        if self.failure_message is None:
+            self._loader()
+        return self.failure_message
+
+    def resolve_started_at(self, info):
+        if self.started_at is None:
+            self._loader()
+        return self.started_at
+
+    def resolve_finished_at(self, info):
+        if self.finished_at is None:
+            self._loader()
+        return self.finished_at
+
+    def resolve_result(self, info):
+        if self.result is None:
+            self._loader()
+        return self.result
+
     @classmethod
     def get_node(cls, info, id):
         """Method to resolve the object based on it's Node ID"""
-        # Parse the key
-        d = Dispatcher()
-        status = d.query_task(JobKey(id))
-        return JobStatus(job_key=status.job_key.key_str,
-                         status=status.status,
-                         started_at=status.started_at,
-                         finished_at=status.finished_at,
-                         job_metadata=status.meta,
-                         result=status.result,
-                         failure_message=status.failure_message)
+        return JobStatus(id=id)
 
     def resolve_id(self, info):
         if not self.id:
