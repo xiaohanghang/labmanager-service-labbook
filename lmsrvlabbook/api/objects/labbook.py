@@ -509,5 +509,5 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         d = Dispatcher()
         jobs = d.get_jobs_for_labbook(labbook_key=lb.key)
-        return [JobStatus.create(j.job_key.key_str) for j in jobs]
+        return [JobStatus(j.job_key.key_str) for j in jobs]
 
