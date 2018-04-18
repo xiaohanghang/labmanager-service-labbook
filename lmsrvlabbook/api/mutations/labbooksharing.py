@@ -29,6 +29,7 @@ from lmcommon.workflows import GitWorkflow
 from lmsrvcore.api import logged_mutation
 from lmsrvcore.auth.identity import parse_token
 from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
+from lmsrvlabbook.api.objects.labbook import Labbook as LabbookObject
 
 logger = LMLogger.get_logger()
 
@@ -74,6 +75,7 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
 
     # How many upstream commits it pulled in.
     update_count = graphene.Int()
+    updated_labbook = graphene.Field(LabbookObject)
 
     @classmethod
     @logged_mutation
@@ -113,4 +115,6 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
         wf = GitWorkflow(labbook=lb)
         cnt = wf.sync(username=username, force=force)
 
-        return SyncLabbook(update_count=cnt)
+        # Create an updated graphne Labbook instance to return for convenience of Relay.
+        updatedl = LabbookObject(owner=owner, name=labbook_name)
+        return SyncLabbook(update_count=cnt, updated_labbook=updatedl)
