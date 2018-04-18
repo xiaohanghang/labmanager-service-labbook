@@ -70,7 +70,7 @@ def temporary_worker():
 
 class TestLabBookServiceQueries(object):
 
-    def test_query_finished_task(self, fixture_working_dir, snapshot, temporary_worker):
+    def test_query_finished_task(self, fixture_working_dir, temporary_worker):
         """Test listing labbooks"""
         w, d = temporary_worker
 
@@ -83,12 +83,20 @@ class TestLabBookServiceQueries(object):
             jobStatus(jobId: "%s") {
                 result
                 status
+                jobMetadata
+                failureMessage
+                startedAt
+                finishedAt
             }
         }
         """ % job_id.key_str
 
         try:
-            snapshot.assert_match(fixture_working_dir[2].execute(query))
+            r = fixture_working_dir[2].execute(query)
+            assert 'errors' not in r
+            assert r['data']['jobStatus']['result'] == 0
+            pprint.pprint(r)
+            assert False
         except:
             w.terminate()
             raise
@@ -109,12 +117,18 @@ class TestLabBookServiceQueries(object):
             jobStatus(jobId: "%s") {
                 result
                 status
+                jobMetadata
+                failureMessage
+                startedAt
+                finishedAt
             }
         }
         """ % job_id
 
         try:
-            snapshot.assert_match(fixture_working_dir[2].execute(query))
+            r = fixture_working_dir[2].execute(query)
+            assert 'errors' not in r
+            assert r['data']['jobStatus']['result'] == 0
         except:
             w.terminate()
             raise
@@ -135,12 +149,18 @@ class TestLabBookServiceQueries(object):
             jobStatus(jobId: "%s") {
                 result
                 status
+                jobMetadata
+                failureMessage
+                startedAt
+                finishedAt
             }
         }
         """ % job_id
 
         try:
-            snapshot.assert_match(fixture_working_dir[2].execute(query))
+            r = fixture_working_dir[2].execute(query)
+            assert 'errors' not in r
+            assert r['data']['jobStatus']['result'] == 0
         except:
             time.sleep(3)
             w.terminate()
@@ -164,12 +184,18 @@ class TestLabBookServiceQueries(object):
             jobStatus(jobId: "%s") {
                 result
                 status
+                jobMetadata
+                failureMessage
+                startedAt
+                finishedAt
             }
         }
         """ % job_id2
 
         try:
-            snapshot.assert_match(fixture_working_dir[2].execute(query))
+            r = fixture_working_dir[2].execute(query)
+            assert 'errors' not in r
+            assert r['data']['jobStatus']['result'] == 0
         except:
             time.sleep(5)
             w.terminate()
