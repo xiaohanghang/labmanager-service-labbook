@@ -27,11 +27,8 @@ from lmcommon.dispatcher import Dispatcher, JobKey
 logger = LMLogger.get_logger()
 
 
-class JobStatus(graphene.ObjectType):
+class JobStatus(graphene.ObjectType, interface=(graphene.relay.Node,)):
     """A query to get the status of a background task launched with the Dispatcher"""
-
-    class Meta:
-        interfaces = (graphene.relay.Node,)
 
     # The Dispatcher returns a unique opaque id of the background job.
     job_key = graphene.Field(graphene.String)
@@ -54,48 +51,23 @@ class JobStatus(graphene.ObjectType):
     # Result.. None if no result or void method.
     result = graphene.Field(graphene.String)
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
-
-        Args:
-            id_data(dict):
-
-        Returns:
-            str
-        """
-        return "{}".format(id_data["job_id"])
-
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
-
-        Args:
-            type_id (str): type unique identifier
-
-        Returns:
-            dict
-        """
-        return {"job_id": type_id}
-
-    @staticmethod
-    def create(job_id: str):
-        """Method to retrieve status info for given background job.
-
-        Args:
-            job_id(str): Unique key of the background job.
-
-        Returns:
-            JobStatus
-        """
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        # Parse the key
         d = Dispatcher()
-        task_ref = d.query_task(JobKey(job_id))
-        logger.info(f'Retrieved reference {str(task_ref)} for job_id `{job_id}`')
-        js = JobStatus(job_key=task_ref.job_key.key_str,
-                       status=task_ref.status,
-                       started_at=task_ref.started_at,
-                       finished_at=task_ref.finished_at,
-                       job_metadata=task_ref.meta,
-                       result=task_ref.result,
-                       failure_message=task_ref.failure_message)
-        return js
+        status = d.query_task(JobKey(id))
+        return JobStatus(job_key=status.job_key.key_str,
+                         status=status.status,
+                         started_at=status.started_at,
+                         finished_at=status.finished_at,
+                         job_metadata=status.meta,
+                         result=status.result,
+                         failure_message=status.failure_message)
+
+    def resolve_id(self, info):
+        if not self.id:
+            if not self.job_key:
+                raise ValueError("Resolving a JobStatus Node ID requires job_key to be set")
+            self.id = self.job_key
+        return self.id
