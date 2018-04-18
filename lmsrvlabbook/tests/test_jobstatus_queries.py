@@ -94,9 +94,12 @@ class TestLabBookServiceQueries(object):
         try:
             r = fixture_working_dir[2].execute(query)
             assert 'errors' not in r
-            assert r['data']['jobStatus']['result'] == 0
-            pprint.pprint(r)
-            assert False
+            assert int(r['data']['jobStatus']['result']) == 0
+            assert r['data']['jobStatus']['status'] == 'finished'
+            assert r['data']['jobStatus']['startedAt'] is not None
+            assert r['data']['jobStatus']['failureMessage'] is None
+            #assert r['data']['jobStatus']['finishedAt']  # <-- Why is this not populated?
+
         except:
             w.terminate()
             raise
@@ -128,7 +131,13 @@ class TestLabBookServiceQueries(object):
         try:
             r = fixture_working_dir[2].execute(query)
             assert 'errors' not in r
-            assert r['data']['jobStatus']['result'] == 0
+            assert r['data']['jobStatus']['result'] is None
+            assert r['data']['jobStatus']['status'] == 'failed'
+            assert r['data']['jobStatus']['failureMessage'] == \
+                   'Exception: Intentional Exception from job `test_exit_fail`'
+            assert r['data']['jobStatus']['startedAt'] is not None
+            # assert r['data']['jobStatus']['finishedAt'] is not None # <-- Why is this None??
+
         except:
             w.terminate()
             raise
@@ -160,7 +169,10 @@ class TestLabBookServiceQueries(object):
         try:
             r = fixture_working_dir[2].execute(query)
             assert 'errors' not in r
-            assert r['data']['jobStatus']['result'] == 0
+            assert r['data']['jobStatus']['result'] is None
+            assert r['data']['jobStatus']['status'] == 'started'
+            assert r['data']['jobStatus']['failureMessage'] is None
+            assert r['data']['jobStatus']['startedAt'] is not None
         except:
             time.sleep(3)
             w.terminate()
@@ -194,8 +206,12 @@ class TestLabBookServiceQueries(object):
 
         try:
             r = fixture_working_dir[2].execute(query)
+            pprint.pprint(r)
             assert 'errors' not in r
-            assert r['data']['jobStatus']['result'] == 0
+            assert r['data']['jobStatus']['result'] is None
+            assert r['data']['jobStatus']['status'] == 'queued'
+            assert r['data']['jobStatus']['failureMessage'] is None
+            assert r['data']['jobStatus']['startedAt'] is None
         except:
             time.sleep(5)
             w.terminate()
