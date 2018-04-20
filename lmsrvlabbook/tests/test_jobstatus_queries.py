@@ -98,7 +98,7 @@ class TestLabBookServiceQueries(object):
             assert r['data']['jobStatus']['status'] == 'finished'
             assert r['data']['jobStatus']['startedAt'] is not None
             assert r['data']['jobStatus']['failureMessage'] is None
-            #assert r['data']['jobStatus']['finishedAt']  # <-- Why is this not populated?
+            assert r['data']['jobStatus']['finishedAt']
 
         except:
             w.terminate()
@@ -136,7 +136,7 @@ class TestLabBookServiceQueries(object):
             assert r['data']['jobStatus']['failureMessage'] == \
                    'Exception: Intentional Exception from job `test_exit_fail`'
             assert r['data']['jobStatus']['startedAt'] is not None
-            # assert r['data']['jobStatus']['finishedAt'] is not None # <-- Why is this None??
+            assert r['data']['jobStatus']['finishedAt'] is not None
 
         except:
             w.terminate()
