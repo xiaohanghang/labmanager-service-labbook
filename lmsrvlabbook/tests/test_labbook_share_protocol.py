@@ -128,6 +128,9 @@ class TestLabbookShareProtocol(object):
                 owner: "default"
             }) {
                 updateCount
+                updatedLabbook {
+                    isRepoClean
+                }
             }
         }
         """
@@ -135,6 +138,7 @@ class TestLabbookShareProtocol(object):
 
         assert 'errors' not in r
         assert r['data']['syncLabbook']['updateCount'] == 1
+        assert r['data']['syncLabbook']['updatedLabbook']['isRepoClean'] is True
         assert test_user_lb.active_branch == 'gm.workspace-default'
 
         c = test_user_wf.sync('default')
