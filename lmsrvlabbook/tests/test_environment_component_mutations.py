@@ -424,3 +424,47 @@ class TestAddComponentMutations(object):
         """
         snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
         assert os.path.exists(component_file) is False
+
+    def test_custom_docker_snippet_success(self, fixture_working_dir_env_repo_scoped):
+        """Test adding a custom dependency"""
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+        labbook_dir = lb.new(name="custom-docker-lb-unittest", description="Testing custom docker and stuff",
+                             owner={"username": "default"})
+        client = fixture_working_dir_env_repo_scoped[2]
+        query = """
+        mutation addCustomDocker($labbook_name: String!, $owner: String!, $custom_docker: String!) {
+            addCustomDocker(input: {
+                owner: $owner,
+                labbookName: $labbook_name,
+                dockerContent: $custom_docker
+            }) {
+                updatedEnvironment {
+                    dockerSnippet
+                }
+            }
+        }
+        """
+        vars = {'labbook_name': "custom-docker-lb-unittest",
+                'owner': 'default',
+                'custom_docker': "RUN true"}
+        r = client.execute(query, variable_values=vars)
+        assert 'errors' not in r
+        assert r['data']['addCustomDocker']['updatedEnvironment']['dockerSnippet'] == "RUN true"
+
+        remove_query = """
+        mutation removeCustomDocker($labbook_name: String!, $owner: String!) {
+            removeCustomDocker(input: {
+                owner: $owner,
+                labbookName: $labbook_name
+            }) {
+                updatedEnvironment {
+                    dockerSnippet
+                }
+            }
+        }
+        """
+        vars = {'labbook_name': "custom-docker-lb-unittest",
+                'owner': 'default'}
+        r = client.execute(remove_query, variable_values=vars)
+        assert 'errors' not in r
+        assert r['data']['removeCustomDocker']['updatedEnvironment']['dockerSnippet'] == ""
