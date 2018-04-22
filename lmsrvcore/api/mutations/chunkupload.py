@@ -100,7 +100,7 @@ class ChunkUploadMutation(object):
         s = lambda n: n if (n.isalnum() or n in '._-+=') else '_'
         safe_fname = ''.join([s(c) for c in os.path.basename(filename)])[:255]
         if safe_fname != filename:
-            logger.warning(f"Renaming unsafe filename `{filename}` to `{safe_fname}`")
+            logger.debug(f"Renaming unsafe filename `{filename}` to `{safe_fname}`")
         return safe_fname
 
     @staticmethod
@@ -118,7 +118,7 @@ class ChunkUploadMutation(object):
     def mutate_and_get_payload(cls, root, info, **kwargs):
         try:
             chunk_params = kwargs.get("chunk_upload_params")
-            logger.info(f"Processing chunk {chunk_params['chunk_index']} for {chunk_params['filename']}")
+            logger.debug(f"Processing chunk {chunk_params['chunk_index']} for {chunk_params['filename']}")
 
             # Make sure the file is there
             if 'uploadChunk' not in info.context.files:
@@ -135,7 +135,7 @@ class ChunkUploadMutation(object):
                 f.write(info.context.files.get('uploadChunk').stream.read())
 
             # If last chunk, move on to mutation
-            logger.info(f"Write for chunk {chunk_params['chunk_index']} complete")
+            logger.debug(f"Write for chunk {chunk_params['chunk_index']} complete")
             if chunk_params['chunk_index'] == chunk_params['total_chunks'] - 1:
                 # Assume last chunk. Let mutation process
                 cls.upload_file_path = cls.get_temp_filename(chunk_params['upload_id'], chunk_params['filename'])

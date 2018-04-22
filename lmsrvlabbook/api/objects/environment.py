@@ -134,7 +134,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             image_status = ImageStatus.DOES_NOT_EXIST
 
         if any([j.status == 'failed' and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.info("Image status for {} is BUILD_FAILED".format(lb.key))
+            logger.debug("Image status for {} is BUILD_FAILED".format(lb.key))
             if image_status == ImageStatus.EXISTS:
                 # The indication that there's a failed job is probably lingering from a while back, so don't
                 # change the status to FAILED. Only do that if there is no Docker image.
