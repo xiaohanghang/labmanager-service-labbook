@@ -100,7 +100,7 @@ class ChunkUploadMutation(object):
         s = lambda n: n if (n.isalnum() or n in '._-+=') else '_'
         safe_fname = ''.join([s(c) for c in os.path.basename(filename)])[:255]
         if safe_fname != filename:
-            logger.debug(f"Renaming unsafe filename `{filename}` to `{safe_fname}`")
+            logger.info(f"Renaming unsafe filename `{filename}` to `{safe_fname}`")
         return safe_fname
 
     @staticmethod
