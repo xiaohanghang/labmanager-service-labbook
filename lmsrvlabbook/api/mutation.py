@@ -25,7 +25,7 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
     DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent, \
     StartDevTool, SetLabbookDescription, CreateExperimentalBranch, DeleteExperimentalBranch, \
-    MergeFromBranch, WorkonBranch, WriteReadme
+    MergeFromBranch, WorkonBranch, WriteReadme, AddCustomDocker, RemoveCustomDocker
 
 
 class LabbookMutations(graphene.ObjectType):
@@ -99,6 +99,12 @@ class LabbookMutations(graphene.ObjectType):
 
     # Remove a package from a Labbook environment (e.g., pip package, apt)
     remove_package_component = RemovePackageComponent.Field()
+
+    # Add an arbitrary docker snippet (supplement to custom dependency)
+    add_custom_docker = AddCustomDocker.Field()
+
+    # Delete the arbitrary docker snippet.
+    remove_custom_docker = RemoveCustomDocker.Field()
 
     # Add a file to a labbook
     add_labbook_file = AddLabbookFile.Field()
