@@ -146,7 +146,6 @@ class AddCustomDocker(graphene.relay.ClientIDMutation):
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         docker_lines = [n for n in docker_content.strip().split('\n') if n]
-        # TODO - Validation of docker lines (length, content, encoding, security, etc).
         cm = ComponentManager(lb)
         cm.add_docker_snippet(cm.DEFAULT_CUSTOM_DOCKER_NAME, docker_lines)
         return AddCustomDocker(updated_environment=Environment(owner=owner, name=labbook_name))
