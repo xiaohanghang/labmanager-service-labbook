@@ -22,6 +22,7 @@ import multiprocessing
 import threading
 import pprint
 import time
+import json
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir
@@ -70,7 +71,7 @@ def temporary_worker():
 
 class TestLabBookServiceQueries(object):
 
-    def test_query_finished_task(self, fixture_working_dir, snapshot, temporary_worker):
+    def test_query_finished_task(self, fixture_working_dir, temporary_worker):
         """Test listing labbooks"""
         w, d = temporary_worker
 
@@ -83,12 +84,24 @@ class TestLabBookServiceQueries(object):
             jobStatus(jobId: "%s") {
                 result
                 status
+                jobMetadata
+                failureMessage
+                startedAt
+                finishedAt
             }
         }
         """ % job_id.key_str
 
         try:
-            snapshot.assert_match(fixture_working_dir[2].execute(query))
+            r = fixture_working_dir[2].execute(query)
+            assert 'errors' not in r
+            assert int(r['data']['jobStatus']['result']) == 0
+            assert r['data']['jobStatus']['status'] == 'finished'
+            assert r['data']['jobStatus']['startedAt'] is not None
+            assert r['data']['jobStatus']['failureMessage'] is None
+            assert r['data']['jobStatus']['finishedAt']
+            assert r['data']['jobStatus']['jobMetadata'] == '{}'
+
         except:
             w.terminate()
             raise
@@ -109,12 +122,26 @@ class TestLabBookServiceQueries(object):
             jobStatus(jobId: "%s") {
                 result
                 status
+                jobMetadata
+                failureMessage
+                startedAt
+                finishedAt
             }
         }
         """ % job_id
 
         try:
-            snapshot.assert_match(fixture_working_dir[2].execute(query))
+            r = fixture_working_dir[2].execute(query)
+            assert 'errors' not in r
+            assert r['data']['jobStatus']['result'] is None
+            assert r['data']['jobStatus']['status'] == 'failed'
+            assert r['data']['jobStatus']['failureMessage'] == \
+                   'Exception: Intentional Exception from job `test_exit_fail`'
+            assert r['data']['jobStatus']['startedAt'] is not None
+            assert r['data']['jobStatus']['finishedAt'] is not None
+            # Assert the following dict is empty
+            assert not json.loads(r['data']['jobStatus']['jobMetadata'])
+
         except:
             w.terminate()
             raise
@@ -135,12 +162,23 @@ class TestLabBookServiceQueries(object):
             jobStatus(jobId: "%s") {
                 result
                 status
+                jobMetadata
+                failureMessage
+                startedAt
+                finishedAt
             }
         }
         """ % job_id
 
         try:
-            snapshot.assert_match(fixture_working_dir[2].execute(query))
+            r = fixture_working_dir[2].execute(query)
+            pprint.pprint(r)
+            assert 'errors' not in r
+            assert r['data']['jobStatus']['result'] is None
+            assert r['data']['jobStatus']['status'] == 'started'
+            assert r['data']['jobStatus']['failureMessage'] is None
+            assert r['data']['jobStatus']['startedAt'] is not None
+            assert json.loads(r['data']['jobStatus']['jobMetadata'])['sample'] == 'test_sleep metadata'
         except:
             time.sleep(3)
             w.terminate()
@@ -164,12 +202,22 @@ class TestLabBookServiceQueries(object):
             jobStatus(jobId: "%s") {
                 result
                 status
+                jobMetadata
+                failureMessage
+                startedAt
+                finishedAt
             }
         }
         """ % job_id2
 
         try:
-            snapshot.assert_match(fixture_working_dir[2].execute(query))
+            r = fixture_working_dir[2].execute(query)
+            pprint.pprint(r)
+            assert 'errors' not in r
+            assert r['data']['jobStatus']['result'] is None
+            assert r['data']['jobStatus']['status'] == 'queued'
+            assert r['data']['jobStatus']['failureMessage'] is None
+            assert r['data']['jobStatus']['startedAt'] is None
         except:
             time.sleep(5)
             w.terminate()

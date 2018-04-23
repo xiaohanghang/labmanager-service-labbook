@@ -17,7 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import ast
+import json
 import graphene
 
 from lmcommon.logging import LMLogger
@@ -27,11 +28,8 @@ from lmcommon.dispatcher import Dispatcher, JobKey
 logger = LMLogger.get_logger()
 
 
-class JobStatus(graphene.ObjectType):
+class JobStatus(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     """A query to get the status of a background task launched with the Dispatcher"""
-
-    class Meta:
-        interfaces = (graphene.relay.Node,)
 
     # The Dispatcher returns a unique opaque id of the background job.
     job_key = graphene.Field(graphene.String)
@@ -54,48 +52,61 @@ class JobStatus(graphene.ObjectType):
     # Result.. None if no result or void method.
     result = graphene.Field(graphene.String)
 
-    @staticmethod
-    def to_type_id(id_data):
-        """Method to generate a single string that uniquely identifies this object
-
-        Args:
-            id_data(dict):
-
-        Returns:
-            str
-        """
-        return "{}".format(id_data["job_id"])
-
-    @staticmethod
-    def parse_type_id(type_id):
-        """Method to parse an ID for a given type into its identifiable variables returned as a dictionary of strings
-
-        Args:
-            type_id (str): type unique identifier
-
-        Returns:
-            dict
-        """
-        return {"job_id": type_id}
-
-    @staticmethod
-    def create(job_id: str):
-        """Method to retrieve status info for given background job.
-
-        Args:
-            job_id(str): Unique key of the background job.
-
-        Returns:
-            JobStatus
-        """
+    def _loader(self):
+        self.job_key = self.id
         d = Dispatcher()
-        task_ref = d.query_task(JobKey(job_id))
-        logger.info(f'Retrieved reference {str(task_ref)} for job_id `{job_id}`')
-        js = JobStatus(job_key=task_ref.job_key.key_str,
-                       status=task_ref.status,
-                       started_at=task_ref.started_at,
-                       finished_at=task_ref.finished_at,
-                       job_metadata=task_ref.meta,
-                       result=task_ref.result,
-                       failure_message=task_ref.failure_message)
-        return js
+        q = d.query_task(JobKey(self.job_key))
+        self.status = q.status
+        self.job_metadata = json.dumps(q.meta)
+        self.failure_message = q.failure_message
+        self.started_at = q.started_at
+        self.finished_at = q.finished_at
+        self.result = q.result
+
+    def resolve_job_key(self, info):
+        if self.job_key is None:
+            self._loader()
+        return self.job_key
+
+    def resolve_status(self, info):
+        if self.status is None:
+            self._loader()
+        return self.status
+
+    def resolve_job_metadata(self, info):
+        """Returns a JSON-encoded dict. NOT the dict itself. """
+        if self.job_metadata is None:
+            self._loader()
+        return self.job_metadata
+
+    def resolve_failure_message(self, info):
+        if self.failure_message is None:
+            self._loader()
+        return self.failure_message
+
+    def resolve_started_at(self, info):
+        if self.started_at is None:
+            self._loader()
+        return self.started_at
+
+    def resolve_finished_at(self, info):
+        if self.finished_at is None:
+            self._loader()
+        return self.finished_at
+
+    def resolve_result(self, info):
+        if self.result is None:
+            self._loader()
+        return self.result
+
+    @classmethod
+    def get_node(cls, info, id):
+        """Method to resolve the object based on it's Node ID"""
+        return JobStatus(id=id)
+
+    def resolve_id(self, info):
+        if not self.id:
+            if not self.job_key:
+                raise ValueError("Resolving a JobStatus Node ID requires job_key to be set")
+            self.id = self.job_key
+        return self.id

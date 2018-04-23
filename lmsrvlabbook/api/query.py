@@ -143,8 +143,7 @@ class LabbookQuery(graphene.ObjectType):
         Returns:
             JobStatus
         """
-        logger.info(f"Resolving jobStatus {job_id} (type {type(job_id)})")
-        return JobStatus.create(job_id)
+        return JobStatus(job_id)
 
     def resolve_background_jobs(self, info, **kwargs):
         """Method to return a all background jobs the system is aware of: Queued, Started, Finished, Failed.
@@ -163,7 +162,7 @@ class LabbookQuery(graphene.ObjectType):
 
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            edge_objs.append(JobStatusConnection.Edge(node=JobStatus.create(edge), cursor=cursor))
+            edge_objs.append(JobStatusConnection.Edge(node=JobStatus(edge), cursor=cursor))
 
         return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
 
