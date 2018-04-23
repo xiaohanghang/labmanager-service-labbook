@@ -22,6 +22,7 @@ import multiprocessing
 import threading
 import pprint
 import time
+import json
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir
@@ -99,6 +100,7 @@ class TestLabBookServiceQueries(object):
             assert r['data']['jobStatus']['startedAt'] is not None
             assert r['data']['jobStatus']['failureMessage'] is None
             assert r['data']['jobStatus']['finishedAt']
+            assert r['data']['jobStatus']['jobMetadata'] == '{}'
 
         except:
             w.terminate()
@@ -173,6 +175,7 @@ class TestLabBookServiceQueries(object):
             assert r['data']['jobStatus']['status'] == 'started'
             assert r['data']['jobStatus']['failureMessage'] is None
             assert r['data']['jobStatus']['startedAt'] is not None
+            assert json.loads(r['data']['jobStatus']['jobMetadata'])['sample'] == 'test_sleep metadata'
         except:
             time.sleep(3)
             w.terminate()

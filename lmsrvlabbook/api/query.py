@@ -143,7 +143,6 @@ class LabbookQuery(graphene.ObjectType):
         Returns:
             JobStatus
         """
-        logger.info(f"Resolving jobStatus {job_id} (type {type(job_id)})")
         return JobStatus(job_id)
 
     def resolve_background_jobs(self, info, **kwargs):
