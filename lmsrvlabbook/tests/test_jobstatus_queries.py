@@ -139,6 +139,8 @@ class TestLabBookServiceQueries(object):
                    'Exception: Intentional Exception from job `test_exit_fail`'
             assert r['data']['jobStatus']['startedAt'] is not None
             assert r['data']['jobStatus']['finishedAt'] is not None
+            # Assert the following dict is empty
+            assert not json.loads(r['data']['jobStatus']['jobMetadata'])
 
         except:
             w.terminate()
@@ -170,6 +172,7 @@ class TestLabBookServiceQueries(object):
 
         try:
             r = fixture_working_dir[2].execute(query)
+            pprint.pprint(r)
             assert 'errors' not in r
             assert r['data']['jobStatus']['result'] is None
             assert r['data']['jobStatus']['status'] == 'started'

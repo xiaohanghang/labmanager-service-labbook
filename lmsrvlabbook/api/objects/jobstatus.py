@@ -17,7 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import ast
+import json
 import graphene
 
 from lmcommon.logging import LMLogger
@@ -56,7 +57,7 @@ class JobStatus(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         d = Dispatcher()
         q = d.query_task(JobKey(self.job_key))
         self.status = q.status
-        self.job_metadata = q.meta
+        self.job_metadata = json.dumps(q.meta)
         self.failure_message = q.failure_message
         self.started_at = q.started_at
         self.finished_at = q.finished_at
@@ -73,6 +74,7 @@ class JobStatus(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         return self.status
 
     def resolve_job_metadata(self, info):
+        """Returns a JSON-encoded dict. NOT the dict itself. """
         if self.job_metadata is None:
             self._loader()
         return self.job_metadata
