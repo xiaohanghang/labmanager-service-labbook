@@ -28,16 +28,20 @@ from lmcommon.configuration import Configuration
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository, get_package_manager
 from lmcommon.labbook.schemas import CURRENT_SCHEMA
+from lmcommon.gitlib.gitlab import GitLabManager
 
 from lmsrvcore.auth.user import get_logged_in_username
+from lmsrvcore.auth.identity import parse_token
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbook import Labbook
+from lmsrvlabbook.api.objects.remotelabbook import RemoteLabbook
 from lmsrvlabbook.api.objects.basecomponent import BaseComponent
 from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.customcomponent import CustomComponent
 from lmsrvlabbook.api.objects.jobstatus import JobStatus
 from lmsrvlabbook.api.connections.labbook import LabbookConnection
+from lmsrvlabbook.api.connections.remotelabbook import RemoteLabbookConnection
 from lmsrvlabbook.api.connections.environment import BaseComponentConnection, CustomComponentConnection
 from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
 
@@ -74,6 +78,11 @@ class LabbookQuery(graphene.ObjectType):
     local_labbooks = graphene.relay.ConnectionField(LabbookConnection,
                                                     sort=graphene.String(default_value="az"),
                                                     reverse=graphene.Boolean(default_value=False))
+
+    # Connection to remotely available labbooks
+    remote_labbooks = graphene.relay.ConnectionField(RemoteLabbookConnection,
+                                                     sort=graphene.String(default_value="az"),
+                                                     reverse=graphene.Boolean(default_value=False))
 
     # Base Image Repository Interface
     available_bases = graphene.relay.ConnectionField(BaseComponentConnection)
@@ -197,6 +206,73 @@ class LabbookQuery(graphene.ObjectType):
                                                     cursor=cursor))
 
         return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_remote_labbooks(self, info, sort: str, reverse: bool, **kwargs):
+        """Method to return a all RemoteLabbook instances for the logged in user
+
+        This is a remote call, so should be fetched on its own and only when needed. The user must have a valid
+        session for data to be returned.
+
+        It is recommended to use large page size (e.g. 50-100). This is due to how the remote server returns all the
+        available data at once, so it is more efficient to load a lot of records at a time.
+
+        Args:
+            sort_mode(sort_mode): String specifying how labbooks should be sorted
+            reverse(bool): Reverse sorting if True
+
+        Supported sorting modes:
+            - az: naturally sort
+            - created_on: sort by creation date, newest first
+            - modified_on: sort by modification date, newest first
+
+        Returns:
+            list(Labbook)
+        """
+        # Load config data
+        configuration = Configuration().config
+
+        # Extract valid Bearer token
+        token = None
+        if hasattr(info.context.headers, 'environ'):
+            if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+                token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
+        if not token:
+            raise ValueError("Authorization header not provided. Cannot list remote LabBooks.")
+
+        # Get remote server configuration
+        default_remote = configuration['git']['default_remote']
+        admin_service = None
+        for remote in configuration['git']['remotes']:
+            if default_remote == remote:
+                admin_service = configuration['git']['remotes'][remote]['admin_service']
+                break
+
+        if not admin_service:
+            raise ValueError('admin_service could not be found')
+
+        # Query backend for data
+        mgr = GitLabManager(default_remote, admin_service, access_token=token)
+        edges = mgr.list_labbooks(sort_mode=sort, reverse=reverse)
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, kwargs)
+        lbc.apply()
+
+        # Get Labbook instances
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            create_data = {"id": "{}&{}".format(edge["namespace"], edge["labbook_name"]),
+                           "name": edge["labbook_name"],
+                           "owner": edge["namespace"],
+                           "description": edge["description"],
+                           "creation_date_utc": edge["created_on"],
+                           "modified_date_utc": edge["modified_on"]}
+
+            edge_objs.append(RemoteLabbookConnection.Edge(node=RemoteLabbook(**create_data),
+                                                          cursor=cursor))
+
+        return RemoteLabbookConnection(edges=edge_objs, page_info=lbc.page_info)
 
     def resolve_available_bases(self, info, **kwargs):
         """Method to return a all graphene BaseImages that are available

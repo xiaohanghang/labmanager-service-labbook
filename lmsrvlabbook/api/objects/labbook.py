@@ -24,7 +24,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.workflows import BranchManager
 from lmcommon.activity import ActivityStore
-from lmcommon.gitlib.gitlab import GitLabRepositoryManager
+from lmcommon.gitlib.gitlab import GitLabManager
 from lmcommon.files import FileOperations
 
 from lmsrvcore.auth.user import get_logged_in_username
@@ -52,6 +52,9 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     LabBooks are uniquely identified by both the "owner" and the "name" of the LabBook
 
     """
+    # Store collaborator data so it is only fetched once per request
+    _collaborators = None
+
     # A short description of the LabBook limited to 140 UTF-8 characters
     description = graphene.String()
 
@@ -125,6 +128,37 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
     # List of keys of all background jobs pertaining to this labbook (queued, started, failed, etc.)
     background_jobs = graphene.List(JobStatus)
+
+    def _fetch_collaborators(self, info):
+        """Helper method to fetch this labbook's collaborators
+
+        Args:
+            info: The graphene info object for this requests
+
+        """
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = lb.labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in lb.labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        # Get collaborators from remote service
+        mgr = GitLabManager(default_remote, admin_service, token)
+        try:
+            self._collaborators = mgr.get_collaborators(self.owner, self.name)
+        except ValueError:
+            # If ValueError Raised, assume repo doesn't exist yet
+            self._collaborators = []
 
     @classmethod
     def get_node(cls, info, id):
@@ -423,79 +457,31 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         """Method to get the list of collaborators for a labbook
 
         Args:
-            args:
-            context:
             info:
 
         Returns:
 
         """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        if self._collaborators is None:
+            self._fetch_collaborators(info)
 
-        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
-        default_remote = lb.labmanager_config.config['git']['default_remote']
-        admin_service = None
-        for remote in lb.labmanager_config.config['git']['remotes']:
-            if default_remote == remote:
-                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
-                break
-
-        # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
-            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
-        else:
-            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
-
-        # Get collaborators from remote service
-        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      get_logged_in_username(), self.owner, self.name)
-        try:
-            collaborators = mgr.get_collaborators()
-        except ValueError:
-            # If ValueError Raised, assume repo doesn't exist yet
-            return []
-
-        return [x[1] for x in collaborators]
+        return [x[1] for x in self._collaborators]
 
     def resolve_can_manage_collaborators(self, info):
-        """Method to get the list of collaborators for a labbook
+        """Method to check if the user is the "owner" of the labbook and can manage collaborators
 
         Args:
-            args:
-            context:
             info:
 
         Returns:
 
         """
-        username = get_logged_in_username()
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
-        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
-        default_remote = lb.labmanager_config.config['git']['default_remote']
-        admin_service = None
-        for remote in lb.labmanager_config.config['git']['remotes']:
-            if default_remote == remote:
-                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
-                break
-
-        # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
-            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
-        else:
-            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
-
-        # Get collaborators from remote service
-        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      get_logged_in_username(), self.owner, self.name)
-        try:
-            collaborators = mgr.get_collaborators()
-        except ValueError:
-            # If ValueError Raised, assume repo doesn't exist yet
-            return False
+        if self._collaborators is None:
+            self._fetch_collaborators(info)
 
         can_manage = False
-        for c in collaborators:
+        username = get_logged_in_username()
+        for c in self._collaborators:
             if c[1] == username:
                 if c[2] is True:
                     can_manage = True
@@ -504,7 +490,6 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
     def resolve_background_jobs(self, info):
         """ Return the job keys, tasks, and statuses for all background jobs. """
-        username = get_logged_in_username()
         lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
 
         d = Dispatcher()

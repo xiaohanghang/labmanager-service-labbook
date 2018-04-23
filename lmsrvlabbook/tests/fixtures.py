@@ -68,10 +68,17 @@ def _create_temp_work_dir(lfs_enabled: bool = True):
     return config_file, temp_dir
 
 
+class EnvironMock(object):
+    """A simple class to mock the Flask environ object so you can have a token"""
+    def __init__(self):
+        self.environ = {'HTTP_AUTHORIZATION': "Bearer afaketoken"}
+
+
 class ContextMock(object):
     """A simple class to mock the Flask request context so you have a labbook_loader attribute"""
     def __init__(self):
         self.labbook_loader = None
+        self.headers = EnvironMock()
 
 
 @pytest.fixture

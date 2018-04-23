@@ -23,7 +23,7 @@ import graphene
 from lmcommon.configuration import Configuration
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
-from lmcommon.gitlib.gitlab import GitLabRepositoryManager
+from lmcommon.gitlib.gitlab import GitLabManager
 from lmcommon.workflows import GitWorkflow
 
 from lmsrvcore.api import logged_mutation
@@ -108,8 +108,7 @@ class SyncLabbook(graphene.relay.ClientIDMutation):
             raise ValueError('admin_service could not be found')
 
         # Configure git creds
-        mgr = GitLabRepositoryManager(default_remote, admin_service, access_token=token,
-                                      username=username, owner=lb.owner['username'], labbook_name=lb.name)
+        mgr = GitLabManager(default_remote, admin_service, access_token=token)
         mgr.configure_git_credentials(default_remote, username)
 
         wf = GitWorkflow(labbook=lb)

@@ -32,7 +32,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.files import FileOperations
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
-from lmcommon.gitlib.gitlab import GitLabRepositoryManager
+from lmcommon.gitlib.gitlab import GitLabManager
 from lmcommon.environment import ComponentManager
 
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
@@ -152,6 +152,52 @@ class DeleteLabbook(graphene.ClientIDMutation):
                 return DeleteLabbook(success=True)
         else:
             logger.info(f"Dry run in deleting {str(lb)} -- not deleted.")
+            return DeleteLabbook(success=False)
+
+
+class DeleteRemoteLabbook(graphene.ClientIDMutation):
+    """Delete a labbook from the remote repository."""
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        confirm = graphene.Boolean(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, confirm, client_mutation_id=None):
+        if confirm is True:
+            # Load config data
+            configuration = Configuration().config
+
+            # Extract valid Bearer token
+            token = None
+            if hasattr(info.context.headers, 'environ'):
+                if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+                    token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
+            if not token:
+                raise ValueError("Authorization header not provided. Cannot perform remote delete operation.")
+
+            # Get remote server configuration
+            default_remote = configuration['git']['default_remote']
+            admin_service = None
+            for remote in configuration['git']['remotes']:
+                if default_remote == remote:
+                    admin_service = configuration['git']['remotes'][remote]['admin_service']
+                    break
+
+            if not admin_service:
+                raise ValueError('admin_service could not be found')
+
+            # Perform delete operation
+            mgr = GitLabManager(default_remote, admin_service, access_token=token)
+            mgr.remove_labbook(owner, labbook_name)
+
+            logger.info(f"Deleted {labbook_name} from the remote repository {default_remote}")
+
+            return DeleteLabbook(success=True)
+        else:
+            logger.info(f"Dry run deleting {labbook_name} from remote repository -- not deleted.")
             return DeleteLabbook(success=False)
 
 
@@ -321,8 +367,7 @@ class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
-        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      username, owner, labbook_name)
+        mgr = GitLabManager(default_remote, admin_service, token)
         mgr.configure_git_credentials(default_remote, username)
 
         lb.from_remote(remote_url, username, owner, labbook_name)
@@ -740,9 +785,8 @@ class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         # Add collaborator to remote service
-        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      logged_in_username, owner, labbook_name)
-        mgr.add_collaborator(username)
+        mgr = GitLabManager(default_remote, admin_service, token)
+        mgr.add_collaborator(owner, labbook_name, username)
 
         # Prime dataloader with labbook you just created
         dataloader = LabBookLoader()
@@ -783,13 +827,8 @@ class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         # Add collaborator to remote service
-        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      logged_in_username, owner, labbook_name)
-        mgr.delete_collaborator(username)
-
-        # Prime dataloader with labbook you just created
-        dataloader = LabBookLoader()
-        dataloader.prime(f"{username}&{username}&{lb.name}", lb)
+        mgr = GitLabManager(default_remote, admin_service, token)
+        mgr.delete_collaborator(owner, labbook_name, username)
 
         create_data = {"owner": owner,
                        "name": labbook_name}

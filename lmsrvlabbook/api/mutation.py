@@ -25,7 +25,7 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
     DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent, \
     StartDevTool, SetLabbookDescription, CreateExperimentalBranch, DeleteExperimentalBranch, \
-    MergeFromBranch, WorkonBranch, WriteReadme, AddCustomDocker, RemoveCustomDocker
+    MergeFromBranch, WorkonBranch, WriteReadme, AddCustomDocker, RemoveCustomDocker, DeleteRemoteLabbook
 
 
 class LabbookMutations(graphene.ObjectType):
@@ -45,6 +45,9 @@ class LabbookMutations(graphene.ObjectType):
 
     # Delete a labbook off the file system
     delete_labbook = DeleteLabbook.Field()
+
+    # Delete a labbook from a remote server
+    delete_remote_labbook = DeleteRemoteLabbook.Field()
 
     # Rename new labbook
     rename_labbook = RenameLabbook.Field()
