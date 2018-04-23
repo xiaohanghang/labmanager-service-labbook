@@ -27,7 +27,6 @@ def error_middleware(next, root, info, **args):
     try:
         return_value = next(root, info, **args)
     except Exception as e:
-        logger.error(f"{type(e)} raised while resolving {info.field_name}: {e}")
         logger.exception(e)
         raise
 
