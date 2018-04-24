@@ -525,3 +525,41 @@ class TestWorkflowsBranching(object):
         snapshot.assert_match(r)
         r['data']['mergeFromBranch']['labbook']['activeBranchName'] == 'gm.workspace-default'
 
+    def test_reflect_deleted_files_on_merge_in(self, mock_create_labbooks):
+        lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
+        with open('/tmp/s1.txt', 'w') as s1:
+            s1.write('original-file\ndata')
+        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        bm = BranchManager(lb, username=UT_USERNAME)
+
+        nb = bm.create_branch('new-branch')
+        assert os.path.exists(os.path.join(lb.root_dir, 'code', 's1.txt'))
+        lb.delete_file('code', 's1.txt')
+        assert lb.is_repo_clean
+        assert not os.path.exists(os.path.join(lb.root_dir, 'code', 's1.txt'))
+
+        bm.workon_branch(bm.workspace_branch)
+        assert os.path.exists(os.path.join(lb.root_dir, 'code', 's1.txt'))
+
+        merge_q = f"""
+        mutation x {{
+            mergeFromBranch(input: {{
+                owner: "{UT_USERNAME}",
+                labbookName: "{UT_LBNAME}",
+                otherBranchName: "{nb}",
+                force: false            
+            }}) {{
+                labbook{{
+                    name
+                    description
+                    availableBranchNames
+                    activeBranchName
+                }}
+            }}
+        }}
+        """
+        r = client.execute(merge_q)
+        assert 'errors' not in r
+        r['data']['mergeFromBranch']['labbook']['activeBranchName'] == 'gm.workspace-default'
+        assert not os.path.exists(os.path.join(lb.root_dir, 'code', 's1.txt'))
+
