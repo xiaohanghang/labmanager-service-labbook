@@ -14,7 +14,7 @@ snapshots['TestLabBookServiceMutations.test_makedir 1'] = {
                 'node': {
                     'isDir': True,
                     'key': 'new_folder/',
-                    'size': 0
+                    'size': '0'
                 }
             }
         }
@@ -28,7 +28,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 1'] = {
                 'node': {
                     'isDir': False,
                     'key': 'subdir/sillyfile',
-                    'size': 7
+                    'size': '7'
                 }
             }
         }
@@ -42,7 +42,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 2'] = {
                 'node': {
                     'isDir': False,
                     'key': 'sillyfile',
-                    'size': 7
+                    'size': '7'
                 }
             }
         }
@@ -56,7 +56,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 3'] = {
                 'node': {
                     'isDir': False,
                     'key': 'subdir/sillyfile',
-                    'size': 7
+                    'size': '7'
                 }
             }
         }
@@ -70,7 +70,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 4'] = {
                 'node': {
                     'isDir': False,
                     'key': 'sillyfile',
-                    'size': 7
+                    'size': '7'
                 }
             }
         }
@@ -84,7 +84,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 5'] = {
                 'node': {
                     'isDir': False,
                     'key': 'subdir/sillyfile',
-                    'size': 7
+                    'size': '7'
                 }
             }
         }
@@ -98,7 +98,7 @@ snapshots['TestLabBookServiceMutations.test_move_file_many 6'] = {
                 'node': {
                     'isDir': False,
                     'key': 'sillyfile',
-                    'size': 7
+                    'size': '7'
                 }
             }
         }
@@ -345,7 +345,7 @@ snapshots['TestLabBookServiceMutations.test_move_file 1'] = {
                 'node': {
                     'isDir': False,
                     'key': 'subdir/sillyfile',
-                    'size': 7
+                    'size': '7'
                 }
             }
         }
@@ -359,7 +359,7 @@ snapshots['TestLabBookServiceMutations.test_move_file 2'] = {
                 'node': {
                     'isDir': True,
                     'key': 'subdir2/',
-                    'size': 0
+                    'size': '0'
                 }
             }
         }

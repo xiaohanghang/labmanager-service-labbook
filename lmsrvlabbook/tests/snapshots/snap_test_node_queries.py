@@ -51,7 +51,7 @@ snapshots['TestNodeQueries.test_file_node 1'] = {
             'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QxLnR4dA==',
             'isDir': False,
             'key': 'test1.txt',
-            'size': 5
+            'size': '5'
         }
     }
 }

@@ -410,7 +410,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnNyYy8=',
                                 'isDir': True,
                                 'key': 'src/',
-                                'size': 0
+                                'size': '0'
                             }
                         },
                         {
@@ -418,7 +418,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3RfZmlsZTEudHh0',
                                 'isDir': False,
                                 'key': 'test_file1.txt',
-                                'size': 6
+                                'size': '6'
                             }
                         },
                         {
@@ -426,7 +426,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3RfZmlsZTIudHh0',
                                 'isDir': False,
                                 'key': 'test_file2.txt',
-                                'size': 15
+                                'size': '15'
                             }
                         }
                     ]
@@ -448,7 +448,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 2'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnNyYy9qcy8=',
                                 'isDir': True,
                                 'key': 'src/js/',
-                                'size': 0
+                                'size': '0'
                             }
                         },
                         {
@@ -456,7 +456,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 2'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnNyYy90ZXN0LnB5',
                                 'isDir': False,
                                 'key': 'src/test.py',
-                                'size': 21
+                                'size': '21'
                             }
                         }
                     ]
@@ -478,7 +478,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 3'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnNyYy9qcy8=',
                                 'isDir': True,
                                 'key': 'src/js/',
-                                'size': 0
+                                'size': '0'
                             }
                         },
                         {
@@ -486,7 +486,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_code 3'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnNyYy90ZXN0LnB5',
                                 'isDir': False,
                                 'key': 'src/test.py',
-                                'size': 21
+                                'size': '21'
                             }
                         }
                     ]
@@ -508,7 +508,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3RfZmlsZTEudHh0',
                                 'isDir': False,
                                 'key': 'test_file1.txt',
-                                'size': 6
+                                'size': '6'
                             }
                         },
                         {
@@ -516,7 +516,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3RfZmlsZTIudHh0',
                                 'isDir': False,
                                 'key': 'test_file2.txt',
-                                'size': 15
+                                'size': '15'
                             }
                         }
                     ]
@@ -530,7 +530,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIv',
                                 'isDir': True,
                                 'key': 'subdir/',
-                                'size': 0
+                                'size': '0'
                             }
                         }
                     ]
@@ -545,7 +545,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZvdXRwdXQmZW1wdHkv',
                                 'isDir': True,
                                 'key': 'empty/',
-                                'size': 0
+                                'size': '0'
                             }
                         },
                         {
@@ -553,7 +553,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZvdXRwdXQmcmVzdWx0LmRhdA==',
                                 'isDir': False,
                                 'key': 'result.dat',
-                                'size': 3
+                                'size': '3'
                             }
                         }
                     ]
@@ -574,7 +574,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 2'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3RfZmlsZTEudHh0',
                                 'isDir': False,
                                 'key': 'test_file1.txt',
-                                'size': 6
+                                'size': '6'
                             }
                         },
                         {
@@ -582,7 +582,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 2'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3RfZmlsZTIudHh0',
                                 'isDir': False,
                                 'key': 'test_file2.txt',
-                                'size': 15
+                                'size': '15'
                             }
                         }
                     ]
@@ -596,7 +596,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 2'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIvZGF0YS5kYXQ=',
                                 'isDir': False,
                                 'key': 'subdir/data.dat',
-                                'size': 12
+                                'size': '12'
                             }
                         },
                         {
@@ -604,7 +604,7 @@ snapshots['TestLabBookServiceQueries.test_list_files_many 2'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIvZGF0YS8=',
                                 'isDir': True,
                                 'key': 'subdir/data/',
-                                'size': 0
+                                'size': '0'
                             }
                         }
                     ]
@@ -632,7 +632,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3RfZmlsZTEudHh0',
                                 'isDir': False,
                                 'key': 'test_file1.txt',
-                                'size': 6
+                                'size': '6'
                             }
                         },
                         {
@@ -640,7 +640,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3RfZmlsZTIudHh0',
                                 'isDir': False,
                                 'key': 'test_file2.txt',
-                                'size': 15
+                                'size': '15'
                             }
                         }
                     ]
@@ -654,7 +654,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIv',
                                 'isDir': True,
                                 'key': 'subdir/',
-                                'size': 0
+                                'size': '0'
                             }
                         },
                         {
@@ -662,7 +662,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIvZGF0YS8=',
                                 'isDir': True,
                                 'key': 'subdir/data/',
-                                'size': 0
+                                'size': '0'
                             }
                         },
                         {
@@ -670,7 +670,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZpbnB1dCZzdWJkaXIvZGF0YS5kYXQ=',
                                 'isDir': False,
                                 'key': 'subdir/data.dat',
-                                'size': 12
+                                'size': '12'
                             }
                         }
                     ]
@@ -685,7 +685,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZvdXRwdXQmZW1wdHkv',
                                 'isDir': True,
                                 'key': 'empty/',
-                                'size': 0
+                                'size': '0'
                             }
                         },
                         {
@@ -693,7 +693,7 @@ snapshots['TestLabBookServiceQueries.test_list_all_files_many 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZvdXRwdXQmcmVzdWx0LmRhdA==',
                                 'isDir': False,
                                 'key': 'result.dat',
-                                'size': 3
+                                'size': '3'
                             }
                         }
                     ]
@@ -1245,7 +1245,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorite_and_files 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJmJsYWgv',
                                 'isDir': True,
                                 'key': 'blah/',
-                                'size': 0
+                                'size': '0'
                             }
                         },
                         {
@@ -1253,7 +1253,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorite_and_files 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QxLnR4dA==',
                                 'isDir': False,
                                 'key': 'test1.txt',
-                                'size': 5
+                                'size': '5'
                             }
                         },
                         {
@@ -1261,7 +1261,7 @@ snapshots['TestLabBookServiceQueries.test_list_favorite_and_files 1'] = {
                                 'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QyLnR4dA==',
                                 'isDir': False,
                                 'key': 'test2.txt',
-                                'size': 5
+                                'size': '5'
                             }
                         }
                     ]

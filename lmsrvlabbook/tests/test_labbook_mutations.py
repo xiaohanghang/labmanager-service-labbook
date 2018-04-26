@@ -547,7 +547,7 @@ class TestLabBookServiceMutations(object):
         # So, these will only be populated once the last chunk is uploaded. Will be None otherwise.
         assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['isDir'] is False
         assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['key'] == 'newdir/myValidFile.dat'
-        assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['size'] == new_file_size
+        assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['size'] == f"{new_file_size}"
 
         # When done uploading, file should exist in the labbook
         assert os.path.exists(target_file)
