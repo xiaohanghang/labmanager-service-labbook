@@ -318,9 +318,5 @@ class TestEnvironmentServiceQueries(object):
         }
         """
         res = fixture_working_dir_env_repo_scoped[2].execute(query)
-        assert 'errors' not in res
-        assert res['data']['labbook']['package']['fromBase'] is False
-        assert res['data']['labbook']['package']['latestVersion'] == "2.18.4"
-        assert res['data']['labbook']['package']['manager'] == "pip"
-        assert res['data']['labbook']['package']['package'] == "requests"
-        assert res['data']['labbook']['package']['version'] == "2.18.4"
+        assert 'errors' in res
+        assert 'is invalid' in res['errors'][0]['message']
