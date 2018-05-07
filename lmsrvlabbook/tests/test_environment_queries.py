@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
+import pprint
 
 from lmcommon.labbook import LabBook
 from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
@@ -241,12 +242,13 @@ class TestEnvironmentServiceQueries(object):
         }
         """
         res = fixture_working_dir_env_repo_scoped[2].execute(query)
+        pprint.pprint(res)
         assert 'errors' not in res
-        assert res['data']['package']['fromBase'] is False
-        assert res['data']['package']['latestVersion'] == "2.18.4"
-        assert res['data']['package']['manager'] == "pip"
-        assert res['data']['package']['package'] == "requests"
-        assert res['data']['package']['version'] == "2.18.0"
+        assert res['data']['labbook']['package']['fromBase'] is False
+        assert res['data']['labbook']['package']['latestVersion'] == "2.18.4"
+        assert res['data']['labbook']['package']['manager'] == "pip"
+        assert res['data']['labbook']['package']['package'] == "requests"
+        assert res['data']['labbook']['package']['version'] == "2.18.0"
 
     def test_package_query_no_version(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
@@ -267,11 +269,11 @@ class TestEnvironmentServiceQueries(object):
         """
         res = fixture_working_dir_env_repo_scoped[2].execute(query)
         assert 'errors' not in res
-        assert res['data']['package']['fromBase'] is False
-        assert res['data']['package']['latestVersion'] == "2.18.4"
-        assert res['data']['package']['manager'] == "pip"
-        assert res['data']['package']['package'] == "requests"
-        assert res['data']['package']['version'] == "2.18.4"
+        assert res['data']['labbook']['package']['fromBase'] is False
+        assert res['data']['labbook']['package']['latestVersion'] == "2.18.4"
+        assert res['data']['labbook']['package']['manager'] == "pip"
+        assert res['data']['labbook']['package']['package'] == "requests"
+        assert res['data']['labbook']['package']['version'] == "2.18.4"
 
     def test_package_query_bad_version(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
@@ -292,11 +294,11 @@ class TestEnvironmentServiceQueries(object):
         """
         res = fixture_working_dir_env_repo_scoped[2].execute(query)
         assert 'errors' not in res
-        assert res['data']['package']['fromBase'] is False
-        assert res['data']['package']['latestVersion'] == "2.18.4"
-        assert res['data']['package']['manager'] == "pip"
-        assert res['data']['package']['package'] == "requests"
-        assert res['data']['package']['version'] == "2.18.4"
+        assert res['data']['labbook']['package']['fromBase'] is False
+        assert res['data']['labbook']['package']['latestVersion'] == "2.18.4"
+        assert res['data']['labbook']['package']['manager'] == "pip"
+        assert res['data']['labbook']['package']['package'] == "requests"
+        assert res['data']['labbook']['package']['version'] == "2.18.4"
 
     def test_package_query_bad_package(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
@@ -317,8 +319,8 @@ class TestEnvironmentServiceQueries(object):
         """
         res = fixture_working_dir_env_repo_scoped[2].execute(query)
         assert 'errors' not in res
-        assert res['data']['package']['fromBase'] is False
-        assert res['data']['package']['latestVersion'] == "2.18.4"
-        assert res['data']['package']['manager'] == "pip"
-        assert res['data']['package']['package'] == "requests"
-        assert res['data']['package']['version'] == "2.18.4"
+        assert res['data']['labbook']['package']['fromBase'] is False
+        assert res['data']['labbook']['package']['latestVersion'] == "2.18.4"
+        assert res['data']['labbook']['package']['manager'] == "pip"
+        assert res['data']['labbook']['package']['package'] == "requests"
+        assert res['data']['labbook']['package']['version'] == "2.18.4"
