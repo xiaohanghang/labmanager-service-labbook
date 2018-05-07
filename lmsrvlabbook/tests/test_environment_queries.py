@@ -223,70 +223,102 @@ class TestEnvironmentServiceQueries(object):
         assert 'errors' not in r1
         snapshot.assert_match(r1)
 
-    def test_package_query(self, fixture_working_dir_env_repo_scoped, snapshot):
+    def test_package_query(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
         query = """
-                {
-                  package(manager: "pip", package: "requests", version: "2.18.0") {
-                    id
-                    schema
-                    manager
-                    package
-                    version
-                    latestVersion
-                    fromBase
-                  }
-                }
-                """
-        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+        {
+            labbook(owner: "default", name: "labbook4") {
+              package(manager: "pip", package: "requests", version: "2.18.0") {
+                id
+                schema
+                manager
+                package
+                version
+                latestVersion
+                fromBase
+              }                
+            }
+        }
+        """
+        res = fixture_working_dir_env_repo_scoped[2].execute(query)
+        assert 'errors' not in res
+        assert res['data']['package']['fromBase'] is False
+        assert res['data']['package']['latestVersion'] == "2.18.4"
+        assert res['data']['package']['manager'] == "pip"
+        assert res['data']['package']['package'] == "requests"
+        assert res['data']['package']['version'] == "2.18.0"
 
-    def test_package_query_no_version(self, fixture_working_dir_env_repo_scoped, snapshot):
+    def test_package_query_no_version(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
         query = """
-                {
-                  package(manager: "pip", package: "requests") {
-                    id
-                    schema
-                    manager
-                    package
-                    version
-                    latestVersion
-                    fromBase
-                  }
-                }
-                """
-        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+        {
+            labbook(owner: "default", name: "labbook4") {
+              package(manager: "pip", package: "requests") {
+                id
+                schema
+                manager
+                package
+                version
+                latestVersion
+                fromBase
+              }                
+            }
+        }
+        """
+        res = fixture_working_dir_env_repo_scoped[2].execute(query)
+        assert 'errors' not in res
+        assert res['data']['package']['fromBase'] is False
+        assert res['data']['package']['latestVersion'] == "2.18.4"
+        assert res['data']['package']['manager'] == "pip"
+        assert res['data']['package']['package'] == "requests"
+        assert res['data']['package']['version'] == "2.18.4"
 
-    def test_package_query_bad_version(self, fixture_working_dir_env_repo_scoped, snapshot):
+    def test_package_query_bad_version(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
         query = """
-                {
-                  package(manager: "pip", package: "requests", version: "100.100") {
-                    id
-                    schema
-                    manager
-                    package
-                    version
-                    latestVersion
-                    fromBase
-                  }
-                }
-                """
-        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+        {
+            labbook(owner: "default", name: "labbook4") {
+              package(manager: "pip", package: "requests", version: "100.100") {
+                id
+                schema
+                manager
+                package
+                version
+                latestVersion
+                fromBase
+              }                
+            }
+        }
+        """
+        res = fixture_working_dir_env_repo_scoped[2].execute(query)
+        assert 'errors' not in res
+        assert res['data']['package']['fromBase'] is False
+        assert res['data']['package']['latestVersion'] == "2.18.4"
+        assert res['data']['package']['manager'] == "pip"
+        assert res['data']['package']['package'] == "requests"
+        assert res['data']['package']['version'] == "2.18.4"
 
-    def test_package_query_bad_package(self, fixture_working_dir_env_repo_scoped, snapshot):
+    def test_package_query_bad_package(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
         query = """
-                {
-                  package(manager: "pip", package: "asdfasdfasdf") {
-                    id
-                    schema
-                    manager
-                    package
-                    version
-                    latestVersion
-                    fromBase
-                  }
-                }
-                """
-        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+        {
+            labbook(owner: "default", name: "labbook4") {
+              package(manager: "pip", package: "TotallyFakePackage", version: "100.100") {
+                id
+                schema
+                manager
+                package
+                version
+                latestVersion
+                fromBase
+              }                
+            }
+        }
+        """
+        res = fixture_working_dir_env_repo_scoped[2].execute(query)
+        assert 'errors' not in res
+        assert res['data']['package']['fromBase'] is False
+        assert res['data']['package']['latestVersion'] == "2.18.4"
+        assert res['data']['package']['manager'] == "pip"
+        assert res['data']['package']['package'] == "requests"
+        assert res['data']['package']['version'] == "2.18.4"

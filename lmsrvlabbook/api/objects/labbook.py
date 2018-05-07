@@ -26,6 +26,7 @@ from lmcommon.workflows import BranchManager
 from lmcommon.activity import ActivityStore
 from lmcommon.gitlib.gitlab import GitLabManager
 from lmcommon.files import FileOperations
+from lmcommon.environment import get_package_manager
 
 from lmsrvcore.auth.user import get_logged_in_username
 
@@ -42,6 +43,7 @@ from lmsrvlabbook.api.objects.ref import LabbookRef
 from lmsrvlabbook.api.objects.labbooksection import LabbookSection
 from lmsrvlabbook.api.connections.activity import ActivityConnection
 from lmsrvlabbook.api.objects.activity import ActivityDetailObject, ActivityRecordObject
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 
 logger = LMLogger.get_logger()
 
@@ -128,6 +130,12 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
     # List of keys of all background jobs pertaining to this labbook (queued, started, failed, etc.)
     background_jobs = graphene.List(JobStatus)
+
+    # Package Query for validating packages and getting latest versions
+    package = graphene.Field(PackageComponent,
+                             manager=graphene.String(),
+                             package=graphene.String(),
+                             version=graphene.String(default_value=""))
 
     def _fetch_collaborators(self, info):
         """Helper method to fetch this labbook's collaborators
@@ -496,3 +504,36 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         jobs = d.get_jobs_for_labbook(labbook_key=lb.key)
         return [JobStatus(j.job_key.key_str) for j in jobs]
 
+    def resolve_package(self, info, manager, package, version):
+        """Method to retrieve package component. Errors can be used to validate if a package name and version
+        are correct
+
+        Returns:
+            PackageComponent
+        """
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+
+        # Instantiate appropriate package manager
+        mgr = get_package_manager(manager)
+
+        # Validate package and version if available
+        if version == "":
+            version = None
+        result = mgr.is_valid(package, lb, get_logged_in_username(), package_version=version)
+
+        if result.package is False:
+            raise ValueError(f"Package name {package} is invalid")
+
+        latest_version = None
+        if not version:
+            # If missing version, look up latest
+            latest_version = mgr.latest_version(package, lb, get_logged_in_username())
+            version = latest_version
+        else:
+            if result.version is False:
+                # If version was set but is invalid, replace with latest
+                latest_version = mgr.latest_version(package, lb, get_logged_in_username())
+                version = latest_version
+
+        # Return object
+        return PackageComponent(manager=manager, package=package, version=version, latest_version=latest_version)

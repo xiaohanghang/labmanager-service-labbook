@@ -224,7 +224,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
             # Create version dataloader
             keys = [f"{k['manager']}&{k['package']}" for k in lbc.edges]
-            vd = PackageLoader(keys, labbook, username)
+            vd = PackageLoader(keys, lb, get_logged_in_username())
 
             # Get DevEnv instances
             edge_objs = []

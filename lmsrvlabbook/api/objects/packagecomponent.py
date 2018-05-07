@@ -64,15 +64,6 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
         return f"{self.manager}&{self.package}&{self.version}"
 
-    def resolve_latest_version(self, info):
-        """Resolve the latest_version field"""
-        if not self._version_dataloader:
-            # No dataloader is available, so load manually
-            mgr = get_package_manager(self.manager)
-            return mgr.latest_version(self.package)
-
-        return self._version_dataloader.load(f"{self.manager}&{self.package}")
-
     def resolve_from_base(self, info):
         """Resolve the from_base field"""
         if self.from_base is None:
