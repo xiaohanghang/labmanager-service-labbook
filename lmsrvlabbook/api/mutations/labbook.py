@@ -142,6 +142,9 @@ class DeleteLabbook(graphene.ClientIDMutation):
             except OSError:
                 pass
             lb, docker_removed = ContainerOperations.delete_image(labbook=lb, username=username)
+            # TODO RB we prob. want a labook.delete method eventually rather than
+            #   deleting here.
+            lb.drop_indexes()
             if not docker_removed:
                 raise ValueError(f'Cannot delete docker image for {str(lb)} - unable to delete LB from disk')
             shutil.rmtree(lb.root_dir, ignore_errors=True)
