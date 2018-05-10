@@ -520,11 +520,11 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         if version == "":
             version = None
         result = mgr.is_valid(package, lb, get_logged_in_username(), package_version=version)
-
+        logger.error(f"XxXXXXXXXX ---- {result}")
         if result.package is False:
             raise ValueError(f"Package name {package} is invalid")
 
-        latest_version = None
+        latest_version = mgr.latest_version(package, lb, get_logged_in_username())
         if not version:
             # If missing version, look up latest
             latest_version = mgr.latest_version(package, lb, get_logged_in_username())
