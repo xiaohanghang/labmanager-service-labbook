@@ -33,8 +33,8 @@ from lmsrvcore.api.connections import ListBasedConnection
 from lmsrvlabbook.api.objects.labbook import Labbook
 from lmsrvlabbook.api.objects.labbooklist import LabbookList
 from lmsrvlabbook.api.objects.basecomponent import BaseComponent
-from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.customcomponent import CustomComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.jobstatus import JobStatus
 from lmsrvlabbook.api.connections.environment import BaseComponentConnection, CustomComponentConnection
 from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
@@ -247,35 +247,3 @@ class LabbookQuery(graphene.ObjectType):
             UserIdentity
         """
         return UserIdentity()
-
-    def resolve_package(self, info, manager, package, version):
-        """Method to retrieve package component. Errors can be used to validate if a package name and version
-        are correct
-
-        Returns:
-            PackageComponent
-        """
-        # Instantiate appropriate package manager
-        mgr = get_package_manager(manager)
-
-        # Validate package and version if available
-        if version == "":
-            version = None
-        result = mgr.is_valid(package, version)
-
-        if result.package is False:
-            raise ValueError(f"Package name {package} is invalid")
-
-        latest_version = None
-        if not version:
-            # If missing version, look up latest
-            latest_version = mgr.latest_version(package)
-            version = latest_version
-        else:
-            if result.version is False:
-                # If version was set but is invalid, replace with latest
-                latest_version = mgr.latest_version(package)
-                version = latest_version
-
-        # Return object
-        return PackageComponent(manager=manager, package=package, version=version, latest_version=latest_version)

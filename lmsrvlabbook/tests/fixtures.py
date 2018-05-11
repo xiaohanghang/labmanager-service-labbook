@@ -311,14 +311,14 @@ def build_image_for_jupyterlab():
             cm.add_component("base", ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV)
             cm.add_package("pip3", "requests", "2.18.4")
 
-            ib = ImageBuilder(lb.root_dir)
+            ib = ImageBuilder(lb)
             ib.assemble_dockerfile(write=True)
             docker_client = get_docker_client()
 
             try:
                 lb, docker_image_id = ContainerOperations.build_image(labbook=lb, username="unittester")
 
-                yield lb, ib, docker_client, docker_image_id, client
+                yield lb, ib, docker_client, docker_image_id, client, "unittester"
 
             finally:
                 shutil.rmtree(lb.root_dir)
