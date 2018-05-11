@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import responses
+from lmcommon.labbook import LabBook
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir
@@ -92,6 +93,9 @@ class TestLabBookRemoteOperations(object):
     @responses.activate
     def test_list_remote_labbooks_az(self, fixture_working_dir, snapshot):
         """test list labbooks"""
+        lb = LabBook(fixture_working_dir[0])
+        lb.new(username='default', owner={"username": "testuser"}, name="test11", description="my first labbook1")
+
         responses.add(responses.GET, 'https://usersrv.gigantum.io/key',
                       json={'key': 'afaketoken'}, status=200)
         dummy_data = [
@@ -161,6 +165,7 @@ class TestLabBookRemoteOperations(object):
 
         list_query = """
                     {
+                    labbookList{
                       remoteLabbooks(sort: "az", reverse: false){
                         edges{
                           node{
@@ -170,6 +175,7 @@ class TestLabBookRemoteOperations(object):
                             modifiedDateUtc
                             name
                             owner
+                            isLocal
                           }
                           cursor
                         }
@@ -177,14 +183,17 @@ class TestLabBookRemoteOperations(object):
                           hasNextPage
                         }
                       }
+                    }
                     }"""
 
         r = fixture_working_dir[2].execute(list_query)
+        print(r)
         assert 'errors' not in r
         snapshot.assert_match(r)
 
         list_query = """
                     {
+                    labbookList{
                       remoteLabbooks(sort: "modified_on", reverse: false){
                         edges{
                           node{
@@ -201,6 +210,7 @@ class TestLabBookRemoteOperations(object):
                           hasNextPage
                         }
                       }
+                    }
                     }"""
 
         r = fixture_working_dir[2].execute(list_query)

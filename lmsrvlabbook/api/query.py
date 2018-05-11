@@ -19,28 +19,23 @@
 # SOFTWARE.
 import base64
 from typing import List
-
 import graphene
 
-from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher import Dispatcher
 from lmcommon.environment import ComponentRepository, get_package_manager
 from lmcommon.labbook.schemas import CURRENT_SCHEMA
-from lmcommon.gitlib.gitlab import GitLabManager
 
 from lmsrvcore.auth.user import get_logged_in_username
-from lmsrvcore.auth.identity import parse_token
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbook import Labbook
-from lmsrvlabbook.api.objects.remotelabbook import RemoteLabbook
+from lmsrvlabbook.api.objects.labbooklist import LabbookList
 from lmsrvlabbook.api.objects.basecomponent import BaseComponent
 from lmsrvlabbook.api.objects.customcomponent import CustomComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.jobstatus import JobStatus
-from lmsrvlabbook.api.connections.labbook import LabbookConnection
-from lmsrvlabbook.api.connections.remotelabbook import RemoteLabbookConnection
 from lmsrvlabbook.api.connections.environment import BaseComponentConnection, CustomComponentConnection
 from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
 
@@ -73,15 +68,8 @@ class LabbookQuery(graphene.ObjectType):
     # All background jobs in the system: Queued, Completed, Failed, and Started.
     background_jobs = graphene.relay.ConnectionField(JobStatusConnection)
 
-    # Connection to locally available labbooks
-    local_labbooks = graphene.relay.ConnectionField(LabbookConnection,
-                                                    sort=graphene.String(default_value="az"),
-                                                    reverse=graphene.Boolean(default_value=False))
-
-    # Connection to remotely available labbooks
-    remote_labbooks = graphene.relay.ConnectionField(RemoteLabbookConnection,
-                                                     sort=graphene.String(default_value="az"),
-                                                     reverse=graphene.Boolean(default_value=False))
+    # A field to interact with listing labbooks locally and remote
+    labbook_list = graphene.Field(LabbookList)
 
     # Base Image Repository Interface
     available_bases = graphene.relay.ConnectionField(BaseComponentConnection)
@@ -94,11 +82,11 @@ class LabbookQuery(graphene.ObjectType):
     # Custom Dependency Repository Interface
     available_custom_dependencies = graphene.relay.ConnectionField(CustomComponentConnection)
 
-    # Currently not fully supported, but will be added in the future.
-    # available_custom_dependencies_versions = graphene.relay.ConnectionField(CustomDependencyConnection,
-    #                                                                         repository=graphene.String(),
-    #                                                                         namespace=graphene.String(),
-    #                                                                         component=graphene.String())
+    # Package Query for validating packages and getting latest versions
+    package = graphene.Field(PackageComponent,
+                             manager=graphene.String(),
+                             package=graphene.String(),
+                             version=graphene.String(default_value=""))
 
     # Get the current logged in user identity, primarily used when running offline
     user_identity = graphene.Field(UserIdentity)
@@ -134,6 +122,10 @@ class LabbookQuery(graphene.ObjectType):
         """Return the current LabBook schema version"""
         return CURRENT_SCHEMA
 
+    def resolve_labbook_list(self, info):
+        """Return a labbook list object, which is just a container so the id is empty"""
+        return LabbookList(id="")
+
     def resolve_job_status(self, info, job_id: str):
         """Method to return a graphene Labbok instance based on the name
 
@@ -167,105 +159,6 @@ class LabbookQuery(graphene.ObjectType):
             edge_objs.append(JobStatusConnection.Edge(node=JobStatus(edge), cursor=cursor))
 
         return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_local_labbooks(self, info, sort: str, reverse: bool, **kwargs):
-        """Method to return a all graphene Labbook instances for the logged in user
-
-        Uses the "currently logged in" user
-
-        Returns:
-            list(Labbook)
-        """
-        lb = LabBook()
-
-        username = get_logged_in_username()
-
-        # Collect all labbooks for all owners
-        edges = lb.list_local_labbooks(username=username, sort_mode=sort, reverse=reverse)
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, kwargs)
-        lbc.apply()
-
-        # Get Labbook instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            create_data = {"id": "{}&{}".format(edge["owner"], edge["name"]),
-                           "name": edge["name"],
-                           "owner": edge["owner"]}
-
-            edge_objs.append(LabbookConnection.Edge(node=Labbook(**create_data),
-                                                    cursor=cursor))
-
-        return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_remote_labbooks(self, info, sort: str, reverse: bool, **kwargs):
-        """Method to return a all RemoteLabbook instances for the logged in user
-
-        This is a remote call, so should be fetched on its own and only when needed. The user must have a valid
-        session for data to be returned.
-
-        It is recommended to use large page size (e.g. 50-100). This is due to how the remote server returns all the
-        available data at once, so it is more efficient to load a lot of records at a time.
-
-        Args:
-            sort_mode(sort_mode): String specifying how labbooks should be sorted
-            reverse(bool): Reverse sorting if True
-
-        Supported sorting modes:
-            - az: naturally sort
-            - created_on: sort by creation date, newest first
-            - modified_on: sort by modification date, newest first
-
-        Returns:
-            list(Labbook)
-        """
-        # Load config data
-        configuration = Configuration().config
-
-        # Extract valid Bearer token
-        token = None
-        if hasattr(info.context.headers, 'environ'):
-            if "HTTP_AUTHORIZATION" in info.context.headers.environ:
-                token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
-        if not token:
-            raise ValueError("Authorization header not provided. Cannot list remote LabBooks.")
-
-        # Get remote server configuration
-        default_remote = configuration['git']['default_remote']
-        admin_service = None
-        for remote in configuration['git']['remotes']:
-            if default_remote == remote:
-                admin_service = configuration['git']['remotes'][remote]['admin_service']
-                break
-
-        if not admin_service:
-            raise ValueError('admin_service could not be found')
-
-        # Query backend for data
-        mgr = GitLabManager(default_remote, admin_service, access_token=token)
-        edges = mgr.list_labbooks(sort_mode=sort, reverse=reverse)
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, kwargs)
-        lbc.apply()
-
-        # Get Labbook instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            create_data = {"id": "{}&{}".format(edge["namespace"], edge["labbook_name"]),
-                           "name": edge["labbook_name"],
-                           "owner": edge["namespace"],
-                           "description": edge["description"],
-                           "creation_date_utc": edge["created_on"],
-                           "modified_date_utc": edge["modified_on"]}
-
-            edge_objs.append(RemoteLabbookConnection.Edge(node=RemoteLabbook(**create_data),
-                                                          cursor=cursor))
-
-        return RemoteLabbookConnection(edges=edge_objs, page_info=lbc.page_info)
 
     def resolve_available_bases(self, info, **kwargs):
         """Method to return a all graphene BaseImages that are available
@@ -346,38 +239,6 @@ class LabbookQuery(graphene.ObjectType):
                                                             cursor=cursor))
 
         return CustomComponentConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    # Currently not fully supported, but will be added in the future.
-    # def resolve_available_custom_dependencies_versions(self, info, repository, namespace, component, **kwargs):
-    #     """Method to return all versions of a Custom Dependency component
-    #
-    #     Returns:
-    #         CustomDependencyConnection
-    #     """
-    #     repo = ComponentRepository()
-    #     edges = repo.get_component_versions("custom",
-    #                                         repository,
-    #                                         namespace,
-    #                                         component)
-    #     cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-    #
-    #     # Process slicing and cursor args
-    #     lbc = ListBasedConnection(edges, cursors, kwargs)
-    #     lbc.apply()
-    #
-    #     # Get BaseImage instances
-    #     edge_objs = []
-    #     for edge, cursor in zip(lbc.edges, lbc.cursors):
-    #         id_data = {'component_data': edge[1],
-    #                    'component_class': 'custom',
-    #                    'repo': repository,
-    #                    'namespace': namespace,
-    #                    'component': component,
-    #                    'version': edge[0]
-    #                    }
-    #         edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
-    #
-    #     return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
 
     def resolve_user_identity(self, info):
         """Method to return a graphene UserIdentity instance based on the current logged (both on & offline) user
