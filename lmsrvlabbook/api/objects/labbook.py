@@ -525,13 +525,11 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         latest_version = mgr.latest_version(package, lb, get_logged_in_username())
         if not version:
-            # If missing version, look up latest
-            latest_version = mgr.latest_version(package, lb, get_logged_in_username())
+            # If missing version, set to latest
             version = latest_version
         else:
             if result.version is False:
                 # If version was set but is invalid, replace with latest
-                latest_version = mgr.latest_version(package, lb, get_logged_in_username())
                 version = latest_version
 
         # Return object

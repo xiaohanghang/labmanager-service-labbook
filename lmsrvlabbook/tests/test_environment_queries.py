@@ -226,9 +226,13 @@ class TestEnvironmentServiceQueries(object):
 
     def test_package_query(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
+        # Create labbook
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+        lb.new(owner={"username": "default"}, name="labbook5", description="my first labbook10000")
+
         query = """
         {
-            labbook(owner: "default", name: "labbook4") {
+            labbook(owner: "default", name: "labbook5") {
               package(manager: "pip", package: "requests", version: "2.18.0") {
                 id
                 schema
@@ -252,9 +256,13 @@ class TestEnvironmentServiceQueries(object):
 
     def test_package_query_no_version(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
+        # Create labbook
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+        lb.new(owner={"username": "default"}, name="labbook6", description="my first labbook10000")
+
         query = """
         {
-            labbook(owner: "default", name: "labbook4") {
+            labbook(owner: "default", name: "labbook6") {
               package(manager: "pip", package: "requests") {
                 id
                 schema
@@ -277,9 +285,13 @@ class TestEnvironmentServiceQueries(object):
 
     def test_package_query_bad_version(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
+        # Create labbook
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+        lb.new(owner={"username": "default"}, name="labbook7", description="my first labbook10000")
+
         query = """
         {
-            labbook(owner: "default", name: "labbook4") {
+            labbook(owner: "default", name: "labbook7") {
               package(manager: "pip", package: "requests", version: "100.100") {
                 id
                 schema
@@ -302,9 +314,13 @@ class TestEnvironmentServiceQueries(object):
 
     def test_package_query_bad_package(self, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
+        # Create labbook
+        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
+        lb.new(owner={"username": "default"}, name="labbook8", description="my first labbook10000")
+
         query = """
         {
-            labbook(owner: "default", name: "labbook4") {
+            labbook(owner: "default", name: "labbook8") {
               package(manager: "pip", package: "TotallyFakePackage", version: "100.100") {
                 id
                 schema
