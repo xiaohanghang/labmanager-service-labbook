@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: gigantum/circleci-service-client:a7bc7025-2018-05-11
+      - image: gigantum/circleci-service-client:a587c30a-2018-05-22
     steps:
       - checkout
       - setup_remote_docker
@@ -16,8 +16,6 @@ jobs:
           command: |
             cd /home/circleci/
             git clone -b integration --single-branch https://github.com/gigantum/labmanager-common.git
-            # export CWD=`pwd`
-            # sudo pip install --find-links --no-index file:///home/circleci/gigantum/labmanager-common
 
       - run:
           name: Run unit, integration and coverage tests
@@ -26,7 +24,7 @@ jobs:
             cd /home/circleci/project
             redis-server &
             rqscheduler --interval=2 2> /dev/null &
-            python /home/circleci/labmanager-common/lmcommon/dispatcher/worker.py 7 &
+            python3 /home/circleci/labmanager-common/lmcommon/dispatcher/worker.py 7 &
             pytest --cov=lmsrvlabbook --cov=lmsrvcore lmsrvlabbook/
             pytest --cov=lmsrvcore --cov-append lmsrvcore/
             pytest --cov=lmsrvlabbook --cov=lmsrvcore --cov-append lmsrvlabbook/tests/int_labbook_mutations.py
