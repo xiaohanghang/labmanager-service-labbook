@@ -1412,6 +1412,7 @@ class TestLabBookServiceQueries(object):
                             show
                             importance
                             tags
+                            action
                         }
                         }                        
                     }    
@@ -1447,6 +1448,7 @@ class TestLabBookServiceQueries(object):
                             show
                             importance
                             tags
+                            action
                         }
                         }                        
                     }    
@@ -1500,6 +1502,7 @@ class TestLabBookServiceQueries(object):
                 show
                 importance
                 tags 
+                action
             }}
           }}
         }}
@@ -1509,6 +1512,7 @@ class TestLabBookServiceQueries(object):
                activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['key']
         assert detail_result['data']['labbook']['detailRecord']['id'] == \
                activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['id']
+        assert detail_result['data']['labbook']['detailRecord']['action'] == "CREATE"
 
         # Try again in a snapshot compatible way, loading data as well
         query = """

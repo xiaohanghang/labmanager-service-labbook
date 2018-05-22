@@ -950,6 +950,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                         'node': {
                             'detailObjects': [
                                 {
+                                    'action': 'CREATE',
                                     'data': [
                                         [
                                             'text/plain',
@@ -976,6 +977,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                         'node': {
                             'detailObjects': [
                                 {
+                                    'action': 'CREATE',
                                     'data': [
                                         [
                                             'text/plain',
@@ -1002,6 +1004,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                         'node': {
                             'detailObjects': [
                                 {
+                                    'action': 'CREATE',
                                     'data': [
                                         [
                                             'text/plain',
