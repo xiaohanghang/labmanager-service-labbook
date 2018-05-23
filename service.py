@@ -136,6 +136,17 @@ except Exception as e:
     logger.error(f"Failed to empty share folder: {e}.")
     raise
 
+post_save_hook_code = """
+import subprocess, os
+def post_save_hook(os_path, model, contents_manager, **kwargs):
+    token = open('/opt/jupyter_token').read()
+    subprocess.run(f'wget https://localhost:10000/savehook/{token}?file={os.path.basename(os_path)}')
+"""
+os.makedirs(os.path.join(share_dir, 'jupyterhooks'))
+with open(os.path.join(share_dir, 'jupyterhooks', '__init__.py'), 'w') as initpy:
+    initpy.write(post_save_hook_code)
+
+
 # Reset distributed lock, if desired
 if config.config["lock"]["reset_on_start"]:
     logger.info("Resetting ALL distributed locks")
