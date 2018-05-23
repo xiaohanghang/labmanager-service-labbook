@@ -17,12 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask, jsonify
-import flask
-from flask_cors import CORS, cross_origin
 import shutil
 import os
 import base64
+
+from flask import Flask, jsonify, request
+import flask
+from flask_cors import CORS, cross_origin
+import redis
 import blueprint
 
 from lmcommon.configuration import Configuration
@@ -30,6 +32,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
 from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 from lmcommon.labbook.lock import reset_all_locks
+from lmcommon.labbook import LabBook
 from lmcommon.portmap.portmap import reset_all_ports
 
 
@@ -71,7 +74,28 @@ def ping():
     return jsonify(config.config['build_info'])
 
 
-@app.route('/savehook/<owner')
+@app.route('/savehook/<jupyter_token>')
+def savehook(jupyter_token):
+    changed_file = request.args.get('filename')
+    # Get all redis keys pertaining to {lb_key}-jupyter-token
+    redis_conn = redis.Redis(db=1)
+
+    lb_key = None
+    rkeys = [k for k in redis_conn.scan_iter('*-jupyter-token')]
+    for k in rkeys:
+        if redis_conn.get(k) == jupyter_token:
+            lb_key = k.replace('-jupyter-token')
+            break
+
+    if lb_key is None:
+        logger.error('Received Jupyter save hook, but no LabBook matched')
+        return
+
+    lb = LabBook()
+    lb.from_key(lb_key)
+    logger.info(f"Received Jupyter save hook on {changed_file or '<unknown file>'}")
+    with lb.lock_labbook():
+        lb._sweep_uncommitted_changes()
 
 
 # TEMPORARY KLUDGE
