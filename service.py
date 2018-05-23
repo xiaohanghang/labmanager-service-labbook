@@ -76,10 +76,7 @@ def ping():
 
 @app.route('/savehook/<jupyter_token>')
 def savehook(jupyter_token):
-    changed_file = request.args.get('filename')
-    # Get all redis keys pertaining to {lb_key}-jupyter-token
     redis_conn = redis.Redis(db=1)
-
     lb_key = None
     rkeys = [k for k in redis_conn.scan_iter('*-jupyter-token')]
     for k in rkeys:
@@ -93,6 +90,7 @@ def savehook(jupyter_token):
 
     lb = LabBook()
     lb.from_key(lb_key)
+    changed_file = request.args.get('filename')
     logger.info(f"Received Jupyter save hook on {changed_file or '<unknown file>'}")
     with lb.lock_labbook():
         lb._sweep_uncommitted_changes()
