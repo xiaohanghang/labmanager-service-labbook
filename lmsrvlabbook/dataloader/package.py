@@ -22,7 +22,7 @@ from typing import List
 from promise import Promise
 from promise.dataloader import DataLoader
 from lmcommon.environment import get_package_manager
-
+from lmcommon.labbook import LabBook
 
 class PackageLoader(DataLoader):
     """Dataloader for PackageComponent instances
@@ -31,10 +31,12 @@ class PackageLoader(DataLoader):
 
     The key for this object is  manager&package
     """
-    def __init__(self, keys: List[str]):
+    def __init__(self, keys: List[str], labbook: LabBook, username: str):
         DataLoader.__init__(self)
         self.keys = keys
         self.latest_versions = dict()
+        self.labbook = labbook
+        self.username = username
 
     def populate_latest_versions(self):
         conda3_pkgs = list()
@@ -54,7 +56,7 @@ class PackageLoader(DataLoader):
             # load all versions at once
             all_pkgs = [x[0] for x in conda2_pkgs]
             mgr = get_package_manager('conda2')
-            versions = mgr.latest_versions(all_pkgs)
+            versions = mgr.latest_versions(all_pkgs, labbook=self.labbook, username=self.username)
 
             # save
             for version, pkg in zip(versions, conda2_pkgs):
@@ -64,7 +66,7 @@ class PackageLoader(DataLoader):
             # load all versions at once
             all_pkgs = [x[0] for x in conda3_pkgs]
             mgr = get_package_manager('conda3')
-            versions = mgr.latest_versions(all_pkgs)
+            versions = mgr.latest_versions(all_pkgs, labbook=self.labbook, username=self.username)
 
             # save
             for version, pkg in zip(versions, conda3_pkgs):
@@ -74,7 +76,7 @@ class PackageLoader(DataLoader):
             # For these package managers, look up each latest version individually
             for pkg in normal_pkgs:
                 mgr = get_package_manager(pkg[0])
-                self.latest_versions[pkg[2]] = mgr.latest_version(pkg[1])
+                self.latest_versions[pkg[2]] = mgr.latest_version(pkg[1], labbook=self.labbook, username=self.username)
 
     def get_version(self, key: str):
         if not self.latest_versions:

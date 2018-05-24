@@ -111,7 +111,7 @@ class TestLabbookShareProtocol(object):
         env = builder.get_environ()
         req = Request(environ=env)
 
-        remote_url = test_user_lb.remote
+        remote_url = test_user_lb.root_dir
         assert remote_url
 
         sally_lb = LabBook(mock_config_file[0])
@@ -140,6 +140,4 @@ class TestLabbookShareProtocol(object):
         assert r['data']['syncLabbook']['updateCount'] == 1
         assert r['data']['syncLabbook']['updatedLabbook']['isRepoClean'] is True
         assert test_user_lb.active_branch == 'gm.workspace-default'
-
-        c = test_user_wf.sync('default')
-        assert c == 0
+ 

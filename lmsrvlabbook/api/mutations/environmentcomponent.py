@@ -67,14 +67,14 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
         latest_version = None
         if not skip_validation:
             # Validate Package
-            result = mgr.is_valid(package, version)
+            result = mgr.is_valid(package, labbook=lb, username=username, package_version=version)
 
             if result.package is False:
                 raise ValueError(f"{manager} managed package name {package} is invalid")
 
             if version is None:
                 # look up latest version
-                version = mgr.latest_version(package)
+                version = mgr.latest_version(package, labbook=lb, username=username)
                 # Since you already spent the time to look up the latest version, set it in case the field is queried
                 latest_version = version
             else:

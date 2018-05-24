@@ -19,6 +19,8 @@
 # SOFTWARE.
 import graphene
 from lmsrvcore.api.interfaces import GitRepository
+from lmcommon.labbook import LabBook
+from lmsrvcore.auth.user import get_logged_in_username
 
 
 class RemoteLabbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
@@ -40,6 +42,9 @@ class RemoteLabbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRep
 
     # Modification date/timestamp in UTC in ISO format
     modified_date_utc = graphene.String()
+
+    # Flag indicating if the LabBook also exists locally
+    is_local = graphene.Boolean()
 
     @classmethod
     def get_node(cls, info, id):
@@ -88,3 +93,19 @@ class RemoteLabbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRep
         if self.modified_date_utc is None:
             raise ValueError("RemoteLabbook requires all fields to be explicitly set")
         return self.modified_date_utc
+
+    def resolve_is_local(self, info):
+        """Return the modified timestamp
+
+        Args:
+            info:
+
+        Returns:
+
+        """
+        try:
+            lb = LabBook()
+            lb.from_name(get_logged_in_username(), self.owner, self.name)
+            return True
+        except ValueError:
+            return False
