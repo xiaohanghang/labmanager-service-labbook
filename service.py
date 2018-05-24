@@ -147,7 +147,8 @@ def post_save_hook(os_path, model, contents_manager, **kwargs):
         tokens = open('/home/giguser/jupyter_token').read().strip()
         username, owner, lbname, jupyter_token = tokens.split(',')
         url_args = f'file={os.path.basename(os_path)}&jupyter_token={jupyter_token}'
-        subprocess.run(['wget', f'http://{labmanager_ip}:10001/savehook/{username}/{owner}/{lbname}?{url_args}'])
+        subprocess.run(['wget', '--spider', 
+            f'http://{labmanager_ip}:10001/savehook/{username}/{owner}/{lbname}?{url_args}'], cwd='/tmp')
     except Exception as e:
         print(e)
 
