@@ -142,12 +142,14 @@ except Exception as e:
 post_save_hook_code = """
 import subprocess, os
 def post_save_hook(os_path, model, contents_manager, **kwargs):
-    labmanager_ip = open('/home/giguser/labmanager_ip').read().strip()
-    tokens = open('/home/giguser/jupyter_token').read().strip()
-    username, owner, lbname, jupyter_token = tokens.split(',')
-    url_args = f'file={os.path.basename(os_path)}&jupyter_token={jupyter_token}'
-    subprocess.run(['wget', f'http://{labmanager_ip}:10001/savehook/{username}/{owner}/{lbname}?{url_args}'])
-    #subprocess.run(['wget', f'http://{labmanager_ip}:10001/savehook/{token}?file={os.path.basename(os_path)}'])
+    try:
+        labmanager_ip = open('/home/giguser/labmanager_ip').read().strip()
+        tokens = open('/home/giguser/jupyter_token').read().strip()
+        username, owner, lbname, jupyter_token = tokens.split(',')
+        url_args = f'file={os.path.basename(os_path)}&jupyter_token={jupyter_token}'
+        subprocess.run(['wget', f'http://{labmanager_ip}:10001/savehook/{username}/{owner}/{lbname}?{url_args}'])
+    except Exception as e:
+        print(e)
 
 """
 os.makedirs(os.path.join(share_dir, 'jupyterhooks'))
