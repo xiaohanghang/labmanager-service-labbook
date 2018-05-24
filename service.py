@@ -21,7 +21,7 @@ import shutil
 import os
 import base64
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 import flask
 from flask_cors import CORS, cross_origin
 import redis
@@ -74,26 +74,29 @@ def ping():
     return jsonify(config.config['build_info'])
 
 
-@app.route('/savehook/<jupyter_token>')
-def savehook(jupyter_token):
-    redis_conn = redis.Redis(db=1)
-    lb_key = None
-    rkeys = [k for k in redis_conn.scan_iter('*-jupyter-token')]
-    for k in rkeys:
-        if redis_conn.get(k) == jupyter_token:
-            lb_key = k.replace('-jupyter-token')
-            break
-
-    if lb_key is None:
-        logger.error('Received Jupyter save hook, but no LabBook matched')
-        return
-
-    lb = LabBook()
-    lb.from_key(lb_key)
-    changed_file = request.args.get('filename')
-    logger.info(f"Received Jupyter save hook on {changed_file or '<unknown file>'}")
-    with lb.lock_labbook():
-        lb._sweep_uncommitted_changes()
+@app.route('/savehook/<username>/<owner>/<labbook_name>')
+def savehook(username, owner, labbook_name):
+    try:
+        redis_conn = redis.Redis(db=1)
+        lb_key = '-'.join(['gmlb', username, owner, labbook_name, 'jupyter-token'])
+        changed_file = request.args.get('file')
+        jupyter_token = request.args.get('jupyter_token')
+        logger.info(f"Received save hook for {changed_file} in {username}/{owner}/{labbook_name}")
+        r = redis_conn.get(lb_key.encode())
+        if r is None:
+            logger.error(f"Could not find redis key `{lb_key}`")
+            abort(400)
+        if r.decode() != jupyter_token:
+            raise ValueError("Incoming jupyter token must match key in Redis")
+        lb = LabBook()
+        lb.from_name(username, owner, labbook_name)
+        logger.info(f"Jupyter save hook saving {changed_file} from {str(lb)}")
+        with lb.lock_labbook():
+            lb._sweep_uncommitted_changes()
+        return 'success'
+    except Exception as e:
+        logger.error(e)
+        return abort(400)
 
 
 # TEMPORARY KLUDGE
@@ -139,8 +142,13 @@ except Exception as e:
 post_save_hook_code = """
 import subprocess, os
 def post_save_hook(os_path, model, contents_manager, **kwargs):
-    token = open('/opt/jupyter_token').read()
-    subprocess.run(f'wget https://localhost:10000/savehook/{token}?file={os.path.basename(os_path)}')
+    labmanager_ip = open('/home/giguser/labmanager_ip').read().strip()
+    tokens = open('/home/giguser/jupyter_token').read().strip()
+    username, owner, lbname, jupyter_token = tokens.split(',')
+    url_args = f'file={os.path.basename(os_path)}&jupyter_token={jupyter_token}'
+    subprocess.run(['wget', f'http://{labmanager_ip}:10001/savehook/{username}/{owner}/{lbname}?{url_args}'])
+    #subprocess.run(['wget', f'http://{labmanager_ip}:10001/savehook/{token}?file={os.path.basename(os_path)}'])
+
 """
 os.makedirs(os.path.join(share_dir, 'jupyterhooks'))
 with open(os.path.join(share_dir, 'jupyterhooks', '__init__.py'), 'w') as initpy:
