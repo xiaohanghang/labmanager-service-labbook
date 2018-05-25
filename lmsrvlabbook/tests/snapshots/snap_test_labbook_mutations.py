@@ -434,7 +434,7 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
 
   - repository: gig-dev_components2
   - component: quickstart-jupyterlab
-  - revision: 1
+  - revision: 2
 '''
                                         ]
                                     ],
