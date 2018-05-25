@@ -34,6 +34,7 @@ from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 from lmcommon.labbook.lock import reset_all_locks
 from lmcommon.labbook import LabBook
 from lmcommon.portmap.portmap import reset_all_ports
+from lmsrvcore.auth.user import get_logged_in_author
 
 
 logger = LMLogger.get_logger()
@@ -88,14 +89,14 @@ def savehook(username, owner, labbook_name):
             abort(400)
         if r.decode() != jupyter_token:
             raise ValueError("Incoming jupyter token must match key in Redis")
-        lb = LabBook()
+        lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
         logger.info(f"Jupyter save hook saving {changed_file} from {str(lb)}")
         with lb.lock_labbook():
             lb._sweep_uncommitted_changes()
         return 'success'
-    except Exception as e:
-        logger.error(e)
+    except Exception as err:
+        logger.error(err)
         return abort(400)
 
 
