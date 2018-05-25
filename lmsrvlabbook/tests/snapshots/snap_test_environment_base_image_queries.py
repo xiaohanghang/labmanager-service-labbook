@@ -57,9 +57,9 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                         'dockerImageNamespace': 'gigantum',
                         'dockerImageRepository': 'python3-minimal',
                         'dockerImageServer': 'hub.docker.com',
-                        'dockerImageTag': '826b6f24-2018-02-09',
+                        'dockerImageTag': '1effaaea-2018-05-23',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
-                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYy',
                         'installedPackages': [
                             'apt|vim|2:7.4.1689-3ubuntu1.2',
                             'pip3|numpy|1.14.0',
@@ -75,7 +75,7 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images 1'] = 
                         'license': 'MIT',
                         'name': 'Data Science Quickstart with JupyterLab',
                         'osClass': 'ubuntu',
-                        'osRelease': '16.04',
+                        'osRelease': '18.04',
                         'packageManagers': [
                             'apt',
                             'pip3'
@@ -281,16 +281,16 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                         'dockerImageNamespace': 'gigantum',
                         'dockerImageRepository': 'python3-minimal',
                         'dockerImageServer': 'hub.docker.com',
-                        'dockerImageTag': '826b6f24-2018-02-09',
+                        'dockerImageTag': '1effaaea-2018-05-23',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
-                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYy',
                         'languages': [
                             'python3'
                         ],
                         'license': 'MIT',
                         'name': 'Data Science Quickstart with JupyterLab',
                         'osClass': 'ubuntu',
-                        'osRelease': '16.04',
+                        'osRelease': '18.04',
                         'packageManagers': [
                             'apt',
                             'pip3'
@@ -500,16 +500,16 @@ snapshots['TestEnvironmentBaseImageQueries.test_get_available_base_images_pagina
                         'dockerImageNamespace': 'gigantum',
                         'dockerImageRepository': 'python3-minimal',
                         'dockerImageServer': 'hub.docker.com',
-                        'dockerImageTag': '826b6f24-2018-02-09',
+                        'dockerImageTag': '1effaaea-2018-05-23',
                         'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
-                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+                        'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYy',
                         'languages': [
                             'python3'
                         ],
                         'license': 'MIT',
                         'name': 'Data Science Quickstart with JupyterLab',
                         'osClass': 'ubuntu',
-                        'osRelease': '16.04',
+                        'osRelease': '18.04',
                         'packageManagers': [
                             'apt',
                             'pip3'
