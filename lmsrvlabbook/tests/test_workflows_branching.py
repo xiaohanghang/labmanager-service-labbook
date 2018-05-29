@@ -378,7 +378,7 @@ class TestWorkflowsBranching(object):
         assert og_hash != branch_hash
 
         bm.workon_branch(bm.workspace_branch)
-        assert lb.git.commit_hash == og_hash
+        assert lb.git.log()[1]['commit'] == og_hash  # There is 1 extra commit due to sweep
         assert not os.path.exists(os.path.join(lb.root_dir, 'code/sillydir1'))
 
         merge_q = f"""

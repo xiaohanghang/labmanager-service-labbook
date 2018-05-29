@@ -9,6 +9,7 @@ snapshots = Snapshot()
 
 snapshots['TestLabBookServiceQueries.test_pagination_noargs 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -80,11 +81,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_noargs 1'] = {
                 'hasPreviousPage': False
             }
         }
-    }
+    }}
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_first_only 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -115,10 +117,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_only 1'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -158,10 +162,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 1'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 2'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -185,10 +191,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 2'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
             ],
@@ -198,10 +206,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_first_and_after 3'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_last_only 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -232,10 +242,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_only 1'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -266,10 +278,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 1'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 2'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -288,10 +302,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 2'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 3'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
             ],
@@ -303,10 +319,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_last_and_before 3'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -330,10 +348,12 @@ snapshots['TestLabBookServiceQueries.test_pagination 1'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination 2'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -357,10 +377,12 @@ snapshots['TestLabBookServiceQueries.test_pagination 2'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -388,14 +410,17 @@ snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status 1'] = {
             ]
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_list_labbooks_container_status_no_labbooks 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
             ]
         }
+    }
     }
 }
 
@@ -925,6 +950,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                         'node': {
                             'detailObjects': [
                                 {
+                                    'action': 'CREATE',
                                     'data': [
                                         [
                                             'text/plain',
@@ -951,6 +977,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                         'node': {
                             'detailObjects': [
                                 {
+                                    'action': 'CREATE',
                                     'data': [
                                         [
                                             'text/plain',
@@ -977,6 +1004,7 @@ snapshots['TestLabBookServiceQueries.test_get_activity_records_with_details 1'] 
                         'node': {
                             'detailObjects': [
                                 {
+                                    'action': 'CREATE',
                                     'data': [
                                         [
                                             'text/plain',
@@ -1368,6 +1396,7 @@ This is my readme!!'''
 
 snapshots['TestLabBookServiceQueries.test_pagination_sort_az 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -1448,11 +1477,13 @@ snapshots['TestLabBookServiceQueries.test_pagination_sort_az 1'] = {
                 'hasPreviousPage': False
             }
         }
+    }
     }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_sort_az_reverse 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -1533,11 +1564,13 @@ snapshots['TestLabBookServiceQueries.test_pagination_sort_az_reverse 1'] = {
                 'hasPreviousPage': False
             }
         }
+    }
     }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_sort_create 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -1618,11 +1651,13 @@ snapshots['TestLabBookServiceQueries.test_pagination_sort_create 1'] = {
                 'hasPreviousPage': False
             }
         }
+    }
     }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_sort_modified 1'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -1704,10 +1739,12 @@ snapshots['TestLabBookServiceQueries.test_pagination_sort_modified 1'] = {
             }
         }
     }
+    }
 }
 
 snapshots['TestLabBookServiceQueries.test_pagination_sort_modified 2'] = {
     'data': {
+        'labbookList': {
         'localLabbooks': {
             'edges': [
                 {
@@ -1788,5 +1825,6 @@ snapshots['TestLabBookServiceQueries.test_pagination_sort_modified 2'] = {
                 'hasPreviousPage': False
             }
         }
+    }
     }
 }

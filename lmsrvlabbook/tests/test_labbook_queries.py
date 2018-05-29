@@ -40,6 +40,7 @@ class TestLabBookServiceQueries(object):
     def test_pagination_noargs(self, fixture_working_dir_populated_scoped, snapshot):
         query = """
                 {
+                labbookList{
                     localLabbooks {
                         edges {
                             node {
@@ -54,12 +55,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_sort_az(self, fixture_working_dir_populated_scoped, snapshot):
         query = """
                 {
+                labbookList{
                     localLabbooks(sort: "az") {
                         edges {
                             node {
@@ -75,12 +78,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_sort_az_reverse(self, fixture_working_dir_populated_scoped, snapshot):
         query = """
                 {
+                labbookList{
                     localLabbooks(sort: "az", reverse: true) {
                         edges {
                             node {
@@ -96,12 +101,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_sort_create(self, fixture_working_dir_populated_scoped, snapshot):
         query = """
                 {
+                labbookList{
                     localLabbooks(sort: "created_on") {
                         edges {
                             node {
@@ -117,6 +124,7 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
@@ -124,6 +132,7 @@ class TestLabBookServiceQueries(object):
 
         query = """
                 {
+                labbookList{
                     localLabbooks(sort: "modified_on") {
                         edges {
                             node {
@@ -138,6 +147,7 @@ class TestLabBookServiceQueries(object):
                             hasPreviousPage
                         }
                     }
+                }
                 }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
@@ -156,6 +166,7 @@ class TestLabBookServiceQueries(object):
     def test_pagination_first_only(self, fixture_working_dir_populated_scoped, snapshot):
         query = """
                 {
+                labbookList{
                     localLabbooks(first: 3) {
                         edges {
                             node {
@@ -170,6 +181,7 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
@@ -177,6 +189,7 @@ class TestLabBookServiceQueries(object):
         # Nominal case
         query = """
                 {
+                labbookList{
                     localLabbooks(first: 4, after: "Mg==") {
                         edges {
                             node {
@@ -193,12 +206,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
         # Overrunning end of list of labbooks
         query = """
                 {
+                labbookList{
                     localLabbooks(first: 6, after: "Ng==") {
                         edges {
                             node {
@@ -213,12 +228,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
         # Overrunning end of list of labbooks, returns empty set.
         query = """
                 {
+                labbookList{
                     localLabbooks(first: 6, after: "OA==") {
                         edges {
                             node {
@@ -233,12 +250,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_last_only(self, fixture_working_dir_populated_scoped, snapshot):
         query = """
                 {
+                labbookList{
                     localLabbooks(last: 3) {
                         edges {
                             node {
@@ -253,12 +272,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
     def test_pagination_last_and_before(self, fixture_working_dir_populated_scoped, snapshot):
         query = """
                 {
+                labbookList{
                     localLabbooks(last: 3, before: "Nw==") {
                         edges {
                             node {
@@ -273,12 +294,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
         # Overrun start of list
         query = """
                 {
+                labbookList{
                     localLabbooks(last: 3, before: "MQ==") {
                         edges {
                             node {
@@ -295,12 +318,14 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
         # Overrun with no intersection (should return empty list)
         query = """
                 {
+                labbookList{
                     localLabbooks(last: 3, before: "MA==") {
                         edges {
                             node {
@@ -317,6 +342,7 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
@@ -325,6 +351,7 @@ class TestLabBookServiceQueries(object):
         # Get LabBooks for the "logged in user" - Currently just "default"
         query = """
                 {
+                labbookList{
                     localLabbooks(first: 2, after: "MQ==") {
                         edges {
                             node {
@@ -339,11 +366,13 @@ class TestLabBookServiceQueries(object):
                         }
                     }
                 }
+                }
                 """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(query))
 
         before_query = """
                     {
+                    labbookList{
                         localLabbooks(last: 2, before: "Ng==") {
                             edges {
                                 node {
@@ -357,6 +386,7 @@ class TestLabBookServiceQueries(object):
                                 hasPreviousPage
                             }
                         }
+                    }
                     }
                     """
         snapshot.assert_match(fixture_working_dir_populated_scoped[2].execute(before_query))
@@ -435,6 +465,7 @@ class TestLabBookServiceQueries(object):
         # Get LabBooks for the "logged in user" - Currently just "default"
         query = """
         {
+        labbookList{
             localLabbooks {
                 edges {
                     node {
@@ -449,6 +480,7 @@ class TestLabBookServiceQueries(object):
                 }
             }
         }
+        }
         """
         snapshot.assert_match(fixture_working_dir[2].execute(query))
 
@@ -457,6 +489,7 @@ class TestLabBookServiceQueries(object):
         # Get LabBooks for the "logged in user" - Currently just "default"
         query = """
         {
+        labbookList{
             localLabbooks {
                 edges {
                     node {
@@ -470,6 +503,7 @@ class TestLabBookServiceQueries(object):
                     cursor
                 }
             }
+        }
         }
         """
         snapshot.assert_match(fixture_working_dir[2].execute(query))
@@ -1378,6 +1412,7 @@ class TestLabBookServiceQueries(object):
                             show
                             importance
                             tags
+                            action
                         }
                         }                        
                     }    
@@ -1413,6 +1448,7 @@ class TestLabBookServiceQueries(object):
                             show
                             importance
                             tags
+                            action
                         }
                         }                        
                     }    
@@ -1466,6 +1502,7 @@ class TestLabBookServiceQueries(object):
                 show
                 importance
                 tags 
+                action
             }}
           }}
         }}
@@ -1475,6 +1512,7 @@ class TestLabBookServiceQueries(object):
                activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['key']
         assert detail_result['data']['labbook']['detailRecord']['id'] == \
                activity_result['data']['labbook']['activityRecords']['edges'][0]['node']['detailObjects'][0]['id']
+        assert detail_result['data']['labbook']['detailRecord']['action'] == "CREATE"
 
         # Try again in a snapshot compatible way, loading data as well
         query = """

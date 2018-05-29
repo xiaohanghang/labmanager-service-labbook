@@ -19,7 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmcommon.environment import get_package_manager
+from lmcommon.logging import LMLogger
+
+logger = LMLogger.get_logger()
 
 
 class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
@@ -66,11 +68,15 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
     def resolve_latest_version(self, info):
         """Resolve the latest_version field"""
+        if self.latest_version is not None:
+            return self.latest_version
+
         if not self._version_dataloader:
             # No dataloader is available, so load manually
-            mgr = get_package_manager(self.manager)
-            return mgr.latest_version(self.package)
+            logger.warning("Cannot query for latest version of {self.package} - no labbook context")
+            return None
 
+        # If you get here, load via version dataloader (which has labbook context)
         return self._version_dataloader.load(f"{self.manager}&{self.package}")
 
     def resolve_from_base(self, info):
