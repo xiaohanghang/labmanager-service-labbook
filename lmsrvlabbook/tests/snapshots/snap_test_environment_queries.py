@@ -44,16 +44,16 @@ snapshots['TestEnvironmentServiceQueries.test_get_base 2'] = {
                     'dockerImageNamespace': 'gigantum',
                     'dockerImageRepository': 'python3-minimal',
                     'dockerImageServer': 'hub.docker.com',
-                    'dockerImageTag': '826b6f24-2018-02-09',
+                    'dockerImageTag': '1effaaea-2018-05-23',
                     'icon': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
-                    'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYx',
+                    'id': 'QmFzZUNvbXBvbmVudDpnaWctZGV2X2NvbXBvbmVudHMyJnF1aWNrc3RhcnQtanVweXRlcmxhYiYy',
                     'languages': [
                         'python3'
                     ],
                     'license': 'MIT',
                     'name': 'Data Science Quickstart with JupyterLab',
                     'osClass': 'ubuntu',
-                    'osRelease': '16.04',
+                    'osRelease': '18.04',
                     'packageManagers': [
                         'apt',
                         'pip3'

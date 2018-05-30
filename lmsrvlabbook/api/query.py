@@ -19,10 +19,8 @@
 # SOFTWARE.
 import base64
 from typing import List
-
 import graphene
 
-from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher import Dispatcher
@@ -33,11 +31,11 @@ from lmsrvcore.auth.user import get_logged_in_username
 from lmsrvcore.api.connections import ListBasedConnection
 
 from lmsrvlabbook.api.objects.labbook import Labbook
+from lmsrvlabbook.api.objects.labbooklist import LabbookList
 from lmsrvlabbook.api.objects.basecomponent import BaseComponent
-from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.customcomponent import CustomComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.jobstatus import JobStatus
-from lmsrvlabbook.api.connections.labbook import LabbookConnection
 from lmsrvlabbook.api.connections.environment import BaseComponentConnection, CustomComponentConnection
 from lmsrvlabbook.api.connections.jobstatus import JobStatusConnection
 
@@ -70,8 +68,8 @@ class LabbookQuery(graphene.ObjectType):
     # All background jobs in the system: Queued, Completed, Failed, and Started.
     background_jobs = graphene.relay.ConnectionField(JobStatusConnection)
 
-    # Connection to locally available labbooks
-    local_labbooks = graphene.relay.ConnectionField(LabbookConnection)
+    # A field to interact with listing labbooks locally and remote
+    labbook_list = graphene.Field(LabbookList)
 
     # Base Image Repository Interface
     available_bases = graphene.relay.ConnectionField(BaseComponentConnection)
@@ -83,12 +81,6 @@ class LabbookQuery(graphene.ObjectType):
 
     # Custom Dependency Repository Interface
     available_custom_dependencies = graphene.relay.ConnectionField(CustomComponentConnection)
-
-    # Currently not fully supported, but will be added in the future.
-    # available_custom_dependencies_versions = graphene.relay.ConnectionField(CustomDependencyConnection,
-    #                                                                         repository=graphene.String(),
-    #                                                                         namespace=graphene.String(),
-    #                                                                         component=graphene.String())
 
     # Package Query for validating packages and getting latest versions
     package = graphene.Field(PackageComponent,
@@ -130,6 +122,10 @@ class LabbookQuery(graphene.ObjectType):
         """Return the current LabBook schema version"""
         return CURRENT_SCHEMA
 
+    def resolve_labbook_list(self, info):
+        """Return a labbook list object, which is just a container so the id is empty"""
+        return LabbookList(id="")
+
     def resolve_job_status(self, info, job_id: str):
         """Method to return a graphene Labbok instance based on the name
 
@@ -141,8 +137,7 @@ class LabbookQuery(graphene.ObjectType):
         Returns:
             JobStatus
         """
-        logger.info(f"Resolving jobStatus {job_id} (type {type(job_id)})")
-        return JobStatus.create(job_id)
+        return JobStatus(job_id)
 
     def resolve_background_jobs(self, info, **kwargs):
         """Method to return a all background jobs the system is aware of: Queued, Started, Finished, Failed.
@@ -161,47 +156,9 @@ class LabbookQuery(graphene.ObjectType):
 
         edge_objs = []
         for edge, cursor in zip(lbc.edges, lbc.cursors):
-            edge_objs.append(JobStatusConnection.Edge(node=JobStatus.create(edge), cursor=cursor))
+            edge_objs.append(JobStatusConnection.Edge(node=JobStatus(edge), cursor=cursor))
 
         return JobStatusConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_local_labbooks(self, info, **kwargs):
-        """Method to return a all graphene Labbook instances for the logged in user
-
-        Uses the "currently logged in" user
-
-        Returns:
-            list(Labbook)
-        """
-        lb = LabBook()
-
-        username = get_logged_in_username()
-        labbooks = lb.list_local_labbooks(username=username)
-
-        # Collect all labbooks for all owners
-        edges = []
-        cursors = []
-        if labbooks:
-            for key in labbooks.keys():
-                edges.extend(labbooks[key])
-            cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
-                                                                                              x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, kwargs)
-        lbc.apply()
-
-        # Get Labbook instances
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            create_data = {"id": "{}&{}".format(edge["owner"], edge["name"]),
-                           "name": edge["name"],
-                           "owner": edge["owner"]}
-
-            edge_objs.append(LabbookConnection.Edge(node=Labbook(**create_data),
-                                                    cursor=cursor))
-
-        return LabbookConnection(edges=edge_objs, page_info=lbc.page_info)
 
     def resolve_available_bases(self, info, **kwargs):
         """Method to return a all graphene BaseImages that are available
@@ -283,38 +240,6 @@ class LabbookQuery(graphene.ObjectType):
 
         return CustomComponentConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    # Currently not fully supported, but will be added in the future.
-    # def resolve_available_custom_dependencies_versions(self, info, repository, namespace, component, **kwargs):
-    #     """Method to return all versions of a Custom Dependency component
-    #
-    #     Returns:
-    #         CustomDependencyConnection
-    #     """
-    #     repo = ComponentRepository()
-    #     edges = repo.get_component_versions("custom",
-    #                                         repository,
-    #                                         namespace,
-    #                                         component)
-    #     cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-    #
-    #     # Process slicing and cursor args
-    #     lbc = ListBasedConnection(edges, cursors, kwargs)
-    #     lbc.apply()
-    #
-    #     # Get BaseImage instances
-    #     edge_objs = []
-    #     for edge, cursor in zip(lbc.edges, lbc.cursors):
-    #         id_data = {'component_data': edge[1],
-    #                    'component_class': 'custom',
-    #                    'repo': repository,
-    #                    'namespace': namespace,
-    #                    'component': component,
-    #                    'version': edge[0]
-    #                    }
-    #         edge_objs.append(CustomDependencyConnection.Edge(node=CustomDependency.create(id_data), cursor=cursor))
-    #
-    #     return CustomDependencyConnection(edges=edge_objs, page_info=lbc.page_info)
-
     def resolve_user_identity(self, info):
         """Method to return a graphene UserIdentity instance based on the current logged (both on & offline) user
 
@@ -322,35 +247,3 @@ class LabbookQuery(graphene.ObjectType):
             UserIdentity
         """
         return UserIdentity()
-
-    def resolve_package(self, info, manager, package, version):
-        """Method to retrieve package component. Errors can be used to validate if a package name and version
-        are correct
-
-        Returns:
-            PackageComponent
-        """
-        # Instantiate appropriate package manager
-        mgr = get_package_manager(manager)
-
-        # Validate package and version if available
-        if version == "":
-            version = None
-        result = mgr.is_valid(package, version)
-
-        if result.package is False:
-            raise ValueError(f"Package name {package} is invalid")
-
-        latest_version = None
-        if not version:
-            # If missing version, look up latest
-            latest_version = mgr.latest_version(package)
-            version = latest_version
-        else:
-            if result.version is False:
-                # If version was set but is invalid, replace with latest
-                latest_version = mgr.latest_version(package)
-                version = latest_version
-
-        # Return object
-        return PackageComponent(manager=manager, package=package, version=version, latest_version=latest_version)

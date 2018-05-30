@@ -32,7 +32,7 @@ from lmcommon.logging import LMLogger
 from lmcommon.files import FileOperations
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
-from lmcommon.gitlib.gitlab import GitLabRepositoryManager
+from lmcommon.gitlib.gitlab import GitLabManager
 from lmcommon.environment import ComponentManager
 
 from lmsrvcore.api.mutations import ChunkUploadMutation, ChunkUploadInput
@@ -152,6 +152,52 @@ class DeleteLabbook(graphene.ClientIDMutation):
                 return DeleteLabbook(success=True)
         else:
             logger.info(f"Dry run in deleting {str(lb)} -- not deleted.")
+            return DeleteLabbook(success=False)
+
+
+class DeleteRemoteLabbook(graphene.ClientIDMutation):
+    """Delete a labbook from the remote repository."""
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        confirm = graphene.Boolean(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, confirm, client_mutation_id=None):
+        if confirm is True:
+            # Load config data
+            configuration = Configuration().config
+
+            # Extract valid Bearer token
+            token = None
+            if hasattr(info.context.headers, 'environ'):
+                if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+                    token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
+            if not token:
+                raise ValueError("Authorization header not provided. Cannot perform remote delete operation.")
+
+            # Get remote server configuration
+            default_remote = configuration['git']['default_remote']
+            admin_service = None
+            for remote in configuration['git']['remotes']:
+                if default_remote == remote:
+                    admin_service = configuration['git']['remotes'][remote]['admin_service']
+                    break
+
+            if not admin_service:
+                raise ValueError('admin_service could not be found')
+
+            # Perform delete operation
+            mgr = GitLabManager(default_remote, admin_service, access_token=token)
+            mgr.remove_labbook(owner, labbook_name)
+
+            logger.info(f"Deleted {labbook_name} from the remote repository {default_remote}")
+
+            return DeleteLabbook(success=True)
+        else:
+            logger.info(f"Dry run deleting {labbook_name} from remote repository -- not deleted.")
             return DeleteLabbook(success=False)
 
 
@@ -321,8 +367,7 @@ class ImportRemoteLabbook(graphene.relay.ClientIDMutation):
         else:
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
-        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      username, owner, labbook_name)
+        mgr = GitLabManager(default_remote, admin_service, token)
         mgr.configure_git_credentials(default_remote, username)
 
         lb.from_remote(remote_url, username, owner, labbook_name)
@@ -394,6 +439,43 @@ class PushActiveBranchToRemote(graphene.relay.ClientIDMutation):
         return PushActiveBranchToRemote(success=True)
 
 
+class SetLabbookDescription(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        description_content = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, description_content, client_mutation_id=None):
+        username = get_logged_in_username()
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_name(username, owner, labbook_name)
+        lb.description = description_content
+        
+        with lb.lock_labbook():
+            lb.git.add(os.path.join(lb.root_dir, '.gigantum/labbook.yaml'))
+            commit = lb.git.commit('Updating description')
+
+            # Create detail record
+            adr = ActivityDetailRecord(ActivityDetailType.LABBOOK, show=False)
+            adr.add_value('text/plain', "Updated description of LabBook")
+
+            # Create activity record
+            ar = ActivityRecord(ActivityType.LABBOOK,
+                                message="Updated description of LabBook",
+                                linked_commit=commit.hexsha,
+                                tags=["labbook"],
+                                show=False)
+            ar.add_detail_object(adr)
+
+            # Store
+            ars = ActivityStore(lb)
+            ars.create_activity_record(ar)
+        return SetLabbookDescription(success=True)
+
+
 class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
     """Mutation to add a file to a labbook. File should be sent in the `uploadFile` key as a multi-part/form upload.
     file_path is the relative path from the labbook section specified."""
@@ -427,17 +509,23 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
 
         # Insert into labbook
         # Note: insert_file() will strip out any '..' in dst_dir.
-        file_info = lb.insert_file(section=kwargs.get('section'),
-                                   src_file=cls.upload_file_path,
-                                   dst_dir=os.path.dirname(kwargs.get('file_path')),
-                                   base_filename=cls.filename)
+        try:
+            file_info = lb.insert_file(section=kwargs.get('section'),
+                                       src_file=cls.upload_file_path,
+                                       dst_dir=os.path.dirname(kwargs.get('file_path')),
+                                       base_filename=cls.filename)
+        finally:
+            try:
+                logger.debug(f"Removing copied temp file {cls.upload_file_path}")
+                os.remove(cls.upload_file_path)
+            except FileNotFoundError:
+                pass
+
 
         # Prime dataloader with labbook you already loaded
         dataloader = LabBookLoader()
         dataloader.prime(f"{kwargs.get('owner')}&{kwargs.get('labbook_name')}&{lb.name}", lb)
 
-        logger.debug(f"Removing copied temp file {cls.upload_file_path}")
-        os.remove(cls.upload_file_path)
         # Create data to populate edge
         create_data = {'owner': kwargs.get('owner'),
                        'name': kwargs.get('labbook_name'),
@@ -697,9 +785,8 @@ class AddLabbookCollaborator(graphene.relay.ClientIDMutation):
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         # Add collaborator to remote service
-        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      logged_in_username, owner, labbook_name)
-        mgr.add_collaborator(username)
+        mgr = GitLabManager(default_remote, admin_service, token)
+        mgr.add_collaborator(owner, labbook_name, username)
 
         # Prime dataloader with labbook you just created
         dataloader = LabBookLoader()
@@ -740,15 +827,30 @@ class DeleteLabbookCollaborator(graphene.relay.ClientIDMutation):
             raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
 
         # Add collaborator to remote service
-        mgr = GitLabRepositoryManager(default_remote, admin_service, token,
-                                      logged_in_username, owner, labbook_name)
-        mgr.delete_collaborator(username)
-
-        # Prime dataloader with labbook you just created
-        dataloader = LabBookLoader()
-        dataloader.prime(f"{username}&{username}&{lb.name}", lb)
+        mgr = GitLabManager(default_remote, admin_service, token)
+        mgr.delete_collaborator(owner, labbook_name, username)
 
         create_data = {"owner": owner,
                        "name": labbook_name}
 
         return DeleteLabbookCollaborator(updated_labbook=Labbook(**create_data))
+
+
+class WriteReadme(graphene.relay.ClientIDMutation):
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        content = graphene.String(required=True)
+
+    updated_labbook = graphene.Field(Labbook)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, content, client_mutation_id=None):
+        logged_in_username = get_logged_in_username()
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_name(logged_in_username, owner, labbook_name)
+
+        # Write data
+        lb.write_readme(content)
+
+        return WriteReadme(updated_labbook=Labbook(owner=owner, name=labbook_name))

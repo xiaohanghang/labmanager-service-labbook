@@ -21,7 +21,7 @@ import graphene
 from graphene.types import datetime
 
 from lmcommon.logging import LMLogger
-from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityType
+from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityType, ActivityAction
 
 from lmsrvcore.api.interfaces import GitRepository
 from lmsrvcore.auth.user import get_logged_in_username
@@ -34,6 +34,9 @@ ActivityRecordTypeEnum = graphene.Enum.from_enum(ActivityType)
 
 # Bring ActivityDeatilType enumeration into Graphene
 ActivityDetailTypeEnum = graphene.Enum.from_enum(ActivityDetailType)
+
+# Bring ActivityActionType enumeration into Graphene
+ActivityActionTypeEnum = graphene.Enum.from_enum(ActivityAction)
 
 
 class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepository)):
@@ -49,6 +52,9 @@ class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
 
     # Type indicating the type of activity detail object
     type = graphene.Field(ActivityDetailTypeEnum)
+
+    # Type indicating the action modifier of activity
+    action = graphene.Field(ActivityActionTypeEnum)
 
     # Boolean indicating if this item should be "shown" or "hidden"
     show = graphene.Boolean()
@@ -78,6 +84,7 @@ class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
         self.show = self._detail_record.show
         self.tags = self._detail_record.tags
         self.importance = self._detail_record.importance
+        self.action = ActivityActionTypeEnum.get(self._detail_record.action.value).value
 
     @classmethod
     def get_node(cls, info, id):
@@ -101,6 +108,12 @@ class ActivityDetailObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
         if self.type is None:
             self._load_detail_record(info.context.labbook_loader)
         return self.type
+
+    def resolve_action(self, info):
+        """Resolve the action field"""
+        if self.action is None:
+            self._load_detail_record(info.context.labbook_loader)
+        return self.action
 
     def resolve_show(self, info):
         """Resolve the show field"""
@@ -280,6 +293,7 @@ class ActivityRecordObject(graphene.ObjectType, interfaces=(graphene.relay.Node,
                                                         show=r[3].show,
                                                         tags=r[3].tags,
                                                         importance=r[3].importance,
+                                                        action=ActivityActionTypeEnum.get(r[3].action.value).value,
                                                         type=ActivityDetailTypeEnum.get(r[3].type.value).value) for r in self._activity_record.detail_objects]
 
         return self.detail_objects

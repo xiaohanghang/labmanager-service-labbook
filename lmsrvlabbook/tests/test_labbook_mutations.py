@@ -26,6 +26,7 @@ import pprint
 from zipfile import ZipFile
 from pkg_resources import resource_filename
 import getpass
+import json
 
 from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
 
@@ -137,6 +138,46 @@ class TestLabBookServiceMutations(object):
         assert 'errors' not in r
         assert r['data']['deleteLabbook']['success'] is True
         assert not os.path.exists(labbook_dir)
+
+    def test_update_labbook_description(self, mock_create_labbooks, fixture_working_dir_env_repo_scoped):
+        labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')
+        assert os.path.exists(labbook_dir)
+
+        desc_md = f"# Titłe\n ## \"Subtitle\"\n{'æbčdęfghį:*&^&%$%$@!_t ' * 200}. ## Ænother Sübtitle's\n{'xyz.?/<>č ' * 300}.\n"
+        #desc_md = "abc"
+        description_query = f"""
+        mutation setDesc($content: String!) {{
+            setLabbookDescription(input: {{
+                owner: "default",
+                labbookName: "labbook1",
+                descriptionContent: $content
+            }}) {{
+                success
+            }}
+        }}
+        """
+        variables = {'content': desc_md}
+        r = fixture_working_dir_env_repo_scoped[2].execute(description_query, variable_values=variables)
+        pprint.pprint(r)
+        assert 'errors' not in r
+        assert r['data']['setLabbookDescription']['success'] is True
+
+        # Get LabBook you just created
+        query = """
+        {
+          labbook(name: "labbook1", owner: "default") {
+            description
+            isRepoClean
+          }
+        }
+        """
+        r = fixture_working_dir_env_repo_scoped[2].execute(query)
+        pprint.pprint(r['data']['labbook']['description'])
+        assert 'errors' not in r
+        # There's a lot of weird characters getting filtered out, make sure the bulk of the text remains
+        assert abs(1.0 * len(r['data']['labbook']['description']) / len(desc_md)) > 0.75
+        assert r['data']['labbook']['isRepoClean'] == True
+
 
     def test_delete_labbook_dry_run(self, mock_create_labbooks, fixture_working_dir_env_repo_scoped):
         """Test deleting a LabBook off disk. """
@@ -436,12 +477,17 @@ class TestLabBookServiceMutations(object):
 
         client = Client(mock_create_labbooks[3], middleware=[LabBookLoaderMiddleware()])
 
-        new_file_size = 9000000
         # Create file to upload
-        test_file = os.path.join(tempfile.gettempdir(), ".__init__.py")
+        test_file = os.path.join(tempfile.gettempdir(), "myValidFile.dat")
+        est_size = 9000000
+        try:
+            os.remove(test_file)
+        except:
+            pass
         with open(test_file, 'wb') as tf:
-            tf.write(os.urandom(new_file_size))
+            tf.write(os.urandom(est_size))
 
+        new_file_size = os.path.getsize(tf.name)
         # Get upload params
         chunk_size = 4194000
         file_info = os.stat(test_file)
@@ -449,7 +495,7 @@ class TestLabBookServiceMutations(object):
         total_chunks = int(math.ceil(file_info.st_size / chunk_size))
 
         target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
-                                   'labbook1', 'code', 'newdir', '.__init__.py')
+                                   'labbook1', 'code', 'newdir', "myValidFile.dat")
         lb = LabBook(mock_create_labbooks[0])
         lb.from_directory(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1'))
         lb.makedir('code/newdir', create_activity_record=True)
@@ -470,7 +516,91 @@ class TestLabBookServiceMutations(object):
                               addLabbookFile(input:{{owner:"default",
                                                       labbookName: "labbook1",
                                                       section: "code",
-                                                      filePath: "newdir/.__init__.py",
+                                                      filePath: "newdir/myValidFile.dat",
+                                chunkUploadParams:{{
+                                  uploadId: "fdsfdsfdsfdfs",
+                                  chunkSize: {chunk_size},
+                                  totalChunks: {total_chunks},
+                                  chunkIndex: {chunk_index},
+                                  fileSizeKb: {file_size},
+                                  filename: "{os.path.basename(test_file)}"
+                                }}
+                              }}) {{
+                                      newLabbookFileEdge {{
+                                        node{{
+                                          id
+                                          key
+                                          isDir
+                                          size
+                                        }}
+                                      }}
+                                    }}
+                            }}
+                            """
+                r = client.execute(query, context_value=DummyContext(file))
+                #assert 'errors' not in r
+
+            # This must be outside of the chunk upload loop
+            #assert 'errors' not in r
+
+        assert 'errors' not in r
+        # So, these will only be populated once the last chunk is uploaded. Will be None otherwise.
+        assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['isDir'] is False
+        assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['key'] == 'newdir/myValidFile.dat'
+        assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['size'] == f"{new_file_size}"
+
+        # When done uploading, file should exist in the labbook
+        assert os.path.exists(target_file)
+        assert os.path.isfile(target_file)
+
+    def test_add_file_fail_due_to_git_ignore(self, mock_create_labbooks):
+        """Test adding a new file to a labbook"""
+        class DummyContext(object):
+            def __init__(self, file_handle):
+                self.labbook_loader = None
+                self.files = {'uploadChunk': file_handle}
+
+        client = Client(mock_create_labbooks[3], middleware=[LabBookLoaderMiddleware()])
+
+        new_file_size = 9000000
+        # Create file to upload
+        test_file = os.path.join(tempfile.gettempdir(), ".DS_Store")
+        with open(test_file, 'wb') as tf:
+            tf.write(os.urandom(new_file_size))
+
+        # Get upload params
+        chunk_size = 4194000
+        file_info = os.stat(test_file)
+        file_size = int(file_info.st_size / 1000)
+        total_chunks = int(math.ceil(file_info.st_size / chunk_size))
+
+        target_file = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks',
+                                   'labbook1', 'code', 'newdir', '.DS_Store')
+        try:
+            os.remove(target_file)
+        except:
+            pass
+        lb = LabBook(mock_create_labbooks[0])
+        lb.from_directory(os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1'))
+        lb.makedir('code/newdir', create_activity_record=True)
+
+        with open(test_file, 'rb') as tf:
+            # Check for file to exist (shouldn't yet)
+            assert os.path.exists(target_file) is False
+
+            for chunk_index in range(total_chunks):
+                # Upload a chunk
+                chunk = io.BytesIO()
+                chunk.write(tf.read(chunk_size))
+                chunk.seek(0)
+                file = FileStorage(chunk)
+
+                query = f"""
+                            mutation addLabbookFile{{
+                              addLabbookFile(input:{{owner:"default",
+                                                      labbookName: "labbook1",
+                                                      section: "code",
+                                                      filePath: "newdir/.DS_Store",
                                 chunkUploadParams:{{
                                   uploadId: "jfdjfdjdisdjwdoijwlkfjd",
                                   chunkSize: {chunk_size},
@@ -492,16 +622,16 @@ class TestLabBookServiceMutations(object):
                             }}
                             """
                 r = client.execute(query, context_value=DummyContext(file))
-                assert 'errors' not in r
 
-            # So, these will only be populated once the last chunk is uploaded. Will be None otherwise.
-            assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['isDir'] is False
-            assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['key'] == 'newdir/.__init__.py'
-            assert r['data']['addLabbookFile']['newLabbookFileEdge']['node']['size'] == new_file_size
+            # This must be outside of the chunk upload loop
+            pprint.pprint(r)
+            assert 'errors' in r
+            assert len(r['errors']) == 1
+            assert 'matches ignored pattern' in r['errors'][0]['message']
 
         # When done uploading, file should exist in the labbook
-        assert os.path.exists(target_file) is True
-        assert os.path.isfile(target_file) is True
+        assert os.path.isfile(target_file) is False
+        assert os.path.exists(target_file) is False
 
     def test_add_file_errors(self, mock_create_labbooks, snapshot):
         """Test new file error handling"""
@@ -981,6 +1111,27 @@ class TestLabBookServiceMutations(object):
         assert r['data']['renameLabbook'] is None
         assert 'errors' in r
         assert 'NotImplemented' in r['errors'][0]['message']
+
+    def test_write_readme(self, mock_create_labbooks, snapshot):
+        content = json.dumps('##Overview\n\nThis is my readme\n :df,a//3p49kasdf')
+
+        query = f"""
+        mutation writeReadme {{
+          writeReadme(
+            input: {{
+              owner: "default",
+              labbookName: "labbook1",
+              content: {content},
+            }}) {{
+              updatedLabbook{{
+                name
+                description
+                readme
+              }}
+            }}
+        }}
+        """
+        snapshot.assert_match(mock_create_labbooks[2].execute(query))
 
         # TODO - Re-enable this when rename comes back.
         #snapshot.assert_match(client.execute(query))

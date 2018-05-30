@@ -81,7 +81,7 @@ class BuildImage(graphene.relay.ClientIDMutation):
         lb.from_directory(labbook_dir)
 
         # Generate Dockerfile
-        ib = ImageBuilder(labbook_directory=labbook_dir)
+        ib = ImageBuilder(lb)
         ib.assemble_dockerfile(write=True)
 
         # Kick off building in a background thread

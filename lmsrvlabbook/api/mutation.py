@@ -24,7 +24,8 @@ from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbo
     ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
     AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
     DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent, \
-    StartDevTool
+    StartDevTool, SetLabbookDescription, CreateExperimentalBranch, DeleteExperimentalBranch, \
+    MergeFromBranch, WorkonBranch, WriteReadme, AddCustomDocker, RemoveCustomDocker, DeleteRemoteLabbook
 
 
 class LabbookMutations(graphene.ObjectType):
@@ -45,8 +46,14 @@ class LabbookMutations(graphene.ObjectType):
     # Delete a labbook off the file system
     delete_labbook = DeleteLabbook.Field()
 
+    # Delete a labbook from a remote server
+    delete_remote_labbook = DeleteRemoteLabbook.Field()
+
     # Rename new labbook
     rename_labbook = RenameLabbook.Field()
+
+    # (Re-)set labbook description
+    set_labbook_description = SetLabbookDescription.Field()
 
     # Publish a labbook to a remote (for the first time
     publish_labbook = PublishLabbook.Field()
@@ -96,6 +103,12 @@ class LabbookMutations(graphene.ObjectType):
     # Remove a package from a Labbook environment (e.g., pip package, apt)
     remove_package_component = RemovePackageComponent.Field()
 
+    # Add an arbitrary docker snippet (supplement to custom dependency)
+    add_custom_docker = AddCustomDocker.Field()
+
+    # Delete the arbitrary docker snippet.
+    remove_custom_docker = RemoveCustomDocker.Field()
+
     # Add a file to a labbook
     add_labbook_file = AddLabbookFile.Field()
 
@@ -125,3 +138,18 @@ class LabbookMutations(graphene.ObjectType):
 
     # Delete a collaborator from a LabBook
     delete_collaborator = DeleteLabbookCollaborator.Field()
+
+    # Write a readme to a LabBook
+    write_readme = WriteReadme.Field()
+
+    # Create a Rollback or Feature branch
+    create_experimental_branch = CreateExperimentalBranch.Field()
+
+    # Delete a Rollback or Feature branch
+    delete_experimental_branch = DeleteExperimentalBranch.Field()
+
+    # Merge from a given branch into the current checked-out branch
+    merge_from_branch = MergeFromBranch.Field()
+
+    # Work on a given feature branch (perform a git checkout).
+    workon_experimental_branch = WorkonBranch.Field()

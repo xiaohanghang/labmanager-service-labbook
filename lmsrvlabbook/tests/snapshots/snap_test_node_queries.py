@@ -51,7 +51,7 @@ snapshots['TestNodeQueries.test_file_node 1'] = {
             'id': 'TGFiYm9va0ZpbGU6ZGVmYXVsdCZsYWJib29rMSZjb2RlJnRlc3QxLnR4dA==',
             'isDir': False,
             'key': 'test1.txt',
-            'size': 5
+            'size': '5'
         }
     }
 }
@@ -60,7 +60,7 @@ snapshots['TestNodeQueries.test_node_package 1'] = {
     'data': {
         'node': {
             'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmbnVtcHkmMS4xMg==',
-            'latestVersion': '1.14.2',
+            'latestVersion': '1.14.3',
             'manager': 'pip',
             'package': 'numpy',
             'version': '1.12'

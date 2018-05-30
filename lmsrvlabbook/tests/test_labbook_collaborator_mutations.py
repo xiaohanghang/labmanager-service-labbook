@@ -58,7 +58,7 @@ class TestLabBookCollaboratorMutations(object):
                                 }
                             ],
                       status=200)
-        responses.add(responses.POST, 'https://repo.gigantum.io/api/v4/projects/26/members',
+        responses.add(responses.POST, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1/members',
                       json={
                                 "id": 100,
                                 "name": "New Person",
@@ -66,7 +66,13 @@ class TestLabBookCollaboratorMutations(object):
                                 "state": "active",
                             },
                       status=201)
-        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/26/members',
+        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1',
+                      json=[{
+                              "id": 27,
+                              "description": "",
+                            }],
+                      status=200)
+        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1/members',
                       json=[
                                 {
                                     "id": 29,
@@ -122,7 +128,7 @@ class TestLabBookCollaboratorMutations(object):
                                 }
                             ],
                       status=200)
-        responses.add(responses.POST, 'https://repo.gigantum.io/api/v4/projects/26/members',
+        responses.add(responses.POST, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1/members',
                       json={
                                 "id": 100,
                                 "name": "New Person",
@@ -130,7 +136,14 @@ class TestLabBookCollaboratorMutations(object):
                                 "state": "active",
                             },
                       status=201)
-        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/26/members',
+
+        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1',
+                      json=[{
+                              "id": 27,
+                              "description": "",
+                            }],
+                      status=200)
+        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1/members',
                       json=[
                                 {
                                     "id": 29,
@@ -186,9 +199,15 @@ class TestLabBookCollaboratorMutations(object):
                                 }
                             ],
                       status=200)
-        responses.add(responses.DELETE, 'https://repo.gigantum.io/api/v4/projects/26/members/100',
+        responses.add(responses.DELETE, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1/members/100',
                       status=204)
-        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/26/members',
+        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1',
+                      json=[{
+                              "id": 27,
+                              "description": "",
+                            }],
+                      status=200)
+        responses.add(responses.GET, 'https://repo.gigantum.io/api/v4/projects/default%2Flabbook1/members',
                       json=[
                                 {
                                     "id": 29,

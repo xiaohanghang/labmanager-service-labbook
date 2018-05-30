@@ -44,8 +44,8 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
     # Modified at contains timestamp of last modified - NOT creation - in epoch time.
     modified_at = graphene.Int()
 
-    # Size in bytes.
-    size = graphene.Int()
+    # Size in bytes encoded as a string.
+    size = graphene.String()
 
     def _load_file_info(self, dataloader):
         """Private method to retrieve file info for a given key"""
@@ -63,7 +63,7 @@ class LabbookFile(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         # Set class properties
         self.is_dir = self._file_info['is_dir']
         self.modified_at = round(self._file_info['modified_at'])
-        self.size = self._file_info['size']
+        self.size = f"{self._file_info['size']}"
         self.is_favorite = self._file_info['is_favorite']
 
     @classmethod

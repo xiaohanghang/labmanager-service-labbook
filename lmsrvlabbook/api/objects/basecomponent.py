@@ -75,6 +75,9 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     # List of installed package managers that are available to the user
     package_managers = graphene.List(graphene.String)
 
+    # List of pre-installed packages in the format <package manager>|<package name>|<package version>
+    installed_packages = graphene.List(graphene.String)
+
     # The container registry server used to pull the image
     docker_image_server = graphene.String()
 
@@ -86,6 +89,22 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
     # The image tag to use on the container registry server when pulling the image
     docker_image_tag = graphene.String()
+
+    def _format_package(self, package_str):
+        """Helper method to format package strings
+
+        Args:
+            package_str(str): the package string with the version include
+
+        Returns:
+            string
+        """
+        if "=" in package_str:
+            package_str = package_str.replace('==', '|').replace('=', '|')
+        else:
+            package_str = f"{package_str}|latest"
+
+        return package_str
 
     def _load_component_info(self):
         """Private method to retrieve file info for a given key"""
@@ -111,7 +130,14 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         self.docker_image_repository = self._component_data['image']['repository']
         self.docker_image_tag = self._component_data['image']['tag']
 
-        self.package_managers = [list(x.keys())[0] for x in self._component_data['package_managers']]
+        self.package_managers = list()
+        self.installed_packages = list()
+        for entry in self._component_data['package_managers']:
+            for package_manager in entry:
+                self.package_managers.append(package_manager)
+                if entry[package_manager]:
+                    for package in entry[package_manager]:
+                        self.installed_packages.append(f"{package_manager}|{self._format_package(package)}")
 
     @classmethod
     def get_node(cls, info, id):
@@ -230,3 +256,9 @@ class BaseComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         if self.package_managers is None:
             self._load_component_info()
         return self.package_managers
+
+    def resolve_installed_packages(self, info):
+        """Resolve the installed_packages field"""
+        if self.installed_packages is None:
+            self._load_component_info()
+        return self.installed_packages

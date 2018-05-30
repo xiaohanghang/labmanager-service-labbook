@@ -96,6 +96,9 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
     # The LabBook's Custom dependencies
     custom_dependencies = graphene.ConnectionField(CustomComponentConnection)
 
+    # A custom docker snippet to be run after all other dependencies and bases have been added.
+    docker_snippet = graphene.String()
+
     @classmethod
     def get_node(cls, info, id):
         """Method to resolve the object based on it's Node ID"""
@@ -134,7 +137,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             image_status = ImageStatus.DOES_NOT_EXIST
 
         if any([j.status == 'failed' and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.info("Image status for {} is BUILD_FAILED".format(lb.key))
+            logger.debug("Image status for {} is BUILD_FAILED".format(lb.key))
             if image_status == ImageStatus.EXISTS:
                 # The indication that there's a failed job is probably lingering from a while back, so don't
                 # change the status to FAILED. Only do that if there is no Docker image.
@@ -221,7 +224,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
             # Create version dataloader
             keys = [f"{k['manager']}&{k['package']}" for k in lbc.edges]
-            vd = PackageLoader(keys)
+            vd = PackageLoader(keys, lb, get_logged_in_username())
 
             # Get DevEnv instances
             edge_objs = []
@@ -276,3 +279,13 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             return CustomComponentConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
                                                                                          has_previous_page=False))
 
+    def resolve_docker_snippet(self, info, **kwargs):
+        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        cm = ComponentManager(lb)
+        docker_components = cm.get_component_list('docker')
+        if len(docker_components) == 1:
+            return '\n'.join(docker_components[0]['content'])
+        elif len(docker_components) > 1:
+            raise ValueError('There should only be one custdom docker component')
+        else:
+            return ""

@@ -73,7 +73,11 @@ class TestNodeQueries(object):
         }
         """
         results = fixture_working_dir[2].execute(env_query)
-        snapshot.assert_match(results)
+        results['data']['node']['manager'] == 'pip'
+        results['data']['node']['package'] == 'numpy'
+        results['data']['node']['version'] == '1.12'
+        # NOTE - The following will return None because there is no data loader available.
+        #results['data']['node']['latestVersion'] == '1.14.2'
 
     def test_node_environment(self, fixture_working_dir, snapshot):
         lb = LabBook(fixture_working_dir[0])
