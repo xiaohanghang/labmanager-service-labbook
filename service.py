@@ -17,12 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from flask import Flask, jsonify
-import flask
-from flask_cors import CORS, cross_origin
 import shutil
 import os
 import base64
+
+from flask import Flask, jsonify, request, abort
+import flask
+from flask_cors import CORS, cross_origin
+import redis
 import blueprint
 
 from lmcommon.configuration import Configuration
@@ -30,7 +32,9 @@ from lmcommon.logging import LMLogger
 from lmcommon.environment import RepositoryManager
 from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 from lmcommon.labbook.lock import reset_all_locks
+from lmcommon.labbook import LabBook
 from lmcommon.portmap.portmap import reset_all_ports
+from lmsrvcore.auth.user import get_logged_in_author
 
 
 logger = LMLogger.get_logger()
@@ -69,6 +73,31 @@ def handle_auth_error(ex):
 def ping():
     """Unauthorized endpoint for validating the API is up"""
     return jsonify(config.config['build_info'])
+
+
+@app.route('/savehook/<username>/<owner>/<labbook_name>')
+def savehook(username, owner, labbook_name):
+    try:
+        redis_conn = redis.Redis(db=1)
+        lb_key = '-'.join(['gmlb', username, owner, labbook_name, 'jupyter-token'])
+        changed_file = request.args.get('file')
+        jupyter_token = request.args.get('jupyter_token')
+        logger.info(f"Received save hook for {changed_file} in {username}/{owner}/{labbook_name}")
+        r = redis_conn.get(lb_key.encode())
+        if r is None:
+            logger.error(f"Could not find redis key `{lb_key}`")
+            abort(400)
+        if r.decode() != jupyter_token:
+            raise ValueError("Incoming jupyter token must match key in Redis")
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_name(username, owner, labbook_name)
+        logger.info(f"Jupyter save hook saving {changed_file} from {str(lb)}")
+        with lb.lock_labbook():
+            lb._sweep_uncommitted_changes()
+        return 'success'
+    except Exception as err:
+        logger.error(err)
+        return abort(400)
 
 
 # TEMPORARY KLUDGE
@@ -110,6 +139,25 @@ try:
 except Exception as e:
     logger.error(f"Failed to empty share folder: {e}.")
     raise
+
+post_save_hook_code = """
+import subprocess, os
+def post_save_hook(os_path, model, contents_manager, **kwargs):
+    try:
+        labmanager_ip = open('/home/giguser/labmanager_ip').read().strip()
+        tokens = open('/home/giguser/jupyter_token').read().strip()
+        username, owner, lbname, jupyter_token = tokens.split(',')
+        url_args = f'file={os.path.basename(os_path)}&jupyter_token={jupyter_token}'
+        subprocess.run(['wget', '--spider', 
+            f'http://{labmanager_ip}:10001/savehook/{username}/{owner}/{lbname}?{url_args}'], cwd='/tmp')
+    except Exception as e:
+        print(e)
+
+"""
+os.makedirs(os.path.join(share_dir, 'jupyterhooks'))
+with open(os.path.join(share_dir, 'jupyterhooks', '__init__.py'), 'w') as initpy:
+    initpy.write(post_save_hook_code)
+
 
 # Reset distributed lock, if desired
 if config.config["lock"]["reset_on_start"]:
