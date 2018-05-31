@@ -112,9 +112,6 @@ class LabbookQuery(graphene.ObjectType):
             Labbook
         """
         # Load the labbook data via a dataloader
-        loader_key = f"{get_logged_in_username()}&{owner}&{name}"
-        info.context.labbook_loader.load(loader_key)
-
         return Labbook(id="{}&{}".format(owner, name),
                        name=name, owner=owner)
 
