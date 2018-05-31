@@ -192,9 +192,7 @@ class DeleteRemoteLabbook(graphene.ClientIDMutation):
             # Perform delete operation
             mgr = GitLabManager(default_remote, admin_service, access_token=token)
             mgr.remove_labbook(owner, labbook_name)
-
-            logger.info(f"Deleted {labbook_name} from the remote repository {default_remote}")
-
+            logger.info(f"Deleted {owner}/{labbook_name} from the remote repository {default_remote}")
             return DeleteLabbook(success=True)
         else:
             logger.info(f"Dry run deleting {labbook_name} from remote repository -- not deleted.")
