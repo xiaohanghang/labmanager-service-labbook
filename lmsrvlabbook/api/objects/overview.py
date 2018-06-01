@@ -73,6 +73,7 @@ class LabbookOverview(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
 
             self._package_manager_counts[mgr] = self._package_manager_counts[mgr] + 1
 
+        return self._package_manager_counts
 
     @classmethod
     def get_node(cls, info, id):
@@ -92,53 +93,54 @@ class LabbookOverview(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
 
         return self.id
 
-    def resolve_num_apt_packages(self, info, **kwargs):
+    def resolve_num_apt_packages(self, info):
         """Resolver for getting number of apt packages in the labbook"""
         if self._package_manager_counts is None:
-            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-            self._get_all_package_manager_counts(lb)
+            return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: self._get_all_package_manager_counts(labbook)['apt'])
 
         return self._package_manager_counts['apt']
 
-    def resolve_num_conda2_packages(self, info, **kwargs):
+    def resolve_num_conda2_packages(self, info):
         """Resolver for getting number of conda2 packages in the labbook"""
         if self._package_manager_counts is None:
-            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-            self._get_all_package_manager_counts(lb)
+            return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: self._get_all_package_manager_counts(labbook)['conda2'])
 
         return self._package_manager_counts['conda2']
 
-    def resolve_num_conda3_packages(self, info, **kwargs):
+    def resolve_num_conda3_packages(self, info):
         """Resolver for getting number of conda3 packages in the labbook"""
         if self._package_manager_counts is None:
-            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-            self._get_all_package_manager_counts(lb)
+            return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: self._get_all_package_manager_counts(labbook)['conda3'])
 
         return self._package_manager_counts['conda3']
 
-    def resolve_num_pip_packages(self, info, **kwargs):
+    def resolve_num_pip_packages(self, info):
         """Resolver for getting number of pip packages in the labbook"""
         if self._package_manager_counts is None:
-            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-            self._get_all_package_manager_counts(lb)
+            return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: self._get_all_package_manager_counts(labbook)['pip'])
 
         return self._package_manager_counts['pip']
 
-    def resolve_num_custom_dependencies(self, info, **kwargs):
-        """Resolver for getting number of custom dependencies in the labbook"""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        custom_dir = os.path.join(lb.root_dir, ".gigantum", "env", "custom")
-
+    @staticmethod
+    def helper_resolve_num_custom_dependencies(labbook):
+        """Helper to count the number of custom deps"""
+        custom_dir = os.path.join(labbook.root_dir, ".gigantum", "env", "custom")
         count = len([x for x in glob.glob(os.path.join(custom_dir, "*.yaml"))])
-
         return count
 
-    def resolve_recent_activity(self, info, **kwargs):
-        """Resolver for getting number of pip packages in the labbook"""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+    def resolve_num_custom_dependencies(self, info):
+        """Resolver for getting number of custom dependencies in the labbook"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_num_custom_dependencies(labbook))
 
+    def help_resolve_recent_activity(self, labbook):
+        """Method to create 4 activity records with show=True"""
         # Create instance of ActivityStore for this LabBook
-        store = ActivityStore(lb)
+        store = ActivityStore(labbook)
 
         records = list()
         # Get 4 records with show=True
@@ -166,12 +168,20 @@ class LabbookOverview(graphene.ObjectType, interfaces=(graphene.relay.Node, GitR
 
         return records
 
-    def resolve_remote_url(self, info, **kwargs):
-        """Resolver for getting the remote_url in the labbook"""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
-        if len(lb.git.repo.remotes) > 0:
-            remote = lb.git.repo.remotes.origin.url
+    def resolve_recent_activity(self, info):
+        """Resolver for getting recent important activity"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.help_resolve_recent_activity(labbook))
+    
+    @staticmethod
+    def helper_resolve_remote_url(labbook):
+        if len(labbook.git.repo.remotes) > 0:
+            remote = labbook.git.repo.remotes.origin.url
             return remote.replace(".git", "")
         else:
             return None
+
+    def resolve_remote_url(self, info):
+        """Resolver for getting the remote_url in the labbook"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_remote_url(labbook))
