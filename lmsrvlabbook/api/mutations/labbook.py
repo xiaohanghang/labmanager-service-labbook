@@ -195,10 +195,14 @@ class DeleteRemoteLabbook(graphene.ClientIDMutation):
             logger.info(f"Deleted {owner}/{labbook_name} from the remote repository {default_remote}")
 
             # Remove locally any references to that cloud repo that's just been deleted.
-            lb = LabBook()
-            lb.from_name(get_logged_in_username(), owner, labbook_name)
-            lb.remove_remote()
-            lb.remove_lfs_remotes()
+            try:
+                lb = LabBook()
+                lb.from_name(get_logged_in_username(), owner, labbook_name)
+                lb.remove_remote()
+                lb.remove_lfs_remotes()
+            except ValueError as e:
+                logger.warning(e)
+
             return DeleteLabbook(success=True)
         else:
             logger.info(f"Dry run deleting {labbook_name} from remote repository -- not deleted.")
