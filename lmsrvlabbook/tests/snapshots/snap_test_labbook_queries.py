@@ -1828,3 +1828,25 @@ snapshots['TestLabBookServiceQueries.test_pagination_sort_modified 2'] = {
     }
     }
 }
+
+snapshots['TestLabBookServiceQueries.test_list_local_by_id 1'] = {
+    'data': {
+        'labbookList': {
+            'localById': [
+                {
+                    'description': 'my first labbook1',
+                    'id': 'TGFiYm9vazpkZWZhdWx0JmxhYmJvb2sx',
+                    'name': 'labbook1',
+                    'owner': 'default'
+                },
+                {
+                    'description': 'my first labbook3',
+                    'id': 'TGFiYm9vazpkZWZhdWx0JmxhYmJvb2sz',
+                    'name': 'labbook3',
+                    'owner': 'default'
+                },
+                None
+            ]
+        }
+    }
+}
