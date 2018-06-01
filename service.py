@@ -50,7 +50,7 @@ app.config["LABMGR_ID_MGR"] = get_identity_manager(Configuration())
 
 if config.config["flask"]["allow_cors"]:
     # Allow CORS
-    CORS(app)
+    CORS(app, max_age=7200)
 
 # Set Debug mode
 app.config['DEBUG'] = config.config["flask"]["DEBUG"]
@@ -69,7 +69,7 @@ def handle_auth_error(ex):
 
 # Set Unauth'd route for API health-check
 @app.route("/ping/")
-@cross_origin(headers=["Content-Type", "Authorization"])
+@cross_origin(headers=["Content-Type", "Authorization"], max_age=7200)
 def ping():
     """Unauthorized endpoint for validating the API is up"""
     return jsonify(config.config['build_info'])
