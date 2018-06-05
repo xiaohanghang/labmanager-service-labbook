@@ -26,6 +26,7 @@ from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
 from lmcommon.container import ContainerOperations
 from lmcommon.container.utils import infer_docker_image_name
+from lmcommon.workflows import GitWorkflow
 from lmcommon.logging import LMLogger
 from lmcommon.activity.services import stop_labbook_monitor
 
@@ -140,6 +141,13 @@ class StopContainer(graphene.relay.ClientIDMutation):
         lb.from_name(username, owner, labbook_name)
         stop_labbook_monitor(lb, username)
         lb, stopped = ContainerOperations.stop_container(labbook=lb, username=username)
+
+        try:
+            # We know `git gc` fails on windows, so just give best effort fire-and-forget
+            wf = GitWorkflow(lb)
+            wf.garbagecollect()
+        except Exception as e:
+            logger.error(e)
 
         if not stopped:
             raise ValueError(f"Failed to stop labbook {labbook_name}")
