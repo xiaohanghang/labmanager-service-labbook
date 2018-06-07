@@ -1426,9 +1426,12 @@ class TestLabBookServiceQueries(object):
         """Test getting activity records with detail records"""
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
-        FileOperations.insert_file(lb, "code", fixture_test_file)
-        FileOperations.insert_file(lb, "input", fixture_test_file)
-        FileOperations.insert_file(lb, "output", fixture_test_file)
+        open('/tmp/test_file.txt', 'w').write("xxx" * 50)
+        FileOperations.insert_file(lb, "code", '/tmp/test_file.txt')
+        open('/tmp/test_file.txt', 'w').write("xxx" * 50)
+        FileOperations.insert_file(lb, "input", '/tmp/test_file.txt')
+        open('/tmp/test_file.txt', 'w').write("xxx" * 50)
+        FileOperations.insert_file(lb, "output", '/tmp/test_file.txt')
 
         # Get all records at once and verify varying fields exist properly
         query = """
