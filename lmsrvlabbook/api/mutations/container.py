@@ -24,7 +24,7 @@ import graphene
 
 
 from lmcommon.labbook import LabBook
-from lmcommon.container import ContainerOperations
+from lmcommon.container.container import ContainerOperations
 from lmcommon.logging import LMLogger
 from lmcommon.activity.services import start_labbook_monitor
 

@@ -24,7 +24,7 @@ import time
 from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_env_repo_scoped, \
     build_image_for_jupyterlab
 
-from lmcommon.container import ContainerOperations
+from lmcommon.container.container import ContainerOperations
 
 
 class TestContainerMutations(object):

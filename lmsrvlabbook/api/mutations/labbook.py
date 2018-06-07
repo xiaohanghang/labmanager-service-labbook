@@ -25,7 +25,7 @@ import shutil
 import graphene
 
 from lmcommon.configuration import Configuration, get_docker_client
-from lmcommon.container import ContainerOperations
+from lmcommon.container.container import ContainerOperations
 from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
