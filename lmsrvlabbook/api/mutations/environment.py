@@ -24,7 +24,7 @@ from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.imagebuilder import ImageBuilder
 from lmcommon.dispatcher import Dispatcher, jobs
 from lmcommon.labbook import LabBook
-from lmcommon.container import ContainerOperations
+from lmcommon.container.container import ContainerOperations
 from lmcommon.container.utils import infer_docker_image_name
 from lmcommon.workflows import GitWorkflow
 from lmcommon.logging import LMLogger

@@ -38,7 +38,7 @@ from lmcommon.labbook import LabBook
 from lmsrvcore.middleware import LabBookLoaderMiddleware, error_middleware
 
 from lmcommon.fixtures import (ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_REV, ENV_UNIT_TEST_BASE)
-from lmcommon.container import ContainerOperations
+from lmcommon.container.container import ContainerOperations
 from lmcommon.environment import ComponentManager
 from lmcommon.imagebuilder import ImageBuilder
 
