@@ -1134,7 +1134,7 @@ class TestLabBookServiceQueries(object):
 
         lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.from_name("default","default", "labbook-page-test")
-        lb.insert_file("code", fixture_test_file, "")
+        FileOperations.insert_file(lb, "code", fixture_test_file)
 
         # Get all records at once with no pagination args and verify cursors look OK directly
         query = """
@@ -1178,9 +1178,12 @@ class TestLabBookServiceQueries(object):
         """Test paging through activity records"""
         lb = LabBook(fixture_working_dir[0], author=GitAuthor(name="tester", email="tester@test.com"))
         lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
-        lb.insert_file("code", fixture_test_file, "")
-        lb.insert_file("input", fixture_test_file, "")
-        lb.insert_file("output", fixture_test_file, "")
+        open('/tmp/test_file.txt', 'w').write("xxxx")
+        FileOperations.insert_file(lb, "code", '/tmp/test_file.txt')
+        open('/tmp/test_file.txt', 'w').write("xxxx")
+        FileOperations.insert_file(lb, "input", '/tmp/test_file.txt')
+        open('/tmp/test_file.txt', 'w').write("xxxx")
+        FileOperations.insert_file(lb, "output", '/tmp/test_file.txt')
 
         # Get all records at once with no pagination args and verify cursors look OK directly
         query = """
@@ -1423,9 +1426,9 @@ class TestLabBookServiceQueries(object):
         """Test getting activity records with detail records"""
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
-        lb.insert_file("code", fixture_test_file, "")
-        lb.insert_file("input", fixture_test_file, "")
-        lb.insert_file("output", fixture_test_file, "")
+        FileOperations.insert_file(lb, "code", fixture_test_file)
+        FileOperations.insert_file(lb, "input", fixture_test_file)
+        FileOperations.insert_file(lb, "output", fixture_test_file)
 
         # Get all records at once and verify varying fields exist properly
         query = """
@@ -1502,7 +1505,7 @@ class TestLabBookServiceQueries(object):
         """Test getting detail record directly after an initial activity record query"""
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
-        lb.insert_file("code", fixture_test_file, "")
+        FileOperations.insert_file(lb, "code", fixture_test_file)
 
         # Get all records at once and verify varying fields exist properly
         query = """
@@ -1576,8 +1579,10 @@ class TestLabBookServiceQueries(object):
         """Test getting multiple detail records directly after an initial activity record query"""
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
-        lb.insert_file("code", fixture_test_file, "")
-        lb.insert_file("input", fixture_test_file, "")
+        open('/tmp/test_file.txt', 'w').write("xxxx")
+        FileOperations.insert_file(lb, "code", '/tmp/test_file.txt')
+        open('/tmp/test_file.txt', 'w').write("xxxx")
+        FileOperations.insert_file(lb, "input", '/tmp/test_file.txt')
 
         # Get all records at once and verify varying fields exist properly
         query = """

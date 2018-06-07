@@ -44,7 +44,7 @@ from lmcommon.configuration import Configuration
 from lmcommon.dispatcher.jobs import export_labbook_as_zip
 from lmcommon.fixtures import remote_labbook_repo, mock_config_file
 from lmcommon.labbook import LabBook
-
+from lmcommon.files import FileOperations
 
 @pytest.fixture()
 def mock_create_labbooks(fixture_working_dir):
@@ -56,7 +56,7 @@ def mock_create_labbooks(fixture_working_dir):
     with open(os.path.join(fixture_working_dir[1], 'codefile.c'), 'w') as sf:
         sf.write("1234567")
         sf.seek(0)
-    lb.insert_file('code', sf.name, '')
+    FileOperations.insert_file(lb, 'code', sf.name)
 
     assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'codefile.c'))
     # name of the config file, temporary working directory, the schema

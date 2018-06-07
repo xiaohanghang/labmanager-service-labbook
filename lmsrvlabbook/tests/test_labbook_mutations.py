@@ -29,6 +29,7 @@ import getpass
 import json
 
 from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
+from lmcommon.files import FileOperations
 
 from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped, fixture_working_dir
@@ -56,7 +57,7 @@ def mock_create_labbooks(fixture_working_dir):
     with open(os.path.join(fixture_working_dir[1], 'sillyfile'), 'w') as sf:
         sf.write("1234567")
         sf.seek(0)
-    lb.insert_file('code', sf.name, '')
+    FileOperations.insert_file(lb, 'code', sf.name)
 
     assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
     # name of the config file, temporary working directory, the schema
@@ -517,6 +518,7 @@ class TestLabBookServiceMutations(object):
                                                       labbookName: "labbook1",
                                                       section: "code",
                                                       filePath: "newdir/myValidFile.dat",
+                                                      transactionId: "000-unitest-transaction",
                                 chunkUploadParams:{{
                                   uploadId: "fdsfdsfdsfdfs",
                                   chunkSize: {chunk_size},
@@ -601,6 +603,7 @@ class TestLabBookServiceMutations(object):
                                                       labbookName: "labbook1",
                                                       section: "code",
                                                       filePath: "newdir/.DS_Store",
+                                                      transactionId: "111-unittest-tx",
                                 chunkUploadParams:{{
                                   uploadId: "jfdjfdjdisdjwdoijwlkfjd",
                                   chunkSize: {chunk_size},
@@ -647,6 +650,7 @@ class TestLabBookServiceMutations(object):
                                               labbookName: "labbook1",
                                               section: "code",
                                               filePath: "myfile.bin",
+                                              transactionId: "999-unittest-transaction",
                         chunkUploadParams:{{
                           uploadId: "jfdjfdjdisdjwdoijwlkfjd",
                           chunkSize: 100,
@@ -1035,7 +1039,7 @@ class TestLabBookServiceMutations(object):
         # Create a largeish file in the dir
         with open(os.path.join(fixture_working_dir[1], 'testfile.bin'), 'wb') as testfile:
             testfile.write(os.urandom(9000000))
-        lb.insert_file('input', testfile.name, '')
+        FileOperations.insert_file(lb, 'input', testfile.name)
 
         # Export labbook
         zip_file = export_labbook_as_zip(lb.root_dir, tempfile.gettempdir())

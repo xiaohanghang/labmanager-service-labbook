@@ -27,6 +27,7 @@ import graphene
 from mock import patch
 
 from lmcommon.labbook import LabBook
+from lmcommon.files import FileOperations
 from lmcommon.configuration import Configuration
 
 from ..api import LabbookMutations, LabbookQuery
@@ -193,7 +194,7 @@ class TestNodeQueries(object):
         """Test getting an activity record by node ID"""
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my test description")
-        lb.insert_file("code", fixture_test_file, "")
+        FileOperations.insert_file(lb, "code", fixture_test_file)
 
         # Get activity record to
         query = """
@@ -259,7 +260,7 @@ class TestNodeQueries(object):
         """Test getting an detail record by node ID"""
         lb = LabBook(fixture_working_dir[0])
         lb.new(owner={"username": "default"}, name="labbook1", description="my test description")
-        lb.insert_file("code", fixture_test_file, "")
+        FileOperations.insert_file(lb, "code", fixture_test_file)
 
         # Get activity record to
         query = """

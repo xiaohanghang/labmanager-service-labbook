@@ -346,7 +346,10 @@ def fixture_test_file():
 
         yield dummy_file.name
 
-    os.remove(temp_file_name)
+    try:
+        os.remove(temp_file_name)
+    except:
+        pass
 
 @pytest.fixture()
 def property_mocks_fixture():
