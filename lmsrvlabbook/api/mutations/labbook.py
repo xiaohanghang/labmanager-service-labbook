@@ -561,12 +561,6 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
             except FileNotFoundError:
                 pass
 
-
-        # Prime dataloader with labbook you already loaded
-        dataloader = LabBookLoader()
-        dataloader.prime(f"{owner}&{labbook_name}"
-                         f"&{lb.name}", lb)
-
         # Create data to populate edge
         create_data = {'owner': owner,
                        'name': labbook_name,
