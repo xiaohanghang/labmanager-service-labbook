@@ -18,14 +18,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import graphene
-from lmsrvlabbook.api.mutations import CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer, \
-    AddCustomComponent, AddPackageComponent, CreateUserNote, StopContainer, ImportLabbook, DeleteLabbook, \
-    ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote, PushActiveBranchToRemote, \
-    ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile, MakeLabbookDirectory, RemoveUserIdentity, \
-    AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite, AddLabbookCollaborator, \
-    DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent, RemovePackageComponent, \
-    StartDevTool, SetLabbookDescription, CreateExperimentalBranch, DeleteExperimentalBranch, \
-    MergeFromBranch, WorkonBranch, WriteReadme, AddCustomDocker, RemoveCustomDocker, DeleteRemoteLabbook
+from lmsrvlabbook.api.mutations import (CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer,
+                                        AddCustomComponent, AddPackageComponent, CreateUserNote, StopContainer,
+                                        ImportLabbook, DeleteLabbook,
+                                        ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote,
+                                        PushActiveBranchToRemote,
+                                        ExportLabbook, AddLabbookFile, MoveLabbookFile, DeleteLabbookFile,
+                                        MakeLabbookDirectory, RemoveUserIdentity,
+                                        AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite,
+                                        AddLabbookCollaborator,
+                                        DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent,
+                                        RemovePackageComponent,
+                                        StartDevTool, SetLabbookDescription, CreateExperimentalBranch,
+                                        DeleteExperimentalBranch,
+                                        MergeFromBranch, WorkonBranch, WriteReadme, AddCustomDocker, RemoveCustomDocker,
+                                        DeleteRemoteLabbook,
+                                        CompleteBatchUploadTransaction)
 
 
 class LabbookMutations(graphene.ObjectType):
@@ -111,6 +119,10 @@ class LabbookMutations(graphene.ObjectType):
 
     # Add a file to a labbook
     add_labbook_file = AddLabbookFile.Field()
+
+    # Indicate a (potentially) mutlifile batched upload is finished
+    # Also contains options to cancel (and rollback aborted changes).
+    complete_batch_upload_transaction = CompleteBatchUploadTransaction.Field()
 
     # Move files or directory within a labbook
     move_labbook_file = MoveLabbookFile.Field()

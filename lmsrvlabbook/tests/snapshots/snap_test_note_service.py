@@ -26,7 +26,8 @@ snapshots['TestNoteService.test_create_user_note_no_body 1'] = {
                     'importance': 255,
                     'message': 'I think this is a thing',
                     'show': True,
-                    'tags': None,
+                    'tags': [
+                    ],
                     'type': 'NOTE'
                 }
             }

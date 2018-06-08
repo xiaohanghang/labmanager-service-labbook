@@ -688,7 +688,8 @@ Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base fo
                             'importance': 255,
                             'message': 'Created new LabBook: default/test-lab-book1',
                             'show': True,
-                            'tags': None,
+                            'tags': [
+                            ],
                             'type': 'LABBOOK',
                             'username': 'default'
                         }

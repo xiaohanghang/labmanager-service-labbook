@@ -135,65 +135,6 @@ RUN pip3 install Pillow==4.2.1
     }
 }
 
-snapshots['TestEnvironmentServiceQueries.test_package_query 1'] = {
-    'data': {
-        'package': {
-            'fromBase': False,
-            'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC4w',
-            'latestVersion': '2.18.4',
-            'manager': 'pip',
-            'package': 'requests',
-            'schema': None,
-            'version': '2.18.0'
-        }
-    }
-}
-
-snapshots['TestEnvironmentServiceQueries.test_package_query_no_version 1'] = {
-    'data': {
-        'package': {
-            'fromBase': False,
-            'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
-            'latestVersion': '2.18.4',
-            'manager': 'pip',
-            'package': 'requests',
-            'schema': None,
-            'version': '2.18.4'
-        }
-    }
-}
-
-snapshots['TestEnvironmentServiceQueries.test_package_query_bad_version 1'] = {
-    'data': {
-        'package': {
-            'fromBase': False,
-            'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
-            'latestVersion': '2.18.4',
-            'manager': 'pip',
-            'package': 'requests',
-            'schema': None,
-            'version': '2.18.4'
-        }
-    }
-}
-
-snapshots['TestEnvironmentServiceQueries.test_package_query_bad_package 1'] = {
-    'data': {
-        'package': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 19,
-                    'line': 3
-                }
-            ],
-            'message': 'Package name asdfasdfasdf is invalid'
-        }
-    ]
-}
-
 snapshots['TestEnvironmentServiceQueries.test_get_package_manager 1'] = {
     'data': {
         'labbook': {
