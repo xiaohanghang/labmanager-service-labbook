@@ -494,6 +494,8 @@ class CompleteBatchUploadTransaction(graphene.relay.ClientIDMutation):
         cancel = graphene.Boolean()
         rollback = graphene.Boolean()
 
+    success = graphene.Boolean()
+
     @classmethod
     def mutate_and_get_payload(cls, root, info, owner, labbook_name,
                                transaction_id, cancel=False, rollback=False,
@@ -506,6 +508,7 @@ class CompleteBatchUploadTransaction(graphene.relay.ClientIDMutation):
         lb.from_directory(inferred_lb_directory)
         FileOperations.complete_batch(lb, transaction_id, cancel=cancel,
                                       rollback=rollback)
+        return CompleteBatchUploadTransaction(success=True)
 
 
 class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
