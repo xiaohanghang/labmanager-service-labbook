@@ -93,7 +93,7 @@ def savehook(username, owner, labbook_name):
         lb.from_name(username, owner, labbook_name)
         logger.info(f"Jupyter save hook saving {changed_file} from {str(lb)}")
         with lb.lock_labbook():
-            lb._sweep_uncommitted_changes()
+            lb.sweep_uncommitted_changes()
         return 'success'
     except Exception as err:
         logger.error(err)
