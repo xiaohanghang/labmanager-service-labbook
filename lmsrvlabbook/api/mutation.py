@@ -19,7 +19,7 @@
 # SOFTWARE.
 import graphene
 from lmsrvlabbook.api.mutations import (CreateBranch, CheckoutBranch, CreateLabbook, BuildImage, StartContainer,
-                                        AddCustomComponent, AddPackageComponent, CreateUserNote, StopContainer,
+                                        AddCustomComponent, AddPackageComponents, CreateUserNote, StopContainer,
                                         ImportLabbook, DeleteLabbook,
                                         ImportRemoteLabbook, AddLabbookRemote, PullActiveBranchFromRemote,
                                         PushActiveBranchToRemote,
@@ -28,7 +28,7 @@ from lmsrvlabbook.api.mutations import (CreateBranch, CheckoutBranch, CreateLabb
                                         AddLabbookFavorite, RemoveLabbookFavorite, RenameLabbook, UpdateLabbookFavorite,
                                         AddLabbookCollaborator,
                                         DeleteLabbookCollaborator, SyncLabbook, PublishLabbook, RemoveCustomComponent,
-                                        RemovePackageComponent,
+                                        RemovePackageComponents,
                                         StartDevTool, SetLabbookDescription, CreateExperimentalBranch,
                                         DeleteExperimentalBranch,
                                         MergeFromBranch, WorkonBranch, WriteReadme, AddCustomDocker, RemoveCustomDocker,
@@ -106,10 +106,10 @@ class LabbookMutations(graphene.ObjectType):
     remove_custom_component = RemoveCustomComponent.Field()
 
     # Add a package to a Labbook environment (e.g., pip package, apt)
-    add_package_component = AddPackageComponent.Field()
+    add_package_components = AddPackageComponents.Field()
 
     # Remove a package from a Labbook environment (e.g., pip package, apt)
-    remove_package_component = RemovePackageComponent.Field()
+    remove_package_components = RemovePackageComponents.Field()
 
     # Add an arbitrary docker snippet (supplement to custom dependency)
     add_custom_docker = AddCustomDocker.Field()

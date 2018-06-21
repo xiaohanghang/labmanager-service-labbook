@@ -20,13 +20,14 @@
 import graphene
 import glob
 import os
+import base64
 
 from lmcommon.logging import LMLogger
 from lmcommon.labbook import LabBook
-from lmcommon.environment import ComponentManager, get_package_manager
+from lmcommon.environment import ComponentManager
 from lmcommon.labbook.schemas import CURRENT_SCHEMA
 from lmsrvcore.auth.user import get_logged_in_username, get_logged_in_author
-from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent, PackageComponentInput
 from lmsrvlabbook.api.objects.customcomponent import CustomComponent
 from lmsrvlabbook.api.objects.environment import Environment
 from lmsrvlabbook.api.connections.environment import CustomComponentConnection, PackageComponentConnection
@@ -34,10 +35,9 @@ from lmsrvlabbook.api.connections.environment import CustomComponentConnection, 
 logger = LMLogger.get_logger()
 
 
-class AddPackageComponent(graphene.relay.ClientIDMutation):
-    """Mutation to add a new package to labbook
+class AddPackageComponents(graphene.relay.ClientIDMutation):
+    """Mutation to add or update packages to labbook
 
-    The optional argument `skipValidation` will skip the validation step when adding the package.
     You MUST have previously validated the package information or errors can occur at build time.
     You MUST include a version, since auto-addition of a package version is done during validation.
     """
@@ -45,79 +45,55 @@ class AddPackageComponent(graphene.relay.ClientIDMutation):
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
-        manager = graphene.String(required=True)
-        package = graphene.String(required=True)
-        version = graphene.String()
-        skip_validation = graphene.Boolean()
+        packages = graphene.List(PackageComponentInput)
 
-    new_package_component_edge = graphene.Field(lambda: PackageComponentConnection.Edge)
+    new_package_component_edges = graphene.List(PackageComponentConnection.Edge)
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, manager, package, version=None,
-                               skip_validation=False, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, packages, client_mutation_id=None):
         username = get_logged_in_username()
 
         # Load LabBook instance
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
 
-        # Get a package manager instance and check if package is valid
-        mgr = get_package_manager(manager)
-
-        latest_version = None
-        if not skip_validation:
-            # Validate Package
-            result = mgr.is_valid(package, labbook=lb, username=username, package_version=version)
-
-            if result.package is False:
-                raise ValueError(f"{manager} managed package name {package} is invalid")
-
-            if version is None:
-                # look up latest version
-                version = mgr.latest_version(package, labbook=lb, username=username)
-                # Since you already spent the time to look up the latest version, set it in case the field is queried
-                latest_version = version
-            else:
-                if result.version is False:
-                    raise ValueError(f"{manager} managed package name {package} version {version} is invalid")
-
-        if version is None:
-            # if you get here, you skipped validation but didn't provide a version!
-            raise ValueError(f"Package validation has been skipped and version omitted. You must include a version.")
-
-        # Create Component Manager
-        cm = ComponentManager(lb)
-        cm.add_package(package_manager=manager,
-                       package_name=package,
-                       package_version=version,
-                       from_base=False,
-                       force=True)
+        manager = list(set([x['manager'] for x in packages]))
+        if len(manager) != 1:
+            raise ValueError("Only batch add packages via 1 package manager at a time.")
+        manager = manager[0]
 
         # Set the cursor to the end of the collection of packages
         glob_path = os.path.join(lb.root_dir, '.gigantum', 'env', 'package_manager', f"{manager}*")
         cursor = len(glob.glob(glob_path))
 
-        new_edge = PackageComponentConnection.Edge(node=PackageComponent(manager=manager, package=package,
-                                                                         version=version, latest_version=latest_version,
-                                                                         schema=CURRENT_SCHEMA),
-                                                   cursor=cursor)
+        # Create Component Manager
+        cm = ComponentManager(lb)
+        cm.add_packages(package_manager=manager, packages=packages, from_base=False, force=True)
 
-        return AddPackageComponent(new_package_component_edge=new_edge)
+        new_edges = list()
+        for cnt, pkg in enumerate(packages):
+            new_edges.append(PackageComponentConnection.Edge(node=PackageComponent(manager=manager,
+                                                                                   package=pkg["package"],
+                                                                                   version=pkg["version"],
+                                                                                   schema=CURRENT_SCHEMA),
+                             cursor=base64.b64encode(str(cursor+cnt).encode()).decode()))
+
+        return AddPackageComponents(new_package_component_edges=new_edges)
 
 
-class RemovePackageComponent(graphene.relay.ClientIDMutation):
-    """Mutation to remove a package from labbook"""
+class RemovePackageComponents(graphene.relay.ClientIDMutation):
+    """Mutation to remove packages from labbook"""
 
     class Input:
         owner = graphene.String(required=True)
         labbook_name = graphene.String(required=True)
         manager = graphene.String(required=True)
-        package = graphene.String(required=True)
+        packages = graphene.List(graphene.String, required=True)
 
     success = graphene.Boolean()
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, manager, package,
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name, manager, packages,
                                client_mutation_id=None):
         username = get_logged_in_username()
 
@@ -127,9 +103,9 @@ class RemovePackageComponent(graphene.relay.ClientIDMutation):
 
         # Create Component Manager
         cm = ComponentManager(lb)
-        cm.remove_package(package_manager=manager, package_name=package)
+        cm.remove_packages(package_manager=manager, package_names=packages)
 
-        return RemovePackageComponent(success=True)
+        return RemovePackageComponents(success=True)
 
 
 class AddCustomDocker(graphene.relay.ClientIDMutation):

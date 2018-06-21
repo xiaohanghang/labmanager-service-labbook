@@ -42,100 +42,6 @@ RUN pip3 install Pillow==4.2.1
     }
 }
 
-snapshots['TestAddComponentMutations.test_add_package 1'] = {
-    'data': {
-        'addPackageComponent': {
-            'clientMutationId': None,
-            'newPackageComponentEdge': {
-                'node': {
-                    'fromBase': False,
-                    'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
-                    'manager': 'pip',
-                    'package': 'requests',
-                    'schema': 1,
-                    'version': '2.18.4'
-                }
-            }
-        }
-    }
-}
-
-snapshots['TestAddComponentMutations.test_add_package_no_version 1'] = {
-    'data': {
-        'addPackageComponent': {
-            'clientMutationId': None,
-            'newPackageComponentEdge': {
-                'node': {
-                    'fromBase': False,
-                    'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
-                    'manager': 'pip',
-                    'package': 'requests',
-                    'schema': 1,
-                    'version': '2.18.4'
-                }
-            }
-        }
-    }
-}
-
-snapshots['TestAddComponentMutations.test_add_package_bad_version 1'] = {
-    'data': {
-        'addPackageComponent': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 11,
-                    'line': 3
-                }
-            ],
-            'message': 'pip managed package name requests version 100.100.100 is invalid'
-        }
-    ]
-}
-
-snapshots['TestAddComponentMutations.test_add_bad_package 1'] = {
-    'data': {
-        'addPackageComponent': None
-    },
-    'errors': [
-        {
-            'locations': [
-                {
-                    'column': 11,
-                    'line': 3
-                }
-            ],
-            'message': 'pip managed package name asdfdfghghjfgsdasrftghrty is invalid'
-        }
-    ]
-}
-
-snapshots['TestAddComponentMutations.test_remove_package 1'] = {
-    'data': {
-        'addPackageComponent': {
-            'clientMutationId': None,
-            'newPackageComponentEdge': {
-                'node': {
-                    'fromBase': False,
-                    'manager': 'pip',
-                    'package': 'docker'
-                }
-            }
-        }
-    }
-}
-
-snapshots['TestAddComponentMutations.test_remove_package 2'] = {
-    'data': {
-        'removePackageComponent': {
-            'clientMutationId': None,
-            'success': True
-        }
-    }
-}
-
 snapshots['TestAddComponentMutations.test_remove_custom_dep 1'] = {
     'data': {
         'addCustomComponent': {
@@ -162,20 +68,84 @@ snapshots['TestAddComponentMutations.test_remove_custom_dep 2'] = {
     }
 }
 
-snapshots['TestAddComponentMutations.test_add_package_skip_validation 1'] = {
+snapshots['TestAddComponentMutations.test_add_package 1'] = {
     'data': {
-        'addPackageComponent': {
+        'addPackageComponents': {
             'clientMutationId': None,
-            'newPackageComponentEdge': {
-                'node': {
-                    'fromBase': False,
-                    'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAmcmVxdWVzdHMmMi4xOC40',
-                    'manager': 'pip',
-                    'package': 'requests',
-                    'schema': 1,
-                    'version': '2.18.4'
+            'newPackageComponentEdges': [
+                {
+                    'cursor': 'MA==',
+                    'node': {
+                        'fromBase': False,
+                        'id': 'UGFja2FnZUNvbXBvbmVudDpjb25kYTMmcmVxdWVzdHMmMi4xOC40',
+                        'manager': 'conda3',
+                        'package': 'requests',
+                        'schema': 1,
+                        'version': '2.18.4'
+                    }
                 }
-            }
+            ]
+        }
+    }
+}
+
+snapshots['TestAddComponentMutations.test_add_multiple_packages 1'] = {
+    'data': {
+        'addPackageComponents': {
+            'clientMutationId': None,
+            'newPackageComponentEdges': [
+                {
+                    'cursor': 'MA==',
+                    'node': {
+                        'fromBase': False,
+                        'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAzJnJlcXVlc3RzJjIuMTguNA==',
+                        'manager': 'pip3',
+                        'package': 'requests',
+                        'schema': 1,
+                        'version': '2.18.4'
+                    }
+                },
+                {
+                    'cursor': 'MQ==',
+                    'node': {
+                        'fromBase': False,
+                        'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAzJnJlc3BvbnNlcyYxLjQ=',
+                        'manager': 'pip3',
+                        'package': 'responses',
+                        'schema': 1,
+                        'version': '1.4'
+                    }
+                }
+            ]
+        }
+    }
+}
+
+snapshots['TestAddComponentMutations.test_remove_package 1'] = {
+    'data': {
+        'addPackageComponents': {
+            'clientMutationId': None,
+            'newPackageComponentEdges': [
+                {
+                    'node': {
+                        'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAzJnJlcXVlc3RzJjIuMTguNA=='
+                    }
+                },
+                {
+                    'node': {
+                        'id': 'UGFja2FnZUNvbXBvbmVudDpwaXAzJnJlc3BvbnNlcyYxLjQ='
+                    }
+                }
+            ]
+        }
+    }
+}
+
+snapshots['TestAddComponentMutations.test_remove_package 2'] = {
+    'data': {
+        'removePackageComponents': {
+            'clientMutationId': None,
+            'success': True
         }
     }
 }

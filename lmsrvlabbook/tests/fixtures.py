@@ -309,7 +309,7 @@ def build_image_for_jupyterlab():
             cm = ComponentManager(lb)
             # Add a component
             cm.add_component("base", ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV)
-            cm.add_package("pip3", "requests", "2.18.4")
+            cm.add_packages("pip3", [{"manager": "pip3", "package": "requests", "version": "2.18.4"}])
 
             ib = ImageBuilder(lb)
             ib.assemble_dockerfile(write=True)

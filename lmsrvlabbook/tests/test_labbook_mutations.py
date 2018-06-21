@@ -179,7 +179,6 @@ class TestLabBookServiceMutations(object):
         assert abs(1.0 * len(r['data']['labbook']['description']) / len(desc_md)) > 0.75
         assert r['data']['labbook']['isRepoClean'] == True
 
-
     def test_delete_labbook_dry_run(self, mock_create_labbooks, fixture_working_dir_env_repo_scoped):
         """Test deleting a LabBook off disk. """
         labbook_dir = os.path.join(mock_create_labbooks[1], 'default', 'default', 'labbooks', 'labbook1')

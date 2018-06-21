@@ -26,7 +26,7 @@ from lmcommon.workflows import BranchManager
 from lmcommon.activity import ActivityStore
 from lmcommon.gitlib.gitlab import GitLabManager
 from lmcommon.files import FileOperations
-from lmcommon.environment import get_package_manager
+from lmcommon.environment.utils import get_package_manager
 
 from lmsrvcore.auth.user import get_logged_in_username
 
@@ -43,7 +43,7 @@ from lmsrvlabbook.api.objects.ref import LabbookRef
 from lmsrvlabbook.api.objects.labbooksection import LabbookSection
 from lmsrvlabbook.api.connections.activity import ActivityConnection
 from lmsrvlabbook.api.objects.activity import ActivityDetailObject, ActivityRecordObject
-from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent, PackageComponentInput
 
 logger = LMLogger.get_logger()
 
@@ -131,11 +131,8 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # List of keys of all background jobs pertaining to this labbook (queued, started, failed, etc.)
     background_jobs = graphene.List(JobStatus)
 
-    # Package Query for validating packages and getting latest versions
-    package = graphene.Field(PackageComponent,
-                             manager=graphene.String(),
-                             package=graphene.String(),
-                             version=graphene.String(default_value=""))
+    # Package Query for validating packages and getting PackageComponents by attributes
+    packages = graphene.List(PackageComponent, package_input=graphene.List(PackageComponentInput))
 
     @classmethod
     def get_node(cls, info, id):
@@ -531,36 +528,31 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
             lambda labbook: self.helper_resolve_background_jobs(labbook))
 
     @staticmethod
-    def helper_resolve_package(labbook, manager, package, version):
+    def helper_resolve_packages(labbook, package_input):
         """Helper to return a PackageComponent object"""
+        manager = list(set([x['manager'] for x in package_input]))
+
+        if len(manager) > 1:
+            raise ValueError("Only batch add via 1 package manager at a time.")
+
         # Instantiate appropriate package manager
-        mgr = get_package_manager(manager)
+        mgr = get_package_manager(manager[0])
 
-        # Validate package and version if available
-        if version == "":
-            version = None
-        result = mgr.is_valid(package, labbook, get_logged_in_username(), package_version=version)
-        if result.package is False:
-            raise ValueError(f"Package name {package} is invalid")
-
-        latest_version = mgr.latest_version(package, labbook, get_logged_in_username())
-        if not version:
-            # If missing version, set to latest
-            version = latest_version
-        else:
-            if result.version is False:
-                # If version was set but is invalid, replace with latest
-                version = latest_version
+        # Validate packages
+        pkg_result = mgr.validate_packages(package_input, labbook, get_logged_in_username())
 
         # Return object
-        return PackageComponent(manager=manager, package=package, version=version, latest_version=latest_version)
+        return [PackageComponent(manager=manager[0],
+                                 package=pkg.package,
+                                 version=pkg.version,
+                                 is_valid=not pkg.error) for pkg in pkg_result]
 
-    def resolve_package(self, info, manager, package, version):
+    def resolve_packages(self, info, package_input):
         """Method to retrieve package component. Errors can be used to validate if a package name and version
         are correct
 
         Returns:
-            PackageComponent
+            list(PackageComponent)
         """
         return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
-            lambda labbook: self.helper_resolve_package(labbook, manager, package, version))
+            lambda labbook: self.helper_resolve_packages(labbook, package_input))
