@@ -20,6 +20,7 @@
 import pytest
 import getpass
 import time
+import subprocess
 
 from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_env_repo_scoped, \
     build_image_for_jupyterlab
@@ -27,8 +28,24 @@ from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir
 from lmcommon.container.container import ContainerOperations
 
 
+@pytest.fixture
+def start_proxy():
+    if getpass.getuser() == 'circleci':
+        cmds = ['configurable-http-proxy', '--port=10000', '--api-port=1999',
+                '--no-prepend-path', '--no-include-prefix']
+        proxyserver = subprocess.Popen(
+                cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(3)
+    try:
+        yield
+    finally:
+        if getpass.getuser() == 'circleci':
+            time.sleep(1)
+            proxyserver.kill()
+
+
 class TestContainerMutations(object):
-    def test_start_stop_container(self, build_image_for_jupyterlab):
+    def test_start_stop_container(self, build_image_for_jupyterlab, start_proxy):
         """Test start stop mutations"""
         query = """
            {
@@ -139,7 +156,7 @@ class TestContainerMutations(object):
             r = client.execute(q)
             assert 'errors' not in r
 
-            assert ':8890/lab' in r['data']['startDevTool']['path']
+            assert ':10000/jupyter/' in r['data']['startDevTool']['path']
             l = [a for a in docker_client.containers.get(container_id=container_id).exec_run(
                 'sh -c "ps aux | grep jupyter-lab | grep -v \' grep \'"', user='giguser').decode().split('\n') if a]
             assert len(l) == 1

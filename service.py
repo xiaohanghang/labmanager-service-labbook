@@ -20,12 +20,15 @@
 import shutil
 import os
 import base64
+import subprocess
 
+from confhttpproxy import ProxyRouter
 from flask import Flask, jsonify, request, abort
 import flask
 from flask_cors import CORS, cross_origin
 import redis
 import blueprint
+import time
 
 from lmcommon.configuration import Configuration
 from lmcommon.logging import LMLogger
@@ -33,7 +36,6 @@ from lmcommon.environment import RepositoryManager
 from lmcommon.auth.identity import AuthenticationError, get_identity_manager
 from lmcommon.labbook.lock import reset_all_locks
 from lmcommon.labbook import LabBook
-from lmcommon.portmap.portmap import reset_all_ports
 from lmsrvcore.auth.user import get_logged_in_author
 
 
@@ -58,6 +60,18 @@ app.config['DEBUG'] = config.config["flask"]["DEBUG"]
 # Register LabBook service
 app.register_blueprint(blueprint.complete_labbook_service)
 
+# Configure CHP
+try:
+    api_prefix = app.config["LABMGR_CONFIG"].config['proxy']["labmanager_api_prefix"]
+    apparent_proxy_port = app.config["LABMGR_CONFIG"].config['proxy']["apparent_proxy_port"]
+    api_port = app.config["LABMGR_CONFIG"].config['proxy']['api_port']
+
+    proxy_router = ProxyRouter.get_proxy(app.config["LABMGR_CONFIG"].config['proxy'])
+    proxy_router.add("http://localhost:10001", "api")
+    logger.info(f"Proxy routes ({type(proxy_router)}): {proxy_router.routes}")
+except Exception as e:
+    logger.exception(e)
+
 
 # Set auth error handler
 @app.errorhandler(AuthenticationError)
@@ -68,14 +82,14 @@ def handle_auth_error(ex):
 
 
 # Set Unauth'd route for API health-check
-@app.route("/ping/")
+@app.route(f"{api_prefix}/ping/")
 @cross_origin(headers=["Content-Type", "Authorization"], max_age=7200)
 def ping():
     """Unauthorized endpoint for validating the API is up"""
     return jsonify(config.config['build_info'])
 
 
-@app.route('/savehook/<username>/<owner>/<labbook_name>')
+@app.route(f'{api_prefix}/savehook/<username>/<owner>/<labbook_name>')
 def savehook(username, owner, labbook_name):
     try:
         redis_conn = redis.Redis(db=1)
@@ -149,7 +163,7 @@ def post_save_hook(os_path, model, contents_manager, **kwargs):
         username, owner, lbname, jupyter_token = tokens.split(',')
         url_args = f'file={os.path.basename(os_path)}&jupyter_token={jupyter_token}'
         subprocess.run(['wget', '--spider', 
-            f'http://{labmanager_ip}:10001/savehook/{username}/{owner}/{lbname}?{url_args}'], cwd='/tmp')
+            f'http://{labmanager_ip}:10001/api/savehook/{username}/{owner}/{lbname}?{url_args}'], cwd='/tmp')
     except Exception as e:
         print(e)
 
@@ -163,9 +177,6 @@ with open(os.path.join(share_dir, 'jupyterhooks', '__init__.py'), 'w') as initpy
 if config.config["lock"]["reset_on_start"]:
     logger.info("Resetting ALL distributed locks")
     reset_all_locks(config.config['lock'])
-    # also reset portmap
-    logger.info("Resetting ALL assigned ports")
-    reset_all_ports(config)
 
 
 def main(debug=False) -> None:

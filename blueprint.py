@@ -43,7 +43,7 @@ complete_labbook_service = Blueprint('complete_labbook_service', __name__)
 full_schema = graphene.Schema(query=LabbookQuery, mutation=LabbookMutations)
 
 # Add route and require authentication
-complete_labbook_service.add_url_rule('/labbook/',
+complete_labbook_service.add_url_rule(f'{config.config["proxy"]["labmanager_api_prefix"]}/labbook/',
                                       view_func=GraphQLView.as_view('graphql', schema=full_schema,
                                                                     graphiql=config.config["flask"]["DEBUG"],
                                                                     middleware=[error_middleware,

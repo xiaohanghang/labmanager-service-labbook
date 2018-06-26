@@ -19,6 +19,7 @@
 # SOFTWARE.
 import os
 import graphene
+import confhttpproxy
 
 from lmcommon.configuration import Configuration, get_docker_client
 from lmcommon.imagebuilder import ImageBuilder
@@ -139,6 +140,9 @@ class StopContainer(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
+
+        lb_ip, _ = ContainerOperations.get_labbook_ip(lb, username)
+
         stop_labbook_monitor(lb, username)
         lb, stopped = ContainerOperations.stop_container(labbook=lb, username=username)
 
@@ -148,6 +152,18 @@ class StopContainer(graphene.relay.ClientIDMutation):
             wf.garbagecollect()
         except Exception as e:
             logger.error(e)
+
+        # Try to remove route from proxy
+        lb_port = 8888
+        lb_endpoint = f'http://{lb_ip}:{lb_port}'
+
+        pr = confhttpproxy.ProxyRouter.get_proxy(lb.labmanager_config.config['proxy'])
+        routes = pr.routes
+        est_target = [k for k in routes.keys()
+                      if lb_endpoint in routes[k]['target']
+                      and 'jupyter' in k]
+        if len(est_target) == 1:
+            pr.remove(est_target[0][1:])
 
         if not stopped:
             raise ValueError(f"Failed to stop labbook {labbook_name}")

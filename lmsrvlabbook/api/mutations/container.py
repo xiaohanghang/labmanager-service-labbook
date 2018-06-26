@@ -18,10 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import uuid
 import time
 
 import graphene
-
+import confhttpproxy
 
 from lmcommon.labbook import LabBook
 from lmcommon.container.container import ContainerOperations
@@ -49,10 +50,43 @@ class StartDevTool(graphene.relay.ClientIDMutation):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
-        lb, tool_url = ContainerOperations.start_dev_tool(lb, dev_tool_name=dev_tool, username=username,
-                                                          tag=container_override_id)
 
-        # Start monitoring lab book environment for activity
-        start_labbook_monitor(lb, username, dev_tool, author=get_logged_in_author())
-        
-        return StartDevTool(path=tool_url)
+        lb_ip, _ = ContainerOperations.get_labbook_ip(lb, username)
+        lb_port = 8888
+        lb_endpoint = f'http://{lb_ip}:{lb_port}'
+
+        pr = confhttpproxy.ProxyRouter.get_proxy(lb.labmanager_config.config['proxy'])
+        routes = pr.routes
+        est_target = [k for k in routes.keys()
+                      if lb_endpoint in routes[k]['target']
+                      and 'jupyter' in k]
+
+        apparent_proxy_port = lb.labmanager_config.config['proxy']["apparent_proxy_port"]
+        base_route = f'0.0.0.0:{apparent_proxy_port}'
+
+        if len(est_target) == 1:
+            path = f'{base_route}{est_target[0]}'
+            return StartDevTool(path=path)
+        elif len(est_target) == 0:
+            rt_prefix = str(uuid.uuid4()).replace('-', '')[:8]
+            rt_prefix, _ = pr.add(lb_endpoint, f'jupyter/{rt_prefix}')
+
+            # Start jupyterlab
+            _, suffix = ContainerOperations.start_dev_tool(
+                lb, dev_tool_name=dev_tool, username=username,
+                tag=container_override_id, proxy_prefix=rt_prefix)
+
+            # Ensure we start monitor IFF jupyter isn't already running.
+            start_labbook_monitor(lb, username, dev_tool,
+                                  url=f'{lb_endpoint}/{rt_prefix}',
+                                  author=get_logged_in_author())
+
+            # Don't include the port in the path if running on 80
+            if apparent_proxy_port == 80:
+                path = suffix
+            else:
+                path = f':{apparent_proxy_port}{suffix}'
+
+            return StartDevTool(path=path)
+        else:
+            raise ValueError(f"Multiple Jupyter instances for {str(lb)}")
