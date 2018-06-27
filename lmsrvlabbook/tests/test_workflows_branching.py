@@ -31,6 +31,7 @@ from lmcommon.auth.identity import get_identity_manager
 from lmcommon.configuration import Configuration
 from lmcommon.workflows import BranchManager
 from lmcommon.labbook import LabBook
+from lmcommon.files import FileOperations
 
 from lmsrvcore.middleware import LabBookLoaderMiddleware, error_middleware
 from lmsrvlabbook.tests.fixtures import ContextMock, fixture_working_dir, _create_temp_work_dir
@@ -52,7 +53,7 @@ def mock_create_labbooks(fixture_working_dir):
     with open(os.path.join(fixture_working_dir[1], 'unittest-examplefile'), 'w') as sf:
         sf.write("test data")
         sf.seek(0)
-    lb.insert_file('code', sf.name, '')
+    FileOperations.insert_file(lb, 'code', sf.name)
 
     assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'unittest-examplefile'))
 
@@ -453,18 +454,18 @@ class TestWorkflowsBranching(object):
         lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
         with open('/tmp/s1.txt', 'w') as s1:
             s1.write('original-file\ndata')
-        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        FileOperations.insert_file(lb, section='code', src_file=s1.name)
         bm = BranchManager(lb, username=UT_USERNAME)
 
         nb = bm.create_branch('new-branch')
         with open('/tmp/s1.txt', 'w') as s1:
             s1.write('branch-conflict-data')
-        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        FileOperations.insert_file(lb, section='code', src_file=s1.name)
 
         bm.workon_branch(bm.workspace_branch)
         with open('/tmp/s1.txt', 'w') as s1:
             s1.write('mainline-conflict-data')
-        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        FileOperations.insert_file(lb, section='code', src_file=s1.name)
 
         merge_q = f"""
         mutation x {{
@@ -490,18 +491,18 @@ class TestWorkflowsBranching(object):
         lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
         with open('/tmp/s1.txt', 'w') as s1:
             s1.write('original-file\ndata')
-        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        FileOperations.insert_file(lb, section='code', src_file=s1.name)
         bm = BranchManager(lb, username=UT_USERNAME)
 
         nb = bm.create_branch('new-branch')
         with open('/tmp/s1.txt', 'w') as s1:
             s1.write('branch-conflict-data')
-        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        FileOperations.insert_file(lb, section='code', src_file=s1.name)
 
         bm.workon_branch(bm.workspace_branch)
         with open('/tmp/s1.txt', 'w') as s1:
             s1.write('mainline-conflict-data')
-        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        FileOperations.insert_file(lb, section='code', src_file=s1.name)
 
         merge_q = f"""
         mutation x {{
@@ -529,7 +530,7 @@ class TestWorkflowsBranching(object):
         lb, client = mock_create_labbooks[0], mock_create_labbooks[1]
         with open('/tmp/s1.txt', 'w') as s1:
             s1.write('original-file\ndata')
-        lb.insert_file(section='code', src_file=s1.name, dst_dir='')
+        FileOperations.insert_file(lb, section='code', src_file=s1.name)
         bm = BranchManager(lb, username=UT_USERNAME)
 
         nb = bm.create_branch('new-branch')

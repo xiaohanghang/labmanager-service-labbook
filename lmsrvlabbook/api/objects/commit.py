@@ -51,8 +51,5 @@ class LabbookCommit(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRep
 
     def resolve_committed_on(self, info):
         """Resolve the committed_on field"""
-        if self.committed_on is None:
-            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-            self.committed_on = lb.git.repo.commit(self.hash).committed_datetime.isoformat()
-
-        return self.committed_on
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: labbook.git.repo.commit(self.hash).committed_datetime.isoformat())

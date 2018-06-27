@@ -43,6 +43,9 @@ class LabbookList(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     NOTE: Currently all RemoteLabbook description fields will return empty strings
 
     """
+    # List of specific local labbooks based on Node ID
+    local_by_id = graphene.List(Labbook, ids=graphene.List(graphene.String))
+
     # Connection to locally available labbooks
     local_labbooks = graphene.relay.ConnectionField(LabbookConnection,
                                                     sort=graphene.String(default_value="az"),
@@ -63,6 +66,19 @@ class LabbookList(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
         """Resolve the unique Node id for this object"""
         # This object doesn't really have a node because it's simply container
         return ""
+
+    def resolve_local_by_id(self, info, ids):
+        """Method to return graphene Labbook instances based on a list of Global Node IDs
+
+        Uses the "currently logged in" user
+
+        Args:
+            ids(list): List of Node IDs for the local labbooks to return
+
+        Returns:
+            list(Labbook)
+        """
+        return [graphene.Node.get_node_from_global_id(info, x) for x in ids]
 
     def resolve_local_labbooks(self, info, sort: str, reverse: bool, **kwargs):
         """Method to return all graphene Labbook instances for the logged in user available locally

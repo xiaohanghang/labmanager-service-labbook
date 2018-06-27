@@ -24,7 +24,8 @@ import graphene
 from lmcommon.logging import LMLogger
 from lmcommon.configuration import Configuration
 from lmcommon.dispatcher import Dispatcher
-from lmcommon.environment import ComponentRepository, get_package_manager
+from lmcommon.environment import ComponentRepository
+from lmcommon.environment.utils import get_package_manager
 from lmcommon.labbook.schemas import CURRENT_SCHEMA
 
 from lmsrvcore.auth.user import get_logged_in_username
@@ -112,9 +113,6 @@ class LabbookQuery(graphene.ObjectType):
             Labbook
         """
         # Load the labbook data via a dataloader
-        loader_key = f"{get_logged_in_username()}&{owner}&{name}"
-        info.context.labbook_loader.load(loader_key)
-
         return Labbook(id="{}&{}".format(owner, name),
                        name=name, owner=owner)
 

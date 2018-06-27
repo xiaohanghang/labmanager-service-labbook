@@ -39,7 +39,7 @@ from lmsrvlabbook.api.connections.environment import CustomComponentConnection, 
 from lmsrvlabbook.api.objects.basecomponent import BaseComponent
 from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmsrvlabbook.api.objects.customcomponent import CustomComponent
-from lmsrvlabbook.dataloader.package import PackageLoader
+from lmsrvlabbook.dataloader.package import PackageLatestVersionLoader
 
 logger = LMLogger.get_logger()
 
@@ -94,7 +94,9 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
     package_dependencies = graphene.ConnectionField(PackageComponentConnection)
 
     # The LabBook's Custom dependencies
-    custom_dependencies = graphene.ConnectionField(CustomComponentConnection)
+    custom_dependencies = graphene.ConnectionField(CustomComponentConnection,
+                                                   deprecation_reason="Custom Dependencies have been replaced "
+                                                                      "with custom docker interface")
 
     # A custom docker snippet to be run after all other dependencies and bases have been added.
     docker_snippet = graphene.String()
@@ -114,18 +116,16 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
         return f"{self.owner}&{self.name}"
 
-    def resolve_image_status(self, info):
-        """Resolve the image_status field"""
+    def helper_resolve_image_status(self, labbook):
+        """Helper to resolve the image status of a labbook"""
         labbook_image_key = infer_docker_image_name(labbook_name=self.name, owner=self.owner,
                                                     username=get_logged_in_username())
 
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
         dispatcher = Dispatcher()
-        lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(lb.key)]
+        lb_jobs = [dispatcher.query_task(j.job_key) for j in dispatcher.get_jobs_for_labbook(labbook.key)]
 
         for j in lb_jobs:
-            logger.debug("Current job for lb: status {}, meta {}".format(j.status, j.meta))
+            logger.debug("Current job for labbook: status {}, meta {}".format(j.status, j.meta))
 
         # First, check if image exists or not -- The first step of building an image untags any existing ones.
         # Therefore, we know that if one exists, there most likely is not one being built.
@@ -137,31 +137,35 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             image_status = ImageStatus.DOES_NOT_EXIST
 
         if any([j.status == 'failed' and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.debug("Image status for {} is BUILD_FAILED".format(lb.key))
+            logger.debug("Image status for {} is BUILD_FAILED".format(labbook.key))
             if image_status == ImageStatus.EXISTS:
                 # The indication that there's a failed job is probably lingering from a while back, so don't
                 # change the status to FAILED. Only do that if there is no Docker image.
-                logger.warning(f'Got failed build_image for labbook {lb.key}, but image exists.')
+                logger.debug(f'Got failed build_image for labbook {labbook.key}, but image exists.')
             else:
                 image_status = ImageStatus.BUILD_FAILED
 
         if any([j.status in ['started'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.debug(f"Image status for {lb.key} is BUILD_IN_PROGRESS")
+            logger.debug(f"Image status for {labbook.key} is BUILD_IN_PROGRESS")
             # build_image being in progress takes precedence over if image already exists (unlikely event).
             if image_status == ImageStatus.EXISTS:
-                logger.warning(f'Got build_image for labbook {lb.key}, but image exists.')
+                logger.warning(f'Got build_image for labbook {labbook.key}, but image exists.')
             image_status = ImageStatus.BUILD_IN_PROGRESS
 
         if any([j.status in ['queued'] and j.meta.get('method') == 'build_image' for j in lb_jobs]):
-            logger.warning(f"build_image for {lb.key} stuck in queued state")
+            logger.warning(f"build_image for {labbook.key} stuck in queued state")
             image_status = ImageStatus.BUILD_QUEUED
 
         return image_status.value
 
+    def resolve_image_status(self, info):
+        """Resolve the image_status field"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_image_status(labbook))
+
     def resolve_container_status(self, info):
         """Resolve the image_status field"""
         # Check if the container is running by looking up the container
-
         labbook_key = infer_docker_image_name(labbook_name=self.name, owner=self.owner,
                                               username=get_logged_in_username())
 
@@ -177,18 +181,11 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
         return container_status.value
 
-    def resolve_base(self, info):
-        """Method to get the LabBook's base component
-
-        Args:
-            info:
-
-        Returns:
-
-        """
+    @staticmethod
+    def helper_resolve_base(labbook):
+        """Helper to resolve the base component object"""
         # Get base image data from the LabBook
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        cm = ComponentManager(lb)
+        cm = ComponentManager(labbook)
         component_data = cm.base_fields
 
         if component_data:
@@ -200,8 +197,8 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         else:
             return None
 
-    def resolve_package_dependencies(self, info, **kwargs):
-        """Method to get the LabBook's package manager dependencies
+    def resolve_base(self, info):
+        """Method to get the LabBook's base component
 
         Args:
             info:
@@ -209,9 +206,13 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         Returns:
 
         """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        cm = ComponentManager(lb)
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_base(labbook))
 
+    @staticmethod
+    def helper_resolve_package_dependencies(labbook, kwargs):
+        """Helper to resolve the packages"""
+        cm = ComponentManager(labbook)
         edges = cm.get_component_list("package_manager")
 
         if edges:
@@ -224,7 +225,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
 
             # Create version dataloader
             keys = [f"{k['manager']}&{k['package']}" for k in lbc.edges]
-            vd = PackageLoader(keys, lb, get_logged_in_username())
+            vd = PackageLatestVersionLoader(keys, labbook, get_logged_in_username())
 
             # Get DevEnv instances
             edge_objs = []
@@ -234,6 +235,7 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
                                                                                        package=edge['package'],
                                                                                        version=edge['version'],
                                                                                        from_base=edge['from_base'],
+                                                                                       is_valid=True,
                                                                                        schema=edge['schema']),
                                                                  cursor=cursor))
 
@@ -243,8 +245,8 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             return PackageComponentConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
                                                                                           has_previous_page=False))
 
-    def resolve_custom_dependencies(self, info, **kwargs):
-        """Method to get the LabBook's custom dependencies
+    def resolve_package_dependencies(self, info, **kwargs):
+        """Method to get the LabBook's package manager dependencies
 
         Args:
             info:
@@ -252,9 +254,13 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
         Returns:
 
         """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        cm = ComponentManager(lb)
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_package_dependencies(labbook, kwargs))
 
+    @staticmethod
+    def helper_resolve_custom_dependencies(labbook, kwargs):
+        """Helper to generate custom dependencies (DEPRECATED)"""
+        cm = ComponentManager(labbook)
         edges = cm.get_component_list("custom")
 
         if edges:
@@ -279,9 +285,22 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             return CustomComponentConnection(edges=[], page_info=graphene.relay.PageInfo(has_next_page=False,
                                                                                          has_previous_page=False))
 
-    def resolve_docker_snippet(self, info, **kwargs):
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        cm = ComponentManager(lb)
+    def resolve_custom_dependencies(self, info, **kwargs):
+        """Method to get the LabBook's custom dependencies
+
+        Args:
+            info:
+
+        Returns:
+
+        """
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_custom_dependencies(labbook, kwargs))
+
+    @staticmethod
+    def helper_resolve_docker_snippet(labbook):
+        """Helper to get custom docker snippet"""
+        cm = ComponentManager(labbook)
         docker_components = cm.get_component_list('docker')
         if len(docker_components) == 1:
             return '\n'.join(docker_components[0]['content'])
@@ -289,3 +308,8 @@ class Environment(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepos
             raise ValueError('There should only be one custdom docker component')
         else:
             return ""
+
+    def resolve_docker_snippet(self, info):
+        """Method to resolve  the docker snippet for this labbook. Right now only 1 snippet is supported"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_docker_snippet(labbook))

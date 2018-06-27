@@ -22,7 +22,7 @@ from lmsrvlabbook.tests.fixtures import fixture_working_dir, build_image_for_jup
 import getpass
 from promise import Promise
 
-from lmsrvlabbook.dataloader.package import PackageLoader
+from lmsrvlabbook.dataloader.package import PackageLatestVersionLoader
 from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
 from lmcommon.configuration import get_docker_client
 from lmcommon.labbook import LabBook
@@ -36,18 +36,18 @@ class TestDataloaderPackage(object):
         key = "pip&requests"
         lb, username = build_image_for_jupyterlab[0], build_image_for_jupyterlab[5]
 
-        loader = PackageLoader([key], lb, username)
+        loader = PackageLatestVersionLoader([key], lb, username)
         promise1 = loader.load(key)
         assert isinstance(promise1, Promise)
 
         pkg = promise1.get()
-        assert pkg == '2.18.4'
+        assert pkg == '2.19.1'
 
     def test_load_many_pip(self, build_image_for_jupyterlab):
         """Test loading many labbooks"""
         lb, username = build_image_for_jupyterlab[0], build_image_for_jupyterlab[5]
         keys = ["pip&redis", "pip&gigantum", "pip&numpy"]
-        loader = PackageLoader(keys, lb, username)
+        loader = PackageLatestVersionLoader(keys, lb, username)
         promise1 = loader.load_many(keys)
         assert isinstance(promise1, Promise)
 
@@ -55,52 +55,62 @@ class TestDataloaderPackage(object):
         assert len(version_list) == 3
         assert version_list[0] == "2.10.6"
         assert version_list[1] == "0.9"
-        assert version_list[2] == "1.14.3"
+        assert version_list[2] == "1.14.5"
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Conda not available on CircleCI")
     def test_load_many_conda(self, build_image_for_jupyterlab):
         """Test loading many labbooks"""
         lb, username = build_image_for_jupyterlab[0], build_image_for_jupyterlab[5]
         keys = ["conda3&redis", "conda3&scipy", "conda3&numpy"]
-        loader = PackageLoader(keys, lb, username)
+        loader = PackageLatestVersionLoader(keys, lb, username)
         promise1 = loader.load_many(keys)
         assert isinstance(promise1, Promise)
 
         version_list = promise1.get()
         assert len(version_list) == 3
 
-        assert version_list[0] == "4.0.9"
+        assert version_list[0] == "4.0.10"
         assert version_list[1] == "1.1.0"
-        assert version_list[2] == "1.14.3"
+        assert version_list[2] == "1.14.5"
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Conda not available on CircleCI")
     def test_load_many_conda2(self, build_image_for_jupyterlab):
         """Test loading many labbooks"""
         lb, username = build_image_for_jupyterlab[0], build_image_for_jupyterlab[5]
         keys = ["conda2&redis", "conda2&scipy", "conda2&numpy"]
-        loader = PackageLoader(keys, lb, username)
+        loader = PackageLatestVersionLoader(keys, lb, username)
         promise1 = loader.load_many(keys)
         assert isinstance(promise1, Promise)
 
         version_list = promise1.get()
         assert len(version_list) == 3
-        assert version_list[0] == "4.0.9"
+        assert version_list[0] == "4.0.10"
         assert version_list[1] == "1.1.0"
-        assert version_list[2] == "1.14.3"
+        assert version_list[2] == "1.14.5"
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Conda not available on CircleCI")
     def test_load_many_mixed(self, build_image_for_jupyterlab):
         """Test loading many labbooks"""
         lb, username = build_image_for_jupyterlab[0], build_image_for_jupyterlab[5]
         keys = ["conda3&redis", "pip&scipy", "conda3&numpy"]
-        loader = PackageLoader(keys, lb, username)
+        loader = PackageLatestVersionLoader(keys, lb, username)
         promise1 = loader.load_many(keys)
         assert isinstance(promise1, Promise)
 
         version_list = promise1.get()
         assert len(version_list) == 3
-        assert version_list[0] == "4.0.9"
-        assert version_list[1] == "1.1.0rc1"
-        assert version_list[2] == "1.14.3"
+        assert version_list[0] == "4.0.10"
+        assert version_list[1] == "1.1.0"
+        assert version_list[2] == "1.14.5"
 
+    @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Conda not available on CircleCI")
+    def test_load_invalid_package(self, build_image_for_jupyterlab):
+        """Test loading many labbooks"""
+        lb, username = build_image_for_jupyterlab[0], build_image_for_jupyterlab[5]
+        keys = ["pip&scipysdfsdfs", "pip&numpy"]
+        loader = PackageLatestVersionLoader(keys, lb, username)
+        promise1 = loader.load_many(keys)
+        assert isinstance(promise1, Promise)
 
+        with pytest.raises(Exception):
+            version_list = promise1.get()

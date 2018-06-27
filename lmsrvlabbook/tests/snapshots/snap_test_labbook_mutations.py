@@ -416,289 +416,6 @@ snapshots['TestLabBookServiceMutations.test_create_labbook_already_exists 3'] = 
     ]
 }
 
-snapshots['TestLabBookServiceMutations.test_create_labbook 2'] = {
-    'data': {
-        'labbook': {
-            'activityRecords': {
-                'edges': [
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            '''Added a `base` class environment component quickstart-jupyterlab
-
-Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base for any analysis.
-
-  - repository: gig-dev_components2
-  - component: quickstart-jupyterlab
-  - revision: 2
-'''
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'ENVIRONMENT'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 0,
-                            'message': 'Add base environment component: quickstart-jupyterlab',
-                            'show': True,
-                            'tags': [
-                                'environment',
-                                'base'
-                            ],
-                            'type': 'ENVIRONMENT',
-                            'username': 'default'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Add pip3 managed package: pandas v0.22.0'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'ENVIRONMENT'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 0,
-                            'message': 'Add pip3 managed package: pandas v0.22.0',
-                            'show': True,
-                            'tags': [
-                                'environment',
-                                'package_manager',
-                                'pip3'
-                            ],
-                            'type': 'ENVIRONMENT',
-                            'username': 'default'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Add pip3 managed package: ipywidgets v7.1.0'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'ENVIRONMENT'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 0,
-                            'message': 'Add pip3 managed package: ipywidgets v7.1.0',
-                            'show': True,
-                            'tags': [
-                                'environment',
-                                'package_manager',
-                                'pip3'
-                            ],
-                            'type': 'ENVIRONMENT',
-                            'username': 'default'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Add pip3 managed package: jupyterlab v0.31.1'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'ENVIRONMENT'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 0,
-                            'message': 'Add pip3 managed package: jupyterlab v0.31.1',
-                            'show': True,
-                            'tags': [
-                                'environment',
-                                'package_manager',
-                                'pip3'
-                            ],
-                            'type': 'ENVIRONMENT',
-                            'username': 'default'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Add pip3 managed package: jupyter v1.0.0'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'ENVIRONMENT'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 0,
-                            'message': 'Add pip3 managed package: jupyter v1.0.0',
-                            'show': True,
-                            'tags': [
-                                'environment',
-                                'package_manager',
-                                'pip3'
-                            ],
-                            'type': 'ENVIRONMENT',
-                            'username': 'default'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Add pip3 managed package: matplotlib v2.1.1'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'ENVIRONMENT'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 0,
-                            'message': 'Add pip3 managed package: matplotlib v2.1.1',
-                            'show': True,
-                            'tags': [
-                                'environment',
-                                'package_manager',
-                                'pip3'
-                            ],
-                            'type': 'ENVIRONMENT',
-                            'username': 'default'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Add pip3 managed package: numpy v1.14.0'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'ENVIRONMENT'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 0,
-                            'message': 'Add pip3 managed package: numpy v1.14.0',
-                            'show': True,
-                            'tags': [
-                                'environment',
-                                'package_manager',
-                                'pip3'
-                            ],
-                            'type': 'ENVIRONMENT',
-                            'username': 'default'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Add apt managed package: vim v2:7.4.1689-3ubuntu1.2'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'ENVIRONMENT'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 0,
-                            'message': 'Add apt managed package: vim v2:7.4.1689-3ubuntu1.2',
-                            'show': True,
-                            'tags': [
-                                'environment',
-                                'package_manager',
-                                'apt'
-                            ],
-                            'type': 'ENVIRONMENT',
-                            'username': 'default'
-                        }
-                    },
-                    {
-                        'node': {
-                            'detailObjects': [
-                                {
-                                    'data': [
-                                        [
-                                            'text/plain',
-                                            'Created new LabBook: default/test-lab-book1'
-                                        ]
-                                    ],
-                                    'importance': 0,
-                                    'show': False,
-                                    'tags': [
-                                    ],
-                                    'type': 'LABBOOK'
-                                }
-                            ],
-                            'email': 'jane@doe.com',
-                            'importance': 255,
-                            'message': 'Created new LabBook: default/test-lab-book1',
-                            'show': True,
-                            'tags': None,
-                            'type': 'LABBOOK',
-                            'username': 'default'
-                        }
-                    }
-                ]
-            }
-        }
-    }
-}
-
 snapshots['TestLabBookServiceMutations.test_update_favorite 1'] = {
     'data': {
         'labbook': {
@@ -835,6 +552,205 @@ snapshots['TestLabBookServiceMutations.test_write_readme 1'] = {
 
 This is my readme
  :df,a//3p49kasdf'''
+            }
+        }
+    }
+}
+
+snapshots['TestLabBookServiceMutations.test_create_labbook 2'] = {
+    'data': {
+        'labbook': {
+            'activityRecords': {
+                'edges': [
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            '''Added a `base` class environment component quickstart-jupyterlab
+
+Data Science Quickstart using Jupyterlab, numpy, and Matplotlib. A great base for any analysis.
+
+  - repository: gig-dev_components2
+  - component: quickstart-jupyterlab
+  - revision: 2
+'''
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'email': 'jane@doe.com',
+                            'importance': 0,
+                            'message': 'Add base environment component: quickstart-jupyterlab',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'base'
+                            ],
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: numpy "1.14.0"'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                },
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: matplotlib "2.1.1"'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                },
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: jupyter "1.0.0"'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                },
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: jupyterlab "0.31.1"'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                },
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: ipywidgets "7.1.0"'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                },
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add pip3 managed package: pandas "0.22.0"'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'email': 'jane@doe.com',
+                            'importance': 0,
+                            'message': 'Added 6 pip3 package(s). ',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'pip3'
+                            ],
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Add apt managed package: vim "2:7.4.1689-3ubuntu1.2"'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'ENVIRONMENT'
+                                }
+                            ],
+                            'email': 'jane@doe.com',
+                            'importance': 0,
+                            'message': 'Added 1 apt package(s). ',
+                            'show': True,
+                            'tags': [
+                                'environment',
+                                'package_manager',
+                                'apt'
+                            ],
+                            'type': 'ENVIRONMENT',
+                            'username': 'default'
+                        }
+                    },
+                    {
+                        'node': {
+                            'detailObjects': [
+                                {
+                                    'data': [
+                                        [
+                                            'text/plain',
+                                            'Created new LabBook: default/test-lab-book1'
+                                        ]
+                                    ],
+                                    'importance': 0,
+                                    'show': False,
+                                    'tags': [
+                                    ],
+                                    'type': 'LABBOOK'
+                                }
+                            ],
+                            'email': 'jane@doe.com',
+                            'importance': 255,
+                            'message': 'Created new LabBook: default/test-lab-book1',
+                            'show': True,
+                            'tags': [
+                            ],
+                            'type': 'LABBOOK',
+                            'username': 'default'
+                        }
+                    }
+                ]
             }
         }
     }

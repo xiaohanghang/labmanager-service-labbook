@@ -24,6 +24,7 @@ from snapshottest import snapshot
 from lmsrvlabbook.tests.fixtures import fixture_working_dir, fixture_working_dir_populated_scoped, fixture_test_file
 from lmsrvlabbook.tests.fixtures import fixture_working_dir_env_repo_scoped
 from lmcommon.fixtures import ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV
+from lmcommon.files import FileOperations
 from lmcommon.environment import ComponentManager
 from lmcommon.activity import ActivityStore, ActivityDetailRecord, ActivityDetailType, ActivityRecord, ActivityType
 
@@ -65,16 +66,21 @@ class TestLabBookOverviewQueries(object):
 
         cm = ComponentManager(lb)
         # Add packages
-        cm.add_package("apt", "docker")
-        cm.add_package("pip", "requests", "1.3")
-        cm.add_package("pip", "numpy", "1.12")
-        cm.add_package("conda2", "requests", "1.3")
-        cm.add_package("conda2", "numpy", "1.12")
-        cm.add_package("conda2", "matplotlib", "1.12")
-        cm.add_package("conda2", "plotly", "1.12")
-        cm.add_package("conda3", "requests", "1.3")
-        cm.add_package("conda3", "numpy", "1.12")
-        cm.add_package("conda3", "scipy", "1.12")
+        cm.add_packages("apt", [{"manager": "apt", "package": "docker", "version": ""}])
+        pkgs = [{"manager": "pip", "package": "requests", "version": "1.3"},
+                {"manager": "pip", "package": "numpy", "version": "1.12"}]
+        cm.add_packages('pip', pkgs)
+
+        pkgs = [{"manager": "conda2", "package": "requests", "version": "1.3"},
+                {"manager": "conda2", "package": "numpy", "version": "1.12"},
+                {"manager": "conda2", "package": "matplotlib", "version": "1.12"},
+                {"manager": "conda2", "package": "plotly", "version": "1.12"}]
+        cm.add_packages('conda2', pkgs)
+
+        pkgs = [{"manager": "conda3", "package": "networkx", "version": "1.3"},
+                {"manager": "conda3", "package": "nibabel", "version": "1.3"},
+                {"manager": "conda3", "package": "scipy", "version": "1.12"}]
+        cm.add_packages('conda3', pkgs)
 
         query = """
                     {
@@ -121,7 +127,7 @@ class TestLabBookOverviewQueries(object):
         """Test paging through activity records"""
         lb = LabBook(fixture_working_dir[0], author=GitAuthor(name="tester", email="tester@test.com"))
         lb.new(owner={"username": "default"}, name="labbook11", description="my test description")
-        lb.insert_file("code", fixture_test_file, "")
+        FileOperations.insert_file(lb, "code", fixture_test_file)
 
         # fake activity
         store = ActivityStore(lb)
@@ -143,17 +149,21 @@ class TestLabBookOverviewQueries(object):
         store.create_activity_record(ar)
         store.create_activity_record(ar)
         store.create_activity_record(ar)
-        lb.insert_file("input", fixture_test_file, "")
+        open('/tmp/test_file.txt', 'w').write("xxx" * 50)
+        FileOperations.insert_file(lb, "input", '/tmp/test_file.txt')
         lb.makedir("input/test")
-        lb.insert_file("input", fixture_test_file, "test")
+        open('/tmp/test_file.txt', 'w').write("xxx" * 50)
+        FileOperations.insert_file(lb, "input", '/tmp/test_file.txt', "test")
         lb.makedir("input/test2")
-        lb.insert_file("input", fixture_test_file, "test2")
+        open('/tmp/test_file.txt', 'w').write("xxx" * 50)
+        FileOperations.insert_file(lb, "input", '/tmp/test_file.txt', "test2")
         store.create_activity_record(ar)
         store.create_activity_record(ar)
         store.create_activity_record(ar)
         store.create_activity_record(ar)
         store.create_activity_record(ar)
-        lb.insert_file("output", fixture_test_file, "")
+        open('/tmp/test_file.txt', 'w').write("xxx" * 50)
+        FileOperations.insert_file(lb, "output", '/tmp/test_file.txt')
 
         # Get all records at once with no pagination args and verify cursors look OK directly
         query = """

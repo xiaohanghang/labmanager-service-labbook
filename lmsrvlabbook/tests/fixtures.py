@@ -38,7 +38,7 @@ from lmcommon.labbook import LabBook
 from lmsrvcore.middleware import LabBookLoaderMiddleware, error_middleware
 
 from lmcommon.fixtures import (ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_REV, ENV_UNIT_TEST_BASE)
-from lmcommon.container import ContainerOperations
+from lmcommon.container.container import ContainerOperations
 from lmcommon.environment import ComponentManager
 from lmcommon.imagebuilder import ImageBuilder
 
@@ -309,7 +309,7 @@ def build_image_for_jupyterlab():
             cm = ComponentManager(lb)
             # Add a component
             cm.add_component("base", ENV_UNIT_TEST_REPO, ENV_UNIT_TEST_BASE, ENV_UNIT_TEST_REV)
-            cm.add_package("pip3", "requests", "2.18.4")
+            cm.add_packages("pip3", [{"manager": "pip3", "package": "requests", "version": "2.18.4"}])
 
             ib = ImageBuilder(lb)
             ib.assemble_dockerfile(write=True)
@@ -346,7 +346,10 @@ def fixture_test_file():
 
         yield dummy_file.name
 
-    os.remove(temp_file_name)
+    try:
+        os.remove(temp_file_name)
+    except:
+        pass
 
 @pytest.fixture()
 def property_mocks_fixture():

@@ -50,9 +50,13 @@ class LabbookRef(graphene.ObjectType, interfaces=(graphene.relay.Node, GitReposi
                 raise ValueError("Resolving a LabbookRef Node ID requires owner, name, and branch to be set")
             self.id = f"{self.owner}&{self.name}&{self.prefix}&{self.ref_name}"
 
-    def resolve_commit(self, info):
-        """Resolve the commit field"""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        git_ref = lb.git.repo.refs[self.ref_name]
+    def helper_resolve_commit(self, labbook):
+        git_ref = labbook.git.repo.refs[self.ref_name]
         return LabbookCommit(id=f"{self.owner}&{self.name}&None&{self.ref_name}",
                              owner=self.owner, name=self.name, hash=git_ref.commit.hexsha)
+
+    def resolve_commit(self, info):
+        """Resolve the commit field"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_commit(labbook))
+

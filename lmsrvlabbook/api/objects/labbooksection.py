@@ -70,10 +70,8 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
 
         return self.id
 
-    def resolve_files(self, info, **kwargs):
-        """Resolver for getting file listing in a single directory"""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
+    def helper_resolve_files(self, labbook, kwargs):
+        """Helper method to populate the LabbookFileConnection"""
         base_dir = None
         if 'root_dir' in kwargs:
             if kwargs['root_dir']:
@@ -81,8 +79,35 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
                 base_dir = base_dir.replace(os.path.sep + os.path.sep, os.path.sep)
 
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.listdir(self.section, base_path=base_dir, show_hidden=False)
+        edges = labbook.listdir(self.section, base_path=base_dir, show_hidden=False)
 
+        # Generate naive cursors
+        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
+
+        # Process slicing and cursor args
+        lbc = ListBasedConnection(edges, cursors, kwargs)
+        lbc.apply()
+
+        edge_objs = []
+        for edge, cursor in zip(lbc.edges, lbc.cursors):
+            create_data = {"owner": self.owner,
+                           "section": self.section,
+                           "name": self.name,
+                           "key": edge['key'],
+                           "_file_info": edge}
+            edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile(**create_data), cursor=cursor))
+
+        return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
+
+    def resolve_files(self, info, **kwargs):
+        """Resolver for getting file listing in a single directory"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_files(labbook, kwargs))
+
+    def helper_resolve_all_files(self, labbook, kwargs):
+        """Helper method to populate the LabbookFileConnection"""
+        # Get all files and directories, with the exception of anything in .git or .gigantum
+        edges = labbook.walkdir(section=self.section, show_hidden=False)
         # Generate naive cursors
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
@@ -103,34 +128,12 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
 
     def resolve_all_files(self, info, **kwargs):
         """Resolver for getting all files in a LabBook section"""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_all_files(labbook, kwargs))
 
+    def helper_resolve_favorites(self, labbook, kwargs):
         # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = lb.walkdir(section=self.section, show_hidden=False)
-        # Generate naive cursors
-        cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
-
-        # Process slicing and cursor args
-        lbc = ListBasedConnection(edges, cursors, kwargs)
-        lbc.apply()
-
-        edge_objs = []
-        for edge, cursor in zip(lbc.edges, lbc.cursors):
-            create_data = {"owner": self.owner,
-                           "section": self.section,
-                           "name": self.name,
-                           "key": edge['key'],
-                           "_file_info": edge}
-            edge_objs.append(LabbookFileConnection.Edge(node=LabbookFile(**create_data), cursor=cursor))
-
-        return LabbookFileConnection(edges=edge_objs, page_info=lbc.page_info)
-
-    def resolve_favorites(self, info, **kwargs):
-        """Resolve all favorites for the given section"""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
-        # Get all files and directories, with the exception of anything in .git or .gigantum
-        edges = [x[1] for x in lb.get_favorites(self.section).items()]
+        edges = [x[1] for x in labbook.get_favorites(self.section).items()]
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt, x in enumerate(edges)]
 
         # Process slicing and cursor args
@@ -150,6 +153,11 @@ class LabbookSection(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRe
 
         return LabbookFavoriteConnection(edges=edge_objs, page_info=lbc.page_info)
 
-    def resolve_is_untracked(self, info, **kwargs):
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        return FileOperations.is_set_untracked(labbook=lb, section=str(self.section))
+    def resolve_favorites(self, info, **kwargs):
+        """Resolve all favorites for the given section"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_favorites(labbook, kwargs))
+
+    def resolve_is_untracked(self, info):
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: FileOperations.is_set_untracked(labbook=labbook, section=str(self.section)))

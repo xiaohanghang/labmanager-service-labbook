@@ -32,6 +32,7 @@ from lmcommon.fixtures import (remote_labbook_repo, remote_bare_repo, mock_labbo
                                mock_config_file, _MOCK_create_remote_repo2)
 from lmcommon.labbook import LabBook
 from lmcommon.workflows import GitWorkflow
+from lmcommon.files import FileOperations
 
 @pytest.fixture()
 def mock_create_labbooks(fixture_working_dir):
@@ -43,7 +44,7 @@ def mock_create_labbooks(fixture_working_dir):
     with open(os.path.join(fixture_working_dir[1], 'sillyfile'), 'w') as sf:
         sf.write("1234567")
         sf.seek(0)
-    lb.insert_file('code', sf.name, '')
+    FileOperations.insert_file(lb, 'code', sf.name)
 
     assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
     # name of the config file, temporary working directory, the schema
@@ -59,7 +60,7 @@ def mock_create_labbooks_no_lfs(fixture_working_dir_lfs_disabled):
     with open(os.path.join(fixture_working_dir_lfs_disabled[1], 'sillyfile'), 'w') as sf:
         sf.write("1234567")
         sf.seek(0)
-    lb.insert_file('code', sf.name, '')
+    FileOperations.insert_file(lb, 'code', sf.name)
 
     assert os.path.isfile(os.path.join(lb.root_dir, 'code', 'sillyfile'))
     # name of the config file, temporary working directory, the schema

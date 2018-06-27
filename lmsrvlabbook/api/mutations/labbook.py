@@ -25,7 +25,7 @@ import shutil
 import graphene
 
 from lmcommon.configuration import Configuration, get_docker_client
-from lmcommon.container import ContainerOperations
+from lmcommon.container.container import ContainerOperations
 from lmcommon.dispatcher import (Dispatcher, jobs)
 from lmcommon.labbook import LabBook
 from lmcommon.logging import LMLogger
@@ -192,8 +192,16 @@ class DeleteRemoteLabbook(graphene.ClientIDMutation):
             # Perform delete operation
             mgr = GitLabManager(default_remote, admin_service, access_token=token)
             mgr.remove_labbook(owner, labbook_name)
+            logger.info(f"Deleted {owner}/{labbook_name} from the remote repository {default_remote}")
 
-            logger.info(f"Deleted {labbook_name} from the remote repository {default_remote}")
+            # Remove locally any references to that cloud repo that's just been deleted.
+            try:
+                lb = LabBook()
+                lb.from_name(get_logged_in_username(), owner, labbook_name)
+                lb.remove_remote()
+                lb.remove_lfs_remotes()
+            except ValueError as e:
+                logger.warning(e)
 
             return DeleteLabbook(success=True)
         else:
@@ -384,14 +392,14 @@ class AddLabbookRemote(graphene.relay.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, remote_name, remote_url, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name,
+                               remote_name, remote_url,
+                               client_mutation_id=None):
         username = get_logged_in_username()
         logger.info(f"Adding labbook remote {remote_name} {remote_url}")
-
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
-        remote = remote_name
-        lb.add_remote(remote, remote_url)
+        lb.add_remote(remote_name, remote_url)
         return AddLabbookRemote(success=True)
 
 
@@ -448,7 +456,8 @@ class SetLabbookDescription(graphene.relay.ClientIDMutation):
     success = graphene.Boolean()
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, owner, labbook_name, description_content, client_mutation_id=None):
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name,
+                               description_content, client_mutation_id=None):
         username = get_logged_in_username()
         lb = LabBook(author=get_logged_in_author())
         lb.from_name(username, owner, labbook_name)
@@ -476,8 +485,35 @@ class SetLabbookDescription(graphene.relay.ClientIDMutation):
         return SetLabbookDescription(success=True)
 
 
+class CompleteBatchUploadTransaction(graphene.relay.ClientIDMutation):
+
+    class Input:
+        owner = graphene.String(required=True)
+        labbook_name = graphene.String(required=True)
+        transaction_id = graphene.String(required=True)
+        cancel = graphene.Boolean()
+        rollback = graphene.Boolean()
+
+    success = graphene.Boolean()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, owner, labbook_name,
+                               transaction_id, cancel=False, rollback=False,
+                               client_mutation_id=None):
+        username = get_logged_in_username()
+        working_directory = Configuration().config['git']['working_directory']
+        inferred_lb_directory = os.path.join(
+            working_directory, username, owner, 'labbooks', labbook_name)
+        lb = LabBook(author=get_logged_in_author())
+        lb.from_directory(inferred_lb_directory)
+        FileOperations.complete_batch(lb, transaction_id, cancel=cancel,
+                                      rollback=rollback)
+        return CompleteBatchUploadTransaction(success=True)
+
+
 class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
-    """Mutation to add a file to a labbook. File should be sent in the `uploadFile` key as a multi-part/form upload.
+    """Mutation to add a file to a labbook. File should be sent in the
+    `uploadFile` key as a multi-part/form upload.
     file_path is the relative path from the labbook section specified."""
     class Input:
         owner = graphene.String(required=True)
@@ -485,58 +521,59 @@ class AddLabbookFile(graphene.relay.ClientIDMutation, ChunkUploadMutation):
         section = graphene.String(required=True)
         file_path = graphene.String(required=True)
         chunk_upload_params = ChunkUploadInput(required=True)
+        transaction_id = graphene.String(required=True)
 
     new_labbook_file_edge = graphene.Field(LabbookFileConnection.Edge)
 
     @classmethod
     def mutate_and_wait_for_chunks(cls, info, **kwargs):
-        return AddLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=None,
-                                                                               cursor="null"))
+        return AddLabbookFile(new_labbook_file_edge=
+            LabbookFileConnection.Edge(node=None, cursor="null"))
 
     @classmethod
-    def mutate_and_process_upload(cls, info, **kwargs):
-
+    def mutate_and_process_upload(cls, info, owner, labbook_name, section,
+                                  file_path, chunk_upload_params,
+                                  transaction_id, client_mutation_id=None):
         if not cls.upload_file_path:
             logger.error('No file uploaded')
             raise ValueError('No file uploaded')
 
-        username = get_logged_in_username()
-        working_directory = Configuration().config['git']['working_directory']
-        inferred_lb_directory = os.path.join(working_directory, username, kwargs.get('owner'), 'labbooks',
-                                             kwargs.get('labbook_name'))
-        lb = LabBook(author=get_logged_in_author())
-        lb.from_directory(inferred_lb_directory)
-
-        # Insert into labbook
-        # Note: insert_file() will strip out any '..' in dst_dir.
         try:
-            file_info = lb.insert_file(section=kwargs.get('section'),
-                                       src_file=cls.upload_file_path,
-                                       dst_dir=os.path.dirname(kwargs.get('file_path')),
-                                       base_filename=cls.filename)
+            username = get_logged_in_username()
+            working_directory = Configuration().config['git'] \
+                ['working_directory']
+            inferred_lb_directory = os.path.join(working_directory, username,
+                                                 owner, 'labbooks',
+                                                 labbook_name)
+            lb = LabBook(author=get_logged_in_author())
+            lb.from_directory(inferred_lb_directory)
+            dstpath = os.path.join(os.path.dirname(file_path), cls.filename)
+
+            fops = FileOperations.put_file(labbook=lb,
+                                           section=section,
+                                           src_file=cls.upload_file_path,
+                                           dst_path=dstpath,
+                                           txid=transaction_id)
         finally:
             try:
-                logger.debug(f"Removing copied temp file {cls.upload_file_path}")
+                logger.debug(f"Removing temp file {cls.upload_file_path}")
                 os.remove(cls.upload_file_path)
             except FileNotFoundError:
                 pass
 
-
-        # Prime dataloader with labbook you already loaded
-        dataloader = LabBookLoader()
-        dataloader.prime(f"{kwargs.get('owner')}&{kwargs.get('labbook_name')}&{lb.name}", lb)
-
         # Create data to populate edge
-        create_data = {'owner': kwargs.get('owner'),
-                       'name': kwargs.get('labbook_name'),
-                       'section': kwargs.get('section'),
-                       'key': file_info['key'],
-                       '_file_info': file_info}
+        create_data = {'owner': owner,
+                       'name': labbook_name,
+                       'section': section,
+                       'key': fops['key'],
+                       '_file_info': fops}
 
-        # TODO: Fix cursor implementation, this currently doesn't make sense when adding edges
+        # TODO: Fix cursor implementation..
+        # this currently doesn't make sense when adding edges
         cursor = base64.b64encode(f"{0}".encode('utf-8'))
-        return AddLabbookFile(new_labbook_file_edge=LabbookFileConnection.Edge(node=LabbookFile(**create_data),
-                                                                               cursor=cursor))
+        return AddLabbookFile(new_labbook_file_edge=
+            LabbookFileConnection.Edge(node=LabbookFile(**create_data),
+                                       cursor=cursor))
 
 
 class DeleteLabbookFile(graphene.ClientIDMutation):

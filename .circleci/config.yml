@@ -2,14 +2,17 @@ version: 2
 jobs:
   build:
     docker:
-      - image: gigantum/circleci-service-client:a587c30a-2018-05-22
+      - image: gigantum/circleci-service-client:679848cf-2018-06-26
     steps:
       - checkout
       - setup_remote_docker
-
       - run:
           name: Set Git credentials config
           command: git config --global user.email "noreply@gigantum.io" && git config --global user.name "CircleCI" && git config --global credential.helper store
+
+      - run:
+          name: Install proxy lib
+          command: cd /tmp && git clone https://github.com/gigantum/confhttpproxy.git && pip3 install -e confhttpproxy
 
       - run:
           name: Clone lmcommon integration branch

@@ -1,89 +1,51 @@
 # LabManager GraphQL API
+
 [![CircleCI](https://circleci.com/gh/gigantum/labmanager-service-labbook.svg?style=svg&circle-token=35da44b7cf8ad0cdf2821db40ed11d61287fbdfe)](https://circleci.com/gh/gigantum/labmanager-service-labbook)
 [![Coverage Status](https://coveralls.io/repos/github/gigantum/labmanager-service-labbook/badge.svg?t=beG2z0)](https://coveralls.io/github/gigantum/labmanager-service-labbook)
 
-Th LabManager GraphQL API provides all services to manage and manipulate LabBooks.
-
+The Gigantum LabManager GraphQL API provides all services to manage and
+manipulate LabBooks.  During development, this repository will generally be
+checked out as a submodule of [gtm](https://github.com/gigantum/gtm).
+High-level instructions are available in that repository.
 
 ## Installation
 
-The LabManager API is Python3 only. 
+The LabManager API is Python3 only.
 
-The `gtm` cli tool can help automate a lot of this, but if you want to manually setup and run the API on your host machine 
-follow these steps:
+The `gtm` cli tool provides the necessary context to run this service in a
+development context. Per the above, please clone this module as a submodule of
+[gtm](https://github.com/gigantum/gtm).
 
-1. Install Python 3
-    
-    OSX
-    ```
-    brew install python3
-    ```
-    
-    Windows
-    ```
-    ```
-    
-2. Create a virtualenv
-
-	Using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/):
-	
-	```
-	mkvirtualenv --python=python3 labmanager
-	```
-	
-3. Clone the `lmcommon` Python library 
-([https://github.com/gigantum/labmanager-common](https://github.com/gigantum/labmanager-common))and install all 
-system and python dependencies. Follow the installation steps in the README file.
- 
-4. Install the API python dependencies into your virtualenv:
-
-    ```
-    workon labmanager
-    pip install -r requirements.txt
-    ```
-    
 ## Running the dev server
 
-Note: Before running the lab manager, Redis needs to be running in the background. Redis is used as a backend for
-background job scheduling for long running tasks (e.g., building a docker image).
+This service will be automatically started by the `Run Dev API server` task
+configured in PyCharm via `python gtm.py developer setup` (run from the root of
+the `gtm` repository). If, however, you are running from the command line, this
+service must be manually started by entering the docker container. Again, see
+the [gtm](https://github.com/gigantum/gtm) repository for full details.
 
-To start redis on an Ubuntu host:
-
-```
-sudo apt-get install redis-server
-sudo service redis-server start
-```
-
-Alternatively, run Redis manually in the background
-
-```
-brew install redis-server
-redis-server &
-```
-
-To run the dev server you must setup your python path so all dependencies are found and run the `service.py` file:
-
-```
-cd <labmanager-service-labbook root dir>
-workon labmanager
-export PYTHONPATH=$PYTHONPATH:<labmanager-service-labbook root dir>:<labmanager-common root dir>
-python service.py
-```
-
-Navigate your browser to [http://127.0.0.1:10001/labbook/](http://127.0.0.1:10001/labbook/) and you should see the
-GraphiQL interface.
-
+Once the service is running, you can navigate your browser to
+[http://127.0.0.1:10001/labbook/](http://127.0.0.1:10001/labbook/) and you
+should see the GraphQL interface.
 
 ## Dumping the GraphQL Schema
 
-To dump the GraphQL schema to a JSON file, setup your python path so all dependencies are found and run the
- `blueprint.py` file:
-
-```
-cd <labmanager-service-labbook root dir>
-workon labmanager
-export PYTHONPATH=$PYTHONPATH:<labmanager-service-labbook root dir>:<labmanager-common root dir>
-python blueprint.py
-```
+To dump the GraphQL schema to a JSON file, run the `blueprint.py` file from a
+`developer attach` session (again, see [gtm](https://github.com/gigantum/gtm)
+for details).
 
 The path to the schema.json file will be printed to your console.
+
+## Contributing
+
+Gigantum uses the [Developer Certificate of Origin](https://developercertificate.org/). 
+This is lightweight approach that doesn't require submission and review of a
+separate contributor agreement.  Code is signed directly by the developer using
+facilities built into git.
+
+Please see [`docs/contributing.md`  in the gtm
+repository](https://github.com/gigantum/gtm/tree/integration/docs/contributing.md).
+
+## Credits
+
+TODO

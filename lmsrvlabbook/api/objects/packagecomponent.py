@@ -24,6 +24,19 @@ from lmcommon.logging import LMLogger
 logger = LMLogger.get_logger()
 
 
+class PackageComponentInput(graphene.InputObjectType):
+    """An input type to support Batch interfaces that use Package Components"""
+
+    # The name of the package manager
+    manager = graphene.String(required=True)
+
+    # The name of the package
+    package = graphene.String(required=True)
+
+    # The desired version of the package
+    version = graphene.String()
+
+
 class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
     """A type that represents a Package Manager based Environment Component"""
     # The loaded yaml data
@@ -49,6 +62,9 @@ class PackageComponent(graphene.ObjectType, interfaces=(graphene.relay.Node,)):
 
     # Flag indicating if the component is in the Base
     from_base = graphene.Boolean()
+
+    # Flag indicating if the package name and version has been validated
+    is_valid = graphene.Boolean(default_value=False)
 
     @classmethod
     def get_node(cls, info, id):

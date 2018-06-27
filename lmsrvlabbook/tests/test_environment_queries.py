@@ -187,12 +187,14 @@ class TestEnvironmentServiceQueries(object):
 
         # Add a base image
         cm = ComponentManager(lb)
+        pkgs = [{"manager": "pip", "package": "requests", "version": "1.3"},
+                {"manager": "pip", "package": "numpy", "version": "1.12"}]
+        cm.add_packages('pip', pkgs)
+
         # Add one package without a version, which should cause an error in the API since version is required
-        cm.add_package("apt", "docker")
-        # Add 3 packages
-        cm.add_package("pip", "requests", "1.3")
-        cm.add_package("pip", "numpy", "1.12")
-        cm.add_package("apt", "lxml", "3.4")
+        pkgs = [{"manager": "apt", "package": "docker", "version": ""},
+                {"manager": "apt", "package": "lxml", "version": "3.4"}]
+        cm.add_packages('apt', pkgs)
 
         # Test again
         snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
@@ -224,115 +226,55 @@ class TestEnvironmentServiceQueries(object):
         assert 'errors' not in r1
         snapshot.assert_match(r1)
 
-    def test_package_query(self, fixture_working_dir_env_repo_scoped):
+    def test_package_query_with_errors(self, snapshot, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
         # Create labbook
         lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.new(owner={"username": "default"}, name="labbook5", description="my first labbook10000")
 
         query = """
-        {
-            labbook(owner: "default", name: "labbook5") {
-              package(manager: "pip", package: "requests", version: "2.18.0") {
-                id
-                schema
-                manager
-                package
-                version
-                latestVersion
-                fromBase
-              }                
-            }
-        }
-        """
-        res = fixture_working_dir_env_repo_scoped[2].execute(query)
-        pprint.pprint(res)
-        assert 'errors' not in res
-        assert res['data']['labbook']['package']['fromBase'] is False
-        assert res['data']['labbook']['package']['latestVersion'] == "2.18.4"
-        assert res['data']['labbook']['package']['manager'] == "pip"
-        assert res['data']['labbook']['package']['package'] == "requests"
-        assert res['data']['labbook']['package']['version'] == "2.18.0"
+                    {
+                      labbook(owner: "default", name: "labbook5"){
+                        id
+                        packages(packageInput: [
+                          {manager: "pip", package: "numpy", version:"1.14.2"},
+                          {manager: "pip", package: "plotly", version:"100.00"},
+                          {manager: "pip", package: "scipy", version:""},
+                          {manager: "pip", package: "asdfasdfasdf", version:""}]){
+                          id
+                          manager 
+                          package
+                          version
+                          isValid     
+                        }
+                      }
+                    }
+                """
 
-    def test_package_query_no_version(self, fixture_working_dir_env_repo_scoped):
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
+
+    def test_package_query(self, snapshot, fixture_working_dir_env_repo_scoped):
         """Test querying for package info"""
         # Create labbook
         lb = LabBook(fixture_working_dir_env_repo_scoped[0])
         lb.new(owner={"username": "default"}, name="labbook6", description="my first labbook10000")
 
         query = """
-        {
-            labbook(owner: "default", name: "labbook6") {
-              package(manager: "pip", package: "requests") {
-                id
-                schema
-                manager
-                package
-                version
-                latestVersion
-                fromBase
-              }                
-            }
-        }
-        """
-        res = fixture_working_dir_env_repo_scoped[2].execute(query)
-        assert 'errors' not in res
-        assert res['data']['labbook']['package']['fromBase'] is False
-        assert res['data']['labbook']['package']['latestVersion'] == "2.18.4"
-        assert res['data']['labbook']['package']['manager'] == "pip"
-        assert res['data']['labbook']['package']['package'] == "requests"
-        assert res['data']['labbook']['package']['version'] == "2.18.4"
+                    {
+                      labbook(owner: "default", name: "labbook6"){
+                        id
+                        packages(packageInput: [
+                          {manager: "pip", package: "numpy", version:"1.14.2"},
+                          {manager: "pip", package: "scipy", version:""}]){
+                          id
+                          manager 
+                          package
+                          version
+                          isValid     
+                        }
+                      }
+                    }
+                """
 
-    def test_package_query_bad_version(self, fixture_working_dir_env_repo_scoped):
-        """Test querying for package info"""
-        # Create labbook
-        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
-        lb.new(owner={"username": "default"}, name="labbook7", description="my first labbook10000")
+        snapshot.assert_match(fixture_working_dir_env_repo_scoped[2].execute(query))
 
-        query = """
-        {
-            labbook(owner: "default", name: "labbook7") {
-              package(manager: "pip", package: "requests", version: "100.100") {
-                id
-                schema
-                manager
-                package
-                version
-                latestVersion
-                fromBase
-              }                
-            }
-        }
-        """
-        res = fixture_working_dir_env_repo_scoped[2].execute(query)
-        assert 'errors' not in res
-        assert res['data']['labbook']['package']['fromBase'] is False
-        assert res['data']['labbook']['package']['latestVersion'] == "2.18.4"
-        assert res['data']['labbook']['package']['manager'] == "pip"
-        assert res['data']['labbook']['package']['package'] == "requests"
-        assert res['data']['labbook']['package']['version'] == "2.18.4"
-
-    def test_package_query_bad_package(self, fixture_working_dir_env_repo_scoped):
-        """Test querying for package info"""
-        # Create labbook
-        lb = LabBook(fixture_working_dir_env_repo_scoped[0])
-        lb.new(owner={"username": "default"}, name="labbook8", description="my first labbook10000")
-
-        query = """
-        {
-            labbook(owner: "default", name: "labbook8") {
-              package(manager: "pip", package: "TotallyFakePackage", version: "100.100") {
-                id
-                schema
-                manager
-                package
-                version
-                latestVersion
-                fromBase
-              }                
-            }
-        }
-        """
-        res = fixture_working_dir_env_repo_scoped[2].execute(query)
-        assert 'errors' in res
-        assert 'is invalid' in res['errors'][0]['message']

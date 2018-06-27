@@ -26,7 +26,7 @@ from lmcommon.workflows import BranchManager
 from lmcommon.activity import ActivityStore
 from lmcommon.gitlib.gitlab import GitLabManager
 from lmcommon.files import FileOperations
-from lmcommon.environment import get_package_manager
+from lmcommon.environment.utils import get_package_manager
 
 from lmsrvcore.auth.user import get_logged_in_username
 
@@ -43,7 +43,7 @@ from lmsrvlabbook.api.objects.ref import LabbookRef
 from lmsrvlabbook.api.objects.labbooksection import LabbookSection
 from lmsrvlabbook.api.connections.activity import ActivityConnection
 from lmsrvlabbook.api.objects.activity import ActivityDetailObject, ActivityRecordObject
-from lmsrvlabbook.api.objects.packagecomponent import PackageComponent
+from lmsrvlabbook.api.objects.packagecomponent import PackageComponent, PackageComponentInput
 
 logger = LMLogger.get_logger()
 
@@ -131,42 +131,8 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     # List of keys of all background jobs pertaining to this labbook (queued, started, failed, etc.)
     background_jobs = graphene.List(JobStatus)
 
-    # Package Query for validating packages and getting latest versions
-    package = graphene.Field(PackageComponent,
-                             manager=graphene.String(),
-                             package=graphene.String(),
-                             version=graphene.String(default_value=""))
-
-    def _fetch_collaborators(self, info):
-        """Helper method to fetch this labbook's collaborators
-
-        Args:
-            info: The graphene info object for this requests
-
-        """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
-        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
-        default_remote = lb.labmanager_config.config['git']['default_remote']
-        admin_service = None
-        for remote in lb.labmanager_config.config['git']['remotes']:
-            if default_remote == remote:
-                admin_service = lb.labmanager_config.config['git']['remotes'][remote]['admin_service']
-                break
-
-        # Extract valid Bearer token
-        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
-            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
-        else:
-            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
-
-        # Get collaborators from remote service
-        mgr = GitLabManager(default_remote, admin_service, token)
-        try:
-            self._collaborators = mgr.get_collaborators(self.owner, self.name)
-        except ValueError:
-            # If ValueError Raised, assume repo doesn't exist yet
-            self._collaborators = []
+    # Package Query for validating packages and getting PackageComponents by attributes
+    packages = graphene.List(PackageComponent, package_input=graphene.List(PackageComponentInput))
 
     @classmethod
     def get_node(cls, info, id):
@@ -190,16 +156,16 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
         if not self.description:
-            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-            self.description = lb.description
+            return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: labbook.description)
 
         return self.description
 
     def resolve_readme(self, info):
         """Resolve the readme document inside the labbook"""
         if not self.readme:
-            lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-            self.readme = lb.get_readme()
+            return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: labbook.get_readme())
 
         return self.readme
 
@@ -214,74 +180,53 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
     def resolve_schema_version(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        return lb.schema
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: labbook.schema)
 
     def resolve_size_bytes(self, info):
         """Return the size of the labbook on disk (in bytes).
         NOTE! This must be a string, as graphene can't quite handle big integers. """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        return str(FileOperations.content_size(labbook=lb))
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: str(FileOperations.content_size(labbook=labbook)))
 
     def resolve_updates_available_count(self, info):
         """Get number of commits the active_branch is behind its remote counterpart.
         Returns 0 if up-to-date or if local only."""
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
         # Note, by default using remote "origin"
-        return lb.get_commits_behind_remote("origin")[1]
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: labbook.get_commits_behind_remote("origin")[1])
 
     def resolve_active_branch_name(self, info):
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        bm = BranchManager(labbook=lb, username=get_logged_in_username())
-        return bm.active_branch
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: BranchManager(labbook=labbook, username=get_logged_in_username()).active_branch)
 
     def resolve_workspace_branch_name(self, info):
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        bm = BranchManager(labbook=lb, username=get_logged_in_username())
-        return bm.workspace_branch
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: BranchManager(labbook=labbook, username=get_logged_in_username()).workspace_branch)
 
     def resolve_available_branch_names(self, info):
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        bm = BranchManager(labbook=lb, username=get_logged_in_username())
-        return bm.branches
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: BranchManager(labbook=labbook, username=get_logged_in_username()).branches)
 
     def resolve_mergeable_branch_names(self, info):
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        bm = BranchManager(labbook=lb, username=get_logged_in_username())
-        return bm.mergeable_branches
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: BranchManager(labbook=labbook, username=get_logged_in_username()).mergeable_branches)
+
+    def helper_resolve_active_branch(self, labbook):
+        active_branch_name = BranchManager(labbook=labbook, username=get_logged_in_username()).active_branch
+        return LabbookRef(id=f"{self.owner}&{self.name}&None&{active_branch_name}",
+                          owner=self.owner, name=self.name, prefix=None,
+                          ref_name=active_branch_name)
 
     def resolve_active_branch(self, info):
-        """Method to get the active branch
-
-        Args:
-            args:
-            context:
-            info:
-
-        Returns:
-
-        """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        ref_name = lb.git.get_current_branch_name()
-
-        return LabbookRef(id=f"{self.owner}&{self.name}&None&{ref_name}",
-                          owner=self.owner, name=self.name, prefix=None,
-                          ref_name=ref_name)
+        """Method to get the active branch as a LabbookRef object"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: self.helper_resolve_active_branch(labbook))
 
     def resolve_is_repo_clean(self, info):
-        """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
-
-        Args:
-            args:
-            context:
-            info:
-
-        Returns:
-
-        """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        return lb.is_repo_clean
+        """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)"""
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: labbook.is_repo_clean)
 
     def resolve_creation_date_utc(self, info):
         """Return the creation timestamp (if available - otherwise empty string)
@@ -294,9 +239,21 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns:
 
         """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
         # Note! creation_date might be None!!
-        return lb.creation_date
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: labbook.creation_date)
+
+    @staticmethod
+    def helper_resolve_default_remote(labbook):
+        """Helper to extract the default remote from a labbook"""
+        remotes = labbook.git.list_remotes()
+        if remotes:
+            url = [x['url'] for x in remotes if x['name'] == 'origin']
+            if url:
+                return url[0]
+            else:
+                logger.warning(f"There exist remotes in {str(lb)}, but no origin found.")
+        return None
 
     def resolve_default_remote(self, info):
         """Return True if no untracked files and no uncommitted changes (i.e., Git repo clean)
@@ -309,29 +266,10 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         Returns:
 
         """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-        remotes = lb.git.list_remotes()
-        if remotes:
-            url = [x['url'] for x in remotes if x['name'] == 'origin']
-            if url:
-                return url[0]
-            else:
-                logger.warning(f"There exist remotes in {str(lb)}, but no origin found.")
-        return None
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_default_remote(labbook))
 
-    def resolve_branches(self, info, **kwargs):
-        """Method to page through branch Refs
-
-        Args:
-            args:
-            context:
-            info:
-
-        Returns:
-
-        """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
+    def helper_resolve_branches(self, lb, kwargs):
         # Get all edges and cursors. Here, cursors are just an index into the refs
         edges = [x for x in lb.git.repo.refs]
         cursors = [base64.b64encode("{}".format(cnt).encode("UTF-8")).decode("UTF-8") for cnt,
@@ -361,6 +299,20 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return LabbookRefConnection(edges=edge_objs,
                                     page_info=lbc.page_info)
 
+    def resolve_branches(self, info, **kwargs):
+        """Method to page through branch Refs
+
+        Args:
+            args:
+            context:
+            info:
+
+        Returns:
+
+        """
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_branches(labbook, kwargs))
+
     def resolve_code(self, info):
         """Method to resolve the code section"""
         return LabbookSection(id="{}&{}&{}".format(self.owner, self.name, 'code'),
@@ -376,20 +328,10 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         return LabbookSection(id="{}&{}&{}".format(self.owner, self.name, 'output'),
                               owner=self.owner, name=self.name, section='output')
 
-    def resolve_activity_records(self, info, **kwargs):
-        """Method to page through branch Refs
-
-        Args:
-            kwargs:
-            info:
-
-        Returns:
-
-        """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
+    def helper_resolve_activity_records(self, labbook, kwargs):
+        """Helper method to generate ActivityRecord objects and populate the connection"""
         # Create instance of ActivityStore for this LabBook
-        store = ActivityStore(lb)
+        store = ActivityStore(labbook)
 
         if kwargs.get('before') or kwargs.get('last'):
             raise ValueError("Only `after` and `first` arguments are supported when paging activity records")
@@ -404,12 +346,13 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         # Get ActivityRecordObject instances
         edge_objs = []
         for edge, cursor in zip(edges, cursors):
-            edge_objs.append(ActivityConnection.Edge(node=ActivityRecordObject(id=f"{self.owner}&{self.name}&{edge.commit}",
-                                                                               owner=self.owner,
-                                                                               name=self.name,
-                                                                               commit=edge.commit,
-                                                                               _activity_record=edge),
-                                                     cursor=cursor))
+            edge_objs.append(
+                ActivityConnection.Edge(node=ActivityRecordObject(id=f"{self.owner}&{self.name}&{edge.commit}",
+                                                                  owner=self.owner,
+                                                                  name=self.name,
+                                                                  commit=edge.commit,
+                                                                  _activity_record=edge),
+                                        cursor=cursor))
 
         # Create page info based on first commit. Since only paging backwards right now, just check for commit
         if edges:
@@ -417,8 +360,8 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
             # Get the message of the linked commit and check if it is the non-activity record labbook creation commit
             if edges[-1].linked_commit != "no-linked-commit":
-                linked_msg = lb.git.log_entry(edges[-1].linked_commit)['message']
-                if linked_msg == f"Creating new empty LabBook: {lb.name}" and "_GTM_ACTIVITY_" not in linked_msg:
+                linked_msg = labbook.git.log_entry(edges[-1].linked_commit)['message']
+                if linked_msg == f"Creating new empty LabBook: {labbook.name}" and "_GTM_ACTIVITY_" not in linked_msg:
                     # if you get here, this is the first activity record
                     has_next_page = False
 
@@ -430,6 +373,19 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
         page_info = graphene.relay.PageInfo(has_next_page=has_next_page, has_previous_page=False, end_cursor=end_cursor)
 
         return ActivityConnection(edges=edge_objs, page_info=page_info)
+
+    def resolve_activity_records(self, info, **kwargs):
+        """Method to page through branch Refs
+
+        Args:
+            kwargs:
+            info:
+
+        Returns:
+
+        """
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_activity_records(labbook, kwargs))
 
     def resolve_detail_record(self, info, key):
         """Method to resolve the detail record object
@@ -461,6 +417,46 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
                                      name=self.name,
                                      key=key) for key in keys]
 
+    def _fetch_collaborators(self, labbook, info):
+        """Helper method to fetch this labbook's collaborators
+
+        Args:
+            info: The graphene info object for this requests
+
+        """
+        # TODO: Future work will look up remote in LabBook data, allowing user to select remote.
+        default_remote = labbook.labmanager_config.config['git']['default_remote']
+        admin_service = None
+        for remote in labbook.labmanager_config.config['git']['remotes']:
+            if default_remote == remote:
+                admin_service = labbook.labmanager_config.config['git']['remotes'][remote]['admin_service']
+                break
+
+        # Extract valid Bearer token
+        if "HTTP_AUTHORIZATION" in info.context.headers.environ:
+            token = parse_token(info.context.headers.environ["HTTP_AUTHORIZATION"])
+        else:
+            raise ValueError("Authorization header not provided. Must have a valid session to query for collaborators")
+
+        # Get collaborators from remote service
+        mgr = GitLabManager(default_remote, admin_service, token)
+        try:
+            self._collaborators = mgr.get_collaborators(self.owner, self.name)
+        except ValueError:
+            # If ValueError Raised, assume repo doesn't exist yet
+            self._collaborators = []
+
+    def helper_resolve_collaborators(self, labbook, info):
+        """Helper method to fetch this labbook's collaborators and generate the resulting list of collaborators
+
+        Args:
+            info: The graphene info object for this requests
+
+        """
+        self._fetch_collaborators(labbook, info)
+
+        return [x[1] for x in self._collaborators]
+
     def resolve_collaborators(self, info):
         """Method to get the list of collaborators for a labbook
 
@@ -471,9 +467,30 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         """
         if self._collaborators is None:
-            self._fetch_collaborators(info)
+            # If here, put the fetch for collaborators in the promise
+            return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: self.helper_resolve_collaborators(labbook, info))
 
+        # If here, you've already fetched the collaborators once and it's already saved in this Labbook object
         return [x[1] for x in self._collaborators]
+
+    def helper_resolve_can_manage_collaborators(self, labbook, info):
+        """Helper method to fetch this labbook's collaborators and check if user can manage collaborators
+
+        Args:
+            info: The graphene info object for this requests
+
+        """
+        self._fetch_collaborators(labbook, info)
+
+        can_manage = False
+        username = get_logged_in_username()
+        for c in self._collaborators:
+            if c[1] == username:
+                if c[2] is True:
+                    can_manage = True
+
+        return can_manage
 
     def resolve_can_manage_collaborators(self, info):
         """Method to check if the user is the "owner" of the labbook and can manage collaborators
@@ -485,7 +502,9 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         """
         if self._collaborators is None:
-            self._fetch_collaborators(info)
+            # If here, put the fetch for collaborators in the promise
+            return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+                lambda labbook: self.helper_resolve_can_manage_collaborators(labbook, info))
 
         can_manage = False
         username = get_logged_in_username()
@@ -496,41 +515,44 @@ class Labbook(graphene.ObjectType, interfaces=(graphene.relay.Node, GitRepositor
 
         return can_manage
 
-    def resolve_background_jobs(self, info):
-        """ Return the job keys, tasks, and statuses for all background jobs. """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
+    @staticmethod
+    def helper_resolve_background_jobs(labbook):
+        """Helper to generate background job info from a labbook"""
         d = Dispatcher()
-        jobs = d.get_jobs_for_labbook(labbook_key=lb.key)
+        jobs = d.get_jobs_for_labbook(labbook_key=labbook.key)
         return [JobStatus(j.job_key.key_str) for j in jobs]
 
-    def resolve_package(self, info, manager, package, version):
+    def resolve_background_jobs(self, info):
+        """ Return the job keys, tasks, and statuses for all background jobs. """
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_background_jobs(labbook))
+
+    @staticmethod
+    def helper_resolve_packages(labbook, package_input):
+        """Helper to return a PackageComponent object"""
+        manager = list(set([x['manager'] for x in package_input]))
+
+        if len(manager) > 1:
+            raise ValueError("Only batch add via 1 package manager at a time.")
+
+        # Instantiate appropriate package manager
+        mgr = get_package_manager(manager[0])
+
+        # Validate packages
+        pkg_result = mgr.validate_packages(package_input, labbook, get_logged_in_username())
+
+        # Return object
+        return [PackageComponent(manager=manager[0],
+                                 package=pkg.package,
+                                 version=pkg.version,
+                                 is_valid=not pkg.error) for pkg in pkg_result]
+
+    def resolve_packages(self, info, package_input):
         """Method to retrieve package component. Errors can be used to validate if a package name and version
         are correct
 
         Returns:
-            PackageComponent
+            list(PackageComponent)
         """
-        lb = info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").get()
-
-        # Instantiate appropriate package manager
-        mgr = get_package_manager(manager)
-
-        # Validate package and version if available
-        if version == "":
-            version = None
-        result = mgr.is_valid(package, lb, get_logged_in_username(), package_version=version)
-        if result.package is False:
-            raise ValueError(f"Package name {package} is invalid")
-
-        latest_version = mgr.latest_version(package, lb, get_logged_in_username())
-        if not version:
-            # If missing version, set to latest
-            version = latest_version
-        else:
-            if result.version is False:
-                # If version was set but is invalid, replace with latest
-                version = latest_version
-
-        # Return object
-        return PackageComponent(manager=manager, package=package, version=version, latest_version=latest_version)
+        return info.context.labbook_loader.load(f"{get_logged_in_username()}&{self.owner}&{self.name}").then(
+            lambda labbook: self.helper_resolve_packages(labbook, package_input))
