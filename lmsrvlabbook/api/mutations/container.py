@@ -61,12 +61,8 @@ class StartDevTool(graphene.relay.ClientIDMutation):
                       if lb_endpoint in routes[k]['target']
                       and 'jupyter' in k]
 
-        apparent_proxy_port = lb.labmanager_config.config['proxy']["apparent_proxy_port"]
-        base_route = f'0.0.0.0:{apparent_proxy_port}'
-
         if len(est_target) == 1:
-            path = f'{base_route}{est_target[0]}'
-            return StartDevTool(path=path)
+            suffix = est_target[0]
         elif len(est_target) == 0:
             rt_prefix = str(uuid.uuid4()).replace('-', '')[:8]
             rt_prefix, _ = pr.add(lb_endpoint, f'jupyter/{rt_prefix}')
@@ -80,13 +76,14 @@ class StartDevTool(graphene.relay.ClientIDMutation):
             start_labbook_monitor(lb, username, dev_tool,
                                   url=f'{lb_endpoint}/{rt_prefix}',
                                   author=get_logged_in_author())
-
-            # Don't include the port in the path if running on 80
-            if apparent_proxy_port == 80:
-                path = suffix
-            else:
-                path = f':{apparent_proxy_port}{suffix}'
-
-            return StartDevTool(path=path)
         else:
             raise ValueError(f"Multiple Jupyter instances for {str(lb)}")
+
+        # Don't include the port in the path if running on 80
+        apparent_proxy_port = lb.labmanager_config.config['proxy']["apparent_proxy_port"]
+        if apparent_proxy_port == 80:
+            path = suffix
+        else:
+            path = f':{apparent_proxy_port}{suffix}'
+
+        return StartDevTool(path=path)
